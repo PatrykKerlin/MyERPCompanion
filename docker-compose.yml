@@ -1,0 +1,30 @@
+services:
+
+    rest-api:
+        build:
+            context: ./rest-api
+        ports:
+            -   "8000:8000"
+        volumes:
+            - ./rest-api/rest_api/:/rest_api
+        command:
+            sh -c "python manage.py runserver 0.0.0.0:8000"
+        environment:
+            - DB_HOST=database
+            - DB_NAME=db
+            - DB_USER=dbuser
+            - DB_PASS=changeme
+        depends_on:
+            -   database
+
+    database:
+        image: postgres:16.4-alpine3.20
+        volumes:
+            -   db-data:/var/lib/postgresql/data
+        environment:
+            - POSTGRES_DB=db
+            - POSTGRES_USER=dbuser
+            - POSTGRES_PASSWORD=changeme
+
+volumes:
+    db-data:
