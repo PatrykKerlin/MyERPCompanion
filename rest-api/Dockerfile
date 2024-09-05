@@ -10,18 +10,10 @@ EXPOSE 8000
 
 RUN python -m venv /pyenv
 RUN /pyenv/bin/pip install --upgrade pip
+RUN apk add --update --no-cache postgresql-client
 RUN /pyenv/bin/pip install -r /tmp/requirements.txt
 RUN rm -rf /tmp
 RUN adduser -D -H rest-api
-
-#RUN python -m venv /pyenv && \
-#    /pyenv/bin/pip install --upgrade pip && \
-#    /pyenv/bin/pip install -r /tmp/requirements.txt && \
-#    rm -rf /tmp && \
-#    adduser \
-#        --disable-password \
-#        --no-create-home \
-#        rest-api
 
 ENV PATH="/pyenv/bin:$PATH"
 
