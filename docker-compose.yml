@@ -4,27 +4,30 @@ services:
         build:
             context: ./rest-api
         ports:
-            -   "8000:8000"
+            - "8000:8000"
         volumes:
             - ./rest-api/rest_api/:/rest_api
         command:
             sh -c "python manage.py wait_for_db &&
-                   python manage.py migrate &&
-                   python manage.py runserver 0.0.0.0:8000"
+            python manage.py migrate &&
+            python manage.py populate_db &&
+            python manage.py runserver 0.0.0.0:8000"
         environment:
             - DB_HOST=database
-            - DB_NAME=db
+            - DB_NAME=MyERPCompanion
             - DB_USER=dbuser
             - DB_PASS=changeme
         depends_on:
-            -   database
+            - database
 
     database:
-        image: postgres:16.4-alpine3.20
+        image: postgres:16.4-bookworm
+        ports:
+            - "5432:5432"
         volumes:
-            -   db-data:/var/lib/postgresql/data
+            - db-data:/var/lib/postgresql/data
         environment:
-            - POSTGRES_DB=db
+            - POSTGRES_DB=MyERPCompanion
             - POSTGRES_USER=dbuser
             - POSTGRES_PASSWORD=changeme
 

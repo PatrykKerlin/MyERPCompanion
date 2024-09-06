@@ -1,4 +1,4 @@
-FROM python:3.12.5-alpine3.20
+FROM python:3.12-bookworm
 LABEL maintainer="Patryk Kerlin"
 
 ENV PYTHONUNBUFFERED=1
@@ -10,10 +10,14 @@ EXPOSE 8000
 
 RUN python -m venv /pyenv
 RUN /pyenv/bin/pip install --upgrade pip
-RUN apk add --update --no-cache postgresql-client
+RUN apt-get update
+RUN apt-get upgrade -y
+RUN apt-get install -y postgresql-client --no-install-recommends
+RUN rm -rf /var/lib/apt/lists/*
 RUN /pyenv/bin/pip install -r /tmp/requirements.txt
 RUN rm -rf /tmp
-RUN adduser -D -H rest-api
+
+RUN useradd -m -d /rest_api -s /bin/bash rest-api
 
 ENV PATH="/pyenv/bin:$PATH"
 
