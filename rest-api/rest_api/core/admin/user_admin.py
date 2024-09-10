@@ -10,7 +10,8 @@ class UserAdmin(BaseUserAdmin):
     list_display = ['username']
     fieldsets = [
         ['Credentials', {'fields': ['username', 'password']}],
-        ['Details', {'fields': ['last_login', 'created_by', 'created_at', 'modified_by', 'modified_at', 'is_active']}],
+        ['Additional Information',
+         {'fields': ['last_login', 'created_by', 'created_at', 'modified_by', 'modified_at', 'is_active']}],
     ]
     readonly_fields = ['last_login', 'created_by', 'created_at', 'modified_by', 'modified_at', 'is_active']
 

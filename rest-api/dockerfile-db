@@ -1,0 +1,10 @@
+FROM postgres:16.4-bookworm
+LABEL maintainer="Patryk Kerlin"
+
+RUN apt-get update
+RUN apt-get upgrade -y
+RUN rm -rf /var/lib/apt/lists/*
+
+EXPOSE 5432
+
+CMD ["postgres"]

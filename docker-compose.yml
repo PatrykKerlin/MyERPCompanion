@@ -3,6 +3,7 @@ services:
     rest-api:
         build:
             context: ./rest-api
+            dockerfile: dockerfile-api
         ports:
             - "8000:8000"
         volumes:
@@ -21,7 +22,9 @@ services:
             - database
 
     database:
-        image: postgres:16.4-bookworm
+        build:
+            context: ./rest-api
+            dockerfile: dockerfile-db
         ports:
             - "5432:5432"
         volumes:

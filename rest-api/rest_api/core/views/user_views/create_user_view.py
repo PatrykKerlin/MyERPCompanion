@@ -1,6 +1,7 @@
-from rest_framework import generics
-from ...serializers import UserSerializer
+from rest_framework.generics import CreateAPIView
+
+from ...serializers.user_serializer import UserSerializer
 
 
-class CreateUserView(generics.CreateAPIView):
+class CreateUserView(CreateAPIView):
     serializer_class = UserSerializer

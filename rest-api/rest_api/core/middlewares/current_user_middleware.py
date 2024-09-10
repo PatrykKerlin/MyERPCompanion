@@ -1,7 +1,7 @@
 import threading
 
 
-class CurrentUserMiddleware():
+class CurrentUserMiddleware:
     __thread_local = threading.local()
 
     def __init__(self, get_response):
@@ -14,4 +14,7 @@ class CurrentUserMiddleware():
 
     @classmethod
     def get_current_user(cls):
-        return getattr(cls.__thread_local, 'user', None)
+        current_user = getattr(cls.__thread_local, 'user', None)
+        if not current_user or not current_user.is_authenticated:
+            return None
+        return current_user
