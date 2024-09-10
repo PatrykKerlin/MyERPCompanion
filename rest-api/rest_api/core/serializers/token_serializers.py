@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate
 from rest_framework.serializers import Serializer, CharField, ValidationError
 
 
-class UserTokenSerializer(Serializer):
+class TokenSerializer(Serializer):
     username = CharField()
     password = CharField(style={'input_type': 'password'}, trim_whitespace=False)
 

@@ -1,7 +1,9 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, RegexValidator
 from django.db import models
+
 from .base_model import BaseModel
+from ..managers.employee_manager import EmployeeManager
 
 
 class Employee(BaseModel):
@@ -53,25 +55,9 @@ class Employee(BaseModel):
     department = models.CharField(max_length=100)
     salary = models.DecimalField(max_digits=10, decimal_places=2)
 
+    objects = EmployeeManager()
+
     def __str__(self):
         if not self.middle_name:
             return f'{self.first_name} {self.last_name}'
         return f'{self.first_name} {self.middle_name} {self.last_name}'
-
-    def clean(self):
-        super().clean()
-
-        for field in ['first_name', 'last_name', 'phone_country_code', 'phone_number', 'email', 'house_number',
-                      'postal_code', 'city', 'country', 'bank_account_number']:
-            value = getattr(self, field, None)
-            if value and value.strip() == "":
-                raise ValidationError({field: f"{field.replace('_', ' ').capitalize()} cannot contain only spaces."})
-
-        if self.date_of_birth and self.date_of_employment:
-            age_at_employment = self.date_of_employment.year - self.date_of_birth.year
-            if age_at_employment < 18:
-                raise ValidationError("Employee must be at least 18 years old on the date of employment.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)

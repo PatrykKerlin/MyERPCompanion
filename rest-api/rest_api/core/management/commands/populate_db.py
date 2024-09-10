@@ -87,7 +87,7 @@ class Command(BaseCommand):
                     date_of_birth=fake.date_of_birth(minimum_age=21, maximum_age=65),
                     bank_country_code=fake.country_code(),
                     bank_account_number=fake.random_number(digits=26, fix_len=True),
-                    bank_name=re.split(r'[ ,]+', fake.company())[0] + 'Bank',
+                    bank_name=re.split(r'[ ,]+', fake.company())[0] + ' Bank',
                     bank_swift=fake.swift8(),
                     date_of_employment=fake.date_between(start_date='-1y', end_date='today'),
                     position=random.choice(Command.positions),
