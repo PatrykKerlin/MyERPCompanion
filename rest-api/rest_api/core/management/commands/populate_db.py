@@ -5,6 +5,7 @@ from faker import Faker
 from decimal import Decimal
 import random
 import re
+import string
 
 
 class Command(BaseCommand):
@@ -82,7 +83,8 @@ class Command(BaseCommand):
                     postal_code='{:02d}-{:03d}'.format(fake.random_int(min=0, max=99), fake.random_int(min=0, max=999)),
                     city=fake.city(),
                     country=random.choice(Command.eu_countries),
-                    identity_document=random.choice(['PASSPORT', 'ID_CARD']),
+                    identity_document=random.choice(['passport', 'id_card']),
+                    identity_document_number=''.join(random.choices(string.ascii_letters + string.digits, k=9)),
                     pesel=fake.random_number(digits=11, fix_len=True) if fake.boolean() else None,
                     date_of_birth=fake.date_of_birth(minimum_age=21, maximum_age=65),
                     bank_country_code=fake.country_code(),

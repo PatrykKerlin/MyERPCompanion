@@ -1,11 +1,14 @@
 from django.contrib.auth import get_user_model
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, IntegerField
 
 
 class UserSerializer(ModelSerializer):
+    user_id = IntegerField(source='id')
+
     class Meta:
         model = get_user_model()
-        fields = ['id', 'username', 'password']
+        fields = ['user_id', 'username', 'password']
+        read_only_fields = ['user_id']
         extra_kwargs = {
             'password': {
                 'write_only': True,

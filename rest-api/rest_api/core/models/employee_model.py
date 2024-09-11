@@ -7,17 +7,17 @@ from ..managers.employee_manager import EmployeeManager
 
 
 class Employee(BaseModel):
-    class IdentityDocument(models.TextChoices):
-        PASSPORT = 'PASSPORT', 'Passport'
-        ID_CARD = 'ID_CARD', 'Identity Card'
+    class IdentityDocuments(models.TextChoices):
+        PASSPORT = 'passport', 'Passport'
+        ID_CARD = 'id_card', 'Identity Card'
+
+    employee_id = models.IntegerField(null=True, blank=True)
 
     first_name = models.CharField(max_length=50)
     middle_name = models.CharField(max_length=50, null=True, blank=True)
     last_name = models.CharField(max_length=100)
-    identity_document = models.CharField(
-        max_length=20,
-        choices=IdentityDocument.choices
-    )
+    identity_document = models.CharField(max_length=8, choices=IdentityDocuments.choices)
+    identity_document_number = models.CharField(max_length=15)
     pesel = models.CharField(max_length=11, null=True, blank=True)
     date_of_birth = models.DateField()
 
