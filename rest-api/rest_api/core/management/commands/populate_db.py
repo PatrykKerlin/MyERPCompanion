@@ -47,7 +47,7 @@ class Command(BaseCommand):
         if user.objects.count() == 0:
             user.objects.create_superuser(
                 initial=True,
-                username='admin',
+                login='admin',
                 password='admin',
                 employee=None,
             )
@@ -66,7 +66,7 @@ class Command(BaseCommand):
 
         if employee.objects.count() == 0:
             fake = Faker()
-            for _ in range(25):
+            for _ in range(5):
                 first_name = fake.first_name()
                 last_name = fake.last_name()
 

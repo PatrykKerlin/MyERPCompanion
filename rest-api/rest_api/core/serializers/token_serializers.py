@@ -3,15 +3,15 @@ from rest_framework.serializers import Serializer, CharField, ValidationError
 
 
 class TokenSerializer(Serializer):
-    username = CharField()
+    login = CharField()
     password = CharField(style={'input_type': 'password'}, trim_whitespace=False)
 
     def validate(self, attrs):
-        username = attrs.get('username')
+        login = attrs.get('login')
         password = attrs.get('password')
         user = authenticate(
             request=self.context.get('request'),
-            username=username,
+            login=login,
             password=password
         )
 

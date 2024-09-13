@@ -1,17 +1,13 @@
-from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, RegexValidator
 from django.db import models
 
 from .base_model import BaseModel
-from ..managers.employee_manager import EmployeeManager
 
 
 class Employee(BaseModel):
     class IdentityDocuments(models.TextChoices):
         PASSPORT = 'passport', 'Passport'
         ID_CARD = 'id_card', 'Identity Card'
-
-    employee_id = models.IntegerField(null=True, blank=True)
 
     first_name = models.CharField(max_length=50)
     middle_name = models.CharField(max_length=50, null=True, blank=True)
@@ -54,8 +50,6 @@ class Employee(BaseModel):
     position = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
     salary = models.DecimalField(max_digits=10, decimal_places=2)
-
-    objects = EmployeeManager()
 
     def __str__(self):
         if not self.middle_name:

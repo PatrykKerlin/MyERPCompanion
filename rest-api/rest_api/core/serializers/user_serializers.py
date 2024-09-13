@@ -1,14 +1,19 @@
 from django.contrib.auth import get_user_model
-from rest_framework.serializers import ModelSerializer, IntegerField
+from rest_framework.serializers import IntegerField
+
+from .base_serializer import BaseSerializer
 
 
-class UserSerializer(ModelSerializer):
-    user_id = IntegerField(source='id')
-
+class UserListDetailSerializer(BaseSerializer):
     class Meta:
         model = get_user_model()
-        fields = ['user_id', 'username', 'password']
-        read_only_fields = ['user_id']
+        fields = ['id', 'employee', 'login']
+
+
+class UserCreateSerializer(BaseSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ['employee', 'password']
         extra_kwargs = {
             'password': {
                 'write_only': True,
@@ -16,15 +21,29 @@ class UserSerializer(ModelSerializer):
             }
         }
 
-    def create(self, validated_data):
-        return get_user_model().objects.create_user(**validated_data)
+    def create(self, validated_data, user=None):
+        new_user = get_user_model().objects.create_user(user=user, **validated_data)
+        return new_user
 
-    def update(self, instance, validated_data):
+
+class UserUpdateSerializer(BaseSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ['password']
+        extra_kwargs = {
+            'password': {
+                'write_only': True,
+                'min_length': 8
+            }
+        }
+
+    def update(self, instance, validated_data, user=None):
         password = validated_data.pop('password', None)
-        user = super().update(instance, validated_data)
+
+        updated_user = super().update(instance, validated_data, user=user)
 
         if password:
-            user.set_password(password)
-            user.save()
+            updated_user.set_password(password)
+            updated_user.save(user=user)
 
-        return user
+        return updated_user

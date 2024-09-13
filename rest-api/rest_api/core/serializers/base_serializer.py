@@ -1,7 +1,22 @@
 from rest_framework.serializers import ModelSerializer
 
+from ..models.base_model import BaseModel
+from ..helpers.model_fields import ModelFields
+
 
 class BaseSerializer(ModelSerializer):
+    get_model_common_fields = ModelFields.get_model_common_fields
+    get_model_specific_fields = ModelFields.get_model_specific_fields
+
+    def save(self, **kwargs):
+        user = kwargs.pop('user', None)
+        validated_data = {**self.validated_data, **kwargs}
+
+        if self.instance is None:
+            return self.create(validated_data, user=user)
+        else:
+            return self.update(self.instance, validated_data, user=user)
+
     def create(self, validated_data, user=None):
         instance = self.Meta.model(**validated_data)
         instance.save(user=user)

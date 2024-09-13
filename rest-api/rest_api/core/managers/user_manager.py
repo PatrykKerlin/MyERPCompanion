@@ -4,24 +4,20 @@ from .base_manager import BaseManager
 
 
 class UserManager(BaseManager, BaseUserManager):
-    def create_user(self, username, password=None, initial=False, **extra_fields):
-        username = username.strip()
+    def create_user(self, user=None, password=None, initial=False, **extra_fields):
+        new_user = self.model(**extra_fields)
+        new_user.set_password(password)
 
-        if not username:
-            raise ValueError('User must have a username')
+        new_user.save(using=self._db, initial=initial, user=user)
 
-        user = self.model(username=username, **extra_fields)
-        user.set_password(password)
+        return new_user
 
-        user.save(using=self._db, initial=initial)
-
-        return user
-
-    def create_superuser(self, username, password, initial=False, **extra_fields):
-        user = self.create_user(username, password, initial=initial, **extra_fields)
+    def create_superuser(self, initial=False, **extra_fields):
+        user = self.create_user(initial=initial, **extra_fields)
         user.is_staff = True
         user.is_superuser = True
+        user.created_by = user
 
-        user.save(using=self._db, initial=initial)
+        user.save(using=self._db, initial=initial, user=user)
 
         return user
