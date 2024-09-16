@@ -14,7 +14,6 @@ class UserAdmin(BaseUserAdmin, BaseAdmin):
         ['Credentials', {'fields': ['employee', 'login', 'password']}],
         ['Additional Information', {'fields': BaseAdmin.readonly_fields}],
     ]
-    list_filter = ("is_staff", "is_superuser", "groups")
 
     add_fieldsets = [
         [None, {

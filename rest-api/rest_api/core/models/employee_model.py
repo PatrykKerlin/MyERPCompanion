@@ -1,13 +1,18 @@
 from django.core.validators import EmailValidator, RegexValidator
 from django.db import models
 
+from ..managers.user_manager import UserManager
 from .base_model import BaseModel
 
 
 class Employee(BaseModel):
+    objects = UserManager()
+
     class IdentityDocuments(models.TextChoices):
         PASSPORT = 'passport', 'Passport'
         ID_CARD = 'id_card', 'Identity Card'
+
+    employee_id = models.IntegerField()
 
     first_name = models.CharField(max_length=50)
     middle_name = models.CharField(max_length=50, null=True, blank=True)

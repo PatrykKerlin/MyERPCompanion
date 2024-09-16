@@ -46,7 +46,6 @@ class Command(BaseCommand):
 
         if user.objects.count() == 0:
             user.objects.create_superuser(
-                initial=True,
                 login='admin',
                 password='admin',
                 employee=None,
