@@ -23,10 +23,10 @@ class Item(BaseModel):
     #                                      verbose_name="Discount Price", validators=[
     #         MinValueValidator(0.00, message="Discount Price cannot be negative.")])
 
-    sku = models.CharField(max_length=100, unique=True, verbose_name="SKU", validators=[
+    sku = models.CharField(max_length=100, verbose_name="SKU", validators=[
         RegexValidator(regex=r'^[A-Za-z0-9_-]+$',
                        message='SKU must contain only alphanumeric characters, underscores, or hyphens.')])
-    barcode = models.CharField(max_length=100, unique=True, blank=True, null=True, verbose_name="Barcode", validators=[
+    barcode = models.CharField(max_length=100, blank=True, null=True, verbose_name="Barcode", validators=[
         RegexValidator(regex=r'^\d{8,13}$', message='Barcode must be between 8 and 13 digits.')])
     ean = models.CharField(max_length=13, blank=True, null=True, verbose_name="EAN",
                            validators=[RegexValidator(regex=r'^\d{13}$', message='EAN must be exactly 13 digits.')])

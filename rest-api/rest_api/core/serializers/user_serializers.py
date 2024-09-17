@@ -7,7 +7,7 @@ from .base_serializer import BaseSerializer
 class UserListDetailSerializer(BaseSerializer):
     class Meta:
         model = get_user_model()
-        fields = ['id', 'employee', 'login']
+        fields = ['user_id', 'employee', 'login']
 
 
 class UserCreateSerializer(BaseSerializer):

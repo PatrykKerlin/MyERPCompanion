@@ -8,6 +8,8 @@ from ..serializers.token_serializers import TokenSerializer
 
 class CreateTokenView(ObtainAuthToken):
     serializer_class = TokenSerializer
+    authentication_classes = []
+    permission_classes = []
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})

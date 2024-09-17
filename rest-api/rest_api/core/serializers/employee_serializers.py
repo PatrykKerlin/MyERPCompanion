@@ -6,7 +6,7 @@ from ..helpers.model_fields import ModelFields
 class EmployeeListSerializer(BaseSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'first_name', 'middle_name', 'last_name']
+        fields = ['employee_id', 'first_name', 'middle_name', 'last_name']
 
 
 class EmployeeCreateSerializer(EmployeeListSerializer):
@@ -16,5 +16,5 @@ class EmployeeCreateSerializer(EmployeeListSerializer):
 
 class EmployeeDetailSerializer(EmployeeCreateSerializer):
     class Meta(EmployeeCreateSerializer.Meta):
-        fields = EmployeeCreateSerializer.Meta.fields + ModelFields.get_model_common_fields(
-            EmployeeCreateSerializer.Meta.model)
+        fields = (EmployeeCreateSerializer.Meta.fields +
+                  ModelFields.get_model_common_fields(EmployeeCreateSerializer.Meta.model))
