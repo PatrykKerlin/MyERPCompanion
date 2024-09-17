@@ -9,11 +9,6 @@ from ..models import User
 class UserAdmin(BaseUserAdmin, BaseAdmin):
     ordering = ['id']
     list_display = ['login']
-    readonly_fields = ['last_login'] + BaseAdmin.readonly_fields
-    fieldsets = [
-        ['Credentials', {'fields': ['employee', 'login', 'password']}],
-        ['Additional Information', {'fields': BaseAdmin.readonly_fields}],
-    ]
 
     add_fieldsets = [
         [None, {
@@ -23,9 +18,20 @@ class UserAdmin(BaseUserAdmin, BaseAdmin):
     ]
 
     def get_readonly_fields(self, request, obj=None):
+        readonly_fields = ['last_login'] + super().get_readonly_fields(request, obj)
+
         if obj:
-            return self.readonly_fields + ['employee', 'login']
-        return self.readonly_fields
+            readonly_fields += ['employee', 'login']
+
+        return readonly_fields
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = [
+            ['Credentials', {'fields': ['employee', 'login', 'password']}],
+            ['Additional Information', {'fields': self.get_readonly_fields(request, obj)}],
+        ]
+
+        return fieldsets
 
     def save_model(self, request, obj, form, change):
         BaseAdmin.save_model(self, request, obj, form, change)

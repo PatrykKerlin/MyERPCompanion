@@ -3,6 +3,8 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.conf import settings
 
+from ..helpers.model_fields import ModelFields
+
 
 class BaseModel(models.Model):
     class Meta:
@@ -23,22 +25,11 @@ class BaseModel(models.Model):
     modified_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
                                     related_name='%(class)s_modified')
 
-    @staticmethod
-    def __get_model_common_fields():
-        return ['id'] + [field.name for field in BaseModel._meta.fields]
-
-    def __get_instance_id_field_name(self):
-        for field in self._meta.fields:
-            if field.name.endswith('_id'):
-                return field.name
-        return None
-
     def save(self, *args, user=None, force_insert=False, force_update=False, using=None,
              update_fields=None):
         with transaction.atomic():
-            instance_id_field_name = self.__get_instance_id_field_name()
+            instance_id_field_name = ModelFields.get_instance_id_field_name(self.__class__)
             if self._state.adding:
-                print("adding")
                 last_instance_id_val = (self.__class__.objects
                                         .aggregate(models.Max(instance_id_field_name))[
                                             f'{instance_id_field_name}__max'] or 0)
@@ -48,8 +39,6 @@ class BaseModel(models.Model):
                 self.version = 1
                 self.modification_type = BaseModel.ModificationTypes.INSERT
             else:
-                modification_time = timezone.now()
-
                 old_instance = self.__class__.objects.get(id=self.id)
                 old_instance_fields = old_instance.__dict__.copy()
                 old_instance_fields.pop('_state', None)
@@ -62,7 +51,7 @@ class BaseModel(models.Model):
                 self.version += 1
                 self.modification_type = BaseModel.ModificationTypes.UPDATE
                 self.modified_by = user
-                self.modified_at = modification_time
+                self.modified_at = timezone.now()
 
                 self.__class__.objects.bulk_create([self.__class__(**old_instance_fields)])
 

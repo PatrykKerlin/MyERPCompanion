@@ -27,7 +27,7 @@ class Command(BaseCommand):
                    "Marketing Department", "Production Planning Department", "Human Resources (HR) Department"]
 
     def handle(self, *args, **options):
-        methods_to_run = [Command.populate_users, Command.populate_employees]
+        methods_to_run = [Command.populate_users, Command.populate_employees, Command.populate_items]
 
         results = set()
         for method in methods_to_run:
@@ -97,5 +97,52 @@ class Command(BaseCommand):
                 )
                 new_employee.save(user=user)
                 is_populated = True
+
+        return is_populated
+
+    @staticmethod
+    def populate_items():
+        is_populated = False
+        item_model = apps.get_model('core', 'Item')
+        user = get_user_model().objects.filter(id=1, is_superuser=True).first()
+
+        if not user:
+            return is_populated
+
+        if item_model.objects.count() == 0:
+            fake = Faker()
+            for _ in range(10):
+                name = fake.word().capitalize()
+                index = fake.bothify(text='???-###')
+                sku = fake.unique.bothify(text='???-#####')
+                price = Decimal(random.uniform(10, 1000)).quantize(Decimal('0.01'))
+                cost = Decimal(random.uniform(5, 500)).quantize(Decimal('0.01'))
+                barcode = fake.unique.bothify(text='###########')  # Example for a 13-digit barcode
+                stock_quantity = random.randint(0, 100)
+                reorder_level = random.randint(10, 50)
+                warehouse_location = fake.street_address()
+
+                new_item = item_model(
+                    name=name,
+                    index=index,
+                    description=fake.sentence(),
+                    price=price,
+                    cost=cost,
+                    sku=sku,
+                    barcode=barcode,
+                    weight=Decimal(random.uniform(0.1, 5.0)).quantize(Decimal('0.01')),
+                    dimensions=f"{random.randint(10, 100)}x{random.randint(10, 100)}x{random.randint(10, 100)}",
+                    volume=Decimal(random.uniform(0.1, 1.0)).quantize(Decimal('0.001')),
+                    stock_quantity=stock_quantity,
+                    reorder_level=reorder_level,
+                    warehouse_location=warehouse_location,
+                    supplier_sku=fake.unique.bothify(text='???-#####'),
+                    lead_time=random.randint(1, 30),
+                    vat_rate=Decimal(23.00),
+                    tax_category='Standard',
+                )
+                new_item.save(user=user)
+
+            is_populated = True
 
         return is_populated

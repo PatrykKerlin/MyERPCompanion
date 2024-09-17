@@ -5,9 +5,6 @@ from ..helpers.model_fields import ModelFields
 
 
 class BaseSerializer(ModelSerializer):
-    get_model_common_fields = ModelFields.get_model_common_fields
-    get_model_specific_fields = ModelFields.get_model_specific_fields
-
     def save(self, **kwargs):
         user = kwargs.pop('user', None)
         validated_data = {**self.validated_data, **kwargs}

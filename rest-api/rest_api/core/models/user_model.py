@@ -7,14 +7,14 @@ from .employee_model import Employee
 
 
 class User(BaseModel, AbstractBaseUser, PermissionsMixin):
+    objects = UserManager()
+
     user_id = models.IntegerField()
     employee = models.OneToOneField(Employee, null=True, on_delete=models.CASCADE, limit_choices_to={'is_active': True},
                                     related_name='employee')
     login = models.CharField(max_length=6, null=True, unique=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-
-    objects = UserManager()
 
     USERNAME_FIELD = 'login'
     REQUIRED_FIELDS = ['password']
@@ -29,7 +29,6 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
         if update_fields:
             if len(update_fields) == 1 and 'last_login' in update_fields:
                 update_fields = None
-        print('user model')
-        print(user)
+
         super().save(*args, user=user, force_insert=force_insert, force_update=force_update, using=using,
                      update_fields=update_fields)
