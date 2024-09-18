@@ -1,6 +1,3 @@
-# from ..models.base_model import BaseModel
-
-
 class ModelFields:
     @staticmethod
     def get_model_common_fields(Model):

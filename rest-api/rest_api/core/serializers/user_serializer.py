@@ -4,38 +4,31 @@ from rest_framework.serializers import IntegerField
 from .base_serializer import BaseSerializer
 
 
-class UserListDetailSerializer(BaseSerializer):
+class UserSerializer(BaseSerializer):
     class Meta:
         model = get_user_model()
-        fields = ['user_id', 'employee', 'login']
-
-
-class UserCreateSerializer(BaseSerializer):
-    class Meta:
-        model = get_user_model()
-        fields = ['employee', 'password']
         extra_kwargs = {
             'password': {
                 'write_only': True,
                 'min_length': 8
             }
         }
+
+    def _get_list_fields(self):
+        return ['employee', 'login']
+
+    def _get_detail_fields(self):
+        return ['employee', 'login']
+
+    def _get_create_fields(self):
+        return ['employee', 'password']
+
+    def _get_update_fields(self):
+        return ['password']
 
     def create(self, validated_data, user=None):
         new_user = get_user_model().objects.create_user(user=user, **validated_data)
         return new_user
-
-
-class UserUpdateSerializer(BaseSerializer):
-    class Meta:
-        model = get_user_model()
-        fields = ['password']
-        extra_kwargs = {
-            'password': {
-                'write_only': True,
-                'min_length': 8
-            }
-        }
 
     def update(self, instance, validated_data, user=None):
         password = validated_data.pop('password', None)

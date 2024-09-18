@@ -1,0 +1,24 @@
+FROM python:3.12-bookworm
+LABEL maintainer="Patryk Kerlin"
+
+ENV PYTHONUNBUFFERED=1
+
+COPY requirements.txt /tmp/requirements.txt
+COPY ./web_app /web_app
+WORKDIR /web_app
+EXPOSE 9000
+
+RUN python -m venv /pyenv
+RUN /pyenv/bin/pip install --upgrade pip
+RUN apt-get update
+RUN apt-get upgrade -y
+# RUN apt-get install -y postgresql-client --no-install-recommends
+RUN rm -rf /var/lib/apt/lists/*
+RUN /pyenv/bin/pip install -r /tmp/requirements.txt
+RUN rm -rf /tmp
+
+RUN useradd -m -d /web_app -s /bin/bash web-app
+
+ENV PATH="/pyenv/bin:$PATH"
+
+USER web-app

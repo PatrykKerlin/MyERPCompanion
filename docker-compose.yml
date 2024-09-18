@@ -1,4 +1,14 @@
 services:
+    web-app:
+        build:
+            context: ./web-app
+            dockerfile: dockerfile
+        ports:
+            - "9000:9000"
+        volumes:
+            - ./web-app/web_app/:/web_app
+        command:
+            sh -c "python manage.py runserver 0.0.0.0:9000"
 
     rest-api:
         build:
