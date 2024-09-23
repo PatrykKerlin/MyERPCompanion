@@ -3,7 +3,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from django.utils import timezone
 
-from ..serializers.token_serializers import TokenSerializer
+from ..serializers.token_serializer import TokenSerializer
 
 
 class CreateTokenView(ObtainAuthToken):

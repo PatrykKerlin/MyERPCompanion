@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block page_body %}
+    <h3>{{ month|title }} : {{ text }}</h3>
+    <ul>
+        {% for element in sample_list %}
+            <li><h4>{{ element }}</h4></li>
+        {% endfor %}
+    </ul>
+{% endblock %}

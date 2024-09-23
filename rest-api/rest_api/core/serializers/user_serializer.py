@@ -17,15 +17,6 @@ class UserSerializer(BaseSerializer):
     def _get_list_fields(self):
         return ['employee', 'login']
 
-    def _get_detail_fields(self):
-        return ['employee', 'login']
-
-    def _get_create_fields(self):
-        return ['employee', 'password']
-
-    def _get_update_fields(self):
-        return ['password']
-
     def create(self, validated_data, user=None):
         new_user = get_user_model().objects.create_user(user=user, **validated_data)
         return new_user
@@ -37,6 +28,7 @@ class UserSerializer(BaseSerializer):
 
         if password:
             updated_user.set_password(password)
-            updated_user.save(user=user)
+
+        updated_user.save(user=user)
 
         return updated_user

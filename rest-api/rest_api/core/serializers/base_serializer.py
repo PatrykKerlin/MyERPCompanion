@@ -8,20 +8,24 @@ from ..helpers.model_fields import ModelFields
 
 
 class BaseSerializer(ModelSerializer):
-    id = IntegerField(source='employee_id', read_only=True)
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        action = self.context['view'].action
-        self.Meta.fields = self.__get_fields_for_action(action)
+        action = self.context.get('view', None) and getattr(self.context['view'], 'action', None)
+        if action:
+            self.Meta.fields = self.__get_fields_for_action(action)
+        else:
+            self.Meta.fields = self._get_detail_fields()
 
     def __get_fields_for_action(self, action):
         if action == 'list':
-            return self._get_list_fields()
+            fields = self._get_list_fields()
+            if fields == '__all__':
+                return self._get_detail_fields()
+            return fields
         elif action == 'create':
-            return self._get_create_fields()
+            return self._get_detail_fields()
         elif action in ['update', 'partial_update']:
-            return self._get_update_fields()
+            return self._get_detail_fields()
         elif action == 'retrieve':
             return self._get_detail_fields()
         return []
@@ -33,14 +37,20 @@ class BaseSerializer(ModelSerializer):
         return self._get_create_fields()
 
     def _get_detail_fields(self):
-        return (self._get_create_fields() +
+        return (ModelFields.get_model_specific_fields(self.Meta.model) +
                 ModelFields.get_model_common_fields(self.Meta.model))
 
     def get_fields(self):
         fields = super().get_fields()
+
         instance_id_field = ModelFields.get_instance_id_field_name(self.Meta.model)
         fields['id'] = IntegerField(source=instance_id_field, read_only=True)
         fields = OrderedDict([('id', fields['id'])] + [(key, value) for key, value in fields.items() if key != 'id'])
+
+        common_fields = ModelFields.get_model_common_fields(self.Meta.model)
+        for field_name in common_fields:
+            if field_name in fields.keys():
+                fields[field_name].read_only = True
 
         return fields
 

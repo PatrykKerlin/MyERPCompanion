@@ -27,7 +27,8 @@ class Command(BaseCommand):
                    "Marketing Department", "Production Planning Department", "Human Resources (HR) Department"]
 
     def handle(self, *args, **options):
-        methods_to_run = [Command.populate_users, Command.populate_employees, Command.populate_items]
+        methods_to_run = [Command.populate_users, Command.populate_pages, Command.populate_employees,
+                          Command.populate_items]
 
         results = set()
         for method in methods_to_run:
@@ -40,12 +41,37 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("No initial data was populated."))
 
     @staticmethod
+    def populate_pages():
+        is_populated = False
+        Page = apps.get_model('core', 'Page')
+        user = get_user_model().objects.filter(id=1, is_superuser=True).first()
+
+        if not user:
+            return is_populated
+
+        if Page.objects.count() == 0:
+            pages = [Page(
+                name='user-login',
+                title="MyERPCompanion",
+                template='login.html',
+                in_menu=False,
+                order=0
+            )]
+
+            for page in pages:
+                page.save(user=user)
+
+            is_populated = True
+
+        return is_populated
+
+    @staticmethod
     def populate_users():
         is_populated = False
-        user = get_user_model()
+        User = get_user_model()
 
-        if user.objects.count() == 0:
-            user.objects.create_superuser(
+        if User.objects.count() == 0:
+            User.objects.create_superuser(
                 login='admin',
                 password='admin',
                 employee=None,
@@ -57,19 +83,19 @@ class Command(BaseCommand):
     @staticmethod
     def populate_employees():
         is_populated = False
-        employee = apps.get_model('core', 'Employee')
+        Employee = apps.get_model('core', 'Employee')
         user = get_user_model().objects.filter(id=1, is_superuser=True).first()
 
         if not user:
             return is_populated
 
-        if employee.objects.count() == 0:
+        if Employee.objects.count() == 0:
             fake = Faker()
             for _ in range(5):
                 first_name = fake.first_name()
                 last_name = fake.last_name()
 
-                new_employee = employee(
+                new_employee = Employee(
                     first_name=first_name,
                     middle_name=fake.first_name() if fake.boolean() else None,
                     last_name=last_name,
@@ -103,13 +129,13 @@ class Command(BaseCommand):
     @staticmethod
     def populate_items():
         is_populated = False
-        item_model = apps.get_model('core', 'Item')
+        Item = apps.get_model('core', 'Item')
         user = get_user_model().objects.filter(id=1, is_superuser=True).first()
 
         if not user:
             return is_populated
 
-        if item_model.objects.count() == 0:
+        if Item.objects.count() == 0:
             fake = Faker()
             for _ in range(10):
                 name = fake.word().capitalize()
@@ -122,7 +148,7 @@ class Command(BaseCommand):
                 reorder_level = random.randint(10, 50)
                 warehouse_location = fake.street_address()
 
-                new_item = item_model(
+                new_item = Item(
                     name=name,
                     index=index,
                     description=fake.sentence(),

@@ -1,6 +1,5 @@
 from .base_serializer import BaseSerializer
 from ..models import Item
-from ..helpers.model_fields import ModelFields
 
 
 class ItemSerializer(BaseSerializer):

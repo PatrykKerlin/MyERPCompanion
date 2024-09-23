@@ -1,6 +1,6 @@
 from .base_view import BaseView
 from ..models import Employee
-from ..serializers.employee_serializer import *
+from ..serializers.employee_serializer import EmployeeSerializer
 
 
 class EmployeeView(BaseView):

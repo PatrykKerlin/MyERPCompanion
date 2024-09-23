@@ -1,6 +1,6 @@
 from .base_view import BaseView
 from ..models import Item
-from ..serializers.item_serializer import *
+from ..serializers.item_serializer import ItemSerializer
 
 
 class ItemView(BaseView):

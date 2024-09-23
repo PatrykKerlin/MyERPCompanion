@@ -1,6 +1,5 @@
 from .base_serializer import BaseSerializer
 from ..models import Employee
-from ..helpers.model_fields import ModelFields
 
 
 class EmployeeSerializer(BaseSerializer):

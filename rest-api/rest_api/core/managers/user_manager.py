@@ -8,7 +8,7 @@ class UserManager(BaseManager, BaseUserManager):
         new_user = self.model(**extra_fields)
         new_user.set_password(password)
 
-        new_user.save(using=self._db, user=user)
+        new_user.save(user=user)
 
         return new_user
 

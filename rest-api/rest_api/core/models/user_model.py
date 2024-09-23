@@ -1,17 +1,19 @@
-from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.db import models
 
-from ..managers.user_manager import UserManager
 from .base_model import BaseModel
 from .employee_model import Employee
+from ..managers.user_manager import UserManager
 
 
 class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     user_id = models.IntegerField()
-    employee = models.OneToOneField(Employee, null=True, on_delete=models.CASCADE, limit_choices_to={'is_active': True},
-                                    related_name='employee')
+
+    employee = models.ForeignKey(Employee, null=True, on_delete=models.SET_NULL,
+                                 limit_choices_to={'is_active': True}, related_name='employees')
+
     login = models.CharField(max_length=6, null=True, unique=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
