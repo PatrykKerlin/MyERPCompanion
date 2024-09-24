@@ -53,7 +53,7 @@ class Command(BaseCommand):
             pages = [Page(
                 name='user-login',
                 title="MyERPCompanion",
-                template='login.html',
+                template='user/login.html',
                 in_menu=False,
                 order=0
             )]
