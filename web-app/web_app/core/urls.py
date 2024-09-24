@@ -1,10 +1,12 @@
 from django.urls import path
+
+from .helpers.constants import PageNames
+from .views import *
+
 from .views.month import MonthView
-from .views.login_view import LoginView
-from .views.load_pages_view import LoadPagesView
 
 urlpatterns = [
-    path('', LoadPagesView.as_view(), name='load_pages'),
-    path('login/', LoginView.as_view(), name='user-login'),
+    path('', EntryPointView.as_view(), name=PageNames.ENTRY_POINT),
+    path('login/', LoginView.as_view(), name=PageNames.USER_LOGIN),
     path('<str:month>', MonthView.as_view(), name='month'),
 ]

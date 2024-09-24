@@ -8,8 +8,20 @@
     <link rel="stylesheet" href="{% static "css/styles.css" %}">
 </head>
 <body>
+
 {% include "./header.html" %}
-{% block page_body %}
-{% endblock %}
+
+<div class="content-wrapper">
+    <div class="side-menu">
+        {% include "./side_menu.html" %}
+    </div>
+    <div class="main-content">
+        {% block page_body %}
+        {% endblock %}
+    </div>
+</div>
+
+{% include "./footer.html" %}
+
 </body>
 </html>
