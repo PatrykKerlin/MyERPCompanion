@@ -1,0 +1,30 @@
+{% extends "template_base.html" %}
+
+{% block title_block %}
+    {{ page_title }}
+{% endblock %}
+
+{% block body_block %}
+
+    <div class="bg-body-tertiary rounded-4 d-flex align-items-center justify-content-center p-5">
+        <div class="text-center">
+            <h2>{{ body_title }}</h2>
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                <div class="mb-3 w-25">
+                    <label for="login" class="form-label">{{ login_form_title }}:</label>
+                    <input type="text" id="login" name="login" class="form-control" required>
+                </div>
+
+                <div class="mb-3 w-25">
+                    <label for="password" class="form-label">{{ password_form_title }}:</label>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+        </div>
+    </div>
+
+{% endblock %}

@@ -27,8 +27,8 @@ class Command(BaseCommand):
                    "Marketing Department", "Production Planning Department", "Human Resources (HR) Department"]
 
     def handle(self, *args, **options):
-        methods_to_run = [Command.populate_users, Command.populate_pages, Command.populate_employees,
-                          Command.populate_items]
+        methods_to_run = [Command.populate_users, Command.populate_pages, Command.populate_contents,
+                          Command.populate_employees, Command.populate_items]
 
         results = set()
         for method in methods_to_run:
@@ -50,16 +50,66 @@ class Command(BaseCommand):
             return is_populated
 
         if Page.objects.count() == 0:
-            pages = [Page(
-                name='user-login',
-                title="MyERPCompanion",
-                template='core/login.html',
-                in_menu=False,
-                order=0
-            )]
+            pages = [
+                Page(
+                    name='user-login',
+                    title="MyERPCompanion",
+                    template='core/login.html',
+                    in_menu=False,
+                    order=0
+                ),
+                Page(
+                    name='index',
+                    title="MyERPCompanion",
+                    template='core/index.html',
+                    in_menu=False,
+                    order=1
+                )
+            ]
 
             for page in pages:
                 page.save(user=user)
+
+            is_populated = True
+
+        return is_populated
+
+    @staticmethod
+    def populate_contents():
+        is_populated = False
+        Page = apps.get_model('core', 'Page')
+        Content = apps.get_model('core', 'Content')
+        user = get_user_model().objects.filter(id=1, is_superuser=True).first()
+
+        if not user:
+            return is_populated
+
+        if Content.objects.count() == 0:
+            contents = [
+                Content(
+                    page=Page.objects.get(name='user-login'),
+                    key='body_title',
+                    value='Login'
+                ),
+                Content(
+                    page=Page.objects.get(name='user-login'),
+                    key='login_form_title',
+                    value='Login'
+                ),
+                Content(
+                    page=Page.objects.get(name='user-login'),
+                    key='password_form_title',
+                    value='Password'
+                ),
+                Content(
+                    page=Page.objects.get(name='index'),
+                    key='body_title',
+                    value='Index'
+                )
+            ]
+
+            for content in contents:
+                content.save(user=user)
 
             is_populated = True
 

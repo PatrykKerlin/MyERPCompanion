@@ -1,0 +1,13 @@
+{% extends "template_base.html" %}
+
+{% block body_block %}
+    <div class="content-wrapper">
+        <div class="side-menu">
+            {% include "side_menu_base.html" %}
+        </div>
+        <div class="content-block">
+            {% block content_block %}
+            {% endblock %}
+        </div>
+    </div>
+{% endblock %}

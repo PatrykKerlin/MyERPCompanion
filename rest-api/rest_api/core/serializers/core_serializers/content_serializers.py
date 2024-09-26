@@ -7,4 +7,9 @@ class ContentSerializer(BaseSerializer):
         model = Content
 
     def _get_list_fields(self):
-        return ['page', 'name', 'lang']
+        return ['page', 'key']
+
+
+class ContentByPageSerializer(ContentSerializer):
+    def _get_list_fields(self):
+        return ['page', 'key', 'value']

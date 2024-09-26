@@ -6,4 +6,4 @@ from ...models import Content
 
 @admin.register(Content)
 class ContentAdmin(BaseAdmin):
-    list_display = ['page', 'name']
+    list_display = ['page', 'key']

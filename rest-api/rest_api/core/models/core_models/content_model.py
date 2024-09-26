@@ -12,8 +12,7 @@ class Content(BaseModel):
 
     page = models.ForeignKey(Page, on_delete=models.DO_NOTHING, limit_choices_to={'is_active': True},
                              related_name='pages')
-    name = models.CharField(max_length=50, unique=True)
-    lang = models.CharField(max_length=2, default='en')
+    key = models.CharField(max_length=50)
     value = models.TextField()
 
     def __str__(self):

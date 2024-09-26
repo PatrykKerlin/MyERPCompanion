@@ -5,13 +5,15 @@ class PageNames:
 
 
 class SessionContent:
-    PAGES_DATA = 'pages_data'
+    PAGES_DICT = 'pages_dict'
     TOKEN = 'token'
     CURRENT_USER = 'current_user'
+    CONTEXT_BY_PAGE = 'context_by_page'
 
 
 class ApiEndpoints:
-    TOKEN = '/core/token/'
-    CURRENT_USER = '/core/current-user/'
-    PAGE_PUBLIC = '/core/page-public/'
-    PAGE_PRIVATE = '/core/page-private/'
+    TOKEN = '/token/'
+    CURRENT_USER = '/current-user/'
+    PAGE_PUBLIC = '/page-public/'
+    PAGE_PRIVATE = '/page-private/'
+    CONTENT_BY_PAGE = '/content-public-by-page/'

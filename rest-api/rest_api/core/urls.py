@@ -7,8 +7,10 @@ core_views = {
     'user': UserView,
     'page-private': PagePrivateView,
     'page-public': PagePublicView,
-    'content-private': ContentPrivateView,
     'content-public': ContentPublicView,
+    'content-private': ContentPrivateView,
+    'image-public': ImagePublicView,
+    'image-private': ImagePrivateView,
 }
 
 business_views = {
@@ -17,16 +19,18 @@ business_views = {
 }
 
 urlpatterns = [
-    path('core/token/', CreateTokenView.as_view()),
-    path('core/current-user/', CurrentUserView.as_view()),
+    path('token/', CreateTokenView.as_view()),
+    path('current-user/', CurrentUserView.as_view()),
+    path('content-public-by-page/<int:id>/', ContentPublicByPageView.as_view({'get': 'list'})),
+    path('image-public-by-page/<int:id>/', ImagePublicByPageView.as_view({'get': 'list'})),
 ]
 
 for prefix, view in core_views.items():
     router = DefaultRouter()
     router.register(prefix, view)
-    urlpatterns.append(path('core/', include(router.urls)))
+    urlpatterns.append(path('', include(router.urls)))
 
 for prefix, view in business_views.items():
     router = DefaultRouter()
     router.register(prefix, view)
-    urlpatterns.append(path('business/', include(router.urls)))
+    urlpatterns.append(path('', include(router.urls)))
