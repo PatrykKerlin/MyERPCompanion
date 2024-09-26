@@ -133,7 +133,7 @@ class Command(BaseCommand):
     @staticmethod
     def populate_employees():
         is_populated = False
-        Employee = apps.get_model('core', 'Employee')
+        Employee = apps.get_model('business', 'Employee')
         user = get_user_model().objects.filter(id=1, is_superuser=True).first()
 
         if not user:
@@ -179,7 +179,7 @@ class Command(BaseCommand):
     @staticmethod
     def populate_items():
         is_populated = False
-        Item = apps.get_model('core', 'Item')
+        Item = apps.get_model('business', 'Item')
         user = get_user_model().objects.filter(id=1, is_superuser=True).first()
 
         if not user:
