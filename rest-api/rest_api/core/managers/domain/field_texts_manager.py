@@ -1,5 +1,5 @@
 from ..base.base_manager import BaseManager
 
 
-class ImageManager(BaseManager):
+class FieldTextsManager(BaseManager):
     pass

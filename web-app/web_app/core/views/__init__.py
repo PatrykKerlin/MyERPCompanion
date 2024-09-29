@@ -1,3 +1,3 @@
-from .core_views.entry_point_view import EntryPointView
-from .core_views.login_view import LoginView
-from .core_views.index_view import IndexView
+from .domain.entry_point_view import EntryPointView
+from .domain.login_view import LoginView
+from .domain.index_view import IndexView

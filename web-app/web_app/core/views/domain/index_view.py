@@ -1,7 +1,7 @@
 from django.views import View
 from django.shortcuts import render
 
-from ..abstract_views.base_view import BaseView
+from ..base.base_view import BaseView
 from ...helpers.constants import PageNames, SessionContent
 
 

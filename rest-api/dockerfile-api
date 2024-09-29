@@ -19,6 +19,10 @@ RUN rm -rf /tmp
 
 RUN useradd -m -d /rest_api -s /bin/bash rest-api
 
+RUN mkdir -p /rest_api
+RUN chown -R rest-api:rest-api /rest_api
+RUN chmod -R 755 /rest_api
+
 ENV PATH="/pyenv/bin:$PATH"
 
 USER rest-api

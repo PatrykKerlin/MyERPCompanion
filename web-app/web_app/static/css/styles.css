@@ -1,0 +1,6 @@
+.bg-gradient-image {
+    background: linear-gradient(to right, rgba(var(--bs-tertiary-bg-rgb), 1) 33%, rgba(var(--bs-tertiary-bg-rgb), 0) 66%), var(--login-bg-img);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}

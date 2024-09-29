@@ -16,8 +16,7 @@ views = {
 urlpatterns = [
     path('token/', CreateTokenView.as_view()),
     path('current-user/', CurrentUserView.as_view()),
-    path('content-public-by-page/<int:id>/', ContentPublicByPageView.as_view({'get': 'list'})),
-    path('image-public-by-page/<int:id>/', ImagePublicByPageView.as_view({'get': 'list'})),
+    # path('content-public-by-page/<int:id>/', ContentPublicByPageView.as_view({'get': 'list'})),
 ]
 
 for prefix, view in views.items():

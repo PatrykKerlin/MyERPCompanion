@@ -6,23 +6,29 @@
 
 {% block body_block %}
 
-    <div class="bg-body-tertiary rounded-4 d-flex align-items-center justify-content-center p-5">
-        <div class="text-center">
-            <h2>{{ body_title }}</h2>
-            <form method="post" class="needs-validation" novalidate>
+    <style>
+        .bg-gradient-image {
+            --login-bg-img: url('http://127.0.0.1:8000/media/images/login-bg-img.jpg');
+        }
+    </style>
+
+    <div class="bg-gradient-image rounded-4 d-flex align-items-center justify-content-start w-50">
+        <div class="text-start m-5 w-100">
+            <h2 class="mb-5">{{ body_title }}</h2>
+            <form method="post" class="needs-validation">
                 {% csrf_token %}
 
-                <div class="mb-3 w-25">
+                <div class="mb-3">
                     <label for="login" class="form-label">{{ login_form_title }}:</label>
-                    <input type="text" id="login" name="login" class="form-control" required>
+                    <input type="text" id="login" name="login" class="form-control w-25" required>
                 </div>
 
-                <div class="mb-3 w-25">
+                <div class="mb-3">
                     <label for="password" class="form-label">{{ password_form_title }}:</label>
-                    <input type="password" id="password" name="password" class="form-control" required>
+                    <input type="password" id="password" name="password" class="form-control w-25" required>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Login</button>
+                <button type="submit" class="btn btn-primary mt-4">Login</button>
             </form>
         </div>
     </div>

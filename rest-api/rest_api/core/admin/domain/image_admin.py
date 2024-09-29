@@ -6,4 +6,4 @@ from ...models import Image
 
 @admin.register(Image)
 class ImageAdmin(BaseAdmin):
-    list_display = ['key']
+    list_display = ['name', 'value']

@@ -3,7 +3,7 @@ from django.views import View
 from django.conf import settings
 from django.http import Http404
 
-from ..abstract_views.base_view import BaseView
+from ..base.base_view import BaseView
 from ...helpers.constants import ApiEndpoints, SessionContent, PageNames
 from ...helpers.api_client import ApiClient
 

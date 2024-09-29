@@ -7,9 +7,4 @@ class ImageSerializer(BaseSerializer):
         model = Image
 
     def _get_list_fields(self):
-        return ['page', 'key']
-
-
-class ImageByPageSerializer(ImageSerializer):
-    def _get_list_fields(self):
-        return ['page', 'key', 'value']
+        return ['key']

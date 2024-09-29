@@ -1,10 +1,10 @@
 from ..base.base_serializer import BaseSerializer
-from ...models import Content
+from ...models import Text
 
 
 class ContentSerializer(BaseSerializer):
     class Meta:
-        model = Content
+        model = Text
 
     def _get_list_fields(self):
         return ['page', 'key']

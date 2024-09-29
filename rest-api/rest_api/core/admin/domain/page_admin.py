@@ -6,4 +6,4 @@ from ...models import Page
 
 @admin.register(Page)
 class PageAdmin(BaseAdmin):
-    list_display = ['title']
+    list_display = ['name', 'template']

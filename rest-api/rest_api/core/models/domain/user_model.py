@@ -3,11 +3,16 @@ from django.db import models
 
 from business.models.domain.employee_model import Employee
 from ..base.base_model import BaseModel
+from ..base.base_languages_model import BaseLanguagesModel
 from ...managers.domain.user_manager import UserManager
 
 
-class User(BaseModel, AbstractBaseUser, PermissionsMixin):
+class User(BaseModel, BaseLanguagesModel, AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
+
+    class Themes(models.TextChoices):
+        LIGHT = 'light', 'Light'
+        DARK = 'dark', 'dark'
 
     user_id = models.IntegerField()
 
@@ -17,6 +22,9 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     login = models.CharField(max_length=6, null=True, unique=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+
+    theme = models.CharField(max_length=5, choices=Themes.choices, null=True)
+    language = models.CharField(max_length=2, choices=BaseLanguagesModel.Languages.choices, null=True)
 
     USERNAME_FIELD = 'login'
     REQUIRED_FIELDS = ['password']

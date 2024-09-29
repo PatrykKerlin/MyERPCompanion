@@ -1,10 +1,10 @@
 from ..base.base_view import BaseView
-from ...models import Content
+from ...models import Text
 from ...serializers.domain.content_serializers import ContentSerializer, ContentByPageSerializer
 
 
 class ContentPrivateView(BaseView):
-    queryset = Content.objects.all()
+    queryset = Text.objects.all()
     serializer_class = ContentSerializer
     http_method_names = ['post', 'put', 'patch', 'delete']
 
@@ -21,5 +21,5 @@ class ContentPublicByPageView(ContentPublicView):
     def get_queryset(self):
         page_id = self.kwargs.get('id', None)
         if not page_id:
-            return Content.objects.none()
-        return Content.objects.by_page(page_id)
+            return Text.objects.none()
+        return Text.objects.by_page(page_id)

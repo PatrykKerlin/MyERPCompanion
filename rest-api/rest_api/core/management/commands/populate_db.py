@@ -1,11 +1,15 @@
-from django.core.management.base import BaseCommand
-from django.contrib.auth import get_user_model
-from django.apps import apps
-from faker import Faker
-from decimal import Decimal
 import random
 import re
 import string
+import os
+
+from django.core.management.base import BaseCommand
+from django.contrib.auth import get_user_model
+from django.apps import apps
+from django.conf import settings
+from django.core.files import File
+from faker import Faker
+from decimal import Decimal
 
 
 class Command(BaseCommand):
@@ -26,9 +30,36 @@ class Command(BaseCommand):
                    "Customer Service Department", "Quality Control Department", "Shipping Department",
                    "Marketing Department", "Production Planning Department", "Human Resources (HR) Department"]
 
+    pages = [
+        {'name': 'login', 'template': 'core/login.html', 'in_menu': False, 'order': 0},
+        {'name': 'index', 'template': 'core/index.html', 'in_menu': False, 'order': 0},
+    ]
+
+    fields = {
+        'title': {'en': 'MyERPCompanion', 'pl': 'MójAsystentERP'},
+        'login': {'en': 'Login'},
+        'password': {'en': 'Password', 'pl': 'Hasło'},
+        'index': {'en': 'Index'},
+    }
+
+    page_fields = {
+        'login': ['title', 'login', 'password'],
+        'index': ['title', 'index']
+    }
+
+    images = [
+        {'name': 'login-bg-img', 'value': 'login-bg-img.jpg'}
+    ]
+
+    page_images = {
+        'login': ['login-bg-img']
+    }
+
     def handle(self, *args, **options):
-        methods_to_run = [Command.populate_users, Command.populate_pages, Command.populate_contents,
-                          Command.populate_employees, Command.populate_items]
+        methods_to_run = [Command.populate_users, Command.populate_pages, Command.populate_fields,
+                          Command.populate_texts, Command.populate_page_fields, Command.populate_field_texts,
+                          Command.populate_images, Command.populate_page_images, Command.populate_employees,
+                          Command.populate_items]
 
         results = set()
         for method in methods_to_run:
@@ -50,66 +81,133 @@ class Command(BaseCommand):
             return is_populated
 
         if Page.objects.count() == 0:
-            pages = [
-                Page(
-                    name='user-login',
-                    title="MyERPCompanion",
-                    template='core/login.html',
-                    in_menu=False,
-                    order=0
-                ),
-                Page(
-                    name='index',
-                    title="MyERPCompanion",
-                    template='core/index.html',
-                    in_menu=False,
-                    order=1
-                )
-            ]
-
-            for page in pages:
-                page.save(user=user)
+            for page_attrs in Command.pages:
+                new_page = Page(**page_attrs)
+                new_page.save(user=user)
 
             is_populated = True
 
         return is_populated
 
     @staticmethod
-    def populate_contents():
+    def populate_fields():
         is_populated = False
-        Page = apps.get_model('core', 'Page')
-        Content = apps.get_model('core', 'Content')
+        Field = apps.get_model('core', 'Field')
         user = get_user_model().objects.filter(id=1, is_superuser=True).first()
 
         if not user:
             return is_populated
 
-        if Content.objects.count() == 0:
-            contents = [
-                Content(
-                    page=Page.objects.get(name='user-login'),
-                    key='body_title',
-                    value='Login'
-                ),
-                Content(
-                    page=Page.objects.get(name='user-login'),
-                    key='login_form_title',
-                    value='Login'
-                ),
-                Content(
-                    page=Page.objects.get(name='user-login'),
-                    key='password_form_title',
-                    value='Password'
-                ),
-                Content(
-                    page=Page.objects.get(name='index'),
-                    key='body_title',
-                    value='Index'
-                )
-            ]
+        if Field.objects.count() == 0:
+            for field_name in Command.fields.keys():
+                new_field = Field(name=field_name)
+                new_field.save(user=user)
 
-            for content in contents:
-                content.save(user=user)
+            is_populated = True
+
+        return is_populated
+
+    @staticmethod
+    def populate_texts():
+        is_populated = False
+        Text = apps.get_model('core', 'Text')
+        user = get_user_model().objects.filter(id=1, is_superuser=True).first()
+
+        if not user:
+            return is_populated
+
+        if Text.objects.count() == 0:
+            for texts in Command.fields.values():
+                for language, value in texts.items():
+                    new_text = Text(language=language, value=value)
+                    new_text.save(user=user)
+
+            is_populated = True
+
+        return is_populated
+
+    @staticmethod
+    def populate_page_fields():
+        is_populated = False
+        PageFields = apps.get_model('core', 'PageFields')
+        Field = apps.get_model('core', 'Field')
+        Page = apps.get_model('core', 'Page')
+        user = get_user_model().objects.filter(id=1, is_superuser=True).first()
+
+        if not user:
+            return is_populated
+
+        if PageFields.objects.count() == 0:
+            for page_name, field_names in Command.page_fields.items():
+                page = Page.objects.get(name=page_name)
+                for field_name in field_names:
+                    field = Field.objects.get(name=field_name)
+                    new_page_field = PageFields(page=page, field=field)
+                    new_page_field.save(user=user)
+
+            is_populated = True
+
+        return is_populated
+
+    @staticmethod
+    def populate_field_texts():
+        is_populated = False
+        FieldTexts = apps.get_model('core', 'FieldTexts')
+        Field = apps.get_model('core', 'Field')
+        Text = apps.get_model('core', 'Text')
+        user = get_user_model().objects.filter(id=1, is_superuser=True).first()
+
+        if not user:
+            return is_populated
+
+        if FieldTexts.objects.count() == 0:
+            for field_name, texts in Command.fields.items():
+                field = Field.objects.get(name=field_name)
+                for text_value in texts.values():
+                    text = Text.objects.get(value=text_value)
+                    new_field_text = FieldTexts(field=field, text=text)
+                    new_field_text.save(user=user)
+
+            is_populated = True
+
+        return is_populated
+
+    @staticmethod
+    def populate_images():
+        is_populated = False
+        Image = apps.get_model('core', 'Image')
+        user = get_user_model().objects.filter(id=1, is_superuser=True).first()
+
+        if not user:
+            return is_populated
+
+        if Image.objects.count() == 0:
+            for image_attrs in Command.images:
+                new_image = Image(**image_attrs)
+                new_image.save(user=user)
+
+            is_populated = True
+
+        return is_populated
+
+    @staticmethod
+    def populate_page_images():
+        is_populated = False
+        PageImages = apps.get_model('core', 'PageImages')
+        Page = apps.get_model('core', 'Page')
+        Image = apps.get_model('core', 'Image')
+        user = get_user_model().objects.filter(id=1, is_superuser=True).first()
+
+        if not user:
+            return is_populated
+
+        if PageImages.objects.count() == 0:
+            for page_name, images in Command.page_images.items():
+                page = Page.objects.get(name=page_name)
+                for image_name in images:
+                    image = Image.objects.get(name=image_name)
+                    new_page_image = PageImages(page=page, image=image)
+                    new_page_image.save(user=user)
 
             is_populated = True
 
