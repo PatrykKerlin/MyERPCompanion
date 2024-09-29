@@ -1,5 +1,7 @@
 from .domain.token_view import CreateTokenView
 from .domain.user_views import UserView, CurrentUserView
-from .domain.page_views import PagePublicView, PagePrivateView
-from .domain.content_views import ContentPublicView, ContentPrivateView, ContentPublicByPageView
-from .domain.image_views import ImagePublicView, ImagePrivateView
+from .domain.page_view import PageView
+from .domain.field_view import FieldView
+from .domain.text_view import TextView
+from .domain.image_view import ImageView
+from .domain.page_fields_view import PageFieldsView

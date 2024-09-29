@@ -1,10 +1,10 @@
 from ..base.base_serializer import BaseSerializer
-from ...models import Page
+from ...models import Field
 
 
-class PageSerializer(BaseSerializer):
+class FieldSerializer(BaseSerializer):
     class Meta:
-        model = Page
+        model = Field
 
     def _get_list_fields(self):
         return ['name']

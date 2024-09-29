@@ -7,4 +7,4 @@ class ImageSerializer(BaseSerializer):
         model = Image
 
     def _get_list_fields(self):
-        return ['key']
+        return ['name']

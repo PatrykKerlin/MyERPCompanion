@@ -5,12 +5,11 @@ from .views import *
 
 views = {
     'user': UserView,
-    'page-private': PagePrivateView,
-    'page-public': PagePublicView,
-    'content-public': ContentPublicView,
-    'content-private': ContentPrivateView,
-    'image-public': ImagePublicView,
-    'image-private': ImagePrivateView,
+    'field': FieldView,
+    'text': TextView,
+    'page': PageView,
+    'image': ImageView,
+    'page-fields': PageFieldsView,
 }
 
 urlpatterns = [
