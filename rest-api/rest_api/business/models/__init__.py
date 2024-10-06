@@ -1,2 +1,2 @@
-from .domain.employee_model import Employee
-from .domain.item_model import Item
+from .employee_model import Employee
+from .item_model import Item

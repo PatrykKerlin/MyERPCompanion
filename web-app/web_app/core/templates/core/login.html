@@ -1,35 +1,36 @@
 {% extends "template_base.html" %}
 
-{% block title_block %}
-    {{ page_title }}
-{% endblock %}
+{% block title_block %}{{ fields.title.value }}{% endblock %}
+
+{% block theme_block %}{{ theme }}{% endblock %}
 
 {% block body_block %}
-
     <style>
         .bg-gradient-image {
-            --login-bg-img: url('http://127.0.0.1:8000/media/images/login-bg-img.jpg');
+            --login-bg-img: url('{{ images.login_bg_img.value }}');
         }
     </style>
 
-    <div class="bg-gradient-image rounded-4 d-flex align-items-center justify-content-start w-50">
-        <div class="text-start m-5 w-100">
-            <h2 class="mb-5">{{ body_title }}</h2>
-            <form method="post" class="needs-validation">
-                {% csrf_token %}
+    <div class="flex-grow-1 d-flex align-items-center justify-content-center">
+        <div class="bg-gradient-image rounded-4 d-flex align-items-center justify-content-start w-50 h-50 p-4">
+            <div class="text-start w-50">
+                <h2 class="mb-5">{{ fields.login.value }}</h2>
+                <form method="post" class="needs-validation">
+                    {% csrf_token %}
 
-                <div class="mb-3">
-                    <label for="login" class="form-label">{{ login_form_title }}:</label>
-                    <input type="text" id="login" name="login" class="form-control w-25" required>
-                </div>
+                    <div class="mb-3">
+                        <label for="login" class="form-label">{{ fields.login.value }}:</label>
+                        <input type="text" id="login" name="login" class="form-control w-50" required>
+                    </div>
 
-                <div class="mb-3">
-                    <label for="password" class="form-label">{{ password_form_title }}:</label>
-                    <input type="password" id="password" name="password" class="form-control w-25" required>
-                </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">{{ fields.password.value }}:</label>
+                        <input type="password" id="password" name="password" class="form-control w-50" required>
+                    </div>
 
-                <button type="submit" class="btn btn-primary mt-4">Login</button>
-            </form>
+                    <button type="submit" class="btn btn-primary mt-4">Login</button>
+                </form>
+            </div>
         </div>
     </div>
 

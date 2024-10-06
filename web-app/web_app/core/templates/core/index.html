@@ -1,22 +1,18 @@
 {% extends "index_base.html" %}
 
-{% block title_block %}
-    {{ page_title }}
-{% endblock %}
+{% block title_block %}{{ fields.title.value }}{% endblock %}
+
+{% block theme_block %}{{ theme }}{% endblock %}
 
 {% block content_block %}
 
-    {% if error %}
-        <p style="color: red">{{ error }}</p>
-    {% endif %}
-
     {% if token %}
-        <p style="color: green">{{ token }}</p>
+        <p>{{ token }}</p>
     {% endif %}
 
     {% if user %}
         {% for key, val in user.items %}
-            <p style="color: blue">{{ key }}: {{ val }}</p>
+            <p>{{ key }}: {{ val }}</p>
         {% endfor %}
     {% endif %}
 

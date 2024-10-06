@@ -1,2 +1,2 @@
-from .domain.employee_admin import EmployeeAdmin
-from .domain.item_admin import ItemAdmin
+from .employee_admin import EmployeeAdmin
+from .item_admin import ItemAdmin

@@ -3,6 +3,8 @@ services:
     build:
       context: ./web-app
       dockerfile: dockerfile-web
+    networks:
+      - project_net
     ports:
       - "9000:9000"
     volumes:
@@ -10,8 +12,6 @@ services:
     command:
       sh -c "python manage.py wait_for_redis &&
       python manage.py runserver 0.0.0.0:9000"
-    environment:
-      - REDIS_PASSWORD=changeme
     depends_on:
       - redis
       - rest-api
@@ -20,6 +20,8 @@ services:
     build:
       context: ./rest-api
       dockerfile: dockerfile-api
+    networks:
+      - project_net
     ports:
       - "8000:8000"
     volumes:
@@ -35,6 +37,9 @@ services:
       - POSTGRES_NAME=MyERPCompanion
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=changeme
+      - REST_API_PORT=8000
+      - REST_API_PROTOCOL=http
+      - REST_API_HOSTS=127.0.0.1,localhost,rest-api
     depends_on:
       - postgres
 
@@ -42,6 +47,8 @@ services:
     build:
       context: ./rest-api
       dockerfile: dockerfile-db
+    networks:
+      - project_net
     ports:
       - "5432:5432"
     volumes:
@@ -55,11 +62,14 @@ services:
     build:
       context: ./web-app
       dockerfile: dockerfile-cache
+    networks:
+      - project_net
     ports:
       - "6379:6379"
-    volumes:
-      - redis-data:/data
 
 volumes:
   postgres-data:
-  redis-data:
+
+networks:
+  project_net:
+    driver: bridge

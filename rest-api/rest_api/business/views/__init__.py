@@ -1,2 +1,2 @@
-from .domain.employee_view import EmployeeView
-from .domain.item_view import ItemView
+from .employee_view import EmployeeView
+from .item_view import ItemView

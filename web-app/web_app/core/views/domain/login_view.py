@@ -10,10 +10,10 @@ from ...helpers.api_client import ApiClient
 
 class LoginView(BaseView):
     def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, page_name=PageNames.USER_LOGIN, current_user=False, *args, **kwargs)
+        return super().dispatch(request, page_name=PageNames.LOGIN, *args, **kwargs)
 
     def get(self, request):
-        return render(request, self.page['template'], self.context)
+        return render(request, self.context['template'], self.context)
 
     def post(self, request):
         login = request.POST.get('login')
@@ -29,8 +29,9 @@ class LoginView(BaseView):
         if token_response.status_code != 200:
             raise Http404()
 
-        token = token_response.json().get('token')
+        token = token_response.json().get('token', '')
         request.session[SessionContent.TOKEN] = token
+        request.session.modified = True
 
         user_api_url = settings.API_URL + ApiEndpoints.CURRENT_USER
         user_response = ApiClient.get(user_api_url, token)
@@ -40,5 +41,6 @@ class LoginView(BaseView):
 
         user = user_response.json()
         request.session[SessionContent.CURRENT_USER] = user
+        request.session.modified = True
 
         return redirect(PageNames.INDEX)

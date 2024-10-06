@@ -47,7 +47,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'core.middlewares.check_session_middleware.CheckSessionMiddleware',
 ]
 
 ROOT_URLCONF = 'web_app.urls'

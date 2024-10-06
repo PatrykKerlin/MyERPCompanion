@@ -1,19 +1,20 @@
 class PageNames:
-    ENTRY_POINT = 'entry-point'
-    USER_LOGIN = 'user-login'
+    LOGIN = 'login'
     INDEX = 'index'
 
 
 class SessionContent:
-    PAGES_DICT = 'pages_dict'
+    PAGES = 'pages'
     TOKEN = 'token'
     CURRENT_USER = 'current_user'
-    CONTEXT_BY_PAGE = 'context_by_page'
 
 
 class ApiEndpoints:
     TOKEN = '/token/'
     CURRENT_USER = '/current-user/'
-    PAGE_PUBLIC = '/page-public/'
-    PAGE_PRIVATE = '/page-private/'
-    CONTENT_BY_PAGE = '/content-public-by-page/'
+    PAGE_CONTENT = '/page-content/'
+
+
+class Defaults:
+    LANGUAGE = 'en'
+    THEME = 'dark'

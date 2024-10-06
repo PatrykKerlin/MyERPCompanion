@@ -1,13 +1,19 @@
 {% extends "template_base.html" %}
 
 {% block body_block %}
-    <div class="content-wrapper">
-        <div class="side-menu">
+
+    <div class="container-fluid d-flex flex-grow-1 m-0 p-0">
+
+        <div class="bg-body p-5">
             {% include "side_menu_base.html" %}
         </div>
-        <div class="content-block">
+
+        <div class="bg-body-tertiary m-5 container-fluid d-flex flex-grow-1 flex-column">
+            {% include "tabs_base.html" %}
+
             {% block content_block %}
             {% endblock %}
         </div>
     </div>
+
 {% endblock %}

@@ -15,4 +15,4 @@ class IndexView(BaseView):
 
         self.context.update({'token': token, 'user': user})
 
-        return render(request, self.page['template'], self.context)
+        return render(request, self.context['template'], self.context)

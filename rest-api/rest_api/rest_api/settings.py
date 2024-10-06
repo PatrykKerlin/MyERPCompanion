@@ -27,7 +27,11 @@ SECRET_KEY = 'django-insecure-y84l!z(zi8r4w4@6+21t@q^2fq*#@=mae^%9ks)#%*)zs8^$ig
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['rest-api', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = os.environ.get('REST_API_HOSTS', '127.0.0.1').split(',')
+
+PORT = os.environ.get('REST_API_PORT', '8000')
+
+PROTOCOL = os.environ.get('REST_API_PROTOCOL', 'http')
 
 # Application definition
 
@@ -41,6 +45,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'drf_spectacular',
+    'base',
+    'meta',
     'core',
     'business'
 ]
@@ -121,6 +127,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 MEDIA_URL = '/media/'
+
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 STATIC_URL = 'static/'

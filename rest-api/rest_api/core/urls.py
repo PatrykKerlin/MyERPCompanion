@@ -10,15 +10,17 @@ views = {
     'page': PageView,
     'image': ImageView,
     'page-fields': PageFieldsView,
+    'field-texts': FieldTextsView,
+    'page-images': PageImagesView,
 }
 
 urlpatterns = [
     path('token/', CreateTokenView.as_view()),
     path('current-user/', CurrentUserView.as_view()),
-    # path('content-public-by-page/<int:id>/', ContentPublicByPageView.as_view({'get': 'list'})),
+    path('page-content/<str:language>/<str:page_name>/', PageContentView.as_view({'get': 'retrieve'})),
 ]
 
-for prefix, view in views.items():
-    router = DefaultRouter()
-    router.register(prefix, view)
-    urlpatterns.append(path('', include(router.urls)))
+# for prefix, view in views.items():
+#     router = DefaultRouter()
+#     router.register(prefix, view)
+#     urlpatterns.append(path('', include(router.urls)))

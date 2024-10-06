@@ -6,3 +6,5 @@ RUN apt-get upgrade -y
 RUN rm -rf /var/lib/apt/lists/*
 
 EXPOSE 6379
+
+CMD ["redis-server", "--save", "", "--appendonly", "no"]

@@ -48,11 +48,11 @@ class Command(BaseCommand):
     }
 
     images = [
-        {'name': 'login-bg-img', 'value': 'login-bg-img.jpg'}
+        {'name': 'login_bg_img', 'image': 'login-bg-img.jpg'}
     ]
 
     page_images = {
-        'login': ['login-bg-img']
+        'login': ['login_bg_img']
     }
 
     def handle(self, *args, **options):
