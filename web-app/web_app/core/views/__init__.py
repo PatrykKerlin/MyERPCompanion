@@ -1,2 +1,2 @@
-from .domain.login_view import LoginView
-from .domain.index_view import IndexView
+from .login_view import LoginView
+from .index_view import IndexView

@@ -1,8 +1,8 @@
 from base.views.base_view import BaseView
-from ..models import Field
-from ..serializers.field_serializer import FieldSerializer
+from ..models import Label
+from ..serializers.label_serializer import LabelSerializer
 
 
 class FieldView(BaseView):
-    queryset = Field.objects.all()
-    serializer_class = FieldSerializer
+    queryset = Label.objects.all()
+    serializer_class = LabelSerializer

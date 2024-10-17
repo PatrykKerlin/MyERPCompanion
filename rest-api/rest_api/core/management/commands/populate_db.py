@@ -30,21 +30,45 @@ class Command(BaseCommand):
                    "Customer Service Department", "Quality Control Department", "Shipping Department",
                    "Marketing Department", "Production Planning Department", "Human Resources (HR) Department"]
 
-    pages = [
-        {'name': 'login', 'template': 'core/login.html', 'in_menu': False, 'order': 0},
-        {'name': 'index', 'template': 'core/index.html', 'in_menu': False, 'order': 0},
+    labels = [
+        {'name': 'my_erp_companion'},
+        {'name': 'login'},
+        {'name': 'password'},
+        {'name': 'index'},
+        {'name': 'human_resources'},
+        {'name': 'inventory'},
+        {'name': 'new_employee'},
+        {'name': 'new_item'},
     ]
 
-    fields = {
-        'title': {'en': 'MyERPCompanion', 'pl': 'MójAsystentERP'},
+    translations = {
+        'my_erp_companion': {'en': 'MyERPCompanion', 'pl': 'MójAsystentERP'},
         'login': {'en': 'Login'},
         'password': {'en': 'Password', 'pl': 'Hasło'},
         'index': {'en': 'Index'},
+        'human_resources': {'en': 'Human Resources', 'pl': 'Kadry'},
+        'inventory': {'en': 'Inventory', 'pl': 'Magazyn'},
+        'new_employee': {'en': 'New employee', 'pl': 'Nowy pracownik'},
+        'new_item': {'en': 'New item', 'pl': 'Nowy detal'},
     }
 
-    page_fields = {
-        'login': ['title', 'login', 'password'],
-        'index': ['title', 'index']
+    modules = [
+        {'name': 'human_resources'},
+        {'name': 'inventory'},
+    ]
+
+    pages = [
+        {'name': 'login', 'template': 'core/login.html'},
+        {'name': 'index', 'template': 'core/index.html'},
+        {'name': 'new_employee', 'module': 'human_resources', 'template': 'business/add_employee.html', 'order': 1},
+        {'name': 'new_item', 'module': 'inventory', 'template': 'business/add_item.html', 'order': 1},
+    ]
+
+    page_labels = {
+        'login': ['my_erp_companion', 'login', 'password'],
+        'index': ['my_erp_companion', 'index'],
+        'new_employee': ['my_erp_companion', 'human_resources', 'new_employee'],
+        'new_item': ['my_erp_companion', 'inventory', 'new_item'],
     }
 
     images = [
@@ -56,10 +80,10 @@ class Command(BaseCommand):
     }
 
     def handle(self, *args, **options):
-        methods_to_run = [Command.populate_users, Command.populate_pages, Command.populate_fields,
-                          Command.populate_texts, Command.populate_page_fields, Command.populate_field_texts,
-                          Command.populate_images, Command.populate_page_images, Command.populate_employees,
-                          Command.populate_items]
+        methods_to_run = [Command.populate_users, Command.populate_labels, Command.populate_translations,
+                          Command.populate_modules, Command.populate_pages, Command.populate_page_labels,
+                          Command.populate_label_translations, Command.populate_images, Command.populate_page_images,
+                          Command.populate_employees, Command.populate_items]
 
         results = set()
         for method in methods_to_run:
@@ -72,17 +96,53 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("No initial data was populated."))
 
     @staticmethod
+    def populate_modules():
+        is_populated = False
+        Module = apps.get_model('core', 'Module')
+        Label = apps.get_model('core', 'Label')
+        user = get_user_model().objects.filter(id=1, is_superuser=True).first()
+
+        if not user:
+            return is_populated
+
+        if Module.objects.count() == 0:
+            for module in Command.modules:
+                new_module = Module(
+                    name=module['name'],
+                    label=Label.objects.get(name=module['name']),
+                )
+
+                new_module.save(user=user)
+
+            is_populated = True
+
+        return is_populated
+
+    @staticmethod
     def populate_pages():
         is_populated = False
         Page = apps.get_model('core', 'Page')
+        Module = apps.get_model('core', 'Module')
+        Label = apps.get_model('core', 'Label')
         user = get_user_model().objects.filter(id=1, is_superuser=True).first()
 
         if not user:
             return is_populated
 
         if Page.objects.count() == 0:
-            for page_attrs in Command.pages:
-                new_page = Page(**page_attrs)
+            for page in Command.pages:
+                new_page = Page(
+                    name=page['name'],
+                    template=page['template'],
+                    label=Label.objects.get(name=page['name']),
+                )
+
+                if 'module' in page.keys():
+                    new_page.module = Module.objects.get(name=page['module'])
+
+                if 'order' in page.keys():
+                    new_page.order = page['order']
+
                 new_page.save(user=user)
 
             is_populated = True
@@ -90,83 +150,83 @@ class Command(BaseCommand):
         return is_populated
 
     @staticmethod
-    def populate_fields():
+    def populate_labels():
         is_populated = False
-        Field = apps.get_model('core', 'Field')
+        Label = apps.get_model('core', 'Label')
         user = get_user_model().objects.filter(id=1, is_superuser=True).first()
 
         if not user:
             return is_populated
 
-        if Field.objects.count() == 0:
-            for field_name in Command.fields.keys():
-                new_field = Field(name=field_name)
-                new_field.save(user=user)
+        if Label.objects.count() == 0:
+            for label_attrs in Command.labels:
+                new_label = Label(**label_attrs)
+                new_label.save(user=user)
 
             is_populated = True
 
         return is_populated
 
     @staticmethod
-    def populate_texts():
+    def populate_translations():
         is_populated = False
-        Text = apps.get_model('core', 'Text')
+        Translation = apps.get_model('core', 'Translation')
         user = get_user_model().objects.filter(id=1, is_superuser=True).first()
 
         if not user:
             return is_populated
 
-        if Text.objects.count() == 0:
-            for texts in Command.fields.values():
-                for language, value in texts.items():
-                    new_text = Text(language=language, value=value)
-                    new_text.save(user=user)
+        if Translation.objects.count() == 0:
+            for translations in Command.translations.values():
+                for language, value in translations.items():
+                    new_translation = Translation(language=language, value=value)
+                    new_translation.save(user=user)
 
             is_populated = True
 
         return is_populated
 
     @staticmethod
-    def populate_page_fields():
+    def populate_page_labels():
         is_populated = False
-        PageFields = apps.get_model('core', 'PageFields')
-        Field = apps.get_model('core', 'Field')
+        PageLabels = apps.get_model('core', 'PageLabels')
+        Label = apps.get_model('core', 'Label')
         Page = apps.get_model('core', 'Page')
         user = get_user_model().objects.filter(id=1, is_superuser=True).first()
 
         if not user:
             return is_populated
 
-        if PageFields.objects.count() == 0:
-            for page_name, field_names in Command.page_fields.items():
+        if PageLabels.objects.count() == 0:
+            for page_name, label_names in Command.page_labels.items():
                 page = Page.objects.get(name=page_name)
-                for field_name in field_names:
-                    field = Field.objects.get(name=field_name)
-                    new_page_field = PageFields(page=page, field=field)
-                    new_page_field.save(user=user)
+                for label_name in label_names:
+                    label = Label.objects.get(name=label_name)
+                    new_page_label = PageLabels(page=page, label=label)
+                    new_page_label.save(user=user)
 
             is_populated = True
 
         return is_populated
 
     @staticmethod
-    def populate_field_texts():
+    def populate_label_translations():
         is_populated = False
-        FieldTexts = apps.get_model('core', 'FieldTexts')
-        Field = apps.get_model('core', 'Field')
-        Text = apps.get_model('core', 'Text')
+        LabelTranslations = apps.get_model('core', 'LabelTranslations')
+        Label = apps.get_model('core', 'Label')
+        Translation = apps.get_model('core', 'Translation')
         user = get_user_model().objects.filter(id=1, is_superuser=True).first()
 
         if not user:
             return is_populated
 
-        if FieldTexts.objects.count() == 0:
-            for field_name, texts in Command.fields.items():
-                field = Field.objects.get(name=field_name)
-                for text_value in texts.values():
-                    text = Text.objects.get(value=text_value)
-                    new_field_text = FieldTexts(field=field, text=text)
-                    new_field_text.save(user=user)
+        if LabelTranslations.objects.count() == 0:
+            for label_name, translations in Command.translations.items():
+                label = Label.objects.get(name=label_name)
+                for translation_value in translations.values():
+                    translation = Translation.objects.get(value=translation_value)
+                    new_label_translation = LabelTranslations(label=label, translation=translation)
+                    new_label_translation.save(user=user)
 
             is_populated = True
 

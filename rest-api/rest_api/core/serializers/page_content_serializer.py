@@ -1,14 +1,14 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from django.conf import settings
 
-from ..models import Page, Text
+from ..models import Page, Translation
 from ..helpers.model_fields import ModelFields
 
 
 class PageContentSerializer(ModelSerializer):
     language = SerializerMethodField('get_language')
     theme = SerializerMethodField('get_theme')
-    fields = SerializerMethodField('get_page_fields')
+    labels = SerializerMethodField('get_page_labels')
     images = SerializerMethodField('get_page_images')
 
     class Meta:
@@ -16,24 +16,24 @@ class PageContentSerializer(ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.Meta.fields = ModelFields.get_model_specific_fields(self.Meta.model) + ['language', 'theme', 'fields',
+        self.Meta.fields = ModelFields.get_model_specific_fields(self.Meta.model) + ['language', 'theme', 'labels',
                                                                                      'images']
 
-    def get_page_fields(self, page):
+    def get_page_labels(self, page):
         language = self.context.get('language')
 
-        fields = page.fields.all()
+        labels = page.labels.all()
 
         result = {}
-        for field in fields:
-            text = field.texts.filter(language=language).first()
+        for label in labels:
+            translation = label.translations.filter(language=language).first()
 
-            if not text:
-                text = field.texts.filter(language='en').first()
+            if not translation:
+                translation = label.translations.filter(language='en').first()
 
-            if text:
-                result[field.name] = {
-                    'value': text.value
+            if translation:
+                result[label.name] = {
+                    'value': translation.value
                 }
 
         return result

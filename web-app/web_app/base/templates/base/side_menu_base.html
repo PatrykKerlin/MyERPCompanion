@@ -1,0 +1,19 @@
+<div class="bg-body sidebar">
+    <ul class="nav flex-column">
+        {% for menu_item in menu %}
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="dropdownMenuLink" role="button"
+                   data-bs-toggle="dropdown" aria-expanded="false">
+                    {{ menu_item.label }}
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                    {% for page in menu_item.pages %}
+                        <li>
+                            <a class="dropdown-item" href="{% url page.name %}">{{ page.label }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </li>
+        {% endfor %}
+    </ul>
+</div>

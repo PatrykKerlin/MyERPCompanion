@@ -5,12 +5,13 @@ from .views import *
 
 views = {
     'user': UserView,
-    'field': FieldView,
-    'text': TextView,
+    'label': LabelView,
+    'translation': TranslationView,
+    'module': ModuleView,
     'page': PageView,
     'image': ImageView,
-    'page-fields': PageFieldsView,
-    'field-texts': FieldTextsView,
+    'page-labels': PageLabelsView,
+    'field-translations': LabelTranslationsView,
     'page-images': PageImagesView,
 }
 
@@ -18,6 +19,7 @@ urlpatterns = [
     path('token/', CreateTokenView.as_view()),
     path('current-user/', CurrentUserView.as_view()),
     path('page-content/<str:language>/<str:page_name>/', PageContentView.as_view({'get': 'retrieve'})),
+    path('menu-content/<str:language>/', MenuContentView.as_view({'get': 'list'})),
 ]
 
 # for prefix, view in views.items():
