@@ -1,6 +1,7 @@
 from .user_admin import UserAdmin
 from .module_admin import ModuleAdmin
 from .page_admin import PageAdmin
+from .language_admin import LanguageAdmin
 from .label_admin import LabelAdmin
 from .translation_admin import TranslationAdmin
 from .page_labels_admin import PageLabelsAdmin

@@ -3,4 +3,3 @@ djangorestframework>=3.15,<3.16
 psycopg2-binary>=2.9.9,<2.10
 pillow>=10.4,<10.5
 drf-spectacular>=0.27.2,<0.28
-Faker>=28.4.1,<28.5

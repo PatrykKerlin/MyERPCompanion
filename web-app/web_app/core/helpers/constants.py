@@ -13,10 +13,11 @@ class SessionContent:
 
 
 class ApiEndpoints:
-    TOKEN = '/token/'
-    CURRENT_USER = '/current-user/'
-    PAGE_CONTENT = '/page-content/'
-    MENU_CONTENT = '/menu-content/'
+    HEALTH_CHECK = 'health-check/'
+    TOKEN = 'token/'
+    CURRENT_USER = 'current-user/'
+    PAGE_CONTENT = 'page-content/'
+    MENU_CONTENT = 'menu-content/'
 
 
 class Defaults:

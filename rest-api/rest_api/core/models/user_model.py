@@ -2,17 +2,14 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 
 from base.models.base_model import BaseModel
-from base.models.base_languages_model import BaseLanguagesModel
+from base.models.themes_text_choices import Themes
 from business.models.employee_model import Employee
+from .language_model import Language
 from ..managers.user_manager import UserManager
 
 
-class User(BaseModel, BaseLanguagesModel, AbstractBaseUser, PermissionsMixin):
+class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
-
-    class Themes(models.TextChoices):
-        LIGHT = 'light', 'Light'
-        DARK = 'dark', 'dark'
 
     user_id = models.IntegerField()
 
@@ -24,8 +21,8 @@ class User(BaseModel, BaseLanguagesModel, AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=False)
 
     theme = models.CharField(max_length=5, choices=Themes.choices, default=Themes.DARK)
-    language = models.CharField(max_length=2, choices=BaseLanguagesModel.Languages.choices,
-                                default=BaseLanguagesModel.Languages.ENGLISH)
+    language = models.ForeignKey(Language, null=True, on_delete=models.DO_NOTHING, limit_choices_to={'is_active': True},
+                                 related_name='users')
 
     USERNAME_FIELD = 'login'
     REQUIRED_FIELDS = ['password']

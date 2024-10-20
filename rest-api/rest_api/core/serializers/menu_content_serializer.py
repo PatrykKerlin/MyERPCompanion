@@ -15,8 +15,11 @@ class MenuContentSerializer(Serializer):
         return obj.name
 
     def get_label(self, obj):
-        language = self.context.get('language', 'en')
-        translation = obj.label.translations.filter(language=language).first()
+        language = self.context.get('language')
+        translation = obj.label.translations.filter(language__value=language).first()
+
+        if not translation:
+            translation = obj.label.translations.filter(language__value='en').first()
 
         return translation.value
 
@@ -26,7 +29,10 @@ class MenuContentSerializer(Serializer):
 
         result = []
         for page in pages:
-            translation = page.label.translations.filter(language=language).first()
+            translation = page.label.translations.filter(language__value=language).first()
+
+            if not translation:
+                translation = page.label.translations.filter(language__value='en').first()
 
             page_data = {
                 'name': page.name,

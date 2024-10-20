@@ -9,7 +9,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         redis_ready = False
-        import os
 
         self.stdout.write(self.style.WARNING('Waiting for Redis database...'))
 

@@ -2,6 +2,7 @@ from .user_model import User
 from .module_model import Module
 from .page_model import Page
 from .label_model import Label
+from .language_model import Language
 from .translation_model import Translation
 from .page_labels_model import PageLabels
 from .label_translations_model import LabelTranslations

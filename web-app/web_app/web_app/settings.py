@@ -124,7 +124,7 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-API_URL = 'http://rest-api:8000/api'
+API_URL = 'http://rest-api:8000/api/'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 

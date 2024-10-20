@@ -1,7 +1,7 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from django.conf import settings
 
-from ..models import Page, Translation
+from ..models import Page, Translation, Language
 from ..helpers.model_fields import ModelFields
 
 
@@ -26,15 +26,14 @@ class PageContentSerializer(ModelSerializer):
 
         result = {}
         for label in labels:
-            translation = label.translations.filter(language=language).first()
+            translation = label.translations.filter(language__value=language).first()
 
             if not translation:
-                translation = label.translations.filter(language='en').first()
+                translation = label.translations.filter(language__value='en').first()
 
-            if translation:
-                result[label.name] = {
-                    'value': translation.value
-                }
+            result[label.name] = {
+                'value': translation.value
+            }
 
         return result
 
