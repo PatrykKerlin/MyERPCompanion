@@ -1,14 +1,24 @@
 <ul class="nav nav-tabs">
-    <li class="nav-item">
-        <a class="nav-link active bg-body-tertiary" aria-current="page" href="#">Active</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="#">Link</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="#">Link</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link disabled" aria-disabled="true">Disabled</a>
-    </li>
+    {% for tab_key, tab_item in tabs.items %}
+        <li class="nav-item d-flex align-items-center">
+            <a class="nav-link" href="{% url tab_item.name %}">{{ tab_item.label }}</a>
+            <form class="inline" method="post" action="{% url tab_item.close %}">
+                {% csrf_token %}
+                <input type="hidden" name="tab_name" value="{{ tab_item.name }}">
+                <button type="submit" class="btn-close" aria-label="Close"></button>
+            </form>
+        </li>
+    {% endfor %}
+    {#    <li class="nav-item">#}
+    {#        <a class="nav-link active bg-body-tertiary" aria-current="page" href="#">Active</a>#}
+    {#    </li>#}
+    {#    <li class="nav-item">#}
+    {#        <a class="nav-link" href="#">Link</a>#}
+    {#    </li>#}
+    {#    <li class="nav-item">#}
+    {#        <a class="nav-link" href="#">Link</a>#}
+    {#    </li>#}
+    {#    <li class="nav-item">#}
+    {#        <a class="nav-link disabled" aria-disabled="true">Disabled</a>#}
+    {#    </li>#}
 </ul>

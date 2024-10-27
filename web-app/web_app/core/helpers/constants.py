@@ -10,6 +10,7 @@ class SessionContent:
     TOKEN = 'token'
     CURRENT_USER = 'current_user'
     MENU_CONTENT = 'menu_content'
+    TABS = 'tabs'
 
 
 class ApiEndpoints:

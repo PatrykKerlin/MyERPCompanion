@@ -5,6 +5,7 @@ from django.http import Http404
 
 from core.helpers.constants import ApiEndpoints, SessionContent, PageNames, Defaults
 from core.helpers.api_client import ApiClient
+from core.helpers.session import Session
 
 
 class BaseView(View):
@@ -51,16 +52,32 @@ class BaseView(View):
 
             current_page = response.json()
             pages[page_name] = current_page
-            request.session[SessionContent.PAGES] = pages
-            request.session.modified = True
+
         elif user_theme != current_page_theme:
             current_page['theme'] = user_theme
             pages[page_name] = current_page
-            request.session[SessionContent.PAGES] = pages
-            request.session.modified = True
+
+        Session.add(request, SessionContent.PAGES, pages)
+
+        tabs = request.session.get(SessionContent.TABS, {})
+        
+        if ((page_name != PageNames.LOGIN) and
+                (page_name != PageNames.INDEX) and
+                (page_name not in tabs.keys())):
+            tabs[page_name] = {
+                'name': current_page['name'],
+                'label': current_page['label'],
+                'close': PageNames.INDEX
+            }
+
+        Session.add(request, SessionContent.TABS, tabs)
 
         self.context = {
             'page': current_page,
-            'menu': menu_content
+            'menu': menu_content,
+            'tabs': tabs,
         }
+
+        print(self.context)
+
         return super().dispatch(request, *args, **kwargs)
