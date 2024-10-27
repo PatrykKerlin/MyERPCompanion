@@ -1,3 +1,5 @@
+from typing import List, Dict
+
 from rest_framework.serializers import Serializer, SerializerMethodField
 from ..models import Module, Page, Translation
 
@@ -11,10 +13,10 @@ class MenuContentSerializer(Serializer):
         model = Module
         fields = ['name', 'label', 'pages']
 
-    def get_name(self, obj):
+    def get_name(self, obj) -> str:
         return obj.name
 
-    def get_label(self, obj):
+    def get_label(self, obj) -> str:
         language = self.context.get('language')
         translation = obj.label.translations.filter(language__value=language).first()
 
@@ -23,7 +25,7 @@ class MenuContentSerializer(Serializer):
 
         return translation.value
 
-    def get_pages(self, obj):
+    def get_pages(self, obj) -> List[Dict[str, str]]:
         language = self.context.get('language', 'en')
         pages = obj.pages.all()
 

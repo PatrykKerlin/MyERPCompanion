@@ -4,6 +4,6 @@ from core.helpers.constants import PageNames
 from .views import *
 
 urlpatterns = [
-    path('add-employee/', NewEmployeeView.as_view(), name=PageNames.NEW_EMPLOYEE),
-    path('add-item/', NewItemView.as_view(), name=PageNames.NEW_ITEM),
+    path('new-employee/', NewEmployeeView.as_view(), name=PageNames.NEW_EMPLOYEE),
+    path('new-item/', NewItemView.as_view(), name=PageNames.NEW_ITEM),
 ]
