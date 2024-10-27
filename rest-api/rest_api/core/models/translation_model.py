@@ -11,7 +11,7 @@ class Translation(BaseModel):
     translation_id = models.IntegerField()
 
     language = models.ForeignKey(Language, on_delete=models.DO_NOTHING, limit_choices_to={'is_active': True},
-                                 related_name='translations')
+                                 related_name='translation')
 
     value = models.CharField(max_length=255)
 

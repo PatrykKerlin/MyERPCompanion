@@ -14,7 +14,7 @@ class Label(BaseModel):
                                           limit_choices_to={'is_active': True},
                                           related_name='labels')
 
-    name = models.CharField(max_length=25, unique=True)
+    name = models.CharField(max_length=25)
 
     def __str__(self):
         return self.name

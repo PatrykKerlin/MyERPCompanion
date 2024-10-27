@@ -1,6 +1,6 @@
 from django.db.models import TextChoices
 
 
-class Themes(TextChoices):
+class ThemesTextChoices(TextChoices):
     LIGHT = 'light', 'Light'
-    DARK = 'dark', 'dark'
+    DARK = 'dark', 'Dark'

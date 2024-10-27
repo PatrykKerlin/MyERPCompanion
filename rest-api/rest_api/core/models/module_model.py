@@ -11,7 +11,7 @@ class Module(BaseModel):
     module_id = models.IntegerField()
 
     label = models.ForeignKey(Label, on_delete=models.DO_NOTHING, limit_choices_to={'is_active': True},
-                              related_name='modules')
+                              related_name='module')
 
     name = models.CharField(max_length=25)
 

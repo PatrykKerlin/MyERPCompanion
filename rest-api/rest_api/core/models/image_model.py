@@ -9,7 +9,7 @@ class Image(BaseModel):
 
     image_id = models.IntegerField()
 
-    name = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=50)
     image = models.ImageField(upload_to='images/')
 
     def __str__(self):
