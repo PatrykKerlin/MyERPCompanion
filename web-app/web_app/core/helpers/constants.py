@@ -19,6 +19,7 @@ class ApiEndpoints:
     CURRENT_USER = 'current-user/'
     PAGE_CONTENT = 'page-content/'
     MENU_CONTENT = 'menu-content/'
+    EMPLOYEE = 'employee/'
 
 
 class Defaults:
