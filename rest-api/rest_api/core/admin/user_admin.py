@@ -13,7 +13,7 @@ class UserAdmin(BaseUserAdmin, BaseAdmin):
     add_fieldsets = [
         [None, {
             'classes': ['wide'],
-            'fields': ['employee', 'password1', 'password2']
+            'fields': ['employee', 'password1', 'password2', 'theme', 'language']
         }]
     ]
 
@@ -28,6 +28,7 @@ class UserAdmin(BaseUserAdmin, BaseAdmin):
     def get_fieldsets(self, request, obj=None):
         fieldsets = [
             ['Credentials', {'fields': ['employee', 'login', 'password']}],
+            ['Preferences', {'fields': ['theme', 'language']}],
             ['Additional Information', {'fields': self.get_readonly_fields(request, obj)}],
         ]
 

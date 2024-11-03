@@ -1,0 +1,28 @@
+from django import forms
+
+
+class EmployeeForm(forms.Form):
+    first_name = forms.CharField(max_length=50)
+    middle_name = forms.CharField(max_length=50, required=False)
+    last_name = forms.CharField(max_length=100)
+    pesel = forms.CharField(max_length=11, required=False)
+    date_of_birth = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    identity_document = forms.ChoiceField(choices=[('passport', 'Passport'), ('id_card', 'Identity Card')])
+    identity_document_number = forms.CharField(max_length=15)
+    phone_country_code = forms.CharField(max_length=3)
+    phone_number = forms.CharField(max_length=15)
+    email = forms.EmailField()
+    street = forms.CharField(max_length=50, required=False)
+    house_number = forms.CharField(max_length=5)
+    apartment_number = forms.CharField(max_length=5, required=False)
+    postal_code = forms.CharField(max_length=6)
+    city = forms.CharField(max_length=50)
+    country = forms.CharField(max_length=50)
+    bank_country_code = forms.CharField(max_length=2)
+    bank_account_number = forms.CharField(max_length=26)
+    bank_name = forms.CharField(max_length=100)
+    bank_swift = forms.CharField(max_length=11)
+    date_of_employment = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    position = forms.CharField(max_length=100)
+    department = forms.CharField(max_length=100)
+    salary = forms.DecimalField(max_digits=10, decimal_places=2)

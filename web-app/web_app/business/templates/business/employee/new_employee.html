@@ -1,5 +1,9 @@
 {% extends "core/index.html" %}
 
 {% block content_block %}
-    <p>Add employee!</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
 {% endblock %}

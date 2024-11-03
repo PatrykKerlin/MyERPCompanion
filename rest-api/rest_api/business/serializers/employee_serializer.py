@@ -1,4 +1,4 @@
-from core.serializers.base.base_serializer import BaseSerializer
+from base.serializers.base_serializer import BaseSerializer
 from ..models import Employee
 
 

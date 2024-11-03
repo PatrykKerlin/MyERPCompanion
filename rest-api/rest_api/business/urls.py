@@ -5,12 +5,12 @@ from .views import *
 
 views = {
     'employee': EmployeeView,
-    'item': ItemView,
+    # 'item': ItemView,
 }
 
 urlpatterns = []
 
+router = DefaultRouter()
 for prefix, view in views.items():
-    router = DefaultRouter()
     router.register(prefix, view)
-    urlpatterns.append(path('', include(router.urls)))
+urlpatterns.append(path('', include(router.urls)))
