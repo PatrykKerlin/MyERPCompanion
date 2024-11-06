@@ -23,6 +23,14 @@
         ]
     },
     {
+        "page": "new_category",
+        "labels": [
+            "my_erp_companion",
+            "inventory",
+            "new_category"
+        ]
+    },
+    {
         "page": "new_item",
         "labels": [
             "my_erp_companion",

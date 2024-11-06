@@ -94,5 +94,18 @@
                 "value": "Nowy detal"
             }
         ]
+    },
+    {
+        "name": "new_category",
+        "translations": [
+            {
+                "language": "en",
+                "value": "New category"
+            },
+            {
+                "language": "pl",
+                "value": "Nowa kategoria"
+            }
+        ]
     }
 ]

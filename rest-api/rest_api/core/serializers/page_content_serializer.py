@@ -1,12 +1,12 @@
 from typing import Dict
 
-from rest_framework.serializers import Serializer, SerializerMethodField
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from django.conf import settings
 
-from ..models.label_model import Label
+from ..models import Page, Label
 
 
-class PageContentSerializer(Serializer):
+class PageContentSerializer(ModelSerializer):
     module = SerializerMethodField('get_module')
     label = SerializerMethodField('get_label')
     language = SerializerMethodField('get_language')
@@ -15,6 +15,7 @@ class PageContentSerializer(Serializer):
     images = SerializerMethodField('get_page_images')
 
     class Meta:
+        model = Page
         fields = ['module', 'label', 'name', 'template', 'order', 'language', 'theme', 'labels', 'images']
 
     @staticmethod

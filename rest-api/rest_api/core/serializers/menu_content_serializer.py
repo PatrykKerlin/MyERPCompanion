@@ -25,7 +25,7 @@ class MenuContentSerializer(Serializer):
 
     def get_pages(self, instance) -> List[Dict[str, str]]:
         language = self.context.get('language', 'en')
-        pages = instance.pages.all()
+        pages = instance.pages.all().order_by('order')
 
         result = []
         for page in pages:

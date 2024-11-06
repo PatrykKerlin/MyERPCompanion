@@ -3,6 +3,7 @@ class PageNames:
     INDEX = 'index'
     NEW_EMPLOYEE = 'new_employee'
     NEW_ITEM = 'new_item'
+    NEW_CATEGORY = 'new_category'
 
 
 class SessionContent:

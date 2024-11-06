@@ -21,10 +21,17 @@
         "order": 1
     },
     {
+        "name": "new_category",
+        "label": "new_category",
+        "module": "inventory",
+        "template": "business/category/new_category.html",
+        "order": 1
+    },
+    {
         "name": "new_item",
         "label": "new_item",
         "module": "inventory",
         "template": "business/item/new_item.html",
-        "order": 1
+        "order": 2
     }
 ]
