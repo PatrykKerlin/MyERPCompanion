@@ -1,7 +1,8 @@
 from typing import List, Dict
 
 from rest_framework.serializers import Serializer, SerializerMethodField
-from ..models import Module, Page, Translation
+
+from ..models.label_model import Label
 
 
 class MenuContentSerializer(Serializer):
@@ -10,31 +11,25 @@ class MenuContentSerializer(Serializer):
     pages = SerializerMethodField('get_pages')
 
     class Meta:
-        model = Module
         fields = ['name', 'label', 'pages']
 
-    def get_name(self, obj) -> str:
-        return obj.name
+    @staticmethod
+    def get_name(instance) -> str:
+        return instance.name
 
-    def get_label(self, obj) -> str:
-        language = self.context.get('language')
-        translation = obj.label.translations.filter(language__value=language).first()
-
-        if not translation:
-            translation = obj.label.translations.filter(language__value='en').first()
+    def get_label(self, instance) -> str:
+        language = self.context.get('language', 'en')
+        translation = Label.objects.get_translation_by_language(instance.label, language)
 
         return translation.value
 
-    def get_pages(self, obj) -> List[Dict[str, str]]:
+    def get_pages(self, instance) -> List[Dict[str, str]]:
         language = self.context.get('language', 'en')
-        pages = obj.pages.all()
+        pages = instance.pages.all()
 
         result = []
         for page in pages:
-            translation = page.label.translations.filter(language__value=language).first()
-
-            if not translation:
-                translation = page.label.translations.filter(language__value='en').first()
+            translation = Label.objects.get_translation_by_language(page.label, language)
 
             page_data = {
                 'name': page.name,

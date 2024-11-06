@@ -1,15 +1,12 @@
 from typing import Dict
 
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from rest_framework.serializers import Serializer, SerializerMethodField
 from django.conf import settings
 
-from ..models import Page, Translation, Language
+from ..models.label_model import Label
 
 
-# from ..helpers.model_fields import ModelFields
-
-
-class PageContentSerializer(ModelSerializer):
+class PageContentSerializer(Serializer):
     module = SerializerMethodField('get_module')
     label = SerializerMethodField('get_label')
     language = SerializerMethodField('get_language')
@@ -18,40 +15,31 @@ class PageContentSerializer(ModelSerializer):
     images = SerializerMethodField('get_page_images')
 
     class Meta:
-        model = Page
+        fields = ['module', 'label', 'name', 'template', 'order', 'language', 'theme', 'labels', 'images']
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.Meta.fields = ['module', 'label', 'name', 'template', 'order', 'language', 'theme', 'labels', 'images']
-
-    def get_module(self, page) -> str | None:
-        if not page.module:
+    @staticmethod
+    def get_module(instance) -> str | None:
+        if not instance.module:
             return None
-        return page.module.name
+        return instance.module.name
 
-    def get_label(self, page) -> str | None:
-        if not page.label:
+    def get_label(self, instance) -> str | None:
+        if not instance.label:
             return None
 
-        language = self.context.get('language')
-        translation = page.label.translations.filter(language__value=language).first()
-
-        if not translation:
-            translation = page.label.translations.filter(language__value='en').first()
+        language = self.context.get('language', 'en')
+        translation = Label.objects.get_translation_by_language(instance.label, language)
 
         return translation.value
 
-    def get_page_labels(self, page) -> Dict[str, Dict[str, str]]:
-        language = self.context.get('language')
+    def get_page_labels(self, instance) -> Dict[str, Dict[str, str]]:
+        language = self.context.get('language', 'en')
 
-        labels = page.labels.all()
+        labels = instance.labels.all()
 
         result = {}
         for label in labels:
-            translation = label.translations.filter(language__value=language).first()
-
-            if not translation:
-                translation = label.translations.filter(language__value='en').first()
+            translation = Label.objects.get_translation_by_language(label, language)
 
             result[label.name] = {
                 'value': translation.value
@@ -59,8 +47,9 @@ class PageContentSerializer(ModelSerializer):
 
         return result
 
-    def get_page_images(self, page) -> Dict[str, Dict[str, str]]:
-        images = page.images.all()
+    @staticmethod
+    def get_page_images(instance) -> Dict[str, Dict[str, str]]:
+        images = instance.images.all()
 
         result = {}
         for image in images:
@@ -71,10 +60,10 @@ class PageContentSerializer(ModelSerializer):
 
         return result
 
-    def get_language(self, page) -> str:
-        return self.context.get('language')
+    def get_language(self, _) -> str:
+        return self.context.get('language', 'en')
 
-    def get_theme(self, page) -> str:
+    def get_theme(self, _) -> str:
         request = self.context.get('request')
         user = getattr(request, 'user', None)
 
