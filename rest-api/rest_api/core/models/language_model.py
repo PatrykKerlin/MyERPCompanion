@@ -1,11 +1,11 @@
 from django.db import models
 
-from base.models.base_model import BaseModel
-from ..managers.language_manager import LanguageManager
+from base.models import BaseModel
+from ..managers.generic_manager import GenericManager
 
 
 class Language(BaseModel):
-    objects = LanguageManager()
+    objects = GenericManager()
 
     language_id = models.IntegerField()
 

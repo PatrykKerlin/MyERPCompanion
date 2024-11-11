@@ -1,11 +1,11 @@
 from django.db import models
 
-from base.models.base_model import BaseModel
-from ..managers.image_manager import ImageManager
+from base.models import BaseModel
+from ..managers.generic_manager import GenericManager
 
 
 class Image(BaseModel):
-    objects = ImageManager()
+    objects = GenericManager()
 
     image_id = models.IntegerField()
 

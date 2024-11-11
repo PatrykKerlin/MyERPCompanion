@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from base.admin.base_admin import BaseAdmin
+from base.admin import BaseAdmin
 from ..models import User
 
 

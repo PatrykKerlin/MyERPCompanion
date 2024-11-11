@@ -1,13 +1,13 @@
 from django.db import models
 
-from base.models.base_model import BaseModel
+from base.models import BaseModel
 from .label_model import Label
 from .translation_model import Translation
-from ..managers.label_translations_manager import LabelTranslationsManager
+from ..managers.generic_manager import GenericManager
 
 
 class LabelTranslations(BaseModel):
-    objects = LabelTranslationsManager()
+    objects = GenericManager()
 
     class Meta:
         verbose_name = 'Label-Translations'

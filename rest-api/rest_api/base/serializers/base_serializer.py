@@ -74,6 +74,7 @@ class BaseSerializer(ModelSerializer):
         instance.save(user=user)
         return instance
 
+    @staticmethod
     @abstractmethod
-    def _get_list_fields(self):
+    def _get_list_fields():
         pass

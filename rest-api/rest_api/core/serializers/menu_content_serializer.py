@@ -8,10 +8,10 @@ from ..models.label_model import Label
 class MenuContentSerializer(Serializer):
     name = SerializerMethodField('get_name')
     label = SerializerMethodField('get_label')
-    pages = SerializerMethodField('get_pages')
+    views = SerializerMethodField('get_views')
 
     class Meta:
-        fields = ['name', 'label', 'pages']
+        fields = ['name', 'label', 'views']
 
     @staticmethod
     def get_name(instance) -> str:
@@ -21,21 +21,21 @@ class MenuContentSerializer(Serializer):
         language = self.context.get('language', 'en')
         translation = Label.objects.get_translation_by_language(instance.label, language)
 
-        return translation.value
+        return translation
 
-    def get_pages(self, instance) -> List[Dict[str, str]]:
+    def get_views(self, instance) -> List[Dict[str, str]]:
         language = self.context.get('language', 'en')
-        pages = instance.pages.all().order_by('order')
+        views = instance.views.all().order_by('order')
 
         result = []
-        for page in pages:
-            translation = Label.objects.get_translation_by_language(page.label, language)
+        for view in views:
+            translation = Label.objects.get_translation_by_language(view.label, language)
 
-            page_data = {
-                'name': page.name,
-                'label': translation.value
+            view_data = {
+                'name': view.name,
+                'label': translation
             }
 
-            result.append(page_data)
+            result.append(view_data)
 
         return result

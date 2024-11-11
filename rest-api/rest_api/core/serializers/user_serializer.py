@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 
-from base.serializers.base_serializer import BaseSerializer
+from base.serializers import BaseSerializer
 
 
 class UserSerializer(BaseSerializer):

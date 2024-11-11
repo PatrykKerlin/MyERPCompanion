@@ -1,6 +1,6 @@
 from django.db import models
 
-from base.models.base_model import BaseModel
+from base.models import BaseModel
 from .translation_model import Translation
 from ..managers.label_manager import LabelManager
 

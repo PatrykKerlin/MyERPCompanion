@@ -6,7 +6,7 @@ from django.utils import timezone
 from ..serializers.token_serializer import TokenSerializer
 
 
-class CreateTokenView(ObtainAuthToken):
+class TokenView(ObtainAuthToken):
     serializer_class = TokenSerializer
     authentication_classes = []
     permission_classes = []

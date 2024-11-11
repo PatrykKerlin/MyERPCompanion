@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 
-from base.models.base_model import BaseModel
+from base.models import BaseModel
 from ..managers.item_manager import ItemManager
 
 

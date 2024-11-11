@@ -1,4 +1,4 @@
-from base.serializers.base_serializer import BaseSerializer
+from base.serializers import BaseSerializer
 from ..models import Item
 
 

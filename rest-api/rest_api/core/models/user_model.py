@@ -1,8 +1,8 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 
-from base.models.base_model import BaseModel
-from base.models.themes_text_choices import Themes
+from base.models import BaseModel
+from base.models import ThemesTextChoices
 from business.models.employee_model import Employee
 from .language_model import Language
 from ..managers.user_manager import UserManager
@@ -14,15 +14,15 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     user_id = models.IntegerField()
 
     employee = models.ForeignKey(Employee, null=True, on_delete=models.DO_NOTHING, limit_choices_to={'is_active': True},
-                                 related_name='employees')
+                                 related_name='user')
+    language = models.ForeignKey(Language, null=True, on_delete=models.DO_NOTHING, limit_choices_to={'is_active': True},
+                                 related_name='user')
 
     login = models.CharField(max_length=6, null=True, unique=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
 
-    theme = models.CharField(max_length=5, choices=Themes.choices, default=Themes.DARK)
-    language = models.ForeignKey(Language, null=True, on_delete=models.DO_NOTHING, limit_choices_to={'is_active': True},
-                                 related_name='users')
+    theme = models.CharField(max_length=5, choices=ThemesTextChoices.choices, default=ThemesTextChoices.DARK)
 
     USERNAME_FIELD = 'login'
     REQUIRED_FIELDS = ['password']

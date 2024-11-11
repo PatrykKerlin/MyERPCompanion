@@ -1,7 +1,7 @@
 from django.core.validators import EmailValidator, RegexValidator
 from django.db import models
 
-from base.models.base_model import BaseModel
+from base.models import BaseModel
 from ..managers.employee_manager import EmployeeManager
 
 

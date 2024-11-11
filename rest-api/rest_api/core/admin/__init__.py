@@ -1,10 +1,14 @@
+from django.apps import apps
+from base.admin import AdminRegistrar
+
+AdminRegistrar.register(apps.get_model('core', 'Module'), ['name'])
+AdminRegistrar.register(apps.get_model('core', 'View'), ['name', 'template'])
+AdminRegistrar.register(apps.get_model('core', 'Language'), ['name', 'value'])
+AdminRegistrar.register(apps.get_model('core', 'Label'), ['name'])
+AdminRegistrar.register(apps.get_model('core', 'Translation'), ['language', 'value'])
+AdminRegistrar.register(apps.get_model('core', 'ViewLabels'), ['view', 'label'])
+AdminRegistrar.register(apps.get_model('core', 'LabelTranslations'), ['label', 'translation'])
+AdminRegistrar.register(apps.get_model('core', 'Image'), ['name', 'image'])
+AdminRegistrar.register(apps.get_model('core', 'ViewImages'), ['view', 'image'])
+
 from .user_admin import UserAdmin
-from .module_admin import ModuleAdmin
-from .page_admin import PageAdmin
-from .language_admin import LanguageAdmin
-from .label_admin import LabelAdmin
-from .translation_admin import TranslationAdmin
-from .page_labels_admin import PageLabelsAdmin
-from .label_translations_admin import LabelTranslationsAdmin
-from .image_admin import ImageAdmin
-from .page_images_admin import PageImagesAdmin

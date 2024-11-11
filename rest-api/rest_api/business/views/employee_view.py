@@ -1,4 +1,4 @@
-from base.views.base_view import BaseView
+from base.views import BaseView
 from ..models import Employee
 from ..serializers.employee_serializer import EmployeeSerializer
 

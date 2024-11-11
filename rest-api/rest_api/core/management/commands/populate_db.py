@@ -17,12 +17,13 @@ class Command(BaseCommand):
 
         if superuser_added:
             methods_to_run = [self.populate_languages, self.populate_labels_translations, self.populate_modules,
-                              self.populate_pages, self.populate_page_labels, self.populate_images,
-                              self.populate_page_images, self.populate_employees]
+                              self.populate_views, self.populate_view_labels, self.populate_images,
+                              self.populate_view_images, self.populate_employees]
 
             user = get_user_model().objects.filter(id=1, is_superuser=True).first()
 
             for method in methods_to_run:
+                # noinspection PyArgumentList
                 method(user)
 
             self.stdout.write(self.style.WARNING("Database populated with initial data!"))
@@ -105,48 +106,48 @@ class Command(BaseCommand):
 
                 new_module.save(user=user)
 
-    def populate_pages(self, user):
-        Page = apps.get_model('core', 'Page')
+    def populate_views(self, user):
+        View = apps.get_model('core', 'View')
         Module = apps.get_model('core', 'Module')
         Label = apps.get_model('core', 'Label')
 
-        file_path = os.path.join(self.core_payload_path, 'page.json')
+        file_path = os.path.join(self.core_payload_path, 'view.json')
         with open(file_path, 'r') as file:
             data = json.load(file)
 
-            for page in data:
-                new_page = Page(
-                    name=page['name'],
-                    template=page['template'],
-                    order=page['order'],
+            for view in data:
+                new_view = View(
+                    name=view['name'],
+                    template=view['template'],
+                    order=view['order'],
                 )
 
-                if page['label']:
-                    new_page.label = Label.objects.filter(name=page['label']).first()
-                if page['module']:
-                    new_page.module = Module.objects.filter(name=page['module']).first()
+                if view['label']:
+                    new_view.label = Label.objects.filter(name=view['label']).first()
+                if view['module']:
+                    new_view.module = Module.objects.filter(name=view['module']).first()
 
-                new_page.save(user=user)
+                new_view.save(user=user)
 
-    def populate_page_labels(self, user):
-        PageLabels = apps.get_model('core', 'PageLabels')
+    def populate_view_labels(self, user):
+        ViewLabels = apps.get_model('core', 'ViewLabels')
         Label = apps.get_model('core', 'Label')
-        Page = apps.get_model('core', 'Page')
+        View = apps.get_model('core', 'View')
 
-        file_path = os.path.join(self.core_payload_path, 'page_labels.json')
+        file_path = os.path.join(self.core_payload_path, 'view_labels.json')
         with open(file_path, 'r') as file:
             data = json.load(file)
 
-            for page_labels in data:
-                page = Page.objects.filter(name=page_labels['page']).first()
-                for label_name in page_labels['labels']:
+            for view_labels in data:
+                view = View.objects.filter(name=view_labels['view']).first()
+                for label_name in view_labels['labels']:
                     label = Label.objects.filter(name=label_name).first()
-                    new_page_label = PageLabels(
-                        page=page,
+                    new_view_label = ViewLabels(
+                        view=view,
                         label=label
                     )
 
-                    new_page_label.save(user=user)
+                    new_view_label.save(user=user)
 
     def populate_images(self, user):
         Image = apps.get_model('core', 'Image')
@@ -159,25 +160,25 @@ class Command(BaseCommand):
                 new_image = Image(**image_attrs)
                 new_image.save(user=user)
 
-    def populate_page_images(self, user):
-        PageImages = apps.get_model('core', 'PageImages')
-        Page = apps.get_model('core', 'Page')
+    def populate_view_images(self, user):
+        ViewImages = apps.get_model('core', 'ViewImages')
+        View = apps.get_model('core', 'View')
         Image = apps.get_model('core', 'Image')
 
-        file_path = os.path.join(self.core_payload_path, 'page_images.json')
+        file_path = os.path.join(self.core_payload_path, 'view_images.json')
         with open(file_path, 'r') as file:
             data = json.load(file)
 
-            for page_images in data:
-                page = Page.objects.filter(name=page_images['page']).first()
-                for image_name in page_images['images']:
+            for view_images in data:
+                view = View.objects.filter(name=view_images['view']).first()
+                for image_name in view_images['images']:
                     image = Image.objects.filter(name=image_name).first()
-                    new_page_image = PageImages(
-                        page=page,
+                    new_view_image = ViewImages(
+                        view=view,
                         image=image
                     )
 
-                    new_page_image.save(user=user)
+                    new_view_image.save(user=user)
 
     def populate_employees(self, user):
         Employee = apps.get_model('business', 'Employee')

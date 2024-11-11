@@ -1,4 +1,4 @@
-from base.managers.base_manager import BaseManager
+from base.managers import BaseManager
 
 
 class LabelManager(BaseManager):
@@ -9,4 +9,4 @@ class LabelManager(BaseManager):
         if not translation:
             translation = label.translations.filter(language__value='en').first()
 
-        return translation
+        return translation.value

@@ -1,6 +1,5 @@
-from base.serializers.base_serializer import BaseSerializer
-from .label_serializer import LabelSerializer
-from .translation_serializer import TranslationSerializer
+from base.serializers import BaseSerializer
+from . import LabelSerializer, TranslationSerializer
 from ..models import LabelTranslations
 
 
@@ -11,5 +10,6 @@ class LabelTranslationsSerializer(BaseSerializer):
     class Meta:
         model = LabelTranslations
 
-    def _get_list_fields(self):
+    @staticmethod
+    def _get_list_fields():
         return ['label', 'translation']

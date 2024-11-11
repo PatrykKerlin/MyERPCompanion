@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework import status
 
-from base.views.base_view import BaseView
+from base.views import BaseView
 from ..models import Module
 from ..serializers.menu_content_serializer import MenuContentSerializer
 

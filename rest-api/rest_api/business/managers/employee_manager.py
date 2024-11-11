@@ -1,4 +1,4 @@
-from base.managers.base_manager import BaseManager
+from base.managers import BaseManager
 
 
 class EmployeeManager(BaseManager):
