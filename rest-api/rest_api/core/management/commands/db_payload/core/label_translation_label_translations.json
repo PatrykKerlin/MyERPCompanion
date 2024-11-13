@@ -61,6 +61,13 @@
         ]
     },
     {
+        "name": "all_employees",
+        "translations": [
+            {"language": "en", "value": "All employees"},
+            {"language": "pl", "value": "Wszyscy pracownicy"}
+        ]
+    },
+    {
         "name": "new_item",
         "translations": [
             {"language": "en", "value": "New item"},

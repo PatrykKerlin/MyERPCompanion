@@ -20,7 +20,7 @@ urlpatterns = [
     path('health-check/', HealthCheckView.as_view()),
     path('token/', TokenView.as_view()),
     path('current-user/', CurrentUserView.as_view()),
-    path('view-content/<str:language>/<str:view>/', ViewContentView.as_view({'get': 'retrieve'})),
+    path('view-content/<str:language>/<str:view_name>/', ViewContentView.as_view({'get': 'retrieve'})),
     path('menu-content/<str:language>/', MenuContentView.as_view({'get': 'list'})),
 ]
 

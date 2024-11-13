@@ -10,16 +10,16 @@ class ViewContentView(BaseView):
     serializer_class = ViewContentSerializer
 
     def dispatch(self, request, *args, **kwargs):
-        view = kwargs.get('view')
+        view_name = kwargs.get('view_name')
 
-        if view == 'login':
+        if view_name == 'login':
             self.authentication_classes = []
             self.permission_classes = []
 
         return super().dispatch(request, *args, **kwargs)
 
     def retrieve(self, request, *args, **kwargs):
-        view_name = kwargs.get('view_name', 'login')
+        view_name = kwargs.get('view_name', '')
         language = kwargs.get('language', 'en')
 
         view = View.objects.get(name=view_name)

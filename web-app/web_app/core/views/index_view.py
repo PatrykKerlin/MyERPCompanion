@@ -19,4 +19,5 @@ class IndexView(BaseView):
         return super().dispatch(request, page_name=PageNames.INDEX, *args, **kwargs)
 
     def get(self, request):
+        print(self.context)
         return render(request, self.context['page']['template'], self.context)

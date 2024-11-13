@@ -25,7 +25,8 @@ class MenuContentSerializer(Serializer):
 
     def get_views(self, instance) -> List[Dict[str, str]]:
         language = self.context.get('language', 'en')
-        views = instance.views.all().order_by('order')
+
+        views = instance.view.all().order_by('order')
 
         result = []
         for view in views:

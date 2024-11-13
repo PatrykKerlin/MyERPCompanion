@@ -1,2 +1,3 @@
 from .base_serializer import BaseSerializer
 from .serializer_factory import SerializerFactory
+from .serializer_m2m_factory import SerializerM2MFactory
