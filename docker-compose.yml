@@ -1,21 +1,4 @@
 services:
-  web-app:
-    build:
-      context: ./web-app
-      dockerfile: dockerfile-web
-    networks:
-      - project_net
-    ports:
-      - "9000:9000"
-    volumes:
-      - ./web-app/web_app/:/web_app
-    command:
-      sh -c "python manage.py wait_for_redis &&
-      python manage.py wait_for_api &&
-      python manage.py runserver 0.0.0.0:9000"
-    depends_on:
-      - redis
-      - rest-api
 
   rest-api:
     build:
@@ -59,14 +42,32 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=changeme
 
-  redis:
-    build:
-      context: ./web-app
-      dockerfile: dockerfile-cache
-    networks:
-      - project_net
-    ports:
-      - "6379:6379"
+#  web-app:
+#    build:
+#      context: ./web-app
+#      dockerfile: dockerfile-web
+#    networks:
+#      - project_net
+#    ports:
+#      - "9000:9000"
+#    volumes:
+#      - ./web-app/web_app/:/web_app
+#    command:
+#      sh -c "python manage.py wait_for_redis &&
+#      python manage.py wait_for_api &&
+#      python manage.py runserver 0.0.0.0:9000"
+#    depends_on:
+#      - redis
+#      - rest-api
+
+#  redis:
+#    build:
+#      context: ./web-app
+#      dockerfile: dockerfile-cache
+#    networks:
+#      - project_net
+#    ports:
+#      - "6379:6379"
 
 volumes:
   postgres-data:

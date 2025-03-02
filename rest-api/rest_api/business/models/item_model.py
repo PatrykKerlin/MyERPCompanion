@@ -10,8 +10,6 @@ from ..managers.item_manager import ItemManager
 class Item(BaseModel):
     objects = ItemManager()
 
-    item_id = models.IntegerField()
-
     name = models.CharField(max_length=255)
     index = models.CharField(max_length=50)
     description = models.TextField(blank=True, null=True)

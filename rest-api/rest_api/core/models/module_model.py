@@ -8,10 +8,8 @@ from ..managers.generic_manager import GenericManager
 class Module(BaseModel):
     objects = GenericManager()
 
-    module_id = models.IntegerField()
-
-    label = models.ForeignKey(Label, on_delete=models.DO_NOTHING, limit_choices_to={'is_active': True},
-                              related_name='module')
+    label = models.OneToOneField(Label, on_delete=models.DO_NOTHING, limit_choices_to={'is_active': True},
+                                 related_name='module')
 
     name = models.CharField(max_length=25)
 

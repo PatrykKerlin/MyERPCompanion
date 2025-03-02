@@ -1,4 +1,4 @@
-FROM postgres:16.4-bookworm
+FROM postgres:17.4-bookworm
 LABEL maintainer="Patryk Kerlin"
 
 RUN apt-get update

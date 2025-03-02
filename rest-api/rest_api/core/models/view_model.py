@@ -10,8 +10,6 @@ from ..managers.generic_manager import GenericManager
 class View(BaseModel):
     objects = GenericManager()
 
-    view_id = models.IntegerField()
-
     module = models.ForeignKey(Module, null=True, blank=True, on_delete=models.DO_NOTHING,
                                limit_choices_to={'is_active': True}, related_name='view')
     label = models.ForeignKey(Label, null=True, blank=True, on_delete=models.DO_NOTHING,

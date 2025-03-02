@@ -15,10 +15,8 @@ class ViewLabels(BaseModel):
         db_table = 'core_view_labels'
         unique_together = ('view', 'label')
 
-    viewlabels_id = models.IntegerField()
-
-    view = models.ForeignKey(View, on_delete=models.DO_NOTHING)
-    label = models.ForeignKey(Label, on_delete=models.DO_NOTHING)
+    view = models.ForeignKey(View, on_delete=models.DO_NOTHING, limit_choices_to={'is_active': True})
+    label = models.ForeignKey(Label, on_delete=models.DO_NOTHING, limit_choices_to={'is_active': True})
 
     def __str__(self):
         return f'{self.view} - {self.label}'

@@ -12,8 +12,6 @@ class Employee(BaseModel):
         PASSPORT = 'passport', 'Passport'
         ID_CARD = 'id_card', 'Identity Card'
 
-    employee_id = models.IntegerField()
-
     first_name = models.CharField(max_length=50)
     middle_name = models.CharField(max_length=50, null=True, blank=True)
     last_name = models.CharField(max_length=100)

@@ -16,14 +16,13 @@ class Command(BaseCommand):
         superuser_added = self.add_superuser()
 
         if superuser_added:
-            methods_to_run = [self.populate_languages, self.populate_labels_translations, self.populate_modules,
+            methods_to_run = [self.populate_labels_translations, self.populate_modules,
                               self.populate_views, self.populate_view_labels, self.populate_images,
                               self.populate_view_images, self.populate_employees]
 
             user = get_user_model().objects.filter(id=1, is_superuser=True).first()
 
             for method in methods_to_run:
-                # noinspection PyArgumentList
                 method(user)
 
             self.stdout.write(self.style.WARNING("Database populated with initial data!"))
@@ -43,27 +42,11 @@ class Command(BaseCommand):
 
         return True
 
-    def populate_languages(self, user):
-        Language = apps.get_model('core', 'Language')
-
-        file_path = os.path.join(self.core_payload_path, 'language.json')
-        with open(file_path, 'r') as file:
-            data = json.load(file)
-
-            for attrs in data:
-                new_language = Language(**attrs)
-                new_language.save(user=user)
-
     def populate_labels_translations(self, user):
         Label = apps.get_model('core', 'Label')
         Translation = apps.get_model('core', 'Translation')
-        LabelTranslations = apps.get_model('core', 'LabelTranslations')
 
-        Language = apps.get_model('core', 'Language')
-        lang_pl = Language.objects.filter(value='pl').first()
-        lang_en = Language.objects.filter(value='en').first()
-
-        file_path = os.path.join(self.core_payload_path, 'label_translation_label_translations.json')
+        file_path = os.path.join(self.core_payload_path, 'label_translation.json')
         with open(file_path, 'r') as file:
             data = json.load(file)
 
@@ -73,22 +56,11 @@ class Command(BaseCommand):
 
                 for translation in label['translations']:
                     new_translation = Translation(
-                        value=translation['value'],
-                    )
-
-                    if translation['language'] == 'en':
-                        new_translation.language = lang_en
-                    elif translation['language'] == 'pl':
-                        new_translation.language = lang_pl
-
-                    new_translation.save(user=user)
-
-                    new_label_translation = LabelTranslations(
                         label=new_label,
-                        translation=new_translation,
+                        value=translation['value'],
+                        language=translation['language']
                     )
-
-                    new_label_translation.save(user=user)
+                    new_translation.save(user=user)
 
     def populate_modules(self, user):
         Module = apps.get_model('core', 'Module')

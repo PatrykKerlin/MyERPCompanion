@@ -15,10 +15,8 @@ class ViewImages(BaseModel):
         db_table = 'core_view_images'
         unique_together = ('view', 'image')
 
-    viewimages_id = models.IntegerField()
-
-    view = models.ForeignKey(View, on_delete=models.DO_NOTHING)
-    image = models.ForeignKey(Image, on_delete=models.DO_NOTHING)
+    view = models.ForeignKey(View, on_delete=models.DO_NOTHING, limit_choices_to={'is_active': True})
+    image = models.ForeignKey(Image, on_delete=models.DO_NOTHING, limit_choices_to={'is_active': True})
 
     def __str__(self):
         return f'{self.image} - {self.view})'

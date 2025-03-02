@@ -1,0 +1,111 @@
+[
+    {
+        "name": "my_erp_companion",
+        "translations": [
+            {"language": "eng", "value": "MyERPCompanion"},
+            {"language": "pol", "value": "MójAsystentERP"}
+        ]
+    },
+    {
+        "name": "invalid_credentials",
+        "translations": [
+            {"language": "eng", "value": "Invalid login or password!"},
+            {"language": "pol", "value": "Błędny login lub hasło!"}
+        ]
+    },
+    {
+        "name": "login",
+        "translations": [
+            {"language": "eng", "value": "Login"}
+        ]
+    },
+    {
+        "name": "password",
+        "translations": [
+            {"language": "eng", "value": "Password"},
+            {"language": "pol", "value": "Hasło"}
+        ]
+    },
+    {
+        "name": "sign_in",
+        "translations": [
+            {"language": "eng", "value": "Sign In"},
+            {"language": "pol", "value": "Zaloguj się"}
+        ]
+    },
+    {
+        "name": "index",
+        "translations": [
+            {"language": "eng", "value": "Index"}
+        ]
+    },
+    {
+        "name": "human_resources",
+        "translations": [
+            {"language": "eng", "value": "Human Resources"},
+            {"language": "pol", "value": "Kadry"}
+        ]
+    },
+    {
+        "name": "inventory",
+        "translations": [
+            {"language": "eng", "value": "Inventory"},
+            {"language": "pol", "value": "Magazyn"}
+        ]
+    },
+    {
+        "name": "new_employee",
+        "translations": [
+            {"language": "eng", "value": "New employee"},
+            {"language": "pol", "value": "Nowy pracownik"}
+        ]
+    },
+    {
+        "name": "all_employees",
+        "translations": [
+            {"language": "eng", "value": "All employees"},
+            {"language": "pol", "value": "Wszyscy pracownicy"}
+        ]
+    },
+    {
+        "name": "new_item",
+        "translations": [
+            {"language": "eng", "value": "New item"},
+            {"language": "pol", "value": "Nowy detal"}
+        ]
+    },
+    {
+        "name": "new_category",
+        "translations": [
+            {"language": "eng", "value": "New category"},
+            {"language": "pol", "value": "Nowa kategoria"}
+        ]
+    },
+    {
+        "name": "id",
+        "translations": [
+            {"language": "eng", "value": "Id"}
+        ]
+    },
+    {
+        "name": "first_name",
+        "translations": [
+            {"language": "eng", "value": "First name"},
+            {"language": "pol", "value": "Imię"}
+        ]
+    },
+    {
+        "name": "middle_name",
+        "translations": [
+            {"language": "eng", "value": "Middle name"},
+            {"language": "pol", "value": "Drugie imię"}
+        ]
+    },
+    {
+        "name": "last_name",
+        "translations": [
+            {"language": "eng", "value": "Last name"},
+            {"language": "pol", "value": "Nazwisko"}
+        ]
+    }
+]

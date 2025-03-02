@@ -7,8 +7,6 @@ from ..managers.generic_manager import GenericManager
 class Image(BaseModel):
     objects = GenericManager()
 
-    image_id = models.IntegerField()
-
     name = models.CharField(max_length=50, unique=True)
     image = models.ImageField(upload_to='images/')
 
