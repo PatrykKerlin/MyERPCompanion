@@ -1,32 +1,5 @@
 services:
 
-  rest-api:
-    build:
-      context: ./rest-api
-      dockerfile: dockerfile-api
-    networks:
-      - project_net
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./rest-api/rest_api/:/rest_api
-    command:
-      sh -c "python manage.py makemigrations &&
-      python manage.py wait_for_postgres &&
-      python manage.py migrate &&
-      python manage.py populate_db &&
-      python manage.py runserver 0.0.0.0:8000"
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_NAME=MyERPCompanion
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=changeme
-      - REST_API_PORT=8000
-      - REST_API_PROTOCOL=http
-      - REST_API_HOSTS=127.0.0.1,localhost,rest-api
-    depends_on:
-      - postgres
-
   postgres:
     build:
       context: ./rest-api
@@ -41,6 +14,25 @@ services:
       - POSTGRES_DB=MyERPCompanion
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=changeme
+
+  rest-api:
+    build:
+      context: ./rest-api
+      dockerfile: dockerfile-api
+    networks:
+      - project_net
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./rest-api/rest_api/:/rest_api
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:changeme@postgres/MyERPCompanion
+      - SECRET_KEY=secret
+    depends_on:
+      - postgres
+    command:
+      sh -c "python -c 'import sys; path=\"/rest_api\"; sys.path.append(path) if path not in sys.path else None' &&
+      uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
 
 #  web-app:
 #    build:
