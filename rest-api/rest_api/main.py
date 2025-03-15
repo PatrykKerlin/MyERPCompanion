@@ -1,23 +1,22 @@
-from fastapi import FastAPI, APIRouter
-from fastapi.security import OAuth2PasswordBearer
-from fastapi.openapi.utils import get_openapi
-from config import Settings
-from config import Database
+from config import Database, Settings
 from controllers import core
-from handlers import DBCheck, PopulateDB
+from fastapi import APIRouter, FastAPI
+from fastapi.openapi.utils import get_openapi
+from fastapi.security import OAuth2PasswordBearer
+from handlers import DBCheck, PopulateSuperuser
 
 
 class App:
-    def __init__(self, settings: Settings, database: Database, oauth2_scheme: OAuth2PasswordBearer) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        database: Database,
+        oauth2_scheme: OAuth2PasswordBearer,
+    ) -> None:
         self.__settings = settings
         self.__database = database
         self.__oauth2_scheme = oauth2_scheme
-        self.__app = FastAPI(
-            title="MyERPCompanion API",
-            # docs_url=None,
-            redoc_url=None,
-            # openapi_url=None
-        )
+        self.__app = FastAPI(title="MyERPCompanion API", redoc_url=None)
         self.__include_routers()
 
     def __include_routers(self) -> None:
@@ -25,16 +24,23 @@ class App:
 
         health_check_controller = core.HealthCheckController()
         login_controller = core.AuthController(self.__database.get_db, self.__settings)
-        current_user_controller = core.CurrentUserController(self.__database.get_db, self.__settings,
-                                                             self.__oauth2_scheme)
-        user_controller = core.UserController(self.__database.get_db, self.__settings, self.__oauth2_scheme)
+        current_user_controller = core.CurrentUserController(
+            self.__database.get_db, self.__settings, self.__oauth2_scheme
+        )
+        user_controller = core.UserController(
+            self.__database.get_db, self.__settings, self.__oauth2_scheme
+        )
         group_controller = core.GroupController(self.__database.get_db)
 
         api_router.include_router(health_check_controller.router, tags=["Health Check"])
         api_router.include_router(login_controller.router, tags=["Authorization"])
         api_router.include_router(current_user_controller.router, tags=["Current User"])
-        api_router.include_router(user_controller.router, prefix="/users", tags=["Users"])
-        api_router.include_router(group_controller.router, prefix="/groups", tags=["Groups"])
+        api_router.include_router(
+            user_controller.router, prefix="/users", tags=["Users"]
+        )
+        api_router.include_router(
+            group_controller.router, prefix="/groups", tags=["Groups"]
+        )
 
         self.__app.include_router(api_router)
 
@@ -55,11 +61,8 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def on_startup():
-        db_check = DBCheck(database.get_db)
-        populate_db = PopulateDB(database.get_db)
-
-        await db_check.wait_for_db()
-        await populate_db.populate_db()
+        await DBCheck(database.get_db).wait_for_db()
+        await PopulateSuperuser(database.get_db).populate_superuser()
         await app_instance.startup()
 
     def custom_openapi():
@@ -85,4 +88,4 @@ def create_app() -> FastAPI:
     return app
 
 
-app = create_app()
+start_app = create_app()

@@ -1,6 +1,6 @@
-from sqlalchemy.future import select
+from entities.core import Group
 from sqlalchemy.ext.asyncio import AsyncSession
-from models.core import Group
+from sqlalchemy.future import select
 
 
 class GroupService:

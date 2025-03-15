@@ -1,7 +1,7 @@
+from config import Settings
 from fastapi import APIRouter, HTTPException, status
 from schemas.core import AuthSchema
 from services.core import AuthService
-from config import Settings
 
 
 class AuthController:
@@ -13,7 +13,12 @@ class AuthController:
 
     async def auth(self, auth: AuthSchema) -> dict:
         async with self.__get_db() as db:
-            token = await AuthService.authenticate(db, auth.username, auth.password, self.__settings)
+            token = await AuthService.authenticate(
+                db, auth.username, auth.password, self.__settings
+            )
             if not token:
-                raise HTTPException(status_code=status.status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+                raise HTTPException(
+                    status_code=status.status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid credentials",
+                )
             return {"token": token}

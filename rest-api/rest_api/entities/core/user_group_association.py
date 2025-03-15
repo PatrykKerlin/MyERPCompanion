@@ -1,9 +1,9 @@
-from sqlalchemy import Column, Integer, ForeignKey
 from config.database import Database
-from models.base import Base, BaseModel
+from entities.base import Base, BaseEntity
+from sqlalchemy import Column, ForeignKey, Integer
 
 
-class UserGroupAssociation(BaseModel, Base):
+class UserGroupAssociation(BaseEntity, Base):
     __tablename__ = "users_groups"
 
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)

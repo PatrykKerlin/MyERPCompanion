@@ -1,8 +1,9 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
 from contextlib import asynccontextmanager
+
 from config import Settings
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 
 class Database:
@@ -18,9 +19,7 @@ class Database:
         if not hasattr(self, "_initialized"):
             self.engine = create_async_engine(settings.DATABASE_URL, echo=True)
             self.__async_session_local = sessionmaker(
-                self.engine,
-                expire_on_commit=False,
-                class_=AsyncSession
+                self.engine, expire_on_commit=False, class_=AsyncSession
             )
             self.__initialized = True
 

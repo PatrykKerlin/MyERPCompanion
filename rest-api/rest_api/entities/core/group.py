@@ -1,9 +1,9 @@
+from entities.base import Base, BaseEntity
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
-from models.base import Base, BaseModel
 
 
-class Group(BaseModel, Base):
+class Group(BaseEntity, Base):
     __tablename__ = "groups"
 
     name = Column(String(10), unique=True, nullable=False)
@@ -14,5 +14,5 @@ class Group(BaseModel, Base):
         secondary="users_groups",
         primaryjoin="Group.id == users_groups.c.group_id",
         secondaryjoin="User.id == users_groups.c.user_id",
-        back_populates="groups"
+        back_populates="groups",
     )

@@ -1,2 +1,2 @@
-from .settings import Settings
 from .database import Database
+from .settings import Settings

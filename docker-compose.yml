@@ -28,11 +28,13 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:changeme@postgres/MyERPCompanion
       - SECRET_KEY=secret
+      - SUPERUSER_USERNAME=admin
+      - SUPERUSER_PASSWORD=admin
     depends_on:
       - postgres
     command:
       sh -c "python -c 'import sys; path=\"/rest_api\"; sys.path.append(path) if path not in sys.path else None' &&
-      uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+      uvicorn main:start_app --host 0.0.0.0 --port 8000 --reload"
 
 #  web-app:
 #    build:

@@ -1,13 +1,18 @@
 from typing import List
-from models.core import User, Group
+
+from dtos.base import BaseDTO
+from entities.core import Group, User
 
 
-class UserDTO:
-    def __init__(self, id: int, username: str, groups: List[Group]) -> None:
-        self.id = id
+class UserDTO(BaseDTO):
+    def __init__(
+        self, id: int, username: str, is_superuser: bool, groups: List[Group]
+    ) -> None:
+        super().__init__(id)
         self.username = username
         self.groups = groups
+        self.__is_superuser = is_superuser
 
-    @classmethod
-    def from_entity(cls, user: User) -> "UserDTO":
-        return cls(id=user.id, username=user.username, groups=user.groups)
+    @property
+    def is_superuser(self) -> bool:
+        return self.__is_superuser

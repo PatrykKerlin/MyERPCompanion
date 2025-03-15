@@ -1,23 +1,18 @@
 from typing import List
-from pydantic import BaseModel, Field, constr, field_serializer
+
+from pydantic import Field, constr, field_serializer
+from schemas.base import BaseCreateSchema, BaseResponseSchema
 
 
-class UserCreate(BaseModel):
+class UserCreate(BaseCreateSchema):
     username: constr(min_length=3, max_length=50) = Field(...)
     password: constr(min_length=6, max_length=100) = Field(...)
-    groups: List[constr(min_length=1, max_length=10)] = Field(...)
-
-    class Config:
-        from_attributes = True
+    groups: List[constr(min_length=1, max_length=10)]
 
 
-class UserResponse(BaseModel):
-    id: int = Field(...)
+class UserResponse(BaseResponseSchema):
     username: str = Field(...)
     groups: list = Field(...)
-
-    class Config:
-        from_attributes = True
 
     @field_serializer("groups")
     def serialize_groups(self, groups: list) -> list:
