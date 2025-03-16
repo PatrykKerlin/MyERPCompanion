@@ -1,9 +1,10 @@
 from getpass import getpass
 from os import getenv
 
+from sqlalchemy import func, select
+
 from entities.core import User
 from services.core import AuthService
-from sqlalchemy import func, select
 
 
 class PopulateSuperuser:
@@ -22,8 +23,8 @@ class PopulateSuperuser:
                 print("Superuser already exists.")
                 return
 
-            username = getenv("SUPERUSER_USERNAME")
-            password = getenv("SUPERUSER_PASSWORD")
+            username = getenv("SUPERUSER_USERNAME", "")
+            password = getenv("SUPERUSER_PASSWORD", "")
             hashed_password = AuthService.get_password_hash(password)
             superuser = User(
                 username=username, password=hashed_password, is_superuser=True

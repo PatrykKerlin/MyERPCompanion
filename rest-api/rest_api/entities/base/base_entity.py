@@ -1,8 +1,9 @@
-from entities.base import Base
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import now
+
+from entities.base import Base
 
 
 class BaseEntity:

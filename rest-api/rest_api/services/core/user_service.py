@@ -1,10 +1,11 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from dtos.core import UserDTO
 from entities.core import User
 from repositories.core import GroupRepository, UserRepository
 from schemas.core import UserCreate
 from services.base import BaseService
 from services.core import AuthService
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class UserService(BaseService):

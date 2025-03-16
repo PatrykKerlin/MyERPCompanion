@@ -1,9 +1,13 @@
-from config import Database, Settings
-from controllers import core
+from os import getenv
+
 from fastapi import APIRouter, FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
+
+from config import Context, Database, Settings
+from controllers import core
 from handlers import DBCheck, PopulateSuperuser
+from config import CustomFastAPI
 
 
 class App:
@@ -13,34 +17,33 @@ class App:
         database: Database,
         oauth2_scheme: OAuth2PasswordBearer,
     ) -> None:
-        self.__settings = settings
         self.__database = database
-        self.__oauth2_scheme = oauth2_scheme
-        self.__app = FastAPI(title="MyERPCompanion API", redoc_url=None)
+        self.__app = CustomFastAPI(title="MyERPCompanion API", redoc_url=None)
+        self.__context = Context(
+            get_db=self.__database.get_db,
+            settings=settings,
+            oauth2_scheme=oauth2_scheme,
+        )
         self.__include_routers()
 
     def __include_routers(self) -> None:
         api_router = APIRouter(prefix="/api")
 
         health_check_controller = core.HealthCheckController()
-        login_controller = core.AuthController(self.__database.get_db, self.__settings)
-        current_user_controller = core.CurrentUserController(
-            self.__database.get_db, self.__settings, self.__oauth2_scheme
-        )
-        user_controller = core.UserController(
-            self.__database.get_db, self.__settings, self.__oauth2_scheme
-        )
-        group_controller = core.GroupController(self.__database.get_db)
+        auth_controller = core.AuthController(self.__context)
+        current_user_controller = core.CurrentUserController(self.__context)
+        user_controller = core.UserController(self.__context)
+        # group_controller = core.GroupController(self.__context)
 
         api_router.include_router(health_check_controller.router, tags=["Health Check"])
-        api_router.include_router(login_controller.router, tags=["Authorization"])
+        api_router.include_router(auth_controller.router, tags=["Authorization"])
         api_router.include_router(current_user_controller.router, tags=["Current User"])
         api_router.include_router(
             user_controller.router, prefix="/users", tags=["Users"]
         )
-        api_router.include_router(
-            group_controller.router, prefix="/groups", tags=["Groups"]
-        )
+        # api_router.include_router(
+        #     group_controller.router, prefix="/groups", tags=["Groups"]
+        # )
 
         self.__app.include_router(api_router)
 
@@ -53,38 +56,21 @@ class App:
 
 
 def create_app() -> FastAPI:
-    settings = Settings()
+    settings = Settings(
+        DATABASE_URL=getenv("DATABASE_URL", ""),
+        SECRET_KEY=getenv("SECRET_KEY", "")
+    )
     database = Database(settings)
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth")
     app_instance = App(settings, database, oauth2_scheme)
     app = app_instance.get_app()
 
     @app.on_event("startup")
-    async def on_startup():
+    async def on_startup() -> None:
         await DBCheck(database.get_db).wait_for_db()
         await PopulateSuperuser(database.get_db).populate_superuser()
         await app_instance.startup()
 
-    def custom_openapi():
-        if app.openapi_schema:
-            return app.openapi_schema
-        openapi_schema = get_openapi(
-            title=app.title,
-            version="1.0.0",
-            description="MyERPCompanion API documentation",
-            routes=app.routes,
-        )
-        openapi_schema["components"]["securitySchemes"] = {
-            "BearerAuth": {
-                "type": "http",
-                "scheme": "bearer",
-            }
-        }
-        openapi_schema["security"] = [{"BearerAuth": []}]
-        app.openapi_schema = openapi_schema
-        return app.openapi_schema
-
-    app.openapi = custom_openapi
     return app
 
 

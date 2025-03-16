@@ -1,17 +1,18 @@
 from datetime import UTC, datetime, timedelta
-from typing import List
+from typing import List, NoReturn, cast
 
-from config import Settings
-from dtos.core import UserDTO
-from entities.core import Group, User
 from fastapi import HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from repositories.core import UserRepository
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
+
+from config import Settings
+from dtos.core import UserDTO
+from entities.core import Group, User
+from repositories.core import UserRepository
 
 
 class AuthService:
@@ -22,7 +23,7 @@ class AuthService:
         cls, db: AsyncSession, username: str, password: str, settings: Settings
     ) -> str | None:
         user = await UserRepository.get_by_name(db, username)
-        if not user or not cls.__verify_password(password, user.password):
+        if not user or not cls.__verify_password(password, cast(str, user.password)):
             return None
         token_data = {"user": user.id}
         token = cls.__create_access_token(token_data, settings)
@@ -38,7 +39,7 @@ class AuthService:
             return jwt.decode(
                 token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
             )
-        except jwt.JWTError:
+        except JWTError:
             return {}
 
     @classmethod
@@ -51,27 +52,22 @@ class AuthService:
         required_groups: List[str],
     ) -> UserDTO:
         token = await oauth2_scheme(request)
+        if not token:
+            cls.__raise_invalid_token()
         payload = cls.decode_access_token(token, settings)
         if not payload or "user" not in payload:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-            )
+            cls.__raise_invalid_token()
         user_id = payload["user"]
         user = await UserRepository.get_by_id(db, user_id)
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-            )
+            cls.__raise_invalid_token()
         if not (
             user.is_superuser
             or any(group.name in required_groups for group in user.groups)
         ):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have permission to perform this action",
-            )
+            cls.__raise_no_permission()
         dto = UserDTO.from_entity(user)
-        return dto
+        return cast(UserDTO, dto)
 
     @classmethod
     def __verify_password(cls, plain_password: str, hashed_password: str) -> bool:
@@ -87,3 +83,16 @@ class AuthService:
             token_data, settings.SECRET_KEY, algorithm=settings.ALGORITHM
         )
         return encoded_jwt
+
+    @classmethod
+    def __raise_invalid_token(cls) -> NoReturn:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
+
+    @classmethod
+    def __raise_no_permission(cls) -> NoReturn:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to perform this action",
+        )

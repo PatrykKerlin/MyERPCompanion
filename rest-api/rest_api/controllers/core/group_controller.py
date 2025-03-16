@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from schemas.core import GroupCreate, GroupOut
 from services.core import GroupService
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class GroupController:

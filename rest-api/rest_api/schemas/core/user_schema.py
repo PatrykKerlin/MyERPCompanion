@@ -1,13 +1,14 @@
-from typing import List
+from typing import Annotated, List
 
-from pydantic import Field, constr, field_serializer
+from pydantic import Field, field_serializer
+
 from schemas.base import BaseCreateSchema, BaseResponseSchema
 
 
 class UserCreate(BaseCreateSchema):
-    username: constr(min_length=3, max_length=50) = Field(...)
-    password: constr(min_length=6, max_length=100) = Field(...)
-    groups: List[constr(min_length=1, max_length=10)]
+    username: Annotated[str, Field(min_length=3, max_length=50)]
+    password: Annotated[str, Field(min_length=6, max_length=100)]
+    groups: List[Annotated[str, Field(min_length=1, max_length=10)]]
 
 
 class UserResponse(BaseResponseSchema):

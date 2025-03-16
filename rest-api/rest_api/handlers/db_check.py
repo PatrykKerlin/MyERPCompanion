@@ -1,8 +1,9 @@
 import asyncio
 
-from entities.core import User
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.future import select
+
+from entities.core import User
 
 
 class DBCheck:

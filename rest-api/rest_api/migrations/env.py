@@ -1,13 +1,16 @@
 import asyncio
-import os
 import sys
 from logging.config import fileConfig
+from os import getenv
+from typing import cast
 
-import entities.core
 from alembic import context
-from config import Database, Settings
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.sql.schema import MetaData
+
+import entities.core
+from config import Database, Settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -23,7 +26,10 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-settings = Settings()
+settings = Settings(
+    DATABASE_URL=getenv("DATABASE_URL", ""),
+    SECRET_KEY=getenv("SECRET_KEY", "")
+)
 db = Database(settings)
 target_metadata = db.get_base().metadata
 
@@ -50,15 +56,16 @@ def run_migrations_offline() -> None:
 
     """
     url = config.get_main_option("sqlalchemy.url")
-    context.configure(
-        url=url,
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-    )
+    if url:
+        context.configure(
+            url=url,
+            target_metadata=target_metadata,
+            literal_binds=True,
+            dialect_opts={"paramstyle": "named"},
+        )
 
-    with context.begin_transaction():
-        context.run_migrations()
+        with context.begin_transaction():
+            context.run_migrations()
 
 
 async def run_migrations_online() -> None:
@@ -68,13 +75,15 @@ async def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = create_async_engine(
-        config.get_main_option("sqlalchemy.url"),
-        poolclass=pool.NullPool,
-    )
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
-    await connectable.dispose()
+    url = config.get_main_option("sqlalchemy.url")
+    if url:
+        connectable = create_async_engine(
+            url,
+            poolclass=pool.NullPool,
+        )
+        async with connectable.connect() as connection:
+            await connection.run_sync(do_run_migrations)
+        await connectable.dispose()
 
 
 def do_run_migrations(connection):

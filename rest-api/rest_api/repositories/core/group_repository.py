@@ -1,9 +1,10 @@
 from typing import List
 
-from entities.core import Group
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
+
+from entities.core import Group
 
 
 class GroupRepository:

@@ -1,23 +1,20 @@
 from typing import Callable
 
-from config import Settings
-from config.database import Database
-from entities.core import Group, User
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
-from schemas.core import UserResponse
-from services.core import AuthService
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload, with_loader_criteria
 
+from config import Context, Settings
+from config.database import Database
+from entities.core import Group, User
+from schemas.core import UserResponse
+from services.core import AuthService
+
 
 class CurrentUserController:
-    def __init__(
-        self, get_db: Callable, settings: Settings, oauth2_scheme: OAuth2PasswordBearer
-    ):
-        self.__get_db = get_db
-        self.__settings = settings
-        self.__oauth2_scheme = oauth2_scheme
+    def __init__(self, context: Context) -> None:
+        self.__context = context
         self.router = APIRouter()
         self.router.add_api_route(
             "/current-user",
@@ -26,16 +23,20 @@ class CurrentUserController:
             response_model=UserResponse,
         )
 
-    async def current_user(self, request: Request) -> dict:
-        token = await self.__oauth2_scheme(request)
-        payload = AuthService.decode_access_token(token, self.__settings)
+    async def current_user(self, request: Request) -> User:
+        token = await self.__context.oauth2_scheme(request)
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            )
+        payload = AuthService.decode_access_token(token, self.__context.settings)
         if not payload or "user" not in payload:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
             )
         user_id = payload["user"]
 
-        async with self.__get_db() as db:
+        async with self.__context.get_db() as db:
             result = await db.execute(
                 select(User)
                 .options(

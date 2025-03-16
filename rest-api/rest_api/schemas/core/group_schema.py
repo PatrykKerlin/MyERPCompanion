@@ -1,9 +1,11 @@
-from pydantic import BaseModel, Field, constr
+from typing import Annotated
+
+from pydantic import BaseModel, Field
 
 
 class GroupCreate(BaseModel):
-    name: constr(min_length=1, max_length=10) = Field(...)
-    description: constr(min_length=1, max_length=255) = Field(...)
+    name: Annotated[str, Field(min_length=1, max_length=10)]
+    description: Annotated[str, Field(min_length=1, max_length=255)]
 
     class Config:
         from_attributes = True
