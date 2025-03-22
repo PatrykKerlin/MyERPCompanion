@@ -1,1 +1,1 @@
-from .base_schema import BaseCreateSchema, BaseResponseSchema
+from .base_schema import BaseCreateSchema, BaseUpdateSchema, BaseResponseSchema

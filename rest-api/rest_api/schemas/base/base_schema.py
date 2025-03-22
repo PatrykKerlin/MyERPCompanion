@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class BaseSchema(BaseModel):
@@ -10,5 +10,9 @@ class BaseCreateSchema(BaseSchema):
     pass
 
 
+class BaseUpdateSchema(BaseSchema):
+    pass
+
+
 class BaseResponseSchema(BaseSchema):
-    id: int = Field(...)
+    id: int

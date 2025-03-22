@@ -1,9 +1,10 @@
 import asyncio
 
+from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.future import select
 
-from entities.core import User
+from helpers.exceptions import DatabaseNotReadyException
 
 
 class DBCheck:
@@ -16,10 +17,10 @@ class DBCheck:
         for attempt in range(1, self.__retries + 1):
             try:
                 async with self.__get_db() as db:
-                    await db.execute(select(User).limit(1))
+                    await db.execute(text('SELECT 1'))
                     print("Database is ready.")
                 return
             except OperationalError:
                 print(f"Database not ready, attempt {attempt}/{self.__retries}.")
                 await asyncio.sleep(self.__delay)
-        raise Exception("Database not ready after several retries.")
+        raise DatabaseNotReadyException()

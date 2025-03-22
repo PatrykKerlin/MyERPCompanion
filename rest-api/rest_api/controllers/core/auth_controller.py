@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter
 
 from config import Context, Settings
+from helpers.exceptions import InvalidCredentialsException
 from schemas.core import AuthSchema
 from services.core import AuthService
 
@@ -17,8 +18,5 @@ class AuthController:
                 db, auth.username, auth.password, self.__context.settings
             )
             if not token:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid credentials",
-                )
+                raise InvalidCredentialsException
             return {"token": token}

@@ -10,6 +10,7 @@ from config.database import Database
 from entities.core import Group, User
 from schemas.core import UserResponse
 from services.core import AuthService
+from helpers.exceptions import InvalidCredentialsException
 
 
 class CurrentUserController:
@@ -26,14 +27,10 @@ class CurrentUserController:
     async def current_user(self, request: Request) -> User:
         token = await self.__context.oauth2_scheme(request)
         if not token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-            )
+            raise InvalidCredentialsException()
         payload = AuthService.decode_access_token(token, self.__context.settings)
         if not payload or "user" not in payload:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-            )
+            raise InvalidCredentialsException()
         user_id = payload["user"]
 
         async with self.__context.get_db() as db:

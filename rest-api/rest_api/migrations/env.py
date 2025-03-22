@@ -34,9 +34,6 @@ db = Database(settings)
 target_metadata = db.get_base().metadata
 
 
-# target_metadata = Database.get_base().metadata
-
-
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")

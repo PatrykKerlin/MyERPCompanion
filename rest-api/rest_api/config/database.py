@@ -16,10 +16,11 @@ class Database:
     def __new__(cls, settings: Settings) -> "Database":
         if cls.__instance is None:
             cls.__instance = super().__new__(cls)
+            cls.__instance.__initialized = False
         return cls.__instance
 
     def __init__(self, settings: Settings) -> None:
-        if not hasattr(self, "_initialized"):
+        if not self.__initialized:
             self.engine: AsyncEngine = create_async_engine(settings.DATABASE_URL, echo=True)
             self.__async_session_local = async_sessionmaker(
                 bind=self.engine,

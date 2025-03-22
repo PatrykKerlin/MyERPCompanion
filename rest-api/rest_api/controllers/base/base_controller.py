@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from config import Context, Settings
 from dtos.base import BaseDTO
 from dtos.core import UserDTO
+from helpers.exceptions import NotFoundException
 from schemas.base import BaseCreateSchema, BaseResponseSchema
 from services.base import BaseService
 from services.core import AuthService
@@ -51,7 +52,7 @@ class BaseController(Generic[TDTO, TCreateSchema, TResponseSchema, TService]):
         async with self._context.get_db() as db:
             dto = await self.__class__.service.get_by_id(db, entity_id)
             if not dto:
-                self.__raise_not_found()
+                raise NotFoundException(self.__class__.entity_name)
             return self.__class__.response_schema(**dto.__dict__)
 
     async def create(self, request: Request, data: TCreateSchema) -> TResponseSchema:
@@ -65,7 +66,7 @@ class BaseController(Generic[TDTO, TCreateSchema, TResponseSchema, TService]):
         async with self._context.get_db() as db:
             dto = await self.__class__.service.update(db, entity_id, data, user_dto.id)
             if not dto:
-                self.__raise_not_found()
+                raise NotFoundException(self.__class__.entity_name)
             return self.__class__.response_schema(**dto.__dict__)
 
     async def delete(self, request: Request, entity_id: int) -> None:
@@ -73,11 +74,5 @@ class BaseController(Generic[TDTO, TCreateSchema, TResponseSchema, TService]):
         async with self._context.get_db() as db:
             success = await self.__class__.service.delete(db, entity_id, user_dto.id)
             if not success:
-                self.__raise_not_found()
+                raise NotFoundException(self.__class__.entity_name)
             return None
-
-    def __raise_not_found(self) -> NoReturn:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"{self.__class__.entity_name} not found",
-        )

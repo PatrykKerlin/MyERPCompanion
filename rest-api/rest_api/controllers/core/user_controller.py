@@ -18,11 +18,12 @@ class UserController(BaseController):
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
+        user_id_path = "/{user_id}"
         self.router.add_api_route(
             "", self.get_all, methods=["GET"], response_model=List[UserResponse]
         )
         self.router.add_api_route(
-            "/{user_id}", self.get_by_id, methods=["GET"], response_model=UserResponse
+            user_id_path, self.get_by_id, methods=["GET"], response_model=UserResponse
         )
         self.router.add_api_route(
             "",
@@ -32,10 +33,10 @@ class UserController(BaseController):
             status_code=status.HTTP_201_CREATED,
         )
         self.router.add_api_route(
-            "/{user_id}", self.update, methods=["PUT"], response_model=UserResponse
+            user_id_path, self.update, methods=["PUT"], response_model=UserResponse
         )
         self.router.add_api_route(
-            "/{user_id}",
+            user_id_path,
             self.delete,
             methods=["DELETE"],
             status_code=status.HTTP_204_NO_CONTENT,

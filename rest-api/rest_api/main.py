@@ -1,13 +1,11 @@
 from os import getenv
-
+from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI
-from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
 
-from config import Context, Database, Settings
+from config import Context, Database, Settings, CustomFastAPI
 from controllers import core
 from handlers import DBCheck, PopulateSuperuser
-from config import CustomFastAPI
 
 
 class App:
@@ -16,9 +14,14 @@ class App:
         settings: Settings,
         database: Database,
         oauth2_scheme: OAuth2PasswordBearer,
+        lifespan: any = None,
     ) -> None:
         self.__database = database
-        self.__app = CustomFastAPI(title="MyERPCompanion API", redoc_url=None)
+        self.__app = CustomFastAPI(
+            title="MyERPCompanion API",
+            redoc_url=None,
+            lifespan=lifespan,
+        )
         self.__context = Context(
             get_db=self.__database.get_db,
             settings=settings,
@@ -62,16 +65,16 @@ def create_app() -> FastAPI:
     )
     database = Database(settings)
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth")
-    app_instance = App(settings, database, oauth2_scheme)
-    app = app_instance.get_app()
 
-    @app.on_event("startup")
-    async def on_startup() -> None:
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
         await DBCheck(database.get_db).wait_for_db()
-        await PopulateSuperuser(database.get_db).populate_superuser()
         await app_instance.startup()
+        await PopulateSuperuser(database.get_db).populate_superuser()
+        yield
 
-    return app
+    app_instance = App(settings, database, oauth2_scheme, lifespan=lifespan)
+    return app_instance.get_app()
 
 
 start_app = create_app()
