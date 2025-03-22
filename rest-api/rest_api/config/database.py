@@ -12,6 +12,7 @@ from config import Settings
 class Database:
     __instance = None
     __base: DeclarativeMeta | None = None
+    __initialized: bool = False
 
     def __new__(cls, settings: Settings) -> "Database":
         if cls.__instance is None:

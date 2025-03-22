@@ -1,5 +1,11 @@
-from sqlalchemy.orm import DeclarativeBase
+from typing import TYPE_CHECKING
+from config import Database
+from sqlalchemy.orm import DeclarativeMeta
 
+if TYPE_CHECKING:
+    class _Base(DeclarativeMeta):
+        pass
+else:
+    _Base = Database.get_base()
 
-class Base(DeclarativeBase):
-    pass
+Base = _Base

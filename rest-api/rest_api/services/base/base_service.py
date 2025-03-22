@@ -42,8 +42,8 @@ class BaseService(ABC, Generic[TEntity, TDTO, TCreateSchema]):
         if not schema and not dto:
             raise SchemaAndDTOMissingException()
         if schema:
-            dto = UserDTO.from_schema(schema)
-        entity = create_or_update_instance(TEntity, get_instance_attributes(dto))
+            dto = self.dto.from_schema(schema)
+        entity = create_or_update_instance(self.entity, get_instance_attributes(dto))
         entity = cast(TEntity, entity)
         setattr(entity, "created_by", user_id)
         saved_entity = await self.repository.save(db, entity)
@@ -63,8 +63,8 @@ class BaseService(ABC, Generic[TEntity, TDTO, TCreateSchema]):
         if not entity:
             return None
         if schema:
-            dto = UserDTO.from_schema(schema)
-        entity = create_or_update_instance(TEntity, get_instance_attributes(dto), entity)
+            dto = self.dto.from_schema(schema)
+        entity = create_or_update_instance(self.entity, get_instance_attributes(dto), entity)
         setattr(entity, "updated_by", user_id)
         updated_entity = await self.repository.save(db, entity)
         updated_dto = self.dto.from_entity(updated_entity)
