@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 
 from config import Context, Settings
-from helpers.exceptions import InvalidCredentialsException
 from schemas.core import AuthSchema
 from services.core import AuthService
+from utils.exceptions import InvalidCredentialsException
 
 
 class AuthController:

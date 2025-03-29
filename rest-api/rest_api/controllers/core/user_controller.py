@@ -7,7 +7,7 @@ from config import Context, Settings
 from controllers.base import BaseController
 from dtos.core import UserDTO
 from entities.core import User
-from schemas.core import UserCreate, UserResponse
+from schemas.core import UserCreate, UserResponse, UserUpdate
 from services.core import UserService
 
 
@@ -33,7 +33,7 @@ class UserController(BaseController):
             status_code=status.HTTP_201_CREATED,
         )
         self.router.add_api_route(
-            user_id_path, self.update, methods=["PUT"], response_model=UserResponse
+            user_id_path, self.update, methods=["PATCH"], response_model=UserResponse
         )
         self.router.add_api_route(
             user_id_path,
@@ -51,7 +51,7 @@ class UserController(BaseController):
     async def create(self, request: Request, data: UserCreate):
         return await super().create(request, data)
 
-    async def update(self, request: Request, user_id: int, data: UserCreate):
+    async def update(self, request: Request, user_id: int, data: UserUpdate):
         return await super().update(request, user_id, data)
 
     async def delete(self, request: Request, user_id: int):

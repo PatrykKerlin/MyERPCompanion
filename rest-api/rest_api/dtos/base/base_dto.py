@@ -1,34 +1,35 @@
-from typing import Type, TypeVar, Generic
-from schemas.base import BaseCreateSchema, BaseUpdateSchema
+from typing import Generic, Type, TypeVar
+
+from pydantic import BaseModel
+
 from entities.base import BaseEntity
-from helpers.helpers import create_or_update_instance
+from schemas.base import BaseCreateSchema
 
-TBaseEntity = TypeVar("TBaseEntity", bound="BaseEntity")
+TBaseEntity = TypeVar("TBaseEntity", bound=BaseEntity)
 TDTO = TypeVar("TDTO", bound="BaseDTO")
-TCreateSchema = TypeVar("TCreateSchema", bound="BaseCreateSchema")
-TUpdateSchema = TypeVar("TUpdateSchema", bound="BaseUpdateSchema")
+TCreateSchema = TypeVar("TCreateSchema", bound=BaseCreateSchema)
 
 
-class BaseDTO(Generic[TDTO]):
-    def __init__(self, id: int | None) -> None:
-        self.id = id
+class BaseDTO(BaseModel, Generic[TDTO, TBaseEntity, TCreateSchema]):
+    id: int | None = None
 
-    @classmethod
-    def from_entity(cls: Type[TDTO], entity: TBaseEntity) -> TDTO:
-        return create_or_update_instance(cls, entity.__dict__)
+    model_config = {"from_attributes": True}
 
-    @classmethod
-    def from_schema(cls: Type[TDTO], schema: TCreateSchema | TUpdateSchema | dict) -> TDTO:
-        schema_dict = schema if isinstance(schema, dict) else schema.dict(exclude_unset=True)
-        del schema
-        return create_or_update_instance(cls, schema_dict)
+    def to_entity(self, entity_cls: type[TBaseEntity]) -> TBaseEntity:
+        entity_data = self.model_dump(exclude_unset=True)
+        return entity_cls(**entity_data)
 
     @classmethod
-    def call_all_deleters(cls, instance: TDTO) -> None:
-        for name in dir(instance.__class__):
-            attr = getattr(instance.__class__, name)
-            if isinstance(attr, property) and attr.fdel is not None:
-                try:
-                    delattr(instance, name)
-                except AttributeError:
-                    pass
+    def from_entity(cls: type[TDTO], entity: TBaseEntity) -> TDTO:
+        return cls.model_validate(entity)
+
+    @classmethod
+    def from_schema(
+        cls: type[TDTO], schema: TCreateSchema | dict
+    ) -> TDTO:
+        schema_dict = (
+            schema
+            if isinstance(schema, dict)
+            else schema.model_dump(exclude_unset=True)
+        )
+        return cls.model_validate(schema_dict)

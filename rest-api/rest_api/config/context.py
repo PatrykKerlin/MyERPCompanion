@@ -1,6 +1,7 @@
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
-from typing import AsyncContextManager, Callable
+from typing import AsyncContextManager
+from collections.abc import Callable
 
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession

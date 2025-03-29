@@ -9,37 +9,49 @@ from services.core import AuthService
 
 
 class UserService(BaseService):
-    def __init__(self):
-        super().__init__(UserRepository, User, UserDTO)
+    _dto = UserDTO
+    _entity = User
+    _repository = UserRepository
 
     async def create(
-        self, db: AsyncSession, user_id: int, schema: UserCreate | None = None, dto: UserDTO | None = None
+        self,
+        db: AsyncSession,
+        user_id: int,
+        schema: UserCreate | None = None,
+        dto: UserDTO | None = None,
     ) -> UserDTO | None:
-        create_data = schema.dict()
-        if "groups" in create_data:
-            groups = await GroupRepository.get_all_by_names(db, create_data["groups"])
-            create_data["groups"] = groups
-        if "password" in create_data:
-            create_data["password"] = AuthService.get_password_hash(create_data["password"])
         if not dto:
-            dto = UserDTO.from_schema(create_data)
-
-        return super().update(db, user_id, dto=dto)
+            dto = await self.__prepare_dto(db, schema)
+        created_dto = await super().create(db, user_id, dto=dto)
+        return created_dto
 
     async def update(
-        self, db: AsyncSession, entity_id: int, user_id: int, schema: UserUpdate | None = None,
-        dto: UserDTO | None = None
+        self,
+        db: AsyncSession,
+        entity_id: int,
+        user_id: int,
+        schema: UserUpdate | None = None,
+        dto: UserDTO | None = None,
     ) -> UserDTO | None:
         entity = await self.repository.get_by_id(db, entity_id)
         if not entity:
             return None
-        update_data = schema.dict(exclude_unset=True)
-        if "groups" in update_data:
-            groups = await GroupRepository.get_all_by_names(db, update_data["groups"])
-            update_data["groups"] = groups
-        if "password" in update_data:
-            update_data["password"] = AuthService.get_password_hash(update_data["password"])
         if not dto:
-            dto = UserDTO.from_schema(update_data)
+            dto = await self.__prepare_dto(db, schema, exclude_unset=True)
+        updated_dto = await super().update(db, entity_id, user_id, dto=dto)
+        return updated_dto
 
-        return super().update(db, entity_id, user_id, dto=dto)
+    @classmethod
+    async def __prepare_dto(
+        cls,
+        db: AsyncSession,
+        schema: UserCreate | UserUpdate,
+        exclude_unset: bool = False
+    ) -> UserDTO:
+        data = schema.dict(exclude_unset=exclude_unset)
+        if "groups" in data:
+            groups = await GroupRepository.get_all_by_names(db, data["groups"])
+            data["groups"] = groups
+        if "password" in data:
+            data["password"] = AuthService.get_password_hash(data["password"])
+        return cls._dto.from_schema(data)

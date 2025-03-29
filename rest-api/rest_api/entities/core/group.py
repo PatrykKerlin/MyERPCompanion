@@ -1,16 +1,16 @@
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import relationship
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from entities.base import Base, BaseEntity
+from entities.base import BaseEntity
 
 
-class Group(BaseEntity, Base):
+class Group(BaseEntity):
     __tablename__ = "groups"
 
-    name = Column(String(10), unique=True, nullable=False)
-    description = Column(String(255), nullable=False)
+    name: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    users = relationship(
+    users: Mapped[list["User"]] = relationship(
         "User",
         secondary="users_groups",
         primaryjoin="Group.id == users_groups.c.group_id",

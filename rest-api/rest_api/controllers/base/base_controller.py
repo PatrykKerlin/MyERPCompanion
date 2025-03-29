@@ -1,15 +1,15 @@
 from typing import Generic, List, NoReturn, Type, TypeVar
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer
 
 from config import Context, Settings
 from dtos.base import BaseDTO
 from dtos.core import UserDTO
-from helpers.exceptions import NotFoundException
 from schemas.base import BaseCreateSchema, BaseResponseSchema
 from services.base import BaseService
 from services.core import AuthService
+from utils.exceptions import NotFoundException
 
 TDTO = TypeVar("TDTO", bound=BaseDTO)
 TCreateSchema = TypeVar("TCreateSchema", bound=BaseCreateSchema)
@@ -58,21 +58,23 @@ class BaseController(Generic[TDTO, TCreateSchema, TResponseSchema, TService]):
     async def create(self, request: Request, data: TCreateSchema) -> TResponseSchema:
         user_dto = await self._get_user_if_authorized(request)
         async with self._context.get_db() as db:
-            dto = await self.__class__.service.create(db, data, user_dto.id)
+            dto = await self.__class__.service.create(db, user_dto.id, data)
             return self.__class__.response_schema(**dto.__dict__)
 
-    async def update(self, request: Request, entity_id: int, data: TCreateSchema) -> TResponseSchema:
+    async def update(
+        self, request: Request, entity_id: int, data: TCreateSchema
+    ) -> TResponseSchema:
         user_dto = await self._get_user_if_authorized(request)
         async with self._context.get_db() as db:
-            dto = await self.__class__.service.update(db, entity_id, data, user_dto.id)
+            dto = await self.__class__.service.update(db, entity_id, user_dto.id, data)
             if not dto:
                 raise NotFoundException(self.__class__.entity_name)
             return self.__class__.response_schema(**dto.__dict__)
 
-    async def delete(self, request: Request, entity_id: int) -> None:
+    async def delete(self, request: Request, entity_id: int) -> Response:
         user_dto = await self._get_user_if_authorized(request)
         async with self._context.get_db() as db:
             success = await self.__class__.service.delete(db, entity_id, user_dto.id)
             if not success:
                 raise NotFoundException(self.__class__.entity_name)
-            return None
+            return Response(status_code=status.HTTP_204_NO_CONTENT)

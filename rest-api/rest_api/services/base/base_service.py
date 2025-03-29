@@ -1,81 +1,77 @@
-from abc import ABC, abstractmethod
-from typing import Generic, List, Type, TypeVar, cast
+from abc import ABC
+from typing import Generic, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dtos.base import BaseDTO
 from entities.base import BaseEntity
 from repositories.base import BaseRepository
-from schemas.base import BaseCreateSchema, BaseUpdateSchema
-from helpers.exceptions import SchemaAndDTOMissingException
-from helpers.helpers import create_or_update_instance, get_instance_attributes
+from schemas.base import BaseCreateSchema
+from utils.exceptions import SchemaAndDTOMissingException
 
 TEntity = TypeVar("TEntity", bound=BaseEntity)
 TRepository = TypeVar("TRepository", bound=BaseRepository)
 TDTO = TypeVar("TDTO", bound=BaseDTO)
 TCreateSchema = TypeVar("TCreateSchema", bound=BaseCreateSchema)
-TUpdateSchema = TypeVar("TUpdateSchema", bound=BaseUpdateSchema)
 
 
-class BaseService(ABC, Generic[TEntity, TDTO, TCreateSchema]):
-    def __init__(
-        self,
-        repository: Type[TRepository],
-        entity: Type[TEntity],
-        dto: Type[TDTO],
-    ) -> None:
-        self.repository = repository
-        self.entity = entity
-        self.dto = dto
+class BaseService(
+    ABC, Generic[TEntity, TRepository, TDTO, TCreateSchema]
+):
+    _repository: type[TRepository]
+    _entity: type[TEntity]
+    _dto: type[TDTO]
 
-    async def get_all(self, db: AsyncSession) -> List[TDTO]:
-        entities = await self.repository.get_all(db)
-        return [cast(TDTO, self.dto.from_entity(entity)) for entity in entities]
+    async def get_all(self, db: AsyncSession) -> list[TDTO]:
+        entities = await self._repository.get_all(db)
+        return [self._dto.from_entity(entity) for entity in entities]
 
     async def get_by_id(self, db: AsyncSession, entity_id: int) -> TDTO | None:
-        entity = await self.repository.get_by_id(db, entity_id)
-        return cast(TDTO, self.dto.from_entity(entity)) if entity else None
+        entity = await self._repository.get_by_id(db, entity_id)
+        if not entity:
+            return None
+        return self._dto.from_entity(entity)
 
     async def create(
-        self, db: AsyncSession, user_id: int, schema: TUpdateSchema | None = None, dto: TDTO | None = None
+        self,
+        db: AsyncSession,
+        user_id: int,
+        schema: TCreateSchema | None = None,
+        dto: TDTO | None = None,
     ) -> TDTO:
         if not schema and not dto:
             raise SchemaAndDTOMissingException()
-        if schema:
-            dto = self.dto.from_schema(schema)
-        entity = create_or_update_instance(self.entity, get_instance_attributes(dto))
-        entity = cast(TEntity, entity)
+        if not dto:
+            dto = self._dto.from_schema(schema)
+        entity = dto.to_entity(self._entity)
         setattr(entity, "created_by", user_id)
-        saved_entity = await self.repository.save(db, entity)
-        saved_dto = self.dto.from_entity(saved_entity)
-        saved_dto = cast(TDTO, saved_dto)
-        saved_dto.call_all_deleters()
-        return saved_dto
+        saved_entity = await self._repository.save(db, entity)
+        return self._dto.from_entity(saved_entity)
 
     async def update(
-        self, db: AsyncSession, entity_id: int, user_id: int, schema: TUpdateSchema | None = None,
-        dto: TDTO | None = None
+        self,
+        db: AsyncSession,
+        entity_id: int,
+        user_id: int,
+        schema: TCreateSchema | None = None,
+        dto: TDTO | None = None,
     ) -> TDTO | None:
         if not schema and not dto:
             raise SchemaAndDTOMissingException()
-        entity = await self.repository.get_by_id(db, entity_id)
-        entity = cast(TEntity, entity)
+        entity = await self._repository.get_by_id(db, entity_id)
         if not entity:
             return None
-        if schema:
-            dto = self.dto.from_schema(schema)
-        entity = create_or_update_instance(self.entity, get_instance_attributes(dto), entity)
+        if not dto:
+            dto = self._dto.from_schema(schema)
+        for key, value in dto.model_dump(exclude_unset=True).items():
+            setattr(entity, key, value)
         setattr(entity, "updated_by", user_id)
-        updated_entity = await self.repository.save(db, entity)
-        updated_dto = self.dto.from_entity(updated_entity)
-        updated_dto = cast(TDTO, updated_dto)
-        updated_dto.call_all_deleters()
-        return updated_entity
+        updated_entity = await self._repository.save(db, entity)
+        return self._dto.from_entity(updated_entity)
 
     async def delete(self, db: AsyncSession, entity_id: int, user_id: int) -> bool:
-        entity = await self.repository.get_by_id(db, entity_id)
+        entity = await self._repository.get_by_id(db, entity_id)
         if not entity:
             return False
         setattr(entity, "modified_by", user_id)
-        result = await self.repository.delete(db, entity)
-        return result
+        return await self._repository.delete(db, entity)

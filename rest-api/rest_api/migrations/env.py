@@ -27,8 +27,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 
 settings = Settings(
-    DATABASE_URL=getenv("DATABASE_URL", ""),
-    SECRET_KEY=getenv("SECRET_KEY", "")
+    DATABASE_URL=getenv("DATABASE_URL", ""), SECRET_KEY=getenv("SECRET_KEY", "")
 )
 db = Database(settings)
 target_metadata = db.get_base().metadata

@@ -1,19 +1,10 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-
+from dtos.core import GroupDTO
 from entities.core import Group
+from repositories.core import GroupRepository
+from services.base import BaseService
 
 
-class GroupService:
-    @classmethod
-    async def create_group(cls, db: AsyncSession, name: str) -> Group:
-        group = Group(name=name)
-        db.add(group)
-        await db.commit()
-        await db.refresh(group)
-        return group
-
-    @classmethod
-    async def get_all_groups(cls, db: AsyncSession) -> list:
-        result = await db.execute(select(Group))
-        return result.scalars().all()
+class GroupService(BaseService):
+    _dto = GroupDTO
+    _entity = Group
+    _repository = GroupRepository

@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.future import select
 
-from helpers.exceptions import DatabaseNotReadyException
+from utils.exceptions import DatabaseNotReadyException
 
 
 class DBCheck:
@@ -17,7 +17,7 @@ class DBCheck:
         for attempt in range(1, self.__retries + 1):
             try:
                 async with self.__get_db() as db:
-                    await db.execute(text('SELECT 1'))
+                    await db.execute(text("SELECT 1"))
                     print("Database is ready.")
                 return
             except OperationalError:

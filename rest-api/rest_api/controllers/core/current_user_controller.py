@@ -10,7 +10,7 @@ from config.database import Database
 from entities.core import Group, User
 from schemas.core import UserResponse
 from services.core import AuthService
-from helpers.exceptions import InvalidCredentialsException
+from utils.exceptions import InvalidCredentialsException
 
 
 class CurrentUserController:

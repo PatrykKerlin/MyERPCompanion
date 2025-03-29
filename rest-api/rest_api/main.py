@@ -1,11 +1,15 @@
-from os import getenv
 from contextlib import asynccontextmanager
+from os import getenv
+from typing import Any
+
 from fastapi import APIRouter, FastAPI
 from fastapi.security import OAuth2PasswordBearer
 
-from config import Context, Database, Settings, CustomFastAPI
+from config import Context, CustomFastAPI, Database, Settings
 from controllers import core
 from handlers import DBCheck, PopulateSuperuser
+from services.core import AuthService
+from middlewares import AuthMiddleware
 
 
 class App:
@@ -14,7 +18,7 @@ class App:
         settings: Settings,
         database: Database,
         oauth2_scheme: OAuth2PasswordBearer,
-        lifespan: any = None,
+        lifespan: Any = None,
     ) -> None:
         self.__database = database
         self.__app = CustomFastAPI(
@@ -36,7 +40,7 @@ class App:
         auth_controller = core.AuthController(self.__context)
         current_user_controller = core.CurrentUserController(self.__context)
         user_controller = core.UserController(self.__context)
-        # group_controller = core.GroupController(self.__context)
+        group_controller = core.GroupController(self.__context)
 
         api_router.include_router(health_check_controller.router, tags=["Health Check"])
         api_router.include_router(auth_controller.router, tags=["Authorization"])
@@ -44,9 +48,9 @@ class App:
         api_router.include_router(
             user_controller.router, prefix="/users", tags=["Users"]
         )
-        # api_router.include_router(
-        #     group_controller.router, prefix="/groups", tags=["Groups"]
-        # )
+        api_router.include_router(
+            group_controller.router, prefix="/groups", tags=["Groups"]
+        )
 
         self.__app.include_router(api_router)
 
@@ -60,8 +64,7 @@ class App:
 
 def create_app() -> FastAPI:
     settings = Settings(
-        DATABASE_URL=getenv("DATABASE_URL", ""),
-        SECRET_KEY=getenv("SECRET_KEY", "")
+        DATABASE_URL=getenv("DATABASE_URL", ""), SECRET_KEY=getenv("SECRET_KEY", "")
     )
     database = Database(settings)
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth")
@@ -74,6 +77,10 @@ def create_app() -> FastAPI:
         yield
 
     app_instance = App(settings, database, oauth2_scheme, lifespan=lifespan)
+
+    AuthService.set_settings(settings)
+    app_instance.get_app().add_middleware(AuthMiddleware)
+
     return app_instance.get_app()
 
 
