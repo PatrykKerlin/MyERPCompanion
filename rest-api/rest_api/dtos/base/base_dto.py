@@ -1,4 +1,4 @@
-from typing import Generic, Type, TypeVar
+from typing import Generic, Type, TypeVar, Any
 
 from pydantic import BaseModel
 
@@ -25,7 +25,7 @@ class BaseDTO(BaseModel, Generic[TDTO, TBaseEntity, TCreateSchema]):
 
     @classmethod
     def from_schema(
-        cls: type[TDTO], schema: TCreateSchema | dict
+        cls: type[TDTO], schema: TCreateSchema | dict[str, Any]
     ) -> TDTO:
         schema_dict = (
             schema

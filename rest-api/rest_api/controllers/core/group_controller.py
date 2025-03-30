@@ -1,26 +1,40 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Callable, List
 
-from schemas.core import GroupCreate, GroupOut
+from fastapi import status
+
+from config import Context
+from controllers.base import BaseController
+from entities.core import Group
+from schemas.core import GroupResponse
 from services.core import GroupService
 
 
-class GroupController:
-    def __init__(self, get_db):
-        self.get_db = get_db
-        self.router = APIRouter()
+class GroupController(BaseController):
+    _service = GroupService()
+    _response_schema = GroupResponse
+    _entity = Group
 
-        async def create_group_endpoint(
-            group: GroupCreate, db: AsyncSession = Depends(self.get_db)
-        ):
-            return await GroupService.create_group(db, group.name)
-
-        async def get_groups_endpoint(db: AsyncSession = Depends(self.get_db)):
-            return await GroupService.get_all_groups(db)
-
+    def __init__(self, context: Context) -> None:
+        super().__init__(context)
         self.router.add_api_route(
-            "/", create_group_endpoint, methods=["POST"], response_model=GroupOut
+            "", self.get_all, methods=["GET"], response_model=List[GroupResponse]
         )
         self.router.add_api_route(
-            "/", get_groups_endpoint, methods=["GET"], response_model=list[GroupOut]
+            self._id_path, self.get_by_id, methods=["GET"], response_model=GroupResponse
+        )
+        self.router.add_api_route(
+            "",
+            self.create,
+            methods=["POST"],
+            response_model=GroupResponse,
+            status_code=status.HTTP_201_CREATED,
+        )
+        self.router.add_api_route(
+            self._id_path, self.update, methods=["PUT"], response_model=GroupResponse
+        )
+        self.router.add_api_route(
+            self._id_path,
+            self.delete,
+            methods=["DELETE"],
+            status_code=status.HTTP_204_NO_CONTENT,
         )

@@ -4,12 +4,12 @@ from sqlalchemy.orm import Mapped, mapped_column
 from entities.base import BaseEntity
 
 
-class UserGroupAssociation(BaseEntity):
-    __tablename__ = "users_groups"
+class AssocGroupModule(BaseEntity):
+    __tablename__ = "groups_modules"
 
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("users.id"), primary_key=True
-    )
     group_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("groups.id"), primary_key=True
+    )
+    module_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("modules.id"), primary_key=True
     )

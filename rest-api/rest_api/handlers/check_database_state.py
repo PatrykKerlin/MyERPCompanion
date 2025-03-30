@@ -1,14 +1,15 @@
 import asyncio
-
+from collections.abc import Callable
+from contextlib import AbstractAsyncContextManager
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.future import select
 
 from utils.exceptions import DatabaseNotReadyException
 
 
-class DBCheck:
-    def __init__(self, get_db):
+class CheckDatabaseState:
+    def __init__(self, get_db: Callable[..., AbstractAsyncContextManager[AsyncSession, bool | None]]) -> None:
         self.__get_db = get_db
         self.__retries = 60
         self.__delay = 1

@@ -15,7 +15,7 @@ class User(BaseEntity):
     pwd_modified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=now())
 
     groups: Mapped[list["Group"]] = relationship(
-        "Group",
+        argument="Group",
         secondary="users_groups",
         primaryjoin="User.id == users_groups.c.user_id",
         secondaryjoin="Group.id == users_groups.c.group_id",

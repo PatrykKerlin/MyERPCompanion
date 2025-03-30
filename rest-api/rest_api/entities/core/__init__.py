@@ -1,3 +1,5 @@
 from .group import Group
 from .user import User
-from .user_group_association import UserGroupAssociation
+from .module import Module
+from .assoc_group_module import AssocGroupModule
+from .assoc_user_group import AssocUserGroup

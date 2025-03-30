@@ -5,7 +5,6 @@ from entities.core import User
 from repositories.core import GroupRepository, UserRepository
 from schemas.core import UserCreate, UserUpdate
 from services.base import BaseService
-from services.core import AuthService
 
 
 class UserService(BaseService):
@@ -33,9 +32,6 @@ class UserService(BaseService):
         schema: UserUpdate | None = None,
         dto: UserDTO | None = None,
     ) -> UserDTO | None:
-        entity = await self.repository.get_by_id(db, entity_id)
-        if not entity:
-            return None
         if not dto:
             dto = await self.__prepare_dto(db, schema, exclude_unset=True)
         updated_dto = await super().update(db, entity_id, user_id, dto=dto)
@@ -48,6 +44,7 @@ class UserService(BaseService):
         schema: UserCreate | UserUpdate,
         exclude_unset: bool = False
     ) -> UserDTO:
+        from services.core import AuthService
         data = schema.dict(exclude_unset=exclude_unset)
         if "groups" in data:
             groups = await GroupRepository.get_all_by_names(db, data["groups"])

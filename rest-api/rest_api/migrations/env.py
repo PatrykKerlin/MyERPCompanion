@@ -1,11 +1,10 @@
 import asyncio
 import sys
 from logging.config import fileConfig
-from os import getenv
 from typing import cast
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.sql.schema import MetaData
 
@@ -26,9 +25,7 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-settings = Settings(
-    DATABASE_URL=getenv("DATABASE_URL", ""), SECRET_KEY=getenv("SECRET_KEY", "")
-)
+settings = Settings()  # type: ignore
 db = Database(settings)
 target_metadata = db.get_base().metadata
 

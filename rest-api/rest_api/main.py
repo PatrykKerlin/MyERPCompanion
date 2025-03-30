@@ -1,14 +1,11 @@
 from contextlib import asynccontextmanager
-from os import getenv
-from typing import Any
+from typing import Any, AsyncGenerator
 
 from fastapi import APIRouter, FastAPI
-from fastapi.security import OAuth2PasswordBearer
 
 from config import Context, CustomFastAPI, Database, Settings
 from controllers import core
-from handlers import DBCheck, PopulateSuperuser
-from services.core import AuthService
+from handlers import DatabaseStateCheck, PopulateDB
 from middlewares import AuthMiddleware
 
 
@@ -17,7 +14,6 @@ class App:
         self,
         settings: Settings,
         database: Database,
-        oauth2_scheme: OAuth2PasswordBearer,
         lifespan: Any = None,
     ) -> None:
         self.__database = database
@@ -28,8 +24,7 @@ class App:
         )
         self.__context = Context(
             get_db=self.__database.get_db,
-            settings=settings,
-            oauth2_scheme=oauth2_scheme,
+            settings=settings
         )
         self.__include_routers()
 
@@ -38,13 +33,11 @@ class App:
 
         health_check_controller = core.HealthCheckController()
         auth_controller = core.AuthController(self.__context)
-        current_user_controller = core.CurrentUserController(self.__context)
         user_controller = core.UserController(self.__context)
         group_controller = core.GroupController(self.__context)
 
         api_router.include_router(health_check_controller.router, tags=["Health Check"])
-        api_router.include_router(auth_controller.router, tags=["Authorization"])
-        api_router.include_router(current_user_controller.router, tags=["Current User"])
+        api_router.include_router(auth_controller.router, prefix="/auth", tags=["Authorization"])
         api_router.include_router(
             user_controller.router, prefix="/users", tags=["Users"]
         )
@@ -63,23 +56,18 @@ class App:
 
 
 def create_app() -> FastAPI:
-    settings = Settings(
-        DATABASE_URL=getenv("DATABASE_URL", ""), SECRET_KEY=getenv("SECRET_KEY", "")
-    )
+    settings = Settings()  # type: ignore
     database = Database(settings)
-    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth")
 
     @asynccontextmanager
-    async def lifespan(_: FastAPI):
-        await DBCheck(database.get_db).wait_for_db()
+    async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
+        await DatabaseStateCheck(database.get_db).wait_for_db()
         await app_instance.startup()
-        await PopulateSuperuser(database.get_db).populate_superuser()
+        await PopulateDB(database.get_db).populate_from_sql()
         yield
 
-    app_instance = App(settings, database, oauth2_scheme, lifespan=lifespan)
-
-    AuthService.set_settings(settings)
-    app_instance.get_app().add_middleware(AuthMiddleware)
+    app_instance = App(settings, database, lifespan=lifespan)
+    app_instance.get_app().add_middleware(AuthMiddleware, settings=settings)  # type: ignore
 
     return app_instance.get_app()
 
