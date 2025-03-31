@@ -1,37 +1,44 @@
 import importlib
-from fastapi import APIRouter
+from typing import Generic, TypeVar, cast
+
+from fastapi import APIRouter, FastAPI
 from sqlalchemy import select
+from sqlalchemy.sql.elements import BinaryExpression
 
-from models.core import Module
+from controllers.base import BaseController
+from entities.core import Endpoint
+from config import Context
+
+TController = TypeVar("TController", bound=BaseController)
 
 
-class RegisterDynamicModules:
-    def __init__(self, context, app) -> None:
-        self._context = context
-        self._app = app
-        self._api_router = APIRouter(prefix="/api")
+class RegisterDynamicEndpoints(Generic[TController]):
+    def __init__(self, context: Context, app: FastAPI) -> None:
+        self.__context = context
+        self.__app = app
+        self.__api_router = APIRouter(prefix="/api")
 
-    @staticmethod
-    def _import_controller(controller_name: str):
-        module = importlib.import_module("controllers.core")
-        return getattr(module, controller_name)
+    @classmethod
+    def _import_controller(cls, controller_name: str) -> type[TController]:
+        endpoint = importlib.import_module("controllers.core")
+        return getattr(endpoint, controller_name)
 
     async def register(self) -> None:
-        async with self._context.get_db() as db:
-            result = await db.execute(select(Module).where(Module.is_enabled == True))
-            modules = result.scalars().all()
+        async with self.__context.get_db() as db:
+            query = select(Endpoint).where(cast(BinaryExpression, Endpoint.is_active == True))
+            result = await db.execute(query)
+            endpoints = result.scalars().all()
 
-            for mod in modules:
+            for endpoint in endpoints:
                 try:
-                    ControllerClass = self._import_controller(mod.controller_name)
-                    controller = ControllerClass(self._context)
-                    controller.module_name = mod.name  # jeśli dziedziczy po SecuredController
-                    self._api_router.include_router(
+                    controller_class = self._import_controller(endpoint.controller)
+                    controller = controller_class(self.__context)
+                    self.__api_router.include_router(
                         controller.router,
-                        prefix=mod.path,
-                        tags=[mod.name],
+                        prefix=endpoint.path,
+                        tags=[endpoint.tag],
                     )
                 except Exception as e:
-                    print(f"[!] Failed to load controller {mod.controller_name}: {e}")
+                    print(f"Failed to load controller: {endpoint.controller}: {e}")
 
-        self._app.include_router(self._api_router)
+        self.__app.include_router(self.__api_router)

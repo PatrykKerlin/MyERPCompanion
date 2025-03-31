@@ -4,8 +4,8 @@ from typing import Any, AsyncGenerator
 from fastapi import APIRouter, FastAPI
 
 from config import Context, CustomFastAPI, Database, Settings
-from controllers import core
-from handlers import DatabaseStateCheck, PopulateDB
+from controllers.core import AuthController, EndpointController, HealthCheckController
+from handlers import CheckDatabaseState, PopulateDatabase, RegisterDynamicEndpoints
 from middlewares import AuthMiddleware
 
 
@@ -31,21 +31,18 @@ class App:
     def __include_routers(self) -> None:
         api_router = APIRouter(prefix="/api")
 
-        health_check_controller = core.HealthCheckController()
-        auth_controller = core.AuthController(self.__context)
-        user_controller = core.UserController(self.__context)
-        group_controller = core.GroupController(self.__context)
+        health_check_controller = HealthCheckController()
+        auth_controller = AuthController(self.__context)
+        endpoint_controller = EndpointController(self.__context)
 
         api_router.include_router(health_check_controller.router, tags=["Health Check"])
-        api_router.include_router(auth_controller.router, prefix="/auth", tags=["Authorization"])
-        api_router.include_router(
-            user_controller.router, prefix="/users", tags=["Users"]
-        )
-        api_router.include_router(
-            group_controller.router, prefix="/groups", tags=["Groups"]
-        )
+        api_router.include_router(auth_controller.router, tags=["Authorization"])
+        api_router.include_router(endpoint_controller.router, prefix="/endpoints", tags=["Endpoints"])
 
         self.__app.include_router(api_router)
+
+    async def register_dynamic_endpoints(self) -> None:
+        await RegisterDynamicEndpoints(self.__context, self.__app).register()
 
     async def startup(self) -> None:
         async with self.__database.engine.begin() as conn:
@@ -61,9 +58,10 @@ def create_app() -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
-        await DatabaseStateCheck(database.get_db).wait_for_db()
+        await CheckDatabaseState(database.get_db).wait_for_db()
         await app_instance.startup()
-        await PopulateDB(database.get_db).populate_from_sql()
+        await PopulateDatabase(database.get_db).populate_from_sql()
+        await app_instance.register_dynamic_endpoints()
         yield
 
     app_instance = App(settings, database, lifespan=lifespan)

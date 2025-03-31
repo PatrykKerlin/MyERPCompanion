@@ -9,7 +9,7 @@ from sqlalchemy import select, func, text
 from entities.core import User
 
 
-class PopulateDB:
+class PopulateDatabase:
     def __init__(self, get_db: Callable[..., AbstractAsyncContextManager[AsyncSession, bool | None]]) -> None:
         self.__get_db = get_db
 

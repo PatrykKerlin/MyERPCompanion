@@ -7,12 +7,12 @@ from entities.base import BaseEntity
 class Module(BaseEntity):
     __tablename__ = "modules"
 
-    name: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
     label: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
-    controller: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    path: Mapped[str] = mapped_column(String(25), nullable=False)
-    tag: Mapped[str] = mapped_column(String(25))
 
+    endpoints: Mapped[list["Endpoint"]] = relationship(
+        back_populates="module",
+    )
     groups: Mapped[list["Group"]] = relationship(
         argument="Group",
         secondary="groups_modules",

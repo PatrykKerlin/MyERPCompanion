@@ -1,0 +1,3 @@
+controller,path,tag,module_id
+UserController,/users,Users,1
+GroupController,/groups,Groups,1

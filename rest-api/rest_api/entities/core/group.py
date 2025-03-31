@@ -21,6 +21,6 @@ class Group(BaseEntity):
         argument="Module",
         secondary="groups_modules",
         primaryjoin="Group.id == groups_modules.c.group_id",
-        secondaryjoin="Module.id == groups_modules.c.user_id",
+        secondaryjoin="Module.id == groups_modules.c.module_id",
         back_populates="groups",
     )
