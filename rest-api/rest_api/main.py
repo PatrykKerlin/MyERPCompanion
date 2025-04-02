@@ -58,9 +58,11 @@ def create_app() -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
+        populate = PopulateDatabase(database.get_db)
         await CheckDatabaseState(database.get_db).wait_for_db()
         await app_instance.startup()
-        await PopulateDatabase(database.get_db).populate_from_sql()
+        await populate.populate_superuser()
+        await populate.populate_from_csv()
         await app_instance.register_dynamic_endpoints()
         yield
 

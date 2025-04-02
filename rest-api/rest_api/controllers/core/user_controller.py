@@ -18,30 +18,13 @@ class UserController(BaseController):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self.router.add_api_route(
-            "/current-user", self.current_user, methods=["GET"], response_model=UserResponse
+            path="/current-user",
+            endpoint=self.current_user,
+            methods=["GET"],
+            response_model=self._response_schema,
+            status_code=status.HTTP_200_OK
         )
-        self.router.add_api_route(
-            "", self.get_all, methods=["GET"], response_model=List[UserResponse]
-        )
-        self.router.add_api_route(
-            self._id_path, self.get_by_id, methods=["GET"], response_model=UserResponse
-        )
-        self.router.add_api_route(
-            "",
-            self.create,
-            methods=["POST"],
-            response_model=UserResponse,
-            status_code=status.HTTP_201_CREATED,
-        )
-        self.router.add_api_route(
-            self._id_path, self.update, methods=["PUT"], response_model=UserResponse
-        )
-        self.router.add_api_route(
-            self._id_path,
-            self.delete,
-            methods=["DELETE"],
-            status_code=status.HTTP_204_NO_CONTENT,
-        )
+        self._register_routes(["GET_ALL", "GET_ONE", "POST", "PUT", "DELETE"])
 
     @classmethod
     async def current_user(cls, request: Request) -> UserResponse:

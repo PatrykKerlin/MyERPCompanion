@@ -63,3 +63,44 @@ class BaseController(Generic[TDTO, TCreateSchema, TResponseSchema, TService]):
             if not success:
                 raise NotFoundException(self._entity.__name__)
             return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    def _register_routes(self, methods: list[str], prefix: str = "") -> None:
+        if "GET_ALL" in methods:
+            self.router.add_api_route(
+                path=prefix,
+                endpoint=self.get_all,
+                methods=["GET"],
+                response_model=list[self._response_schema],
+                status_code=status.HTTP_200_OK
+            )
+        if "GET_ONE" in methods:
+            self.router.add_api_route(
+                path=prefix + self._id_path,
+                endpoint=self.get_by_id,
+                methods=["GET"],
+                response_model=self._response_schema,
+                status_code=status.HTTP_200_OK
+            )
+        if "POST" in methods:
+            self.router.add_api_route(
+                path=prefix,
+                endpoint=self.create,
+                methods=["POST"],
+                response_model=self._response_schema,
+                status_code=status.HTTP_201_CREATED
+            )
+        if "PUT" in methods:
+            self.router.add_api_route(
+                path=prefix + self._id_path,
+                endpoint=self.update,
+                methods=["PUT"],
+                response_model=self._response_schema,
+                status_code=status.HTTP_200_OK
+            )
+        if "DELETE" in methods:
+            self.router.add_api_route(
+                path=prefix + self._id_path,
+                endpoint=self.delete,
+                methods=["DELETE"],
+                status_code=status.HTTP_204_NO_CONTENT
+            )
