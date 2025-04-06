@@ -1,4 +1,4 @@
-FROM python:3.12-bookworm
+FROM python:3.12.4-bookworm
 LABEL maintainer="Patryk Kerlin"
 
 ENV PYTHONUNBUFFERED=1
@@ -8,13 +8,13 @@ COPY ./rest_api /rest_api
 WORKDIR /rest_api
 EXPOSE 8000
 
-RUN python -m venv /pyenv
-RUN /pyenv/bin/pip install --upgrade pip
+RUN python -m venv /project
+RUN /project/bin/pip install --upgrade pip
 RUN apt-get update
 RUN apt-get upgrade -y
 RUN apt-get install -y postgresql-client --no-install-recommends
 RUN rm -rf /var/lib/apt/lists/*
-RUN /pyenv/bin/pip install -r /tmp/requirements.txt
+RUN /project/bin/pip install -r /tmp/requirements.txt
 RUN rm -rf /tmp
 
 RUN useradd -m -d /rest_api -s /bin/bash rest-api
@@ -23,6 +23,6 @@ RUN mkdir -p /rest_api
 RUN chown -R rest-api:rest-api /rest_api
 RUN chmod -R 755 /rest_api
 
-ENV PATH="/pyenv/bin:$PATH"
+ENV PATH="/project/bin:$PATH"
 
 USER rest-api

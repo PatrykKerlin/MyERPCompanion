@@ -7,7 +7,7 @@
                     {{ menu_item.label }}
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                    {% for page in menu_item.pages %}
+                    {% for page in menu_item.views %}
                         <li>
                             <a class="dropdown-item" href="{% url page.name %}">{{ page.label }}</a>
                         </li>

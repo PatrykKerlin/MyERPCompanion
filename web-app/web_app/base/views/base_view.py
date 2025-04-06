@@ -60,7 +60,7 @@ class BaseView(View):
         Session.add(request, SessionContent.PAGES, pages)
 
         tabs = request.session.get(SessionContent.TABS, {})
-        
+
         if ((page_name != PageNames.LOGIN) and
                 (page_name != PageNames.INDEX) and
                 (page_name not in tabs.keys())):
@@ -77,7 +77,5 @@ class BaseView(View):
             'menu': menu_content,
             'tabs': tabs,
         }
-
-        print(self.context)
 
         return super().dispatch(request, *args, **kwargs)

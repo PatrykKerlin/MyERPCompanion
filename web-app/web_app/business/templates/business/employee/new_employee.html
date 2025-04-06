@@ -1,9 +1,9 @@
 {% extends "core/index.html" %}
 
 {% block content_block %}
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Submit</button>
-    </form>
+    {#    <form method="post">#}
+    {#        {% csrf_token %}#}
+    {{ form.as_p }}
+    <button type="submit">Submit</button>
+    {#    </form>#}
 {% endblock %}

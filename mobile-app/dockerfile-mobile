@@ -1,0 +1,22 @@
+FROM python:3.12-bookworm
+LABEL maintainer="Patryk Kerlin"
+
+ENV PYTHONUNBUFFERED=1
+
+COPY requirements.txt /tmp/requirements.txt
+COPY ./mobile_app /mobile_app
+WORKDIR /mobile_app
+
+RUN python -m venv /pyenv
+RUN /pyenv/bin/pip install --upgrade pip
+RUN apt-get update
+RUN apt-get upgrade -y
+RUN rm -rf /var/lib/apt/lists/*
+RUN /pyenv/bin/pip install -r /tmp/requirements.txt
+RUN rm -rf /tmp
+
+RUN useradd -m -d /mobile_app -s /bin/bash mobile-app
+
+ENV PATH="/pyenv/bin:$PATH"
+
+USER mobile-app
