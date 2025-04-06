@@ -1,77 +1,66 @@
 from abc import ABC
 from typing import Generic, TypeVar
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dtos.base import BaseDTO
 from entities.base import BaseEntity
 from repositories.base import BaseRepository
-from schemas.base import BaseCreateSchema
-from utils.exceptions import SchemaAndDTOMissingException
+from schemas.base import BaseCreateSchema, BaseResponseSchema
+from utils.exceptions import ConflictException
 
 TEntity = TypeVar("TEntity", bound=BaseEntity)
 TRepository = TypeVar("TRepository", bound=BaseRepository)
-TDTO = TypeVar("TDTO", bound=BaseDTO)
 TCreateSchema = TypeVar("TCreateSchema", bound=BaseCreateSchema)
+TResponseSchema = TypeVar("TResponseSchema", bound=BaseResponseSchema)
 
 
-class BaseService(
-    ABC, Generic[TEntity, TRepository, TDTO, TCreateSchema]
-):
-    _repository: type[TRepository]
-    _entity: type[TEntity]
-    _dto: type[TDTO]
+class BaseService(ABC, Generic[TEntity, TRepository, TCreateSchema, TResponseSchema]):
+    _repository_cls: type[TRepository]
+    _entity_cls: type[TEntity]
+    _response_schema_cls: type[TResponseSchema]
 
-    async def get_all(self, db: AsyncSession) -> list[TDTO]:
-        entities = await self._repository.get_all(db)
-        return [self._dto.from_entity(entity) for entity in entities]
+    async def get_all(self, session: AsyncSession) -> list[TResponseSchema]:
+        entities = await self._repository_cls.get_all(session)
+        return [self._response_schema_cls.model_validate(entity) for entity in entities]
 
-    async def get_by_id(self, db: AsyncSession, entity_id: int) -> TDTO | None:
-        entity = await self._repository.get_by_id(db, entity_id)
+    async def get_by_id(
+        self, session: AsyncSession, entity_id: int
+    ) -> TResponseSchema | None:
+        entity = await self._repository_cls.get_by_id(session, entity_id)
         if not entity:
             return None
-        return self._dto.from_entity(entity)
+        return self._response_schema_cls.model_validate(entity)
 
     async def create(
-        self,
-        db: AsyncSession,
-        user_id: int,
-        schema: TCreateSchema | None = None,
-        dto: TDTO | None = None,
-    ) -> TDTO:
-        if not schema and not dto:
-            raise SchemaAndDTOMissingException()
-        if not dto:
-            dto = self._dto.from_schema(schema)
-        entity = dto.to_entity(self._entity)
+        self, session: AsyncSession, user_id: int, schema: TCreateSchema
+    ) -> TResponseSchema:
+        entity = self._entity_cls(**schema.model_dump())
         setattr(entity, "created_by", user_id)
-        saved_entity = await self._repository.save(db, entity)
-        return self._dto.from_entity(saved_entity)
+        try:
+            saved_entity = await self._repository_cls.save(session, entity)
+        except IntegrityError:
+            raise ConflictException()
+        return self._response_schema_cls.model_validate(saved_entity)
 
     async def update(
-        self,
-        db: AsyncSession,
-        entity_id: int,
-        user_id: int,
-        schema: TCreateSchema | None = None,
-        dto: TDTO | None = None,
-    ) -> TDTO | None:
-        if not schema and not dto:
-            raise SchemaAndDTOMissingException()
-        entity = await self._repository.get_by_id(db, entity_id)
+        self, session: AsyncSession, entity_id: int, user_id: int, schema: TCreateSchema
+    ) -> TResponseSchema | None:
+        entity = await self._repository_cls.get_by_id(session, entity_id)
         if not entity:
             return None
-        if not dto:
-            dto = self._dto.from_schema(schema)
-        for key, value in dto.model_dump(exclude_unset=True).items():
+        for key, value in schema.model_dump(exclude_unset=True).items():
             setattr(entity, key, value)
         setattr(entity, "updated_by", user_id)
-        updated_entity = await self._repository.save(db, entity)
-        return self._dto.from_entity(updated_entity)
+        try:
+            updated_entity = await self._repository_cls.save(session, entity)
+        except IntegrityError:
+            raise ConflictException()
+        return self._response_schema_cls.model_validate(updated_entity)
 
-    async def delete(self, db: AsyncSession, entity_id: int, user_id: int) -> bool:
-        entity = await self._repository.get_by_id(db, entity_id)
+    async def delete(self, session: AsyncSession, entity_id: int, user_id: int) -> bool:
+        entity = await self._repository_cls.get_by_id(session, entity_id)
         if not entity:
             return False
         setattr(entity, "modified_by", user_id)
-        return await self._repository.delete(db, entity)
+        return await self._repository_cls.delete(session, entity)

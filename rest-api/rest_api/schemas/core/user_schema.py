@@ -1,26 +1,33 @@
 from typing import Annotated
 
-from pydantic import Field, field_serializer
+from pydantic import Field
 
-from schemas.base import BaseCreateSchema, BaseResponseSchema
+from schemas.base import BaseCreateSchema, BaseInternalSchema, BaseResponseSchema
+from schemas.core import GroupInternal, GroupResponse
 
 
 class UserCreate(BaseCreateSchema):
     username: Annotated[str, Field(min_length=5, max_length=25)]
     password: Annotated[str, Field(min_length=8, max_length=128)]
-    groups: Annotated[list[Annotated[str, Field(min_length=1, max_length=10)]], Field()] | None = None
+    groups: Annotated[list[Annotated[str, Field(min_length=1, max_length=10)]], Field()]
 
 
 class UserUpdate(BaseCreateSchema):
     username: Annotated[str, Field(min_length=5, max_length=25)]
     password: Annotated[str, Field(min_length=8, max_length=128)] | None = None
-    groups: Annotated[list[Annotated[str, Field(min_length=1, max_length=10)]], Field()] | None = None
+    groups: (
+        Annotated[list[Annotated[str, Field(min_length=1, max_length=10)]], Field()]
+        | None
+    ) = None
 
 
 class UserResponse(BaseResponseSchema):
     username: str
-    groups: list[str]
+    groups: list[GroupResponse]
 
-    @field_serializer("groups")
-    def serialize_groups(self, groups: list["GroupDTO"]) -> list[str]:
-        return [group.name for group in groups]
+
+class UserInternal(BaseInternalSchema):
+    username: str
+    groups: list[GroupInternal]
+    is_superuser: bool
+    password: str | None = Field(default=None, exclude=True)

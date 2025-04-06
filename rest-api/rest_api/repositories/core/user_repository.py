@@ -3,18 +3,18 @@ from typing import cast
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
-from sqlalchemy.sql.elements import BinaryExpression
+from sqlalchemy.sql.elements import ColumnElement
 
 from entities.core import Group, User
 from repositories.base import BaseRepository
 
 
-class UserRepository(BaseRepository):
-    _model = User
+class UserRepository(BaseRepository[User]):
+    _model_cls = User
 
     @classmethod
     def _build_query(
-        cls, additional_filters: list[BinaryExpression] | None = None
+        cls, additional_filters: list[ColumnElement[bool]] | None = None
     ) -> Select:
         query = super()._build_query(additional_filters)
         return query.options(
@@ -23,7 +23,7 @@ class UserRepository(BaseRepository):
         )
 
     @classmethod
-    async def get_by_name(cls, db: AsyncSession, user_name: str) -> User | None:
-        query = super()._build_query([cls._expr(User.username == user_name)])
-        result = await db.execute(query)
+    async def get_by_username(cls, session: AsyncSession, username: str) -> User | None:
+        query = super()._build_query([cls._expr(User.username == username)])
+        result = await session.execute(query)
         return result.scalars().first()

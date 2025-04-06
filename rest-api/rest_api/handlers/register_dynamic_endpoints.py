@@ -5,9 +5,9 @@ from fastapi import APIRouter, FastAPI
 from sqlalchemy import select
 from sqlalchemy.sql.elements import BinaryExpression
 
+from config import Context
 from controllers.base import BaseController
 from entities.core import Endpoint
-from config import Context
 
 TController = TypeVar("TController", bound=BaseController)
 
@@ -24,8 +24,10 @@ class RegisterDynamicEndpoints(Generic[TController]):
         return getattr(endpoint, controller_name)
 
     async def register(self) -> None:
-        async with self.__context.get_db() as db:
-            query = select(Endpoint).where(cast(BinaryExpression, Endpoint.is_active == True))
+        async with self.__context.get_session() as db:
+            query = select(Endpoint).where(
+                cast(BinaryExpression, Endpoint.is_active == True)
+            )
             result = await db.execute(query)
             endpoints = result.scalars().all()
 

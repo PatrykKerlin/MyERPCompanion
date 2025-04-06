@@ -13,3 +13,7 @@ class GroupCreate(BaseCreateSchema):
 class GroupResponse(BaseResponseSchema):
     name: str
     description: str
+
+
+class GroupInternal(BaseResponseSchema):
+    name: str

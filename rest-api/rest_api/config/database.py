@@ -28,7 +28,7 @@ class Database:
                 settings.DATABASE_URL,
                 echo=True,
             )
-            self.__async_session_local = async_sessionmaker(
+            self.__async_session_maker = async_sessionmaker(
                 bind=self.engine,
                 expire_on_commit=False,
             )
@@ -39,6 +39,6 @@ class Database:
         return cls.__base
 
     @asynccontextmanager
-    async def get_db(self) -> AsyncGenerator[AsyncSession, None]:
-        async with self.__async_session_local() as session:
+    async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
+        async with self.__async_session_maker() as session:
             yield session
