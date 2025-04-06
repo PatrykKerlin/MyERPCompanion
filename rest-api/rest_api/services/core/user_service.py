@@ -41,7 +41,11 @@ class UserService(BaseService[User, UserRepository, UserCreateOrUpdate, UserResp
         return await super().create(session, user_id, schema)
 
     async def update(
-        self, session: AsyncSession, entity_id: int, user_id: int, schema: UserCreateOrUpdate
+        self,
+        session: AsyncSession,
+        entity_id: int,
+        user_id: int,
+        schema: UserCreateOrUpdate,
     ) -> UserResponse | None:
         schema = await self.__prepare_schema(
             session, schema, UserUpdate, exclude_unset=True
