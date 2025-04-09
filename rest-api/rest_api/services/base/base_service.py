@@ -3,6 +3,7 @@ from typing import Generic, TypeVar
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import ColumnElement
 
 from entities.base import BaseEntity
 from repositories.base import BaseRepository
@@ -20,9 +21,28 @@ class BaseService(ABC, Generic[TEntity, TRepository, TCreateSchema, TResponseSch
     _entity_cls: type[TEntity]
     _response_schema_cls: type[TResponseSchema]
 
-    async def get_all(self, session: AsyncSession) -> list[TResponseSchema]:
-        entities = await self._repository_cls.get_all(session)
-        return [self._response_schema_cls.model_validate(entity) for entity in entities]
+    async def get_all(
+        self,
+        session: AsyncSession,
+        filters: list[ColumnElement[bool]] | None = None,
+        offset: int = 0,
+        limit: int = 100,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
+    ) -> tuple[list[TResponseSchema], int]:
+        entities = await self._repository_cls.get_all(
+            session=session,
+            filters=filters,
+            offset=offset,
+            limit=limit,
+            sort_by=sort_by,
+            sort_order=sort_order,
+        )
+        total = await self._repository_cls.count_all(session=session, filters=filters)
+        schemas = [
+            self._response_schema_cls.model_validate(entity) for entity in entities
+        ]
+        return schemas, total
 
     async def get_by_id(
         self, session: AsyncSession, entity_id: int

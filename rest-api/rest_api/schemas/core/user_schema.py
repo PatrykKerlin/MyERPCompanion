@@ -1,5 +1,3 @@
-from typing import Annotated
-
 from pydantic import Field
 
 from schemas.base import BaseCreateSchema, BaseInternalSchema, BaseResponseSchema
@@ -7,18 +5,15 @@ from schemas.core import GroupInternal, GroupResponse
 
 
 class UserCreate(BaseCreateSchema):
-    username: Annotated[str, Field(min_length=5, max_length=25)]
-    password: Annotated[str, Field(min_length=8, max_length=128)]
-    groups: Annotated[list[Annotated[str, Field(min_length=1, max_length=10)]], Field()]
+    username: str = Field(min_length=5, max_length=25)
+    password: str = Field(min_length=8, max_length=128)
+    groups: list[str] = Field(...)
 
 
 class UserUpdate(BaseCreateSchema):
-    username: Annotated[str, Field(min_length=5, max_length=25)]
-    password: Annotated[str, Field(min_length=8, max_length=128)] | None = None
-    groups: (
-        Annotated[list[Annotated[str, Field(min_length=1, max_length=10)]], Field()]
-        | None
-    ) = None
+    username: str = Field(min_length=5, max_length=25)
+    password: str | None = Field(default=None, min_length=8, max_length=128)
+    groups: list[str] | None = Field(default=None)
 
 
 class UserResponse(BaseResponseSchema):

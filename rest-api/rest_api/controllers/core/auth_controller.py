@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 
 from config import Context
 from schemas.core import AuthCreate
-from utils import AuthUtil
+from utils.auth_util import AuthUtil
 from utils.exceptions import InvalidCredentialsException
 
 

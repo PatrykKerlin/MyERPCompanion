@@ -1,11 +1,21 @@
-from typing import Generic, Literal, TypeVar
+from typing import Annotated, Any, Generic, Literal, TypeVar, cast
 
-from fastapi import APIRouter, Request, Response, status
+from fastapi import APIRouter, Body, Depends, Request, Response, status
+from sqlalchemy import String
+from sqlalchemy.orm.attributes import InstrumentedAttribute
+from sqlalchemy.sql.elements import ColumnElement
 
 from config import Context
 from schemas.base import BaseCreateSchema, BaseResponseSchema
+from schemas.core import (
+    FilterParams,
+    PaginatedResponse,
+    PaginationParams,
+    SortingParams,
+)
 from services.base import BaseService
 from utils.exceptions import NotFoundException
+from utils.filter_params_parser import FilterParamsParser
 
 TService = TypeVar("TService", bound=BaseService)
 TCreateSchema = TypeVar("TCreateSchema", bound=BaseCreateSchema)
@@ -15,15 +25,52 @@ TResponseSchema = TypeVar("TResponseSchema", bound=BaseResponseSchema)
 class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
     _service_cls: type[TService]
 
+    Pagination = Annotated[PaginationParams, Depends()]
+    Filters = Annotated[FilterParams, Depends(FilterParamsParser())]
+    Sorting = Annotated[SortingParams, Depends()]
+
     def __init__(self, context: Context) -> None:
         self.router = APIRouter()
         self._get_session = context.get_session
         self._settings = context.settings
         self._service = self._service_cls()
 
-    async def get_all(self, _: Request) -> list[TResponseSchema]:
+    async def get_all(
+        self, _: Request, pagination: Pagination, filters: Filters, sorting: Sorting
+    ) -> PaginatedResponse[TResponseSchema]:
         async with self._get_session() as session:
-            return await self._service.get_all(session)
+            offset = (pagination.page - 1) * pagination.page_size
+            limit = pagination.page_size
+            conditions: list[ColumnElement[bool]] = []
+            for key, value in filters.filters.items():
+                attr = getattr(self._service._entity_cls, key, None)
+                if isinstance(attr, InstrumentedAttribute):
+                    if hasattr(attr, "property") and isinstance(
+                        attr.property.columns[0].type, String
+                    ):
+                        conditions.append(attr.ilike(f"%{value}%"))
+                    else:
+                        conditions.append(attr == value)
+
+            items, total = await self._service.get_all(
+                session=session,
+                filters=conditions,
+                offset=offset,
+                limit=limit,
+                sort_by=sorting.sort_by,
+                sort_order=sorting.order,
+            )
+            has_next = offset + limit < total
+            has_prev = pagination.page > 1
+
+            return PaginatedResponse[TResponseSchema](
+                items=items,
+                total=total,
+                page=pagination.page,
+                page_size=pagination.page_size,
+                has_next=has_next,
+                has_prev=has_prev,
+            )
 
     async def get_by_id(self, _: Request, entity_id: int) -> TResponseSchema:
         async with self._get_session() as session:
@@ -32,13 +79,15 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
                 raise NotFoundException()
             return schema
 
-    async def create(self, data: TCreateSchema, request: Request) -> TResponseSchema:
+    async def create(
+        self, data: Annotated[TCreateSchema, Body()], request: Request
+    ) -> TResponseSchema:
         user = request.state.user
         async with self._get_session() as session:
             return await self._service.create(session, user.id, data)
 
     async def update(
-        self, data: TCreateSchema, request: Request, entity_id: int
+        self, data: Annotated[TCreateSchema, Body()], request: Request, entity_id: int
     ) -> TResponseSchema:
         user = request.state.user
         async with self._get_session() as session:
@@ -74,7 +123,7 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
                 path=path,
                 endpoint=self.get_all,
                 methods=["GET"],
-                response_model=list[response_schema],
+                response_model=PaginatedResponse[response_schema],
                 status_code=status.HTTP_200_OK,
             )
         if "get_by_id" in include:
