@@ -14,9 +14,12 @@ class UserRepository(BaseRepository[User]):
 
     @classmethod
     def _build_query(
-        cls, additional_filters: list[ColumnElement[bool]] | None = None
+        cls,
+        additional_filters: list[ColumnElement[bool]] | None = None,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
     ) -> Select:
-        query = super()._build_query(additional_filters)
+        query = super()._build_query(additional_filters, sort_by, sort_order)
         return query.options(
             selectinload(User.groups),
             with_loader_criteria(Group, cls._expr(Group.is_active == True)),

@@ -12,7 +12,7 @@ from entities import core as ec
 from entities.base import BaseEntity
 from schemas import core as sc
 from schemas.base import BaseCreateSchema
-from utils import AuthUtil
+from utils.auth_util import AuthUtil
 
 
 class PopulateDatabase:

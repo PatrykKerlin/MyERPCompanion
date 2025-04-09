@@ -7,8 +7,8 @@ from schemas.core import GroupInternal
 
 
 class ModuleCreate(BaseCreateSchema):
-    name: Annotated[str, Field(min_length=1, max_length=25)]
-    label: Annotated[str, Field(min_length=1, max_length=25)]
+    name: str = Field(min_length=1, max_length=25)
+    label: str = Field(min_length=1, max_length=25)
 
 
 class ModuleResponse(BaseResponseSchema):

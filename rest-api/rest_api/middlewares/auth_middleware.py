@@ -7,7 +7,7 @@ from starlette.types import ASGIApp
 
 from config import Context
 from services.core import UserService
-from utils import AuthUtil
+from utils.auth_util import AuthUtil
 
 
 class AuthMiddleware(BaseHTTPMiddleware):

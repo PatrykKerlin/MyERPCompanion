@@ -6,15 +6,15 @@ from fastapi import Request, Response, status
 
 from config import Context
 from controllers.base import BaseController
-from schemas.core import UserCreate, UserResponse, UserUpdate
+from schemas.core import PaginatedResponse, UserCreate, UserResponse, UserUpdate
 from services.core import UserService
-from utils import AuthUtil
+from utils.auth_util import AuthUtil
 from utils.exceptions import InvalidCredentialsException
 
-UserCreateOrUpdate = Union[UserCreate, UserUpdate]
 
-
-class UserController(BaseController[UserService, UserCreateOrUpdate, UserResponse]):
+class UserController(
+    BaseController[UserService, Union[UserCreate, UserUpdate], UserResponse]
+):
     _service_cls = UserService
 
     def __init__(self, context: Context) -> None:
@@ -30,8 +30,14 @@ class UserController(BaseController[UserService, UserCreateOrUpdate, UserRespons
         )
 
     @AuthUtil.restrict_access()
-    async def get_all(self, request: Request) -> list[UserResponse]:
-        return await super().get_all(request)
+    async def get_all(
+        self,
+        request: Request,
+        pagination: BaseController.Pagination,
+        filters: BaseController.Filters,
+        sorting: BaseController.Sorting,
+    ) -> PaginatedResponse[UserResponse]:
+        return await super().get_all(request, pagination, filters, sorting)
 
     @AuthUtil.restrict_access()
     async def get_by_id(self, request: Request, user_id: int) -> UserResponse:

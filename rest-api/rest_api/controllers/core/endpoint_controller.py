@@ -6,9 +6,9 @@ from fastapi import Request, Response
 
 from config import Context
 from controllers.base import BaseController
-from schemas.core import EndpointCreate, EndpointResponse
+from schemas.core import EndpointCreate, EndpointResponse, PaginatedResponse
 from services.core import EndpointService
-from utils import AuthUtil
+from utils.auth_util import AuthUtil
 
 
 class EndpointController(
@@ -21,8 +21,14 @@ class EndpointController(
         self._register_routes("", "/endpoint_id", EndpointResponse)
 
     @AuthUtil.restrict_access()
-    async def get_all(self, request: Request) -> list[EndpointResponse]:
-        return await super().get_all(request)
+    async def get_all(
+        self,
+        request: Request,
+        pagination: BaseController.Pagination,
+        filters: BaseController.Filters,
+        sorting: BaseController.Sorting,
+    ) -> PaginatedResponse[EndpointResponse]:
+        return await super().get_all(request, pagination, filters, sorting)
 
     @AuthUtil.restrict_access()
     async def get_by_id(self, request: Request, endpoint_id: int) -> EndpointResponse:

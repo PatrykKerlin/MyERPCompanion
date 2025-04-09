@@ -6,9 +6,9 @@ from fastapi import Request, Response
 
 from config import Context
 from controllers.base import BaseController
-from schemas.core import GroupCreate, GroupResponse
+from schemas.core import GroupCreate, GroupResponse, PaginatedResponse
 from services.core import GroupService
-from utils import AuthUtil
+from utils.auth_util import AuthUtil
 
 
 class GroupController(BaseController[GroupService, GroupCreate, GroupResponse]):
@@ -19,8 +19,14 @@ class GroupController(BaseController[GroupService, GroupCreate, GroupResponse]):
         self._register_routes("", "/group_id", GroupResponse)
 
     @AuthUtil.restrict_access()
-    async def get_all(self, request: Request) -> list[GroupResponse]:
-        return await super().get_all(request)
+    async def get_all(
+        self,
+        request: Request,
+        pagination: BaseController.Pagination,
+        filters: BaseController.Filters,
+        sorting: BaseController.Sorting,
+    ) -> PaginatedResponse[GroupResponse]:
+        return await super().get_all(request, pagination, filters, sorting)
 
     @AuthUtil.restrict_access()
     async def get_by_id(self, request: Request, group_id: int) -> GroupResponse:

@@ -60,7 +60,7 @@ class UserService(BaseService[User, UserRepository, UserCreateOrUpdate, UserResp
         schema_cls: type[TSchema],
         exclude_unset: bool = False,
     ) -> TSchema:
-        from utils import AuthUtil
+        from utils.auth_util import AuthUtil
 
         data = schema.model_dump(exclude_unset=exclude_unset)
         update_fields: dict[str, Any] = {}

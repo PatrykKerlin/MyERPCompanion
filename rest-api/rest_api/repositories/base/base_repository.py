@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Generic, TypeVar, cast
 
-from sqlalchemy import select
+from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ClauseElement, ColumnElement
@@ -16,20 +16,40 @@ class BaseRepository(Generic[TEntity]):
 
     @classmethod
     def _build_query(
-        cls, additional_filters: list[ColumnElement[bool]] | None = None
+        cls,
+        additional_filters: list[ColumnElement[bool]] | None = None,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
     ) -> Select:
         filters = [cls._model_cls.is_active == True]
         if additional_filters:
             filters.extend(additional_filters)
-        return select(cls._model_cls).filter(*filters)
+        query = select(cls._model_cls).filter(*filters)
+        if sort_by and hasattr(cls._model_cls, sort_by):
+            column = getattr(cls._model_cls, sort_by)
+            if sort_order == "asc":
+                query = query.order_by(asc(column))
+            else:
+                query = query.order_by(desc(column))
+        return query
 
     @staticmethod
     def _expr(expression: ClauseElement | bool) -> ColumnElement[bool]:
         return cast(ColumnElement[bool], expression)
 
     @classmethod
-    async def get_all(cls, session: AsyncSession) -> Sequence[TEntity]:
-        query = cls._build_query()
+    async def get_all(
+        cls,
+        session: AsyncSession,
+        filters: list[ColumnElement[bool]] | None = None,
+        offset: int = 0,
+        limit: int = 100,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
+    ) -> Sequence[TEntity]:
+        query = (
+            cls._build_query(filters, sort_by, sort_order).offset(offset).limit(limit)
+        )
         result = await session.execute(query)
         return result.scalars().all()
 
@@ -50,3 +70,18 @@ class BaseRepository(Generic[TEntity]):
         setattr(entity, "is_active", False)
         await session.commit()
         return True
+
+    @classmethod
+    async def count_all(
+        cls, session: AsyncSession, filters: list[ColumnElement[bool]] | None = None
+    ) -> int:
+        query = (
+            select(func.count())
+            .select_from(cls._model_cls)
+            .filter(cls._expr(cls._model_cls.is_active == True))
+        )
+        if filters:
+            for f in filters:
+                query = query.filter(cls._expr(f))
+        result = await session.execute(query)
+        return result.scalar_one()
