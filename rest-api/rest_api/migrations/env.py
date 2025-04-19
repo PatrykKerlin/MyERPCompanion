@@ -1,12 +1,12 @@
 import asyncio
-import sys
 from logging.config import fileConfig
-from typing import cast
+from typing import cast, Any
 
 from alembic import context
-from sqlalchemy import pool
+from alembic.operations.ops import CreateTableOp, CreateForeignKeyOp, MigrateOperation
+from sqlalchemy import pool, Column, ForeignKeyConstraint
+from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.sql.schema import MetaData, Table
 
 import entities.core
 from config import Database, Settings
@@ -36,29 +36,74 @@ target_metadata = db.get_base().metadata
 # ... etc.
 
 
-def include_object(*args, **kwargs) -> bool:
-    return True
+def foreign_key_split_hook(directives: list[Any]) -> None:
+    script = directives[0]
+    upgrade_ops = script.upgrade_ops
+
+    new_ops: list[MigrateOperation] = []
+    fk_ops: list[CreateForeignKeyOp] = []
+
+    for op in upgrade_ops.ops:
+        if not isinstance(op, CreateTableOp):
+            new_ops.append(op)
+            continue
+
+        table_fks, new_cols = extract_foreign_keys(op)
+        composite_fks = extract_composite_constraints(op)
+
+        op.columns = new_cols
+        new_ops.append(op)
+        fk_ops.extend(table_fks + composite_fks)
+
+    upgrade_ops.ops = new_ops + fk_ops
 
 
-def sorted_tables(metadata: MetaData) -> list[Table]:
-    tables = list(metadata.sorted_tables)
-    users = [t for t in tables if t.name == "users"]
-    rest = [t for t in tables if t.name != "users"]
-    return users + rest
+def extract_foreign_keys(
+    op: CreateTableOp,
+) -> tuple[list[CreateForeignKeyOp], list[Column]]:
+    fks: list[CreateForeignKeyOp] = []
+    new_cols: list[Column] = []
+
+    for col in op.columns:
+        if not isinstance(col, Column):
+            continue
+        for fk in list(col.foreign_keys):
+            fks.append(
+                CreateForeignKeyOp(
+                    constraint_name=f"fk_{op.table_name}_{col.name}_{fk.column.table.name}",
+                    source_table=op.table_name,
+                    referent_table=fk.column.table.name,
+                    local_cols=[col.name],
+                    remote_cols=[fk.column.name],
+                )
+            )
+            col.foreign_keys.remove(fk)
+        new_cols.append(col)
+
+    return fks, new_cols
+
+
+def extract_composite_constraints(op: CreateTableOp) -> list[CreateForeignKeyOp]:
+    fks: list[CreateForeignKeyOp] = []
+    constraints = op.kw.get("constraints", [])
+
+    for constraint in list(constraints):
+        if isinstance(constraint, ForeignKeyConstraint):
+            constraints.remove(constraint)
+            fks.append(
+                CreateForeignKeyOp(
+                    constraint_name=constraint.name or f"fk_{op.table_name}_composite",
+                    source_table=op.table_name,
+                    referent_table=constraint.referred_table.name,
+                    local_cols=constraint.columns.keys(),
+                    remote_cols=[e.column.name for e in constraint.elements],
+                )
+            )
+
+    return fks
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
-    """
     url = config.get_main_option("sqlalchemy.url")
     if url:
         context.configure(
@@ -66,8 +111,9 @@ def run_migrations_offline() -> None:
             target_metadata=target_metadata,
             literal_binds=True,
             dialect_opts={"paramstyle": "named"},
-            include_object=include_object,
-            user_module_prefix="",
+            process_revision_directives=lambda ctx, rev, directives: foreign_key_split_hook(
+                directives
+            ),
         )
 
         with context.begin_transaction():
@@ -75,12 +121,6 @@ def run_migrations_offline() -> None:
 
 
 async def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
     url = config.get_main_option("sqlalchemy.url")
     if url:
         connectable = create_async_engine(
@@ -92,15 +132,14 @@ async def run_migrations_online() -> None:
         await connectable.dispose()
 
 
-def do_run_migrations(connection) -> None:
+def do_run_migrations(connection: Connection) -> None:
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
-        include_object=include_object,
-        user_module_prefix="",
         compare_type=True,
-        render_as_batch=True,
-        sorted_tables=sorted_tables,
+        process_revision_directives=lambda ctx, rev, directives: foreign_key_split_hook(
+            directives
+        ),
     )
     with context.begin_transaction():
         context.run_migrations()

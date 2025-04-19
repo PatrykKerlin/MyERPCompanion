@@ -15,7 +15,7 @@ from schemas.core import (
 )
 from services.base import BaseService
 from utils.exceptions import NotFoundException
-from utils.filter_params_parser import FilterParamsParser
+from utils.parsers import FilterParamsParser
 
 TService = TypeVar("TService", bound=BaseService)
 TCreateSchema = TypeVar("TCreateSchema", bound=BaseCreateSchema)

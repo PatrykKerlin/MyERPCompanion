@@ -7,6 +7,8 @@ from entities.base import BaseEntity
 
 if TYPE_CHECKING:
     from .group import Group
+    from .language import Language
+    from .theme import Theme
 
 
 class User(BaseEntity):
@@ -16,11 +18,15 @@ class User(BaseEntity):
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     password: Mapped[str] = mapped_column(String(128), nullable=False)
 
-    language_id: Mapped[int] = mapped_column(ForeignKey("languages.id"), nullable=False)
-    theme_id: Mapped[int] = mapped_column(ForeignKey("themes.id"), nullable=False)
+    language_id: Mapped[int] = mapped_column(ForeignKey("languages.id"), nullable=True)
+    theme_id: Mapped[int] = mapped_column(ForeignKey("themes.id"), nullable=True)
 
-    language: Mapped["Language"] = relationship(back_populates="users", lazy="selectin")
-    theme: Mapped["Theme"] = relationship(back_populates="users", lazy="selectin")
+    language: Mapped["Language"] = relationship(
+        back_populates="users", foreign_keys=[language_id], lazy="selectin"
+    )
+    theme: Mapped["Theme"] = relationship(
+        back_populates="users", foreign_keys=[theme_id], lazy="selectin"
+    )
 
     groups: Mapped[list["Group"]] = relationship(
         argument="Group",
