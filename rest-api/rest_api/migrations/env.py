@@ -6,7 +6,7 @@ from typing import cast
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.sql.schema import MetaData
+from sqlalchemy.sql.schema import MetaData, Table
 
 import entities.core
 from config import Database, Settings
@@ -36,6 +36,17 @@ target_metadata = db.get_base().metadata
 # ... etc.
 
 
+def include_object(*args, **kwargs) -> bool:
+    return True
+
+
+def sorted_tables(metadata: MetaData) -> list[Table]:
+    tables = list(metadata.sorted_tables)
+    users = [t for t in tables if t.name == "users"]
+    rest = [t for t in tables if t.name != "users"]
+    return users + rest
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -55,6 +66,8 @@ def run_migrations_offline() -> None:
             target_metadata=target_metadata,
             literal_binds=True,
             dialect_opts={"paramstyle": "named"},
+            include_object=include_object,
+            user_module_prefix="",
         )
 
         with context.begin_transaction():
@@ -79,8 +92,16 @@ async def run_migrations_online() -> None:
         await connectable.dispose()
 
 
-def do_run_migrations(connection):
-    context.configure(connection=connection, target_metadata=target_metadata)
+def do_run_migrations(connection) -> None:
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        include_object=include_object,
+        user_module_prefix="",
+        compare_type=True,
+        render_as_batch=True,
+        sorted_tables=sorted_tables,
+    )
     with context.begin_transaction():
         context.run_migrations()
 

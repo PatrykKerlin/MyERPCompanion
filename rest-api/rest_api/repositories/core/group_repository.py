@@ -7,7 +7,7 @@ from repositories.base import BaseRepository
 
 
 class GroupRepository(BaseRepository[Group]):
-    _model_cls = Group
+    _entity_cls = Group
 
     @classmethod
     async def get_all_by_names(

@@ -4,3 +4,6 @@ from .endpoint import Endpoint
 from .group import Group
 from .module import Module
 from .user import User
+from .language import Language
+from .text import Text
+from .theme import Theme
