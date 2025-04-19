@@ -12,7 +12,7 @@ TEntity = TypeVar("TEntity", bound=BaseEntity)
 
 
 class BaseRepository(Generic[TEntity]):
-    _model_cls: type[TEntity]
+    _entity_cls: type[TEntity]
 
     @classmethod
     def _build_query(
@@ -21,12 +21,12 @@ class BaseRepository(Generic[TEntity]):
         sort_by: str | None = None,
         sort_order: str = "asc",
     ) -> Select:
-        filters = [cls._model_cls.is_active == True]
+        filters = [cls._entity_cls.is_active == True]
         if additional_filters:
             filters.extend(additional_filters)
-        query = select(cls._model_cls).filter(*filters)
-        if sort_by and hasattr(cls._model_cls, sort_by):
-            column = getattr(cls._model_cls, sort_by)
+        query = select(cls._entity_cls).filter(*filters)
+        if sort_by and hasattr(cls._entity_cls, sort_by):
+            column = getattr(cls._entity_cls, sort_by)
             if sort_order == "asc":
                 query = query.order_by(asc(column))
             else:
@@ -55,7 +55,7 @@ class BaseRepository(Generic[TEntity]):
 
     @classmethod
     async def get_by_id(cls, session: AsyncSession, entity_id: int) -> TEntity | None:
-        query = cls._build_query([cls._expr(cls._model_cls.id == entity_id)])
+        query = cls._build_query([cls._expr(cls._entity_cls.id == entity_id)])
         result = await session.execute(query)
         return result.scalars().first()
 
@@ -77,8 +77,8 @@ class BaseRepository(Generic[TEntity]):
     ) -> int:
         query = (
             select(func.count())
-            .select_from(cls._model_cls)
-            .filter(cls._expr(cls._model_cls.is_active == True))
+            .select_from(cls._entity_cls)
+            .filter(cls._expr(cls._entity_cls.is_active == True))
         )
         if filters:
             for f in filters:

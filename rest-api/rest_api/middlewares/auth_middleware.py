@@ -7,7 +7,7 @@ from starlette.types import ASGIApp
 
 from config import Context
 from services.core import UserService
-from utils.auth_util import AuthUtil
+from utils.auth import Auth
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -23,7 +23,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         auth_header = request.headers.get("Authorization", None)
         if auth_header and auth_header.startswith("Bearer"):
             token = auth_header.split(" ")[1]
-            payload = AuthUtil.decode_access_token(token, self.__settings)
+            payload = Auth.decode_access_token(token, self.__settings)
             user_id = payload.get("user", None)
 
             if isinstance(user_id, int) and payload.get("type") == "access":

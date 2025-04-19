@@ -10,7 +10,7 @@ from repositories.base import BaseRepository
 
 
 class ModuleRepository(BaseRepository[Module]):
-    _model_cls = Module
+    _entity_cls = Module
 
     @classmethod
     def _build_query(

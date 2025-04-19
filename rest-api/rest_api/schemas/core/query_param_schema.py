@@ -1,6 +1,5 @@
 from typing import Any, Generic, TypeVar
 
-from fastapi import Request
 from pydantic import BaseModel, Field
 
 from schemas.base import BaseResponseSchema
