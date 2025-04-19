@@ -17,4 +17,6 @@ class Endpoint(BaseEntity):
     tag: Mapped[str] = mapped_column(String(25), nullable=True)
 
     module_id: Mapped[int] = mapped_column(ForeignKey("modules.id"))
-    module: Mapped["Module"] = relationship(back_populates="endpoints", lazy="selectin")
+    module: Mapped["Module"] = relationship(
+        back_populates="endpoints", foreign_keys=[module_id], lazy="selectin"
+    )

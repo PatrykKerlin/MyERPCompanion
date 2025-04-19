@@ -1,10 +1,10 @@
 import asyncio
 from logging.config import fileConfig
-from typing import cast, Any
+from typing import Any, cast
 
 from alembic import context
-from alembic.operations.ops import CreateTableOp, CreateForeignKeyOp, MigrateOperation
-from sqlalchemy import pool, Column, ForeignKeyConstraint
+from alembic.operations.ops import CreateForeignKeyOp, CreateTableOp, MigrateOperation
+from sqlalchemy import Column, ForeignKeyConstraint, pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 

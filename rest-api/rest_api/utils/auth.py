@@ -9,7 +9,6 @@ from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings
-from controllers.base import BaseController
 from schemas.core import UserInternal
 from services.core import ModuleService, UserService
 from utils.exceptions import (
@@ -19,7 +18,7 @@ from utils.exceptions import (
 )
 
 
-class AuthUtil:
+class Auth:
     __pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
     @classmethod
@@ -81,7 +80,7 @@ class AuthUtil:
         def decorator(func: Callable) -> Callable:
             @wraps(func)
             async def wrapper(
-                self: BaseController, *args: Any, request: Request, **kwargs: Any
+                self: Any, *args: Any, request: Request, **kwargs: Any
             ) -> Any:
                 user_schema = request.state.user
                 if not user_schema:

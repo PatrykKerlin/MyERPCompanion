@@ -14,6 +14,7 @@ from schemas.core import (
     SortingParams,
 )
 from services.base import BaseService
+from utils.auth import Auth
 from utils.exceptions import NotFoundException
 from utils.parsers import FilterParamsParser
 
@@ -35,6 +36,7 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
         self._settings = context.settings
         self._service = self._service_cls()
 
+    @Auth.restrict_access()
     async def get_all(
         self, _: Request, pagination: Pagination, filters: Filters, sorting: Sorting
     ) -> PaginatedResponse[TResponseSchema]:
@@ -72,6 +74,7 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
                 has_prev=has_prev,
             )
 
+    @Auth.restrict_access()
     async def get_by_id(self, _: Request, entity_id: int) -> TResponseSchema:
         async with self._get_session() as session:
             schema = await self._service.get_by_id(session, entity_id)
@@ -79,6 +82,7 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
                 raise NotFoundException()
             return schema
 
+    @Auth.restrict_access()
     async def create(
         self, data: Annotated[TCreateSchema, Body()], request: Request
     ) -> TResponseSchema:
@@ -86,6 +90,7 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
         async with self._get_session() as session:
             return await self._service.create(session, user.id, data)
 
+    @Auth.restrict_access()
     async def update(
         self, data: Annotated[TCreateSchema, Body()], request: Request, entity_id: int
     ) -> TResponseSchema:
@@ -96,6 +101,7 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
                 raise NotFoundException()
             return schema
 
+    @Auth.restrict_access()
     async def delete(self, request: Request, entity_id: int) -> Response:
         user = request.state.user
         async with self._get_session() as session:
@@ -106,13 +112,13 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
 
     def _register_routes(
         self,
-        path: str,
-        id_param: str,
         response_schema: type[TResponseSchema],
         include: (
             list[Literal["get_all", "get_by_id", "create", "update", "delete"]] | None
         ) = None,
+        path: str = "",
     ) -> None:
+        id_param = "/entity_id"
         include = (
             include
             if include

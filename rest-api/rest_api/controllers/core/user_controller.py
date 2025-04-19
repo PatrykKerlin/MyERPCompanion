@@ -1,14 +1,13 @@
 # pyright: reportIncompatibleMethodOverride=false
 
-from typing import Callable, List, Union
+from typing import Union
 
-from fastapi import Request, Response, status
+from fastapi import Request, status
 
 from config import Context
 from controllers.base import BaseController
-from schemas.core import PaginatedResponse, UserCreate, UserResponse, UserUpdate
+from schemas.core import UserCreate, UserResponse, UserUpdate
 from services.core import UserService
-from utils.auth_util import AuthUtil
 from utils.exceptions import InvalidCredentialsException
 
 
@@ -19,43 +18,14 @@ class UserController(
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        path = ""
-        self._register_routes(path, "/user_id", UserResponse)
+        self._register_routes(UserResponse)
         self.router.add_api_route(
-            path=path + "/current-user",
+            path="/current-user",
             endpoint=self.current_user,
             methods=["GET"],
             response_model=UserResponse,
             status_code=status.HTTP_200_OK,
         )
-
-    @AuthUtil.restrict_access()
-    async def get_all(
-        self,
-        request: Request,
-        pagination: BaseController.Pagination,
-        filters: BaseController.Filters,
-        sorting: BaseController.Sorting,
-    ) -> PaginatedResponse[UserResponse]:
-        return await super().get_all(request, pagination, filters, sorting)
-
-    @AuthUtil.restrict_access()
-    async def get_by_id(self, request: Request, user_id: int) -> UserResponse:
-        return await super().get_by_id(request, user_id)
-
-    @AuthUtil.restrict_access()
-    async def create(self, data: UserCreate, request: Request) -> UserResponse:
-        return await super().create(data, request)
-
-    @AuthUtil.restrict_access()
-    async def update(
-        self, data: UserUpdate, request: Request, user_id: int
-    ) -> UserResponse:
-        return await super().update(data, request, user_id)
-
-    @AuthUtil.restrict_access()
-    async def delete(self, request: Request, user_id: int) -> Response:
-        return await super().delete(request, user_id)
 
     @classmethod
     async def current_user(cls, request: Request) -> UserResponse:

@@ -60,7 +60,7 @@ class UserService(BaseService[User, UserRepository, UserCreateOrUpdate, UserResp
         schema_cls: type[TSchema],
         exclude_unset: bool = False,
     ) -> TSchema:
-        from utils.auth_util import AuthUtil
+        from utils.auth import Auth
 
         data = schema.model_dump(exclude_unset=exclude_unset)
         update_fields: dict[str, Any] = {}
@@ -75,7 +75,7 @@ class UserService(BaseService[User, UserRepository, UserCreateOrUpdate, UserResp
             update_fields["groups"] = group_objs
 
         if "password" in data:
-            update_fields["password"] = AuthUtil.get_password_hash(data["password"])
+            update_fields["password"] = Auth.get_password_hash(data["password"])
 
         validated = schema_cls.model_validate(data)
 

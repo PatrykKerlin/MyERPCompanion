@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 
 from config import Context
 from schemas.core import AuthCreate
-from utils.auth_util import AuthUtil
+from utils.auth import Auth
 from utils.exceptions import InvalidCredentialsException
 
 
@@ -17,7 +17,7 @@ class AuthController:
 
     async def auth(self, data: AuthCreate) -> JSONResponse:
         async with self.__get_session() as session:
-            response = await AuthUtil.authenticate(
+            response = await Auth.authenticate(
                 session, data.username, data.password, self.__settings
             )
             if not response:
@@ -30,8 +30,8 @@ class AuthController:
             raise InvalidCredentialsException()
         refresh_token = auth_header.split(" ")[1]
         async with self.__get_session() as session:
-            schema = await AuthUtil.validate_refresh_token(
+            schema = await Auth.validate_refresh_token(
                 session, refresh_token, self.__settings
             )
-            new_access_token = AuthUtil.create_access_token(schema.id, self.__settings)
+            new_access_token = Auth.create_access_token(schema.id, self.__settings)
             return JSONResponse(content={"access_token": new_access_token})

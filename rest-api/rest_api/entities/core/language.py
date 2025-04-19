@@ -1,12 +1,13 @@
 from typing import TYPE_CHECKING
+
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from entities.base import BaseEntity
 
 if TYPE_CHECKING:
-    from .user import User
     from .text import Text
+    from .user import User
 
 
 class Language(BaseEntity):

@@ -12,7 +12,7 @@ from entities import core as ec
 from entities.base import BaseEntity
 from schemas import core as sc
 from schemas.base import BaseCreateSchema
-from utils.auth_util import AuthUtil
+from utils.auth import Auth
 
 
 class PopulateDatabase:
@@ -32,7 +32,7 @@ class PopulateDatabase:
             username = getenv("SUPERUSER_USERNAME")
             password = getenv("SUPERUSER_PASSWORD")
             if isinstance(username, str) and isinstance(password, str):
-                hashed_password = AuthUtil.get_password_hash(password)
+                hashed_password = Auth.get_password_hash(password)
                 superuser = ec.User(
                     username=username, password=hashed_password, is_superuser=True
                 )
@@ -77,7 +77,7 @@ class PopulateDatabase:
                 reader = csv.DictReader(csv_file)
                 for row in reader:
                     if "password" in row.keys() and row["password"]:
-                        row["password"] = AuthUtil.get_password_hash(row["password"])
+                        row["password"] = Auth.get_password_hash(row["password"])
                     validated_row = schema(**row)
                     instance = entity(**validated_row.model_dump(exclude_unset=True))
                     instance.created_by = self.__superuser_id
