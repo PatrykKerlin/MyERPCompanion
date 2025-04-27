@@ -16,9 +16,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         self.__settings = context.settings
         self.__get_session = context.get_session
 
-    async def dispatch(
-        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         request.state.user = None
         auth_header = request.headers.get("Authorization", None)
         if auth_header and auth_header.startswith("Bearer"):
@@ -29,7 +27,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             if isinstance(user_id, int) and payload.get("type") == "access":
                 service = UserService()
                 async with self.__get_session() as session:
-                    schema = await service.get_internal_by_id(session, user_id)
+                    schema = await service.get_by_id(session, user_id)
                     if schema:
                         request.state.user = schema
 

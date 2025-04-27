@@ -1,6 +1,3 @@
-from .base_schema import (
-    BaseCreateSchema,
-    BaseInternalSchema,
-    BaseResponseSchema,
-    BaseSchema,
-)
+from .base_schema import BaseInputSchema, BaseOutputSchema
+
+__all__ = ["BaseInputSchema", "BaseOutputSchema"]

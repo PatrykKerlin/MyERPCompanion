@@ -14,9 +14,12 @@ class Endpoint(BaseEntity):
 
     controller: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     path: Mapped[str] = mapped_column(String(25), nullable=False)
-    tag: Mapped[str] = mapped_column(String(25), nullable=True)
+    tag: Mapped[str | None] = mapped_column(String(25), nullable=True)
 
-    module_id: Mapped[int] = mapped_column(ForeignKey("modules.id"))
+    module_id: Mapped[int] = mapped_column(ForeignKey("modules.id"), nullable=False)
     module: Mapped["Module"] = relationship(
-        back_populates="endpoints", foreign_keys=[module_id], lazy="selectin"
+        argument="Module",
+        back_populates="endpoints",
+        foreign_keys=[module_id],
+        lazy="selectin",
     )

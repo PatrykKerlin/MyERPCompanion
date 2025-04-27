@@ -2,11 +2,11 @@ from typing import Any
 
 from fastapi import Request
 
-from schemas.core import FilterParams
+from schemas.core import FilterParamsSchema
 
 
 class FilterParamsParser:
-    def __call__(self, request: Request) -> FilterParams:
+    def __call__(self, request: Request) -> FilterParamsSchema:
         parsed: dict[str, Any] = {}
 
         for key, value in request.query_params.items():
@@ -24,4 +24,4 @@ class FilterParamsParser:
                 except ValueError:
                     parsed[key] = value
 
-        return FilterParams(filters=parsed)
+        return FilterParamsSchema(filters=parsed)

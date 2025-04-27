@@ -1,5 +1,3 @@
-from typing import cast
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
@@ -21,12 +19,12 @@ class UserRepository(BaseRepository[User]):
     ) -> Select:
         query = super()._build_query(additional_filters, sort_by, sort_order)
         return query.options(
-            selectinload(User.groups),
+            selectinload(cls._entity_cls.groups),
             with_loader_criteria(Group, cls._expr(Group.is_active == True)),
         )
 
     @classmethod
     async def get_by_username(cls, session: AsyncSession, username: str) -> User | None:
-        query = super()._build_query([cls._expr(User.username == username)])
+        query = super()._build_query([cls._expr(cls._entity_cls.username == username)])
         result = await session.execute(query)
         return result.scalars().first()

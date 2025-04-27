@@ -1,8 +1,21 @@
-from entities.core import *
+from entities.core import Endpoint, Group, SettingKey, Text
 from utils.factories import RepositoryFactory
 
-from .group_repository import GroupRepository
 from .module_repository import ModuleRepository
+from .setting_repository import SettingRepository
 from .user_repository import UserRepository
 
 EndpointRepository = RepositoryFactory.create(Endpoint)
+GroupRepository = RepositoryFactory.create(Group)
+SettingKeyRepository = RepositoryFactory.create(SettingKey)
+TextRepository = RepositoryFactory.create(Text)
+
+__all__ = [
+    "EndpointRepository",
+    "GroupRepository",
+    "ModuleRepository",
+    "SettingKeyRepository",
+    "SettingRepository",
+    "TextRepository",
+    "UserRepository",
+]

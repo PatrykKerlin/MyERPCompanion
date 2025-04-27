@@ -17,7 +17,10 @@ class Module(BaseEntity):
     label: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
 
     endpoints: Mapped[list["Endpoint"]] = relationship(
-        back_populates="module", foreign_keys="Endpoint.module_id", lazy="selectin"
+        argument="Endpoint",
+        back_populates="module",
+        foreign_keys="Endpoint.module_id",
+        lazy="selectin",
     )
     groups: Mapped[list["Group"]] = relationship(
         argument="Group",
