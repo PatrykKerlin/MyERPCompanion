@@ -27,7 +27,7 @@ class RepositoryFactory:
         return new_class(
             f"{entity_cls.__name__}Repository",
             [BaseRepository[entity_cls]],
-            exec_body=lambda namespace: namespace.update({"_model_cls": entity_cls}),
+            exec_body=lambda namespace: namespace.update({"_entity_cls": entity_cls}),
         )
 
 

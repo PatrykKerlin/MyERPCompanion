@@ -2,7 +2,6 @@ from typing import Annotated, Generic, Literal, TypeVar
 
 from fastapi import APIRouter, Body, Depends, Request, Response, status
 from sqlalchemy import String
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql.elements import ColumnElement
 
@@ -77,17 +76,15 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             return schema
 
     @Auth.restrict_access()
-    async def create(self, data: Annotated[TInputSchema, Body()], request: Request) -> TOutputSchema:
+    async def create(self, request: Request, data: Annotated[TInputSchema, Body()]) -> TOutputSchema:
         user = request.state.user
         async with self._get_session() as session:
-            await self._validate_data(session, data)
             return await self._service.create(session, user.id, data)
 
     @Auth.restrict_access()
-    async def update(self, data: Annotated[TInputSchema, Body()], request: Request, entity_id: int) -> TOutputSchema:
+    async def update(self, request: Request, data: Annotated[TInputSchema, Body()], entity_id: int) -> TOutputSchema:
         user = request.state.user
         async with self._get_session() as session:
-            await self._validate_data(session, data)
             schema = await self._service.update(session, entity_id, user.id, data)
             if not schema:
                 raise NotFoundException()
@@ -101,8 +98,6 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             if not success:
                 raise NotFoundException()
             return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-    async def _validate_data(self, session: AsyncSession, data: TInputSchema) -> None: ...
 
     def _register_routes(
         self,

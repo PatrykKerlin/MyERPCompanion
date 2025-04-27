@@ -12,7 +12,7 @@ class SettingsValidator:
         service: BaseService,
         setting_id: int,
         expected_key: str,
-    ):
+    ) -> None:
         setting = await service.get_by_id(session, setting_id)
         if not setting:
             raise ItemNotFoundException(service._entity_cls.__name__, setting_id)
