@@ -1,6 +1,17 @@
-from entities.core import *
-from schemas.core import *
-from services.core import *
+from entities.core import Endpoint, Group, Module, Setting, SettingKey
+from schemas.core import (
+    EndpointInputSchema,
+    EndpointOutputSchema,
+    GroupInputSchema,
+    GroupOutputSchema,
+    ModuleInputSchema,
+    ModuleOutputSchema,
+    SettingInputSchema,
+    SettingKeyInputSchema,
+    SettingKeyOutputSchema,
+    SettingOutputSchema,
+)
+from services.core import EndpointService, GroupService, ModuleService, SettingKeyService, SettingService
 from utils.factories import ControllerFactory
 
 from .auth_controller import AuthController
@@ -10,13 +21,41 @@ from .user_controller import UserController
 EndpointController = ControllerFactory.create(
     entity_cls=Endpoint,
     service_cls=EndpointService,
-    create_schema_cls=EndpointCreate,
-    response_schema_cls=EndpointResponse,
+    input_schema_cls=EndpointInputSchema,
+    output_schema_cls=EndpointOutputSchema,
 )
-
 GroupController = ControllerFactory.create(
     entity_cls=Group,
     service_cls=GroupService,
-    create_schema_cls=GroupCreate,
-    response_schema_cls=GroupResponse,
+    input_schema_cls=GroupInputSchema,
+    output_schema_cls=GroupOutputSchema,
 )
+ModuleController = ControllerFactory.create(
+    entity_cls=Module,
+    service_cls=ModuleService,
+    input_schema_cls=ModuleInputSchema,
+    output_schema_cls=ModuleOutputSchema,
+)
+SettingKeyController = ControllerFactory.create(
+    entity_cls=SettingKey,
+    service_cls=SettingKeyService,
+    input_schema_cls=SettingKeyInputSchema,
+    output_schema_cls=SettingKeyOutputSchema,
+)
+SettingController = ControllerFactory.create(
+    entity_cls=Setting,
+    service_cls=SettingService,
+    input_schema_cls=SettingInputSchema,
+    output_schema_cls=SettingOutputSchema,
+)
+
+__all__ = [
+    "AuthController",
+    "EndpointController",
+    "GroupController",
+    "HealthCheckController",
+    "ModuleController",
+    "SettingController",
+    "SettingKeyController",
+    "UserController",
+]

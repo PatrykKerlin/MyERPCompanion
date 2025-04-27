@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
-from typing import AsyncContextManager
 
 from sqlalchemy.ext.asyncio import AsyncSession
 

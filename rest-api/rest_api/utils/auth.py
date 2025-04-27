@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from functools import wraps
-from typing import Any, Generic, NoReturn, TypeVar, cast
+from typing import Any, cast
 
 from fastapi import Request
 from jose import JWTError, jwt
@@ -9,13 +9,9 @@ from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings
-from schemas.core import UserInternal
+from schemas.core import UserOutputSchema
 from services.core import ModuleService, UserService
-from utils.exceptions import (
-    InvalidCredentialsException,
-    NoPermissionException,
-    NotFoundException,
-)
+from utils.exceptions import InvalidCredentialsException, NoPermissionException, NotFoundException
 
 
 class Auth:
@@ -26,10 +22,8 @@ class Auth:
         cls, session: AsyncSession, username: str, password: str, settings: Settings
     ) -> dict[str, str] | None:
         service = UserService()
-        schema = await service.get_internal_by_name(session, username)
-        if not schema or not cls.__verify_password(
-            password, cast(str, schema.password)
-        ):
+        schema = await service.get_by_name(session, username)
+        if not schema or not cls.__verify_password(password, cast(str, schema.password)):
             return None
         access_token = cls.create_access_token(schema.id, settings)
         refresh_token = cls.__create_refresh_token(schema.id, settings)
@@ -40,13 +34,9 @@ class Auth:
         return cls.__pwd_context.hash(password)
 
     @classmethod
-    def decode_access_token(
-        cls, token: str, settings: Settings
-    ) -> dict[str, str | int]:
+    def decode_access_token(cls, token: str, settings: Settings) -> dict[str, str | int]:
         try:
-            return jwt.decode(
-                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-            )
+            return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         except JWTError:
             return {}
 
@@ -58,9 +48,7 @@ class Auth:
         return token
 
     @classmethod
-    async def validate_refresh_token(
-        cls, session: AsyncSession, token: str, settings: Settings
-    ) -> UserInternal:
+    async def validate_refresh_token(cls, session: AsyncSession, token: str, settings: Settings) -> UserOutputSchema:
         from services.core import UserService
 
         payload = cls.decode_access_token(token, settings)
@@ -70,7 +58,7 @@ class Auth:
         if not isinstance(user_id, int):
             raise InvalidCredentialsException()
         service = UserService()
-        schema = await service.get_internal_by_id(session, user_id)
+        schema = await service.get_by_id(session, user_id)
         if not schema:
             raise InvalidCredentialsException()
         return schema
@@ -79,9 +67,7 @@ class Auth:
     def restrict_access(cls) -> Callable:
         def decorator(func: Callable) -> Callable:
             @wraps(func)
-            async def wrapper(
-                self: Any, *args: Any, request: Request, **kwargs: Any
-            ) -> Any:
+            async def wrapper(self: Any, *args: Any, request: Request, **kwargs: Any) -> Any:
                 user_schema = request.state.user
                 if not user_schema:
                     raise InvalidCredentialsException()
@@ -92,9 +78,7 @@ class Auth:
 
                 async with self._get_session() as session:
                     service = ModuleService()
-                    module_schema = await service.get_internal_by_controller(
-                        session, controller
-                    )
+                    module_schema = await service.get_by_controller(session, controller)
 
                 if not module_schema:
                     raise NotFoundException()
@@ -135,7 +119,5 @@ class Auth:
             "type": token_type,
             "exp": datetime.now(UTC) + time_to_expire,
         }
-        encoded_jwt = jwt.encode(
-            token_data, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-        )
+        encoded_jwt = jwt.encode(token_data, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
         return encoded_jwt

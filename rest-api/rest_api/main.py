@@ -10,9 +10,7 @@ from middlewares import AuthMiddleware
 
 
 class App:
-    def __init__(
-        self, context: Context, database: Database, lifespan: Any = None
-    ) -> None:
+    def __init__(self, context: Context, database: Database, lifespan: Any = None) -> None:
         self.__context = context
         self.__database = database
         self.__app = CustomFastAPI(
@@ -31,9 +29,7 @@ class App:
 
         api_router.include_router(health_check_controller.router, tags=["Health Check"])
         api_router.include_router(auth_controller.router, tags=["Authorization"])
-        api_router.include_router(
-            endpoint_controller.router, prefix="/endpoints", tags=["Endpoints"]
-        )
+        api_router.include_router(endpoint_controller.router, prefix="/endpoints", tags=["Endpoints"])
 
         self.__app.include_router(api_router)
 
@@ -61,6 +57,7 @@ def create_app() -> FastAPI:
         await populate.populate_superuser()
         await populate.populate_admins_group()
         await populate.populate_from_csv()
+        await populate.update_superuser()
         await app_instance.register_dynamic_endpoints()
         yield
 

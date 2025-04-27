@@ -7,18 +7,14 @@ class BaseSchema(BaseModel):
     model_config = {"from_attributes": True, "arbitrary_types_allowed": True}
 
 
-class BaseCreateSchema(BaseSchema):
+class BaseInputSchema(BaseSchema):
     pass
 
 
-class BaseResponseSchema(BaseSchema):
-    id: int
-
-
-class BaseInternalSchema(BaseResponseSchema):
+class BaseOutputSchema(BaseSchema):
     id: int
     is_active: bool
     created_at: datetime
     created_by: int
-    modified_at: datetime | None = None
-    modified_by: int | None = None
+    modified_at: datetime | None
+    modified_by: int | None

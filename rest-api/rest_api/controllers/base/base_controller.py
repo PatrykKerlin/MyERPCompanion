@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Generic, Literal, TypeVar, cast
+from typing import Annotated, Generic, Literal, TypeVar
 
 from fastapi import APIRouter, Body, Depends, Request, Response, status
 from sqlalchemy import String
@@ -6,29 +6,24 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql.elements import ColumnElement
 
 from config import Context
-from schemas.base import BaseCreateSchema, BaseResponseSchema
-from schemas.core import (
-    FilterParams,
-    PaginatedResponse,
-    PaginationParams,
-    SortingParams,
-)
+from schemas.base import BaseInputSchema, BaseOutputSchema
+from schemas.core import FilterParamsSchema, PaginatedResponseSchema, PaginationParamsSchema, SortingParamsSchema
 from services.base import BaseService
 from utils.auth import Auth
 from utils.exceptions import NotFoundException
 from utils.parsers import FilterParamsParser
 
 TService = TypeVar("TService", bound=BaseService)
-TCreateSchema = TypeVar("TCreateSchema", bound=BaseCreateSchema)
-TResponseSchema = TypeVar("TResponseSchema", bound=BaseResponseSchema)
+TInputSchema = TypeVar("TInputSchema", bound=BaseInputSchema)
+TOutputSchema = TypeVar("TOutputSchema", bound=BaseOutputSchema)
 
 
-class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
+class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
     _service_cls: type[TService]
 
-    Pagination = Annotated[PaginationParams, Depends()]
-    Filters = Annotated[FilterParams, Depends(FilterParamsParser())]
-    Sorting = Annotated[SortingParams, Depends()]
+    Pagination = Annotated[PaginationParamsSchema, Depends()]
+    Filters = Annotated[FilterParamsSchema, Depends(FilterParamsParser())]
+    Sorting = Annotated[SortingParamsSchema, Depends()]
 
     def __init__(self, context: Context) -> None:
         self.router = APIRouter()
@@ -38,8 +33,8 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
 
     @Auth.restrict_access()
     async def get_all(
-        self, _: Request, pagination: Pagination, filters: Filters, sorting: Sorting
-    ) -> PaginatedResponse[TResponseSchema]:
+        self, request: Request, pagination: Pagination, filters: Filters, sorting: Sorting
+    ) -> PaginatedResponseSchema[TOutputSchema]:
         async with self._get_session() as session:
             offset = (pagination.page - 1) * pagination.page_size
             limit = pagination.page_size
@@ -47,9 +42,7 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
             for key, value in filters.filters.items():
                 attr = getattr(self._service._entity_cls, key, None)
                 if isinstance(attr, InstrumentedAttribute):
-                    if hasattr(attr, "property") and isinstance(
-                        attr.property.columns[0].type, String
-                    ):
+                    if hasattr(attr, "property") and isinstance(attr.property.columns[0].type, String):
                         conditions.append(attr.ilike(f"%{value}%"))
                     else:
                         conditions.append(attr == value)
@@ -65,7 +58,7 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
             has_next = offset + limit < total
             has_prev = pagination.page > 1
 
-            return PaginatedResponse[TResponseSchema](
+            return PaginatedResponseSchema[TOutputSchema](
                 items=items,
                 total=total,
                 page=pagination.page,
@@ -75,7 +68,7 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
             )
 
     @Auth.restrict_access()
-    async def get_by_id(self, _: Request, entity_id: int) -> TResponseSchema:
+    async def get_by_id(self, request: Request, entity_id: int) -> TOutputSchema:
         async with self._get_session() as session:
             schema = await self._service.get_by_id(session, entity_id)
             if not schema:
@@ -83,17 +76,13 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
             return schema
 
     @Auth.restrict_access()
-    async def create(
-        self, data: Annotated[TCreateSchema, Body()], request: Request
-    ) -> TResponseSchema:
+    async def create(self, request: Request, data: Annotated[TInputSchema, Body()]) -> TOutputSchema:
         user = request.state.user
         async with self._get_session() as session:
             return await self._service.create(session, user.id, data)
 
     @Auth.restrict_access()
-    async def update(
-        self, data: Annotated[TCreateSchema, Body()], request: Request, entity_id: int
-    ) -> TResponseSchema:
+    async def update(self, request: Request, data: Annotated[TInputSchema, Body()], entity_id: int) -> TOutputSchema:
         user = request.state.user
         async with self._get_session() as session:
             schema = await self._service.update(session, entity_id, user.id, data)
@@ -112,24 +101,18 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
 
     def _register_routes(
         self,
-        response_schema: type[TResponseSchema],
-        include: (
-            list[Literal["get_all", "get_by_id", "create", "update", "delete"]] | None
-        ) = None,
+        output_schema: type[TOutputSchema],
+        include: list[Literal["get_all", "get_by_id", "create", "update", "delete"]] | None = None,
         path: str = "",
     ) -> None:
-        id_param = "/entity_id"
-        include = (
-            include
-            if include
-            else ["get_all", "get_by_id", "create", "update", "delete"]
-        )
+        id_param = "/{entity_id}"
+        include = include if include else ["get_all", "get_by_id", "create", "update", "delete"]
         if "get_all" in include:
             self.router.add_api_route(
                 path=path,
                 endpoint=self.get_all,
                 methods=["GET"],
-                response_model=PaginatedResponse[response_schema],
+                response_model=PaginatedResponseSchema[output_schema],
                 status_code=status.HTTP_200_OK,
             )
         if "get_by_id" in include:
@@ -137,7 +120,7 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
                 path=path + id_param,
                 endpoint=self.get_by_id,
                 methods=["GET"],
-                response_model=response_schema,
+                response_model=output_schema,
                 status_code=status.HTTP_200_OK,
             )
         if "create" in include:
@@ -145,7 +128,7 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
                 path=path,
                 endpoint=self.create,
                 methods=["POST"],
-                response_model=response_schema,
+                response_model=output_schema,
                 status_code=status.HTTP_201_CREATED,
             )
         if "update" in include:
@@ -153,7 +136,7 @@ class BaseController(Generic[TService, TCreateSchema, TResponseSchema]):
                 path=path + id_param,
                 endpoint=self.update,
                 methods=["PUT"],
-                response_model=response_schema,
+                response_model=output_schema,
                 status_code=status.HTTP_200_OK,
             )
         if "delete" in include:

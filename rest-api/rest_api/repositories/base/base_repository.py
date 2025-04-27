@@ -47,9 +47,7 @@ class BaseRepository(Generic[TEntity]):
         sort_by: str | None = None,
         sort_order: str = "asc",
     ) -> Sequence[TEntity]:
-        query = (
-            cls._build_query(filters, sort_by, sort_order).offset(offset).limit(limit)
-        )
+        query = cls._build_query(filters, sort_by, sort_order).offset(offset).limit(limit)
         result = await session.execute(query)
         return result.scalars().all()
 
@@ -72,14 +70,8 @@ class BaseRepository(Generic[TEntity]):
         return True
 
     @classmethod
-    async def count_all(
-        cls, session: AsyncSession, filters: list[ColumnElement[bool]] | None = None
-    ) -> int:
-        query = (
-            select(func.count())
-            .select_from(cls._entity_cls)
-            .filter(cls._expr(cls._entity_cls.is_active == True))
-        )
+    async def count_all(cls, session: AsyncSession, filters: list[ColumnElement[bool]] | None = None) -> int:
+        query = select(func.count()).select_from(cls._entity_cls).filter(cls._expr(cls._entity_cls.is_active == True))
         if filters:
             for f in filters:
                 query = query.filter(cls._expr(f))

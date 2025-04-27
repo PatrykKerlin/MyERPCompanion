@@ -2,20 +2,18 @@ from typing import Annotated
 
 from pydantic import Field
 
-from schemas.base import BaseCreateSchema, BaseResponseSchema
-from schemas.core import GroupInternal
+from schemas.base import BaseInputSchema, BaseOutputSchema
+from schemas.core import EndpointOutputSchema, GroupOutputSchema
 
 
-class ModuleCreate(BaseCreateSchema):
-    name: str = Field(min_length=1, max_length=25)
-    label: str = Field(min_length=1, max_length=25)
+class ModuleInputSchema(BaseInputSchema):
+    name: Annotated[str, Field(min_length=1, max_length=25)]
+    label: Annotated[str, Field(min_length=1, max_length=25)]
+    groups: Annotated[list[Annotated[int, Field(ge=1)]] | None, Field(default=None)]
 
 
-class ModuleResponse(BaseResponseSchema):
+class ModuleOutputSchema(BaseOutputSchema):
     name: str
     label: str
-
-
-class ModuleInternal(BaseResponseSchema):
-    name: str
-    groups: list[GroupInternal]
+    endpoints: list[EndpointOutputSchema] = []
+    groups: list[GroupOutputSchema] = []

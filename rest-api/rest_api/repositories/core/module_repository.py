@@ -1,5 +1,3 @@
-from typing import cast
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
@@ -28,9 +26,7 @@ class ModuleRepository(BaseRepository[Module]):
         )
 
     @classmethod
-    async def get_by_controller(
-        cls, session: AsyncSession, controller: str
-    ) -> Module | None:
+    async def get_by_controller(cls, session: AsyncSession, controller: str) -> Module | None:
         query = cls._build_query([cls._expr(Endpoint.controller == controller)])
         result = await session.execute(query)
         return result.scalars().first()

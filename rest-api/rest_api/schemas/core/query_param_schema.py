@@ -1,27 +1,27 @@
-from typing import Any, Generic, TypeVar
+from typing import Annotated, Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
-from schemas.base import BaseResponseSchema
+from schemas.base import BaseOutputSchema
 
-TResponseSchema = TypeVar("TResponseSchema", bound=BaseResponseSchema)
-
-
-class PaginationParams(BaseModel):
-    page: int = Field(1, ge=1)
-    page_size: int = Field(10, ge=1, le=100)
+TResponseSchema = TypeVar("TResponseSchema", bound=BaseOutputSchema)
 
 
-class FilterParams(BaseModel):
-    filters: dict[str, Any] = Field(default={})
+class PaginationParamsSchema(BaseModel):
+    page: Annotated[int, Field(default=1, ge=1)]
+    page_size: Annotated[int, Field(default=10, ge=1, le=100)]
 
 
-class SortingParams(BaseModel):
-    sort_by: str | None = Field(default=None)
-    order: str = Field(default="asc", pattern="^(asc|desc)$")
+class FilterParamsSchema(BaseModel):
+    filters: Annotated[dict[str, Any], Field(default_factory=dict)]
 
 
-class PaginatedResponse(BaseModel, Generic[TResponseSchema]):
+class SortingParamsSchema(BaseModel):
+    sort_by: Annotated[str | None, Field(default=None)]
+    order: Annotated[str, Field(default="asc", pattern="^(asc|desc)$")]
+
+
+class PaginatedResponseSchema(BaseModel, Generic[TResponseSchema]):
     items: list[TResponseSchema]
     total: int
     page: int

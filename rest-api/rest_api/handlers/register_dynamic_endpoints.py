@@ -25,9 +25,7 @@ class RegisterDynamicEndpoints(Generic[TController]):
 
     async def register(self) -> None:
         async with self.__context.get_session() as db:
-            query = select(Endpoint).where(
-                cast(BinaryExpression, Endpoint.is_active == True)
-            )
+            query = select(Endpoint).where(cast(BinaryExpression, Endpoint.is_active == True))
             result = await db.execute(query)
             endpoints = result.scalars().all()
 
@@ -38,7 +36,7 @@ class RegisterDynamicEndpoints(Generic[TController]):
                     self.__api_router.include_router(
                         controller.router,
                         prefix=endpoint.path,
-                        tags=[endpoint.tag],
+                        tags=[endpoint.tag] if endpoint.tag else None,
                     )
                 except Exception as e:
                     print(f"Failed to load controller: {endpoint.controller}: {e}")

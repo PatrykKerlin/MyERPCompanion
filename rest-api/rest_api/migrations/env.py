@@ -1,6 +1,6 @@
 import asyncio
 from logging.config import fileConfig
-from typing import Any, cast
+from typing import Any
 
 from alembic import context
 from alembic.operations.ops import CreateForeignKeyOp, CreateTableOp, MigrateOperation
@@ -8,7 +8,7 @@ from sqlalchemy import Column, ForeignKeyConstraint, pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
-import entities.core
+import entities.core  # noqa: F401
 from config import Database, Settings
 
 # this is the Alembic Config object, which provides
@@ -111,9 +111,7 @@ def run_migrations_offline() -> None:
             target_metadata=target_metadata,
             literal_binds=True,
             dialect_opts={"paramstyle": "named"},
-            process_revision_directives=lambda ctx, rev, directives: foreign_key_split_hook(
-                directives
-            ),
+            process_revision_directives=lambda ctx, rev, directives: foreign_key_split_hook(directives),
         )
 
         with context.begin_transaction():
@@ -137,9 +135,7 @@ def do_run_migrations(connection: Connection) -> None:
         connection=connection,
         target_metadata=target_metadata,
         compare_type=True,
-        process_revision_directives=lambda ctx, rev, directives: foreign_key_split_hook(
-            directives
-        ),
+        process_revision_directives=lambda ctx, rev, directives: foreign_key_split_hook(directives),
     )
     with context.begin_transaction():
         context.run_migrations()

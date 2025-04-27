@@ -1,22 +1,26 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from entities.base import BaseEntity
 
 if TYPE_CHECKING:
-    from .language import Language
+    from .setting import Setting
 
 
 class Text(BaseEntity):
     __tablename__ = "texts"
+    __table_args__ = (UniqueConstraint("name", "language_id", name="uq_texts_name_language"),)
 
-    name: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(25), nullable=False)
     value: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
 
-    language_id: Mapped[int] = mapped_column(ForeignKey("languages.id"), nullable=False)
+    language_id: Mapped[int] = mapped_column(ForeignKey("settings.id"), nullable=False)
 
-    language: Mapped["Language"] = relationship(
-        back_populates="texts", foreign_keys=[language_id], lazy="selectin"
+    language: Mapped["Setting"] = relationship(
+        argument="Setting",
+        back_populates="text_languages",
+        foreign_keys=[language_id],
+        lazy="selectin",
     )

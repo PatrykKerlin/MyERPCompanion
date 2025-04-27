@@ -1,17 +1,15 @@
+from typing import Annotated
+
 from pydantic import Field
 
-from schemas.base import BaseCreateSchema, BaseResponseSchema
+from schemas.base import BaseInputSchema, BaseOutputSchema
 
 
-class GroupCreate(BaseCreateSchema):
-    name: str = Field(min_length=1, max_length=10)
-    description: str = Field(min_length=1, max_length=255)
+class GroupInputSchema(BaseInputSchema):
+    name: Annotated[str, Field(min_length=1, max_length=10)]
+    description: Annotated[str, Field(min_length=1, max_length=255)]
 
 
-class GroupResponse(BaseResponseSchema):
+class GroupOutputSchema(BaseOutputSchema):
     name: str
     description: str
-
-
-class GroupInternal(BaseResponseSchema):
-    name: str

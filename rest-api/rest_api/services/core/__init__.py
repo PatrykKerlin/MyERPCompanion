@@ -1,15 +1,43 @@
-from entities.core import *
-from repositories.core import *
-from schemas.core import *
+from entities.core import Endpoint, Group, Setting, SettingKey
+from repositories.core import EndpointRepository, GroupRepository, SettingKeyRepository, SettingRepository
+from schemas.core import (
+    EndpointInputSchema,
+    EndpointOutputSchema,
+    GroupInputSchema,
+    GroupOutputSchema,
+    SettingInputSchema,
+    SettingKeyInputSchema,
+    SettingKeyOutputSchema,
+    SettingOutputSchema,
+)
 from utils.factories import ServiceFactory
 
-from .group_service import GroupService
 from .module_service import ModuleService
 from .user_service import UserService
 
 EndpointService = ServiceFactory.create(
     entity_cls=Endpoint,
     repository_cls=EndpointRepository,
-    create_schema_cls=EndpointCreate,
-    response_schema_cls=EndpointResponse,
+    input_schema_cls=EndpointInputSchema,
+    output_schema_cls=EndpointOutputSchema,
 )
+GroupService = ServiceFactory.create(
+    entity_cls=Group,
+    repository_cls=GroupRepository,
+    input_schema_cls=GroupInputSchema,
+    output_schema_cls=GroupOutputSchema,
+)
+SettingKeyService = ServiceFactory.create(
+    entity_cls=SettingKey,
+    repository_cls=SettingKeyRepository,
+    input_schema_cls=SettingKeyInputSchema,
+    output_schema_cls=SettingKeyOutputSchema,
+)
+SettingService = ServiceFactory.create(
+    entity_cls=Setting,
+    repository_cls=SettingRepository,
+    input_schema_cls=SettingInputSchema,
+    output_schema_cls=SettingOutputSchema,
+)
+
+__all__ = ["EndpointService", "GroupService", "ModuleService", "SettingKeyService", "SettingService", "UserService"]

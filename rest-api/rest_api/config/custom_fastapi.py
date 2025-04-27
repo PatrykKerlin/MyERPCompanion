@@ -19,9 +19,7 @@ class CustomFastAPI(FastAPI):
             routes=self.routes,
         )
         openapi_schema.setdefault("components", {}).setdefault("securitySchemes", {})
-        openapi_schema["components"]["securitySchemes"] = {
-            "BearerAuth": {"type": "http", "scheme": "bearer"}
-        }
+        openapi_schema["components"]["securitySchemes"] = {"BearerAuth": {"type": "http", "scheme": "bearer"}}
         openapi_schema["security"] = [{"BearerAuth": []}]
         self.openapi_schema = openapi_schema
         return self.openapi_schema
