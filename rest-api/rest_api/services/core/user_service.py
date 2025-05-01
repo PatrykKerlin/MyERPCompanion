@@ -2,7 +2,7 @@ from typing import Any, TypeVar, Union, cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from entities.core import Group, User
+from models.core import Group, User
 from repositories.core import GroupRepository, UserRepository
 from schemas.base import BaseInputSchema
 from schemas.core import UserInputCreateSchema, UserInputUpdateSchema, UserOutputSchema
@@ -21,14 +21,14 @@ class UserService(
     ]
 ):
     _repository_cls = UserRepository
-    _entity_cls = User
+    _model_cls = User
     _output_schema_cls = UserOutputSchema
 
     async def get_by_name(self, session: AsyncSession, username: str) -> UserOutputSchema | None:
-        entity = await self._repository_cls.get_by_username(session, username)
-        if not entity:
+        model = await self._repository_cls.get_by_username(session, username)
+        if not model:
             return None
-        return self._output_schema_cls.model_validate(entity)
+        return self._output_schema_cls.model_validate(model)
 
     async def create(
         self,
@@ -42,12 +42,12 @@ class UserService(
     async def update(
         self,
         session: AsyncSession,
-        entity_id: int,
+        model_id: int,
         user_id: int,
         schema: Union[UserInputCreateSchema, UserInputUpdateSchema],
     ) -> UserOutputSchema | None:
         schema = await self.__prepare_schema(session, schema, UserInputUpdateSchema, exclude_unset=True)
-        return await super().update(session, entity_id, user_id, schema)
+        return await super().update(session, model_id, user_id, schema)
 
     @classmethod
     async def __prepare_schema(

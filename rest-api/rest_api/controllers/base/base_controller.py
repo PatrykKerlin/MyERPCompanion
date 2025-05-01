@@ -40,7 +40,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             limit = pagination.page_size
             conditions: list[ColumnElement[bool]] = []
             for key, value in filters.filters.items():
-                attr = getattr(self._service._entity_cls, key, None)
+                attr = getattr(self._service._model_cls, key, None)
                 if isinstance(attr, InstrumentedAttribute):
                     if hasattr(attr, "property") and isinstance(attr.property.columns[0].type, String):
                         conditions.append(attr.ilike(f"%{value}%"))
@@ -68,9 +68,9 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             )
 
     @Auth.restrict_access()
-    async def get_by_id(self, request: Request, entity_id: int) -> TOutputSchema:
+    async def get_by_id(self, request: Request, model_id: int) -> TOutputSchema:
         async with self._get_session() as session:
-            schema = await self._service.get_by_id(session, entity_id)
+            schema = await self._service.get_by_id(session, model_id)
             if not schema:
                 raise NotFoundException()
             return schema
@@ -82,19 +82,19 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             return await self._service.create(session, user.id, data)
 
     @Auth.restrict_access()
-    async def update(self, request: Request, data: Annotated[TInputSchema, Body()], entity_id: int) -> TOutputSchema:
+    async def update(self, request: Request, data: Annotated[TInputSchema, Body()], model_id: int) -> TOutputSchema:
         user = request.state.user
         async with self._get_session() as session:
-            schema = await self._service.update(session, entity_id, user.id, data)
+            schema = await self._service.update(session, model_id, user.id, data)
             if not schema:
                 raise NotFoundException()
             return schema
 
     @Auth.restrict_access()
-    async def delete(self, request: Request, entity_id: int) -> Response:
+    async def delete(self, request: Request, model_id: int) -> Response:
         user = request.state.user
         async with self._get_session() as session:
-            success = await self._service.delete(session, entity_id, user.id)
+            success = await self._service.delete(session, model_id, user.id)
             if not success:
                 raise NotFoundException()
             return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -105,7 +105,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         include: list[Literal["get_all", "get_by_id", "create", "update", "delete"]] | None = None,
         path: str = "",
     ) -> None:
-        id_param = "/{entity_id}"
+        id_param = "/{model_id}"
         include = include if include else ["get_all", "get_by_id", "create", "update", "delete"]
         if "get_all" in include:
             self.router.add_api_route(

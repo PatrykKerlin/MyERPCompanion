@@ -3,12 +3,12 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from entities.core import Endpoint, Group, Module
+from models.core import Endpoint, Group, Module
 from repositories.base import BaseRepository
 
 
 class ModuleRepository(BaseRepository[Module]):
-    _entity_cls = Module
+    _model_cls = Module
 
     @classmethod
     def _build_query(

@@ -41,10 +41,10 @@ class UserController(
 
     @Auth.restrict_access()
     async def update(
-        self, request: Request, data: Annotated[UserInputCreateSchema | UserInputUpdateSchema, Body()], entity_id: int
+        self, request: Request, data: Annotated[UserInputCreateSchema | UserInputUpdateSchema, Body()], model_id: int
     ) -> UserOutputSchema:
         await self.__validate_settings(data)
-        return await super().update(request=request, data=data, entity_id=entity_id)
+        return await super().update(request=request, data=data, model_id=model_id)
 
     @Auth.restrict_access()
     async def current_user(self, request: Request) -> UserOutputSchema:

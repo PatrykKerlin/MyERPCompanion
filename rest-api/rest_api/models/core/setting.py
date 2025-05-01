@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from entities.base import BaseEntity
-from entities.base.orm import relationship
+from models.base import BaseModel
+from models.base.orm import relationship
 
 if TYPE_CHECKING:
     from .setting_key import SettingKey
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .user import User
 
 
-class Setting(BaseEntity):
+class Setting(BaseModel):
     __tablename__ = "settings"
 
     value: Mapped[str] = mapped_column(String(25), nullable=False)

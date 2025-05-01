@@ -7,7 +7,7 @@ from sqlalchemy.sql.elements import BinaryExpression
 
 from config import Context
 from controllers.base import BaseController
-from entities.core import Endpoint
+from models.core import Endpoint
 
 TController = TypeVar("TController", bound=BaseController)
 

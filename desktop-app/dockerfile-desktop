@@ -4,15 +4,14 @@ LABEL maintainer="Patryk Kerlin"
 ENV PYTHONUNBUFFERED=1
 
 COPY requirements.txt /tmp/requirements.txt
-COPY ./rest_api /rest_api
-WORKDIR /rest_api
+COPY ./desktop_app /desktop_app
+WORKDIR /desktop_app
 EXPOSE 8000
 
 RUN python -m venv /project
 RUN /project/bin/pip install --upgrade pip
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install -y postgresql-client --no-install-recommends
 RUN rm -rf /var/lib/apt/lists/*
 RUN /project/bin/pip install -r /tmp/requirements.txt
 RUN rm -rf /tmp
@@ -25,12 +24,12 @@ RUN ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/node" 
 RUN ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npm" /usr/bin/npm
 RUN ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npx" /usr/bin/npx
 
-RUN useradd -m -d /rest_api -s /bin/bash rest-api
+RUN useradd -m -d /desktop_app -s /bin/bash desktop-app
 
-RUN mkdir -p /rest_api
-RUN chown -R rest-api:rest-api /rest_api
-RUN chmod -R 755 /rest_api
+RUN mkdir -p /desktop_app
+RUN chown -R desktop-app:desktop-app /desktop_app
+RUN chmod -R 755 /desktop_app
 
 ENV PATH="/project/bin:$PATH"
 
-USER rest-api
+USER desktop-app

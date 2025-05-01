@@ -3,15 +3,15 @@ from typing import TYPE_CHECKING
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from entities.base import BaseEntity
-from entities.base.orm import relationship
+from models.base import BaseModel
+from models.base.orm import relationship
 
 if TYPE_CHECKING:
     from .module import Module
     from .user import User
 
 
-class Group(BaseEntity):
+class Group(BaseModel):
     __tablename__ = "groups"
 
     name: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
