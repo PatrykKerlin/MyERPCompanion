@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ClauseElement, ColumnElement
 
-from entities.base import BaseEntity
+from entities.base import Base, BaseEntity
 
 TEntity = TypeVar("TEntity", bound=BaseEntity)
 
@@ -66,6 +66,7 @@ class BaseRepository(Generic[TEntity]):
     @classmethod
     async def delete(cls, session: AsyncSession, entity: TEntity) -> bool:
         setattr(entity, "is_active", False)
+        await cls.__cascade_soft_delete(entity)
         await session.commit()
         return True
 
@@ -73,7 +74,23 @@ class BaseRepository(Generic[TEntity]):
     async def count_all(cls, session: AsyncSession, filters: list[ColumnElement[bool]] | None = None) -> int:
         query = select(func.count()).select_from(cls._entity_cls).filter(cls._expr(cls._entity_cls.is_active == True))
         if filters:
-            for f in filters:
-                query = query.filter(cls._expr(f))
+            for filter in filters:
+                query = query.filter(cls._expr(filter))
         result = await session.execute(query)
         return result.scalar_one()
+
+    @classmethod
+    async def __cascade_soft_delete(cls, entity: TEntity) -> None:
+        for relation in cls._entity_cls.__mapper__.relationships:
+            if not relation.info.get("cascade_soft_delete", False):
+                continue
+            related = getattr(entity, relation.key)
+            if related is None:
+                continue
+            if isinstance(related, (Sequence, set)) and not isinstance(related, (str, bytes)):
+                for obj in related:
+                    if hasattr(obj, "is_active"):
+                        setattr(obj, "is_active", False)
+            else:
+                if hasattr(related, "is_active"):
+                    setattr(related, "is_active", False)

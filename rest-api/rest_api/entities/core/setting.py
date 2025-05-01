@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from entities.base import BaseEntity
+from entities.base.orm import relationship
 
 if TYPE_CHECKING:
     from .setting_key import SettingKey
@@ -22,23 +23,19 @@ class Setting(BaseEntity):
         argument="SettingKey",
         back_populates="values",
         foreign_keys=[key_id],
-        lazy="selectin",
     )
     user_languages: Mapped[list["User"]] = relationship(
         argument="User",
         back_populates="language",
         foreign_keys="User.language_id",
-        lazy="selectin",
     )
     user_themes: Mapped[list["User"]] = relationship(
         argument="User",
         back_populates="theme",
         foreign_keys="User.theme_id",
-        lazy="selectin",
     )
     text_languages: Mapped[list["Text"]] = relationship(
         argument="Text",
         back_populates="language",
         foreign_keys="Text.language_id",
-        lazy="selectin",
     )

@@ -1,0 +1,21 @@
+[tool.ruff]
+exclude = ["**/.cache"]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+extend-ignore = ["E712"]
+
+[tool.black]
+line-length = 120
+target-version = ["py313"]
+skip-string-normalization = true
+exclude = '''
+/(
+    \.cache
+    | \.git
+    | \.ruff_cache
+    | __pycache__
+    | migrations/versions
+)/
+'''

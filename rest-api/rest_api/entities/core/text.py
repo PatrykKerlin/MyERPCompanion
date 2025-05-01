@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from entities.base import BaseEntity
+from entities.base.orm import relationship
 
 if TYPE_CHECKING:
     from .setting import Setting
@@ -22,5 +23,4 @@ class Text(BaseEntity):
         argument="Setting",
         back_populates="text_languages",
         foreign_keys=[language_id],
-        lazy="selectin",
     )

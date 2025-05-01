@@ -1,0 +1,36 @@
+FROM python:3.13.3-bookworm
+LABEL maintainer="Patryk Kerlin"
+
+ENV PYTHONUNBUFFERED=1
+
+COPY requirements.txt /tmp/requirements.txt
+COPY ./rest_api /rest_api
+WORKDIR /rest_api
+EXPOSE 8000
+
+RUN python -m venv /project
+RUN /project/bin/pip install --upgrade pip
+RUN apt-get update
+RUN apt-get upgrade -y
+RUN apt-get install -y postgresql-client --no-install-recommends
+RUN rm -rf /var/lib/apt/lists/*
+RUN /project/bin/pip install -r /tmp/requirements.txt
+RUN rm -rf /tmp
+
+ENV NVM_DIR=/root/.nvm
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
+RUN . "$NVM_DIR/nvm.sh" && nvm install 22
+RUN . "$NVM_DIR/nvm.sh" && nvm alias default 22
+RUN ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/node" /usr/bin/node
+RUN ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npm" /usr/bin/npm
+RUN ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npx" /usr/bin/npx
+
+RUN useradd -m -d /rest_api -s /bin/bash rest-api
+
+RUN mkdir -p /rest_api
+RUN chown -R rest-api:rest-api /rest_api
+RUN chmod -R 755 /rest_api
+
+ENV PATH="/project/bin:$PATH"
+
+USER rest-api
