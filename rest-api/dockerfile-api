@@ -1,36 +1,37 @@
 FROM python:3.13.3-bookworm
 LABEL maintainer="Patryk Kerlin"
 
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    VIRTUAL_ENV=/project \
+    PATH="/project/bin:$PATH" \
+    PYTHONPATH="/rest_api" \
+    NVM_DIR=/root/.nvm
+
+RUN apt-get update && \
+    apt-get install -y curl postgresql-client --no-install-recommends && \
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash && \
+    . "$NVM_DIR/nvm.sh" && nvm install 22 && \
+    . "$NVM_DIR/nvm.sh" && nvm alias default 22 && \
+    ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/node" /usr/bin/node && \
+    ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npm" /usr/bin/npm && \
+    ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npx" /usr/bin/npx && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /tmp/requirements.txt
+RUN python -m venv $VIRTUAL_ENV && \
+    pip install --upgrade pip && \
+    pip install -r /tmp/requirements.txt && \
+    rm -rf /tmp/requirements.txt
+
 COPY ./rest_api /rest_api
 WORKDIR /rest_api
-EXPOSE 8000
 
-RUN python -m venv /project
-RUN /project/bin/pip install --upgrade pip
-RUN apt-get update
-RUN apt-get upgrade -y
-RUN apt-get install -y postgresql-client --no-install-recommends
-RUN rm -rf /var/lib/apt/lists/*
-RUN /project/bin/pip install -r /tmp/requirements.txt
-RUN rm -rf /tmp
-
-ENV NVM_DIR=/root/.nvm
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
-RUN . "$NVM_DIR/nvm.sh" && nvm install 22
-RUN . "$NVM_DIR/nvm.sh" && nvm alias default 22
-RUN ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/node" /usr/bin/node
-RUN ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npm" /usr/bin/npm
-RUN ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npx" /usr/bin/npx
-
-RUN useradd -m -d /rest_api -s /bin/bash rest-api
-
-RUN mkdir -p /rest_api
-RUN chown -R rest-api:rest-api /rest_api
-RUN chmod -R 755 /rest_api
-
-ENV PATH="/project/bin:$PATH"
+RUN useradd -m -d /rest_api -s /bin/bash rest-api && \
+    chown -R rest-api:rest-api /rest_api && \
+    chmod -R 755 /rest_api
 
 USER rest-api
+
+EXPOSE 8000

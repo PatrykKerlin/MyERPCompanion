@@ -38,8 +38,26 @@ services:
     depends_on:
       - postgres
     command:
-      sh -c "python -c 'import sys; path=\"/rest_api\"; sys.path.append(path) if path not in sys.path else None' &&
-      uvicorn main:start_app --host 0.0.0.0 --port 8000 --reload"
+      sh -c "uvicorn main:start_app --host 0.0.0.0 --port 8000 --reload"
+
+  desktop-app:
+    build:
+      context: ./desktop-app
+      dockerfile: dockerfile-desktop
+    networks:
+      - project_net
+    volumes:
+      - ./desktop-app/desktop_app/:/desktop_app
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY=${DISPLAY}
+    depends_on:
+      - postgres
+      - rest-api
+    stdin_open: true
+    tty: true
+    command:
+      sh -c "python main.py"
 
 #  web-app:
 #    build:

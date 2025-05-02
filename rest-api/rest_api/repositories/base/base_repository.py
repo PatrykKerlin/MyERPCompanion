@@ -5,8 +5,9 @@ from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ClauseElement, ColumnElement
+from sqlalchemy.sql.schema import Column
 
-from models.base import Base, BaseModel
+from models.base import BaseModel
 
 TModel = TypeVar("TModel", bound=BaseModel)
 
@@ -84,13 +85,13 @@ class BaseRepository(Generic[TModel]):
         for relation in cls._model_cls.__mapper__.relationships:
             if not relation.info.get("cascade_soft_delete", False):
                 continue
+            if any(isinstance(column, Column) and column.nullable for column in relation.local_columns):
+                continue
             related = getattr(model, relation.key)
             if related is None:
                 continue
-            if isinstance(related, (Sequence, set)) and not isinstance(related, (str, bytes)):
-                for obj in related:
-                    if hasattr(obj, "is_active"):
-                        setattr(obj, "is_active", False)
-            else:
-                if hasattr(related, "is_active"):
-                    setattr(related, "is_active", False)
+            related_items = (
+                related if isinstance(related, (Sequence, set)) and not isinstance(related, (str, bytes)) else [related]
+            )
+            for item in related_items:
+                setattr(item, "is_active", False)
