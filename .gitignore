@@ -171,4 +171,7 @@ cython_debug/
 .ruff_cache
 
 # Alembic migrations
-rest-api/rest_api/migrations/versions/
+rest-api/rest_api/migrations/versions
+
+# TKInter
+*/*/.fonts

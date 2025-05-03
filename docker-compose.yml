@@ -51,6 +51,7 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix
     environment:
       - DISPLAY=${DISPLAY}
+      - API_URL=http://rest-api:8000/api
     depends_on:
       - postgres
       - rest-api

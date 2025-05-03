@@ -10,9 +10,9 @@ ENV PYTHONUNBUFFERED=1 \
 
 RUN apt-get update && \
     apt-get install -y curl x11-apps libx11-dev tk --no-install-recommends && \
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash && \
-    . "$NVM_DIR/nvm.sh" && nvm install 22 && \
-    . "$NVM_DIR/nvm.sh" && nvm alias default 22 && \
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash && \
+    . "$NVM_DIR/nvm.sh" && nvm install 23 && \
+    . "$NVM_DIR/nvm.sh" && nvm alias default 23 && \
     ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/node" /usr/bin/node && \
     ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npm" /usr/bin/npm && \
     ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npx" /usr/bin/npx && \

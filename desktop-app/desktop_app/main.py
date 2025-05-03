@@ -1,31 +1,48 @@
+import asyncio
+import locale
+import threading
+
 import customtkinter as ctk
-from services.core import AuthService
-from schemas.core import TokenSchema
-from views.core import BaseView
-from controllers.core import AppController
+
+from config import Context, Controllers, Settings
+from controllers.core import AppController, AuthController
 
 
-class App(ctk.CTk):
+class App:
     def __init__(self) -> None:
-        super().__init__()
-        self.title("MyERPCompanion")
-        self.geometry("1920x1080")
+        self.__master = ctk.CTk()
+        self.__init_locale()
+        settings = Settings()  # type: ignore
+        loop = asyncio.new_event_loop()
+        language = self.__detect_language()
+        controllers = Controllers()
+        self.__context = Context(settings=settings, loop=loop, controllers=controllers, language=language)
+        self.__start_async_loop()
+        self.__register_controllers()
 
-        self.service = AuthService(base_url="http://127.0.0.1:8000/api")
-        self.view = BaseView(self)
-        self.controller = AppController(service=self.service, view=self.view)
+    def __init_locale(self) -> None:
+        ctk.set_appearance_mode("system")
+        locale.setlocale(locale.LC_ALL, "")
 
-        self.view.set_controller(self.controller)
-        self.view.pack(expand=True, fill="both")
+    def __detect_language(self) -> str:
+        current_locale = locale.getlocale()
+        return current_locale[0].split("_")[0] if current_locale[0] else "en"
 
+    def __start_async_loop(self) -> None:
+        threading.Thread(target=self.__run_loop, daemon=True).start()
 
-class MainApp:
-    def __init__(self) -> None:
-        self.app = App()
+    def __run_loop(self) -> None:
+        asyncio.set_event_loop(self.__context.loop)
+        self.__context.loop.run_forever()
+
+    def __register_controllers(self) -> None:
+        self.__context.controllers.add("app", AppController(self.__master, self.__context))
+        self.__context.controllers.add("auth", AuthController(self.__master, self.__context))
 
     def run(self) -> None:
-        self.app.mainloop()
+        self.__context.controllers.app.show()
+        self.__master.mainloop()
 
 
 if __name__ == "__main__":
-    MainApp().run()
+    App().run()
