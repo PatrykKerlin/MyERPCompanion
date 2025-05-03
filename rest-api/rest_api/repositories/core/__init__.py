@@ -1,4 +1,4 @@
-from entities.core import Endpoint, Group, SettingKey, Text
+from models.core import Endpoint, Group, SettingKey, Text
 from utils.factories import RepositoryFactory
 
 from .module_repository import ModuleRepository

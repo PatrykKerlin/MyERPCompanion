@@ -27,7 +27,7 @@ class Auth:
             return None
         access_token = cls.create_access_token(schema.id, settings)
         refresh_token = cls.__create_refresh_token(schema.id, settings)
-        return {"access_token": access_token, "refresh_token": refresh_token}
+        return {"access": access_token, "refresh": refresh_token}
 
     @classmethod
     def get_password_hash(cls, password: str) -> str:

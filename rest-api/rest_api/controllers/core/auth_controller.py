@@ -30,4 +30,4 @@ class AuthController:
         async with self.__get_session() as session:
             schema = await Auth.validate_refresh_token(session, refresh_token, self.__settings)
             new_access_token = Auth.create_access_token(schema.id, self.__settings)
-            return JSONResponse(content={"access_token": new_access_token})
+            return JSONResponse(content={"access": new_access_token})

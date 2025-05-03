@@ -5,13 +5,13 @@ from config import Context
 
 if TYPE_CHECKING:
     from ..controllers.base import BaseController
-    from ..entities.base import BaseEntity
+    from ..models.base import BaseModel
     from ..repositories.base import BaseRepository
     from ..schemas.base import BaseInputSchema, BaseOutputSchema
     from ..services.base import BaseService
 
 
-TEntity = TypeVar("TEntity", bound="BaseEntity")
+TModel = TypeVar("TModel", bound="BaseModel")
 TInputSchema = TypeVar("TInputSchema", bound="BaseInputSchema")
 TOutputSchema = TypeVar("TOutputSchema", bound="BaseOutputSchema")
 TRepository = TypeVar("TRepository", bound="BaseRepository")
@@ -21,13 +21,13 @@ TController = TypeVar("TController", bound="BaseController")
 
 class RepositoryFactory:
     @classmethod
-    def create(cls, entity_cls: type[TEntity]) -> type["BaseRepository[TEntity]"]:
+    def create(cls, model_cls: type[TModel]) -> type["BaseRepository[TModel]"]:
         from repositories.base import BaseRepository
 
         return new_class(
-            f"{entity_cls.__name__}Repository",
-            [BaseRepository[entity_cls]],
-            exec_body=lambda namespace: namespace.update({"_entity_cls": entity_cls}),
+            f"{model_cls.__name__}Repository",
+            [BaseRepository[model_cls]],
+            exec_body=lambda namespace: namespace.update({"_model_cls": model_cls}),
         )
 
 
@@ -35,20 +35,20 @@ class ServiceFactory:
     @classmethod
     def create(
         cls,
-        entity_cls: type[TEntity],
+        model_cls: type[TModel],
         repository_cls: type[TRepository],
         input_schema_cls: type[TInputSchema],
         output_schema_cls: type[TOutputSchema],
-    ) -> type["BaseService[TEntity, TRepository, TInputSchema, TOutputSchema]"]:
+    ) -> type["BaseService[TModel, TRepository, TInputSchema, TOutputSchema]"]:
         from services.base import BaseService
 
         return new_class(
-            f"{entity_cls.__name__}Service",
-            [BaseService[entity_cls, repository_cls, input_schema_cls, output_schema_cls]],
+            f"{model_cls.__name__}Service",
+            [BaseService[model_cls, repository_cls, input_schema_cls, output_schema_cls]],
             exec_body=lambda namespace: namespace.update(
                 {
                     "_repository_cls": repository_cls,
-                    "_entity_cls": entity_cls,
+                    "_model_cls": model_cls,
                     "_output_schema_cls": output_schema_cls,
                 }
             ),
@@ -59,7 +59,7 @@ class ControllerFactory:
     @classmethod
     def create(
         cls,
-        entity_cls: type[TEntity],
+        model_cls: type[TModel],
         service_cls: type[TService],
         input_schema_cls: type[TInputSchema],
         output_schema_cls: type[TOutputSchema],
@@ -96,7 +96,7 @@ class ControllerFactory:
             raise ValueError(f"Invalid method(s): {invalid}. Allowed: {list(allowed_methods)}")
 
         return new_class(
-            f"{entity_cls.__name__}Controller",
+            f"{model_cls.__name__}Controller",
             [BaseController[service_cls, input_schema_cls, output_schema_cls]],
             exec_body=exec_body,
         )

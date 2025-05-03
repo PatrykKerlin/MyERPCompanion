@@ -1,4 +1,4 @@
-from entities.core import Endpoint, Group, Setting, SettingKey
+from models.core import Endpoint, Group, Setting, SettingKey
 from repositories.core import EndpointRepository, GroupRepository, SettingKeyRepository, SettingRepository
 from schemas.core import (
     EndpointInputSchema,
@@ -16,25 +16,25 @@ from .module_service import ModuleService
 from .user_service import UserService
 
 EndpointService = ServiceFactory.create(
-    entity_cls=Endpoint,
+    model_cls=Endpoint,
     repository_cls=EndpointRepository,
     input_schema_cls=EndpointInputSchema,
     output_schema_cls=EndpointOutputSchema,
 )
 GroupService = ServiceFactory.create(
-    entity_cls=Group,
+    model_cls=Group,
     repository_cls=GroupRepository,
     input_schema_cls=GroupInputSchema,
     output_schema_cls=GroupOutputSchema,
 )
 SettingKeyService = ServiceFactory.create(
-    entity_cls=SettingKey,
+    model_cls=SettingKey,
     repository_cls=SettingKeyRepository,
     input_schema_cls=SettingKeyInputSchema,
     output_schema_cls=SettingKeyOutputSchema,
 )
 SettingService = ServiceFactory.create(
-    entity_cls=Setting,
+    model_cls=Setting,
     repository_cls=SettingRepository,
     input_schema_cls=SettingInputSchema,
     output_schema_cls=SettingOutputSchema,

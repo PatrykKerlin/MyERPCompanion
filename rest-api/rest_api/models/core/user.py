@@ -1,16 +1,17 @@
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
-from entities.base import BaseEntity
+from models.base import BaseModel
+from models.base.orm import relationship
 
 if TYPE_CHECKING:
     from .group import Group
     from .setting import Setting
 
 
-class User(BaseEntity):
+class User(BaseModel):
     __tablename__ = "users"
 
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
@@ -24,13 +25,11 @@ class User(BaseEntity):
         argument="Setting",
         back_populates="user_languages",
         foreign_keys=[language_id],
-        lazy="selectin",
     )
     theme: Mapped["Setting"] = relationship(
         argument="Setting",
         back_populates="user_themes",
         foreign_keys=[theme_id],
-        lazy="selectin",
     )
     groups: Mapped[list["Group"]] = relationship(
         argument="Group",
@@ -38,5 +37,4 @@ class User(BaseEntity):
         primaryjoin="User.id == users_groups.c.user_id",
         secondaryjoin="Group.id == users_groups.c.group_id",
         back_populates="users",
-        lazy="selectin",
     )
