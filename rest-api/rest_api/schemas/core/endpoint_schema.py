@@ -15,5 +15,5 @@ class EndpointInputSchema(BaseInputSchema):
 class EndpointOutputSchema(BaseOutputSchema):
     controller: str
     path: str
-    tag: str | None
+    tag: str | None = None
     module_id: int

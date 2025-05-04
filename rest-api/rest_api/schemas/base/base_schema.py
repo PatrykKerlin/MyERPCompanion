@@ -16,5 +16,5 @@ class BaseOutputSchema(BaseSchema):
     is_active: bool
     created_at: datetime
     created_by: int
-    modified_at: datetime | None
-    modified_by: int | None
+    modified_at: datetime | None = None
+    modified_by: int | None = None

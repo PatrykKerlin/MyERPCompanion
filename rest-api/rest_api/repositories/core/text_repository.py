@@ -25,20 +25,3 @@ class TextRepository(BaseRepository[Text]):
             with_loader_criteria(Setting, cls._expr(Setting.is_active == True)),
             with_loader_criteria(SettingKey, cls._expr(SettingKey.is_active == True)),
         )
-
-    @classmethod
-    async def get_all_by_language(
-        cls,
-        session: AsyncSession,
-        language: str,
-        offset: int = 0,
-        limit: int = 100,
-    ) -> Sequence[Text]:
-        filters = [
-            cls._expr(SettingKey.key == "language"),
-            cls._expr(Setting.value == language),
-        ]
-        query = cls._build_query(filters)
-        query = query.join(cls._model_cls.language).join(Setting.key).filter(*filters).offset(offset).limit(limit)
-        result = await session.execute(query)
-        return result.scalars().all()

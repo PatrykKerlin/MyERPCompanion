@@ -17,6 +17,7 @@ from utils.factories import ControllerFactory
 from .auth_controller import AuthController
 from .health_check_controller import HealthCheckController
 from .user_controller import UserController
+from .text_controller import TextController
 
 EndpointController = ControllerFactory.create(
     model_cls=Endpoint,
@@ -57,5 +58,6 @@ __all__ = [
     "ModuleController",
     "SettingController",
     "SettingKeyController",
+    "TextController",
     "UserController",
 ]
