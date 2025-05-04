@@ -53,7 +53,7 @@ class BaseRepository(Generic[TModel]):
         return result.scalars().all()
 
     @classmethod
-    async def get_by_id(cls, session: AsyncSession, model_id: int) -> TModel | None:
+    async def get_one_by_id(cls, session: AsyncSession, model_id: int) -> TModel | None:
         query = cls._build_query([cls._expr(cls._model_cls.id == model_id)])
         result = await session.execute(query)
         return result.scalars().first()
@@ -62,7 +62,7 @@ class BaseRepository(Generic[TModel]):
     async def save(cls, session: AsyncSession, model: TModel) -> TModel | None:
         session.add(model)
         await session.commit()
-        return await cls.get_by_id(session, int(model.id))
+        return await cls.get_one_by_id(session, int(model.id))
 
     @classmethod
     async def delete(cls, session: AsyncSession, model: TModel) -> bool:

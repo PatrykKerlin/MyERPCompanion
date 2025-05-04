@@ -27,7 +27,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             if isinstance(user_id, int) and payload.get("type") == "access":
                 service = UserService()
                 async with self.__get_session() as session:
-                    schema = await service.get_by_id(session, user_id)
+                    schema = await service.get_one_by_id(session, user_id)
                     if schema:
                         request.state.user = schema
 

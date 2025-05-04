@@ -3,7 +3,7 @@ from typing import Annotated
 from pydantic import BaseModel, Field
 
 from schemas.base import BaseInputSchema, BaseOutputSchema
-from schemas.core import GroupOutputSchema
+from schemas.core import GroupOutputSchema, SettingOutputSchema
 
 
 class UserInputBaseSchema(BaseModel):
@@ -23,8 +23,8 @@ class UserInputUpdateSchema(BaseInputSchema, UserInputBaseSchema):
 
 class UserOutputSchema(BaseOutputSchema):
     username: str
-    language_id: int
-    theme_id: int
+    language: SettingOutputSchema
+    theme: SettingOutputSchema
     groups: list[GroupOutputSchema]
     is_superuser: Annotated[bool, Field(exclude=True)]
     password: Annotated[str, Field(exclude=True)]

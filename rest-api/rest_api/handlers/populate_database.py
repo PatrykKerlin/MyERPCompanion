@@ -18,7 +18,7 @@ class PopulateDatabase:
     def __init__(self, get_session: Callable[..., AbstractAsyncContextManager[AsyncSession]]) -> None:
         self.__get_session = get_session
         self.__superuser: mc.User | None = None
-        self.__base_path = Path(__file__).resolve().parent.parent / "initial_data"
+        self.__base_path = Path(__file__).resolve().parent.parent / "config/initial_data"
 
     async def populate_superuser(self) -> None:
         async with self.__get_session() as session:
@@ -58,6 +58,7 @@ class PopulateDatabase:
                 ("modules", mc.Module, sc.ModuleInputSchema),
                 ("endpoints", mc.Endpoint, sc.EndpointInputSchema),
                 ("groups_modules", mc.AssocGroupModule, sc.AssocGroupModuleInputSchema),
+                ("texts", mc.Text, sc.TextInputSchema),
             ]
             for file_name, model_cls, schema_cls in data_to_write:
                 file_path = self.__base_path / f"{file_name}.csv"

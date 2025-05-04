@@ -1,14 +1,16 @@
+from collections.abc import Sequence
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.core import Group, User, AssocUserGroup, Setting, SettingKey
+from models.core import Text, Setting, SettingKey
 from repositories.base import BaseRepository
 
 
-class UserRepository(BaseRepository[User]):
-    _model_cls = User
+class TextRepository(BaseRepository[Text]):
+    _model_cls = Text
 
     @classmethod
     def _build_query(
@@ -19,16 +21,24 @@ class UserRepository(BaseRepository[User]):
     ) -> Select:
         query = super()._build_query(additional_filters, sort_by, sort_order)
         return query.options(
-            selectinload(cls._model_cls.user_groups).selectinload(AssocUserGroup.group),
             selectinload(cls._model_cls.language).selectinload(Setting.key),
-            selectinload(cls._model_cls.theme).selectinload(Setting.key),
-            with_loader_criteria(Group, cls._expr(Group.is_active == True)),
             with_loader_criteria(Setting, cls._expr(Setting.is_active == True)),
             with_loader_criteria(SettingKey, cls._expr(SettingKey.is_active == True)),
         )
 
     @classmethod
-    async def get_one_by_username(cls, session: AsyncSession, username: str) -> User | None:
-        query = super()._build_query([cls._expr(cls._model_cls.username == username)])
+    async def get_all_by_language(
+        cls,
+        session: AsyncSession,
+        language: str,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> Sequence[Text]:
+        filters = [
+            cls._expr(SettingKey.key == "language"),
+            cls._expr(Setting.value == language),
+        ]
+        query = cls._build_query(filters)
+        query = query.join(cls._model_cls.language).join(Setting.key).filter(*filters).offset(offset).limit(limit)
         result = await session.execute(query)
-        return result.scalars().first()
+        return result.scalars().all()

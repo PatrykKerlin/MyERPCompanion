@@ -42,8 +42,8 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         schemas = [self._output_schema_cls.model_validate(model) for model in models]
         return schemas, total
 
-    async def get_by_id(self, session: AsyncSession, model_id: int) -> TOutputSchema | None:
-        model = await self._repository_cls.get_by_id(session, model_id)
+    async def get_one_by_id(self, session: AsyncSession, model_id: int) -> TOutputSchema | None:
+        model = await self._repository_cls.get_one_by_id(session, model_id)
         if not model:
             return None
         return self._output_schema_cls.model_validate(model)
@@ -64,7 +64,7 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
     async def update(
         self, session: AsyncSession, model_id: int, user_id: int, schema: TInputSchema
     ) -> TOutputSchema | None:
-        model = await self._repository_cls.get_by_id(session, model_id)
+        model = await self._repository_cls.get_one_by_id(session, model_id)
         if not model:
             return None
         for key, value in schema.model_dump(exclude_unset=True).items():
@@ -81,7 +81,7 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         return self._output_schema_cls.model_validate(updated_model)
 
     async def delete(self, session: AsyncSession, model_id: int, user_id: int) -> bool:
-        model = await self._repository_cls.get_by_id(session, model_id)
+        model = await self._repository_cls.get_one_by_id(session, model_id)
         if not model:
             return False
         setattr(model, "modified_by", user_id)

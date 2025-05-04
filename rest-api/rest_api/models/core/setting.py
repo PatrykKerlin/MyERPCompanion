@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String
@@ -19,23 +20,13 @@ class Setting(BaseModel):
 
     key_id: Mapped[int] = mapped_column(ForeignKey("settings_keys.id"), nullable=False)
 
-    key: Mapped["SettingKey"] = relationship(
-        argument="SettingKey",
-        back_populates="values",
-        foreign_keys=[key_id],
+    key: Mapped[SettingKey] = relationship(argument="SettingKey", back_populates="values", foreign_keys=[key_id])
+    user_languages: Mapped[list[User]] = relationship(
+        argument="User", back_populates="language", foreign_keys="User.language_id"
     )
-    user_languages: Mapped[list["User"]] = relationship(
-        argument="User",
-        back_populates="language",
-        foreign_keys="User.language_id",
+    user_themes: Mapped[list[User]] = relationship(
+        argument="User", back_populates="theme", foreign_keys="User.theme_id"
     )
-    user_themes: Mapped[list["User"]] = relationship(
-        argument="User",
-        back_populates="theme",
-        foreign_keys="User.theme_id",
-    )
-    text_languages: Mapped[list["Text"]] = relationship(
-        argument="Text",
-        back_populates="language",
-        foreign_keys="Text.language_id",
+    text_languages: Mapped[list[Text]] = relationship(
+        argument="Text", back_populates="language", foreign_keys="Text.language_id"
     )

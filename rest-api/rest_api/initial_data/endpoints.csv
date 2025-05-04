@@ -1,6 +1,0 @@
-controller,path,tag,module_id
-UserController,/users,Users,1
-GroupController,/groups,Groups,1
-ModuleController,/modules,Modules,1
-SettingKeyController,/settings-keys,Settings,1
-SettingController,/settings,Settings,1

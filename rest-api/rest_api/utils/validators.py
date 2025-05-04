@@ -13,7 +13,7 @@ class SettingsValidator:
         setting_id: int,
         expected_key: str,
     ) -> None:
-        setting = await service.get_by_id(session, setting_id)
+        setting = await service.get_one_by_id(session, setting_id)
         if not setting:
             raise ItemNotFoundException(service._model_cls.__name__, setting_id)
         if setting.key.key != expected_key:

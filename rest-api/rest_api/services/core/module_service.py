@@ -12,7 +12,7 @@ class ModuleService(BaseService[Module, ModuleRepository, ModuleInputSchema, Mod
     _output_schema_cls = ModuleOutputSchema
 
     async def get_by_controller(self, session: AsyncSession, controller: str) -> ModuleOutputSchema | None:
-        model = await self._repository_cls.get_by_controller(session, controller)
+        model = await self._repository_cls.get_one_by_controller(session, controller)
         if not model:
             return None
         return ModuleOutputSchema.model_validate(model)

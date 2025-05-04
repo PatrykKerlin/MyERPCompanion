@@ -1,0 +1,7 @@
+controller,path,tag,module_id
+UserController,/users,users,1
+EndpointController,/endpoints,endpoints,1
+GroupController,/groups,groups,1
+ModuleController,/modules,modules,1
+SettingKeyController,/settings-keys,setting_keys,1
+SettingController,/settings,settings,1

@@ -25,7 +25,7 @@ class UserService(
     _output_schema_cls = UserOutputSchema
 
     async def get_by_name(self, session: AsyncSession, username: str) -> UserOutputSchema | None:
-        model = await self._repository_cls.get_by_username(session, username)
+        model = await self._repository_cls.get_one_by_username(session, username)
         if not model:
             return None
         return self._output_schema_cls.model_validate(model)
@@ -66,7 +66,7 @@ class UserService(
             group_ids = data["groups"]
             groups: list[Group] = []
             for group_id in group_ids:
-                group = await GroupRepository.get_by_id(session, group_id)
+                group = await GroupRepository.get_one_by_id(session, group_id)
                 if not group:
                     ItemNotFoundException(Group.__name__, group_id)
                 groups.append(cast(Group, group))

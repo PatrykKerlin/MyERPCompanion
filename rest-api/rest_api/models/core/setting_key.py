@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sqlalchemy import String
@@ -15,8 +16,6 @@ class SettingKey(BaseModel):
 
     key: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
 
-    values: Mapped[list["Setting"]] = relationship(
-        argument="Setting",
-        back_populates="key",
-        foreign_keys="Setting.key_id",
+    values: Mapped[list[Setting]] = relationship(
+        argument="Setting", back_populates="key", foreign_keys="Setting.key_id"
     )

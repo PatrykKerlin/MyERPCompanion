@@ -58,7 +58,7 @@ class Auth:
         if not isinstance(user_id, int):
             raise InvalidCredentialsException()
         service = UserService()
-        schema = await service.get_by_id(session, user_id)
+        schema = await service.get_one_by_id(session, user_id)
         if not schema:
             raise InvalidCredentialsException()
         return schema

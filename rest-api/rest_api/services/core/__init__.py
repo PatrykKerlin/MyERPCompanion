@@ -13,6 +13,7 @@ from schemas.core import (
 from utils.factories import ServiceFactory
 
 from .module_service import ModuleService
+from .text_service import TextService
 from .user_service import UserService
 
 EndpointService = ServiceFactory.create(
@@ -40,4 +41,12 @@ SettingService = ServiceFactory.create(
     output_schema_cls=SettingOutputSchema,
 )
 
-__all__ = ["EndpointService", "GroupService", "ModuleService", "SettingKeyService", "SettingService", "UserService"]
+__all__ = [
+    "EndpointService",
+    "GroupService",
+    "ModuleService",
+    "SettingKeyService",
+    "SettingService",
+    "TextService",
+    "UserService",
+]
