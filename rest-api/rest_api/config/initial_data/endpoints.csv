@@ -1,4 +1,5 @@
 controller,path,tag,module_id
+TextController,/texts,texts,1
 UserController,/users,users,1
 EndpointController,/endpoints,endpoints,1
 GroupController,/groups,groups,1

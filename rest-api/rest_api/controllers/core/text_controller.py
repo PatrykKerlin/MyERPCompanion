@@ -4,7 +4,7 @@ from fastapi import Request, status, Depends
 
 from config import Context
 from controllers.base import BaseController
-from schemas.core import TextInputSchema, TextOutputSchema
+from schemas.core import TextInputSchema, TextOutputSchema, TextOutputByLanguageSchema
 from services.core import SettingService, TextService
 from utils.validators import SettingsValidator
 from schemas.core import PaginatedResponseSchema, PaginationParamsSchema
@@ -20,14 +20,14 @@ class TextController(BaseController[TextService, TextInputSchema, TextOutputSche
             path="/by-language/{language}",
             endpoint=self.texts_by_language,
             methods=["GET"],
-            response_model=TextOutputSchema,
+            response_model=PaginatedResponseSchema[TextOutputByLanguageSchema],
             status_code=status.HTTP_200_OK,
         )
         self._register_routes(TextOutputSchema)
 
     async def texts_by_language(
         self, request: Request, language: str, pagination: Annotated[PaginationParamsSchema, Depends()]
-    ) -> PaginatedResponseSchema[TextOutputSchema]:
+    ) -> PaginatedResponseSchema[TextOutputByLanguageSchema]:
         async with self._get_session() as session:
             offset, limit = BaseController._get_offset_and_limit(pagination)
             items, total = await self._service.get_all_by_language(
@@ -35,7 +35,7 @@ class TextController(BaseController[TextService, TextInputSchema, TextOutputSche
             )
             has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
 
-            return PaginatedResponseSchema[TextOutputSchema](
+            return PaginatedResponseSchema[TextOutputByLanguageSchema](
                 items=items,
                 total=total,
                 page=pagination.page,

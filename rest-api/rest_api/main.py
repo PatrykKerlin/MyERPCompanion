@@ -26,8 +26,8 @@ class App:
         health_check_controller = HealthCheckController()
         auth_controller = AuthController(self.__context)
 
-        api_router.include_router(health_check_controller.router, tags=["Health Check"])
-        api_router.include_router(auth_controller.router, tags=["Authorization"])
+        api_router.include_router(health_check_controller.router, tags=["health_check"])
+        api_router.include_router(auth_controller.router, tags=["authorization"])
 
         self.__app.include_router(api_router)
 
