@@ -4,7 +4,7 @@ from typing import Any, AsyncGenerator
 from fastapi import APIRouter, FastAPI
 
 from config import Context, CustomFastAPI, Database, Settings
-from controllers.core import AuthController, EndpointController, HealthCheckController
+from controllers.core import AuthController, HealthCheckController
 from handlers import CheckDatabaseState, PopulateDatabase, RegisterDynamicEndpoints
 from middlewares import AuthMiddleware
 
@@ -25,11 +25,9 @@ class App:
 
         health_check_controller = HealthCheckController()
         auth_controller = AuthController(self.__context)
-        endpoint_controller = EndpointController(self.__context)
 
         api_router.include_router(health_check_controller.router, tags=["Health Check"])
         api_router.include_router(auth_controller.router, tags=["Authorization"])
-        api_router.include_router(endpoint_controller.router, prefix="/endpoints", tags=["Endpoints"])
 
         self.__app.include_router(api_router)
 

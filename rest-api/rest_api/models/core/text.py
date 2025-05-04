@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String, UniqueConstraint
@@ -19,8 +20,6 @@ class Text(BaseModel):
 
     language_id: Mapped[int] = mapped_column(ForeignKey("settings.id"), nullable=False)
 
-    language: Mapped["Setting"] = relationship(
-        argument="Setting",
-        back_populates="text_languages",
-        foreign_keys=[language_id],
+    language: Mapped[Setting] = relationship(
+        argument="Setting", back_populates="text_languages", foreign_keys=[language_id]
     )

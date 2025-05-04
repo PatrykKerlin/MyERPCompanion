@@ -6,6 +6,7 @@ from .module_schema import ModuleInputSchema, ModuleOutputSchema
 from .query_param_schema import FilterParamsSchema, PaginatedResponseSchema, PaginationParamsSchema, SortingParamsSchema
 from .setting_key_schema import SettingKeyInputSchema, SettingKeyOutputSchema
 from .setting_schema import SettingInputSchema, SettingOutputSchema
+from .text_schema import TextInputSchema, TextOutputSchema
 from .user_schema import UserInputCreateSchema, UserInputUpdateSchema, UserOutputSchema
 
 __all__ = [
@@ -26,6 +27,8 @@ __all__ = [
     "SettingKeyOutputSchema",
     "SettingOutputSchema",
     "SortingParamsSchema",
+    "TextInputSchema",
+    "TextOutputSchema",
     "UserInputCreateSchema",
     "UserInputUpdateSchema",
     "UserOutputSchema",

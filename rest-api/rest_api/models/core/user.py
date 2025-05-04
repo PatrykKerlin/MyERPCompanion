@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, ForeignKey, String
@@ -7,6 +8,7 @@ from models.base import BaseModel
 from models.base.orm import relationship
 
 if TYPE_CHECKING:
+    from .assoc_user_group import AssocUserGroup
     from .group import Group
     from .setting import Setting
 
@@ -21,20 +23,14 @@ class User(BaseModel):
     language_id: Mapped[int | None] = mapped_column(ForeignKey("settings.id"), nullable=True)
     theme_id: Mapped[int | None] = mapped_column(ForeignKey("settings.id"), nullable=True)
 
-    language: Mapped["Setting"] = relationship(
-        argument="Setting",
-        back_populates="user_languages",
-        foreign_keys=[language_id],
+    language: Mapped[Setting] = relationship(
+        argument="Setting", back_populates="user_languages", foreign_keys=[language_id]
     )
-    theme: Mapped["Setting"] = relationship(
-        argument="Setting",
-        back_populates="user_themes",
-        foreign_keys=[theme_id],
+    theme: Mapped[Setting] = relationship(argument="Setting", back_populates="user_themes", foreign_keys=[theme_id])
+    user_groups: Mapped[list[AssocUserGroup]] = relationship(
+        argument="AssocUserGroup", back_populates="user", foreign_keys="AssocUserGroup.user_id"
     )
-    groups: Mapped[list["Group"]] = relationship(
-        argument="Group",
-        secondary="users_groups",
-        primaryjoin="User.id == users_groups.c.user_id",
-        secondaryjoin="Group.id == users_groups.c.group_id",
-        back_populates="users",
-    )
+
+    @property
+    def groups(self) -> list[Group]:
+        return [assoc.group for assoc in self.user_groups]

@@ -33,27 +33,13 @@ class UserController(
         self._register_routes(UserOutputSchema)
 
     @Auth.restrict_access()
-    async def create(
-        self, request: Request, data: Annotated[UserInputCreateSchema | UserInputUpdateSchema, Body()]
-    ) -> UserOutputSchema:
-        await self.__validate_settings(data)
-        return await super().create(request=request, data=data)
-
-    @Auth.restrict_access()
-    async def update(
-        self, request: Request, data: Annotated[UserInputCreateSchema | UserInputUpdateSchema, Body()], model_id: int
-    ) -> UserOutputSchema:
-        await self.__validate_settings(data)
-        return await super().update(request=request, data=data, model_id=model_id)
-
-    @Auth.restrict_access()
     async def current_user(self, request: Request) -> UserOutputSchema:
         user = request.state.user
         if not user:
             raise InvalidCredentialsException()
         return UserOutputSchema.model_construct(**user.model_dump())
 
-    async def __validate_settings(self, data: UserInputCreateSchema | UserInputUpdateSchema) -> None:
+    async def _validate_data(self, data: UserInputCreateSchema | UserInputUpdateSchema) -> None:
         async with self._get_session() as session:
             await SettingsValidator.validate_key(session, self.setting_service, data.language_id, "language")
             await SettingsValidator.validate_key(session, self.setting_service, data.theme_id, "theme")

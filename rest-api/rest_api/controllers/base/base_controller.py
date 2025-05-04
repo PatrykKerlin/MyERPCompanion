@@ -21,23 +21,23 @@ TOutputSchema = TypeVar("TOutputSchema", bound=BaseOutputSchema)
 class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
     _service_cls: type[TService]
 
-    Pagination = Annotated[PaginationParamsSchema, Depends()]
-    Filters = Annotated[FilterParamsSchema, Depends(FilterParamsParser())]
-    Sorting = Annotated[SortingParamsSchema, Depends()]
-
     def __init__(self, context: Context) -> None:
         self.router = APIRouter()
         self._get_session = context.get_session
         self._settings = context.settings
         self._service = self._service_cls()
 
+    async def _validate_data(self, data: TInputSchema) -> None: ...
+
     @Auth.restrict_access()
     async def get_all(
-        self, request: Request, pagination: Pagination, filters: Filters, sorting: Sorting
+        self,
+        request: Request,
+        pagination: Annotated[PaginationParamsSchema, Depends()],
+        filters: Annotated[FilterParamsSchema, Depends(FilterParamsParser())],
+        sorting: Annotated[SortingParamsSchema, Depends()],
     ) -> PaginatedResponseSchema[TOutputSchema]:
         async with self._get_session() as session:
-            offset = (pagination.page - 1) * pagination.page_size
-            limit = pagination.page_size
             conditions: list[ColumnElement[bool]] = []
             for key, value in filters.filters.items():
                 attr = getattr(self._service._model_cls, key, None)
@@ -47,6 +47,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                     else:
                         conditions.append(attr == value)
 
+            offset, limit = BaseController._get_offset_and_limit(pagination)
             items, total = await self._service.get_all(
                 session=session,
                 filters=conditions,
@@ -55,8 +56,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 sort_by=sorting.sort_by,
                 sort_order=sorting.order,
             )
-            has_next = offset + limit < total
-            has_prev = pagination.page > 1
+            has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
 
             return PaginatedResponseSchema[TOutputSchema](
                 items=items,
@@ -70,7 +70,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
     @Auth.restrict_access()
     async def get_by_id(self, request: Request, model_id: int) -> TOutputSchema:
         async with self._get_session() as session:
-            schema = await self._service.get_by_id(session, model_id)
+            schema = await self._service.get_one_by_id(session, model_id)
             if not schema:
                 raise NotFoundException()
             return schema
@@ -78,12 +78,14 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
     @Auth.restrict_access()
     async def create(self, request: Request, data: Annotated[TInputSchema, Body()]) -> TOutputSchema:
         user = request.state.user
+        await self._validate_data(data)
         async with self._get_session() as session:
             return await self._service.create(session, user.id, data)
 
     @Auth.restrict_access()
     async def update(self, request: Request, data: Annotated[TInputSchema, Body()], model_id: int) -> TOutputSchema:
         user = request.state.user
+        await self._validate_data(data)
         async with self._get_session() as session:
             schema = await self._service.update(session, model_id, user.id, data)
             if not schema:
@@ -146,3 +148,15 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 methods=["DELETE"],
                 status_code=status.HTTP_204_NO_CONTENT,
             )
+
+    @staticmethod
+    def _get_offset_and_limit(pagination: PaginationParamsSchema) -> tuple[int, int]:
+        offset = (pagination.page - 1) * pagination.page_size
+        limit = pagination.page_size
+        return offset, limit
+
+    @staticmethod
+    def _get_has_next_has_prev(offset: int, limit: int, total: int, page: int) -> tuple[bool, bool]:
+        has_next = offset + limit < total
+        has_prev = page > 1
+        return has_next, has_prev
