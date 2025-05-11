@@ -174,4 +174,4 @@ cython_debug/
 rest-api/rest_api/migrations/versions
 
 # TKInter
-*/*/.fonts
+.fonts

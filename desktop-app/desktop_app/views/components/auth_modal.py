@@ -7,16 +7,16 @@ import customtkinter as ctk
 from views.base import BaseModal
 
 if TYPE_CHECKING:
-    from controllers.core import AuthController
+    from ...controllers.core.auth_controller import AuthController
 
 
 class AuthModal(BaseModal["AuthController"]):
-    def __init__(self, master: ctk.CTk, controller: AuthController, language: str) -> None:
+    def __init__(self, master: ctk.CTk, controller: AuthController, texts: dict[str, str]) -> None:
         self.username_entry: ctk.CTkEntry
         self.password_entry: ctk.CTkEntry
         self.login_button: ctk.CTkButton
         self.spinner: ctk.CTkProgressBar
-        super().__init__(master, controller, language)
+        super().__init__(master, controller, texts)
 
     def _build(self) -> None:
         self.username_entry = ctk.CTkEntry(self._content, placeholder_text="Username")

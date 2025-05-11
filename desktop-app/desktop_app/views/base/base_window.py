@@ -13,9 +13,9 @@ TController = TypeVar("TController", bound="BaseController")
 
 
 class BaseWindow(BaseView[TController], Generic[TController], ctk.CTkFrame):
-    def __init__(self, master: ctk.CTk, controller: TController, language: str) -> None:
+    def __init__(self, master: ctk.CTk, controller: TController, texts: dict[str, str]) -> None:
         ctk.CTkFrame.__init__(self, master)
-        BaseView.__init__(self, master, controller, language)
+        BaseView.__init__(self, master, controller, texts)
         self._build()
 
     def show(self) -> None:

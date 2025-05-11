@@ -1,4 +1,4 @@
-FROM redis:7.4-bookworm
+FROM redis:8.0.0-bookworm
 LABEL maintainer="Patryk Kerlin"
 
 RUN apt-get update
@@ -6,5 +6,3 @@ RUN apt-get upgrade -y
 RUN rm -rf /var/lib/apt/lists/*
 
 EXPOSE 6379
-
-CMD ["redis-server", "--save", "", "--appendonly", "no"]

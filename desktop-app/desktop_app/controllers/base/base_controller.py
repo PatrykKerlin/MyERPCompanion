@@ -15,9 +15,18 @@ class BaseController(Generic[TService, TView]):
     _view_cls: type[TView]
 
     def __init__(self, master: ctk.CTk, context: Context) -> None:
-        self._service = self._service_cls(context.settings)
-        self._view = self._view_cls(master, self, context.language)
+        self._service = self._service_cls(context)
         self._context = context
+        self._master = master
+        self.__view: TView | None = None
 
     def show(self) -> None:
-        self._view.show()
+        if self.__view is None:
+            self.__view = self._view_cls(self._master, self, self._context.texts)
+        self.__view.show()
+
+    @property
+    def _view(self) -> TView:
+        if self.__view is None:
+            raise RuntimeError(f"{self.__class__.__name__} has no view initialized.")
+        return self.__view

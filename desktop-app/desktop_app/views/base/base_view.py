@@ -12,10 +12,10 @@ TController = TypeVar("TController", bound="BaseController")
 
 
 class BaseView(ABC, Generic[TController]):
-    def __init__(self, master: ctk.CTk, controller: TController, language: str) -> None:
+    def __init__(self, master: ctk.CTk, controller: TController, texts: dict[str, str]) -> None:
         self._master = master
         self._controller = controller
-        self._language = language
+        self._texts = texts
 
     @abstractmethod
     def _build(self) -> None:

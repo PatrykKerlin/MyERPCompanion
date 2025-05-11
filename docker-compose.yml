@@ -40,6 +40,24 @@ services:
     command:
       sh -c "uvicorn main:start_app --host 0.0.0.0 --port 8000 --reload"
 
+  redis:
+    build:
+      context: ./desktop-app
+      dockerfile: dockerfile-redis
+    networks:
+      - project_net
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: [
+      "redis-server",
+      "--requirepass", "changeme",
+      "--save", "60", "1",
+      "--appendonly", "no",
+      "--dir", "/data"
+    ]
+
   desktop-app:
     build:
       context: ./desktop-app
@@ -52,43 +70,20 @@ services:
     environment:
       - DISPLAY=${DISPLAY}
       - API_URL=http://rest-api:8000/api
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=changeme
     depends_on:
-      - postgres
-      - rest-api
+      - redis
     stdin_open: true
     tty: true
     command:
       sh -c "python main.py"
 
-#  web-app:
-#    build:
-#      context: ./web-app
-#      dockerfile: dockerfile-web
-#    networks:
-#      - project_net
-#    ports:
-#      - "9000:9000"
-#    volumes:
-#      - ./web-app/web_app/:/web_app
-#    command:
-#      sh -c "python manage.py wait_for_redis &&
-#      python manage.py wait_for_api &&
-#      python manage.py runserver 0.0.0.0:9000"
-#    depends_on:
-#      - redis
-#      - rest-api
-
-#  redis:
-#    build:
-#      context: ./web-app
-#      dockerfile: dockerfile-cache
-#    networks:
-#      - project_net
-#    ports:
-#      - "6379:6379"
-
 volumes:
   postgres-data:
+  redis-data:
 
 networks:
   project_net:

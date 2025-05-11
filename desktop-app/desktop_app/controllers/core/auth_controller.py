@@ -2,10 +2,10 @@ import asyncio
 
 from controllers.base import BaseController
 from services.core import AuthService
-from views.core import AuthModal
+from views.components import AuthModal
 
 
-class AuthController(BaseController):
+class AuthController(BaseController[AuthService, AuthModal]):
     _service_cls = AuthService
     _view_cls = AuthModal
 
