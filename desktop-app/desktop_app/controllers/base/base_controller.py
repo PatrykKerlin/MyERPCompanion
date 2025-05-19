@@ -1,32 +1,45 @@
-from typing import Generic, TypeVar
-
-import customtkinter as ctk
-
+from abc import ABC, abstractmethod
+import flet as ft
 from config import Context
+from views.components import LoadingDialog, ErrorDialog
 from services.base import BaseService
-from views.base import BaseView
+from typing import TypeVar, Generic
+from helpers import SafeExecutor
 
 TService = TypeVar("TService", bound=BaseService)
-TView = TypeVar("TView", bound=BaseView)
 
 
-class BaseController(Generic[TService, TView]):
+class BaseController(ABC, Generic[TService]):
     _service_cls: type[TService]
-    _view_cls: type[TView]
 
-    def __init__(self, master: ctk.CTk, context: Context) -> None:
-        self._service = self._service_cls(context)
+    def __init__(self, context: Context) -> None:
         self._context = context
-        self._master = master
-        self.__view: TView | None = None
+        self._executor = SafeExecutor(context.page)
+        self._service = self._service_cls(context)
 
-    def show(self) -> None:
-        if self.__view is None:
-            self.__view = self._view_cls(self._master, self, self._context.texts)
-        self.__view.show()
+    @abstractmethod
+    def show(self, *args, **kwargs) -> None:
+        pass
 
-    @property
-    def _view(self) -> TView:
-        if self.__view is None:
-            raise RuntimeError(f"{self.__class__.__name__} has no view initialized.")
-        return self.__view
+    def _show_loading_dialog(self) -> LoadingDialog:
+        loading_dialog = LoadingDialog(self._context.texts)
+        self._open_dialog(loading_dialog)
+        return loading_dialog
+
+    def _show_error_dialog(self, message_key: str) -> None:
+        error_dialog = ErrorDialog(
+            texts=self._context.texts,
+            message_key=message_key,
+            on_click=lambda _: self._close_dialog(error_dialog),
+        )
+        self._open_dialog(error_dialog)
+
+    def _open_dialog(self, dialog: ft.AlertDialog) -> None:
+        self._context.page.overlay.append(dialog)
+        dialog.open = True
+        self._context.page.update()
+
+    def _close_dialog(self, dialog: ft.AlertDialog) -> None:
+        dialog.open = False
+        self._context.page.update()
+        self._context.page.overlay.remove(dialog)

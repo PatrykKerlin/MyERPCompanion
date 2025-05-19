@@ -173,5 +173,5 @@ cython_debug/
 # Alembic migrations
 rest-api/rest_api/migrations/versions
 
-# TKInter
-.fonts
+# Flet
+.flet

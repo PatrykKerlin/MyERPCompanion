@@ -1,6 +1,5 @@
-from asyncio import AbstractEventLoop
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
+from flet import Page
 from config import Controllers, Settings
 from schemas.core import TokenSchema, UserSchema
 
@@ -8,8 +7,8 @@ from schemas.core import TokenSchema, UserSchema
 @dataclass
 class Context:
     settings: Settings
-    loop: AbstractEventLoop
     controllers: Controllers
-    texts: dict[str, str] = field(default_factory=dict)
+    page: Page
+    texts: dict[str, str]
     tokens: TokenSchema | None = None
     user: UserSchema | None = None

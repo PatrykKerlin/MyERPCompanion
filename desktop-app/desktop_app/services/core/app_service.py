@@ -18,10 +18,9 @@ class AppService(BaseService):
 
     async def check_redis_ready(self) -> None:
         redis = self.__get_redis()
-        for _ in range(10):
+        for _ in range(2):
             try:
                 if await redis.ping():
-                    await asyncio.sleep(1)
                     return
             except ConnectionError:
                 await asyncio.sleep(1)
@@ -46,10 +45,9 @@ class AppService(BaseService):
             await redis.close()
 
     async def api_health_check(self) -> None:
-        for _ in range(10):
+        for _ in range(2):
             try:
                 await self._get("/health-check")
-                await asyncio.sleep(1)
                 return
             except HTTPError:
                 await asyncio.sleep(1)
@@ -70,7 +68,6 @@ class AppService(BaseService):
                 break
             page += 1
 
-        await asyncio.sleep(1)
         return texts
 
     def __get_redis(self) -> Redis:

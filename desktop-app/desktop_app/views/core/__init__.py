@@ -1,3 +1,3 @@
-from .app_window import AppWindow
+from .app_view import AppView
 
-__all__ = ["AppWindow"]
+__all__ = ["AppView"]

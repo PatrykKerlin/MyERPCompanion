@@ -1,6 +1,3 @@
-# isort: off
-from .base_view import BaseView
-from .base_modal import BaseModal
-from .base_window import BaseWindow
+from .base_dialog import BaseDialog
 
-__all__ = ["BaseModal", "BaseView", "BaseWindow"]
+__all__ = ["BaseDialog"]
