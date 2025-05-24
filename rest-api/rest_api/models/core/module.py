@@ -16,8 +16,7 @@ if TYPE_CHECKING:
 class Module(BaseModel):
     __tablename__ = "modules"
 
-    name: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
-    label: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
+    key: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
 
     endpoints: Mapped[list[Endpoint]] = relationship(
         argument="Endpoint", back_populates="module", foreign_keys="Endpoint.module_id"

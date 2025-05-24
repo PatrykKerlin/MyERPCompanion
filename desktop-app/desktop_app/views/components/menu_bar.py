@@ -1,10 +1,11 @@
 import flet as ft
+from styles import MenuStyles
 
 
 class MenuBar(ft.MenuBar):
     def __init__(self, texts: dict[str, str]) -> None:
         super().__init__(
-            expand=True,
+            style=MenuStyles.flat,
             controls=[
                 ft.SubmenuButton(
                     content=ft.Text(texts["file"]),

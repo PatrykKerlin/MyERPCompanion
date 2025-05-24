@@ -21,6 +21,7 @@ class DefaultTranslation:
         "undo": "Undo",
         "redo": "Redo",
         "about": "About",
+        "menu": "Menu",
         "api_not_responding": "API is not responding.",
         "invalid_credentials": "Invalid credentials.",
     }

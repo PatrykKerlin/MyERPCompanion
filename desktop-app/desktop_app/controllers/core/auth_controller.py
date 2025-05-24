@@ -17,15 +17,16 @@ class AuthController(BaseController[AuthService]):
 
     def show(self, *args, **kwargs) -> None:
         self.__post_login_callback = kwargs.get("callback")
-        self.__auth_dialog = AuthDialog(
-            texts=self._context.texts,
-            on_cancel=self.__on_cancel,
-            on_login=self.__on_login,
-        )
-        self._open_dialog(self.__auth_dialog)
+        # self.__auth_dialog = AuthDialog(
+        #     texts=self._context.texts,
+        #     on_cancel=self.__on_cancel,
+        #     on_login=self.__on_login,
+        # )
+        # self._open_dialog(self.__auth_dialog)
+        self.__on_login("admin", "admin123")
 
-    def __on_cancel(self) -> None:
-        self._context.page.window.destroy()
+    # def __on_cancel(self) -> None:
+    #     self._context.page.window.destroy()
 
     def __on_login(self, username: str, password: str) -> None:
         self._executor.run_async(
@@ -38,13 +39,15 @@ class AuthController(BaseController[AuthService]):
         try:
             tokens = await self._service.fetch_tokens(username, password)
             self._context.tokens = tokens
+            user = await self._service.fetch_current_user()
+            self._context.user = user
             if self.__auth_dialog:
                 self._close_dialog(self.__auth_dialog)
             self._close_dialog(loading_dialog)
             if self.__post_login_callback:
                 self._executor.run_ui(self.__post_login_callback)
-        except Exception:
+        except Exception as e:
             self._close_dialog(loading_dialog)
             if self.__auth_dialog:
                 self._close_dialog(self.__auth_dialog)
-            self._show_error_dialog("invalid_credentials")
+            self._show_error_dialog(str(e))

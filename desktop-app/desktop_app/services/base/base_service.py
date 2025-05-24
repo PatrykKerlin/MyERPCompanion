@@ -8,13 +8,21 @@ class BaseService:
         self._context = context
 
     async def _get(self, endpoint: str, params: dict = {}) -> httpx.Response:
-        async with httpx.AsyncClient(base_url=self._context.settings.API_URL) as client:
+        headers = self.__prepare_headers()
+        async with httpx.AsyncClient(base_url=self._context.settings.API_URL, headers=headers) as client:
             response = await client.get(url=endpoint, params=params)
             response.raise_for_status()
             return response
 
     async def _post(self, endpoint: str, payload: dict = {}) -> httpx.Response:
-        async with httpx.AsyncClient(base_url=self._context.settings.API_URL) as client:
+        headers = self.__prepare_headers()
+        async with httpx.AsyncClient(base_url=self._context.settings.API_URL, headers=headers) as client:
             response = await client.post(url=endpoint, json=payload)
             response.raise_for_status()
             return response
+
+    def __prepare_headers(self) -> dict[str, str]:
+        headers: dict[str, str] = {}
+        if self._context.tokens:
+            headers["Authorization"] = f"Bearer {self._context.tokens.access}"
+        return headers

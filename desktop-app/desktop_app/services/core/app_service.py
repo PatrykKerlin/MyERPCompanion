@@ -31,16 +31,28 @@ class AppService(BaseService):
     async def load_settings_from_redis(self) -> None:
         redis = self.__get_redis()
         try:
-            data = await cast(Awaitable[dict[Any, Any]], redis.hgetall(self.system_id))
-            if data:
-                self._context.settings = Settings.model_validate(data)
+            raw_language = redis.hget(self.system_id, "LANGUAGE")
+            raw_theme = redis.hget(self.system_id, "THEME")
+            language = await cast(Awaitable[str | None], raw_language)
+            theme = await cast(Awaitable[str | None], raw_theme)
+            if language:
+                self._context.settings.LANGUAGE = language
+            if theme:
+                self._context.settings.THEME = theme
         finally:
             await redis.close()
 
     async def save_settings_to_redis(self) -> None:
-        redis = Redis(decode_responses=True)
+        redis = self.__get_redis()
         try:
-            cast(Awaitable[int], redis.hset(self.system_id, mapping=self._context.settings.model_dump()))
+            hset_result = redis.hset(
+                self.system_id,
+                mapping={
+                    "LANGUAGE": self._context.settings.LANGUAGE,
+                    "THEME": self._context.settings.THEME,
+                },
+            )
+            await cast(Awaitable[int], hset_result)
         finally:
             await redis.close()
 

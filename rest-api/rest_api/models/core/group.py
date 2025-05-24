@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class Group(BaseModel):
     __tablename__ = "groups"
 
-    name: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
+    key: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
 
     group_modules: Mapped[list[AssocGroupModule]] = relationship(

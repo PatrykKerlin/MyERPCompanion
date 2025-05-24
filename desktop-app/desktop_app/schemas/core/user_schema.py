@@ -1,8 +1,10 @@
-from pydantic import BaseModel
+from schemas.base import BaseInputSchema, BaseOutputSchema
+from .group_schema import GroupInputSchema
+from .setting_schema import SettingInputSchema
 
 
-class UserSchema(BaseModel):
-    id: int
+class UserInputSchema(BaseInputSchema):
     username: str
-    language_id: int
-    theme_id: int
+    language: SettingInputSchema
+    theme: SettingInputSchema
+    groups: list[GroupInputSchema]

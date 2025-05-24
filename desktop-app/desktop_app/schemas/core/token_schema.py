@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
 
-class TokenSchema(BaseModel):
+class TokenInputSchema(BaseModel):
     access: str
     refresh: str

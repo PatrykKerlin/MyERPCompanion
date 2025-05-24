@@ -15,6 +15,7 @@ from services.core import EndpointService, GroupService, ModuleService, SettingK
 from utils.factories import ControllerFactory
 
 from .auth_controller import AuthController
+from .current_user_controller import CurrentUserController
 from .health_check_controller import HealthCheckController
 from .user_controller import UserController
 from .text_controller import TextController
@@ -52,6 +53,7 @@ SettingController = ControllerFactory.create(
 
 __all__ = [
     "AuthController",
+    "CurrentUserController",
     "EndpointController",
     "GroupController",
     "HealthCheckController",

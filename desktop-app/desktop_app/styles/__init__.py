@@ -1,3 +1,3 @@
-from .styles import ButtonStyles
+from .styles import ButtonStyles, MenuStyles
 
-__all__ = ["ButtonStyles"]
+__all__ = ["ButtonStyles", "MenuStyles"]
