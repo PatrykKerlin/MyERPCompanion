@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
+from typing import Generic, TypeVar
+
 import flet as ft
+
 from config import Context
-from views.components import LoadingDialog, ErrorDialog
-from services.base import BaseService
-from typing import TypeVar, Generic
 from helpers import SafeExecutor
+from services.base import BaseService
+from views.components import ErrorDialog, LoadingDialog
 
 TService = TypeVar("TService", bound=BaseService)
 

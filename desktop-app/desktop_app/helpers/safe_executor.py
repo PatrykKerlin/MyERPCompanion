@@ -1,6 +1,7 @@
-from flet import Page
-from collections.abc import Callable, Awaitable
+from collections.abc import Awaitable, Callable
 from typing import Any
+
+from flet import Page
 
 
 class SafeExecutor:

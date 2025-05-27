@@ -1,10 +1,8 @@
-from typing import Any, TypeVar, Union, cast
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.core import Text, Setting, SettingKey
+from models.core import Language, Text
 from repositories.core import TextRepository
-from schemas.core import TextInputSchema, TextOutputSchema, TextOutputByLanguageSchema
+from schemas.core import TextInputSchema, TextOutputByLanguageSchema, TextOutputSchema
 from services.base import BaseService
 
 
@@ -20,10 +18,7 @@ class TextService(BaseService[Text, TextRepository, TextInputSchema, TextOutputS
         offset: int = 0,
         limit: int = 100,
     ) -> tuple[list[TextOutputByLanguageSchema], int]:
-        filters = [
-            self._model_cls.language.has(Setting.key.has(SettingKey.key == "language")),
-            self._model_cls.language.has(Setting.value == language),
-        ]
+        filters = [self._model_cls.language.has(Language.key == language)]
         models = await self._repository_cls.get_all(session=session, filters=filters, offset=offset, limit=limit)
         total = await self._repository_cls.count_all(session=session, filters=filters)
         schemas = [TextOutputByLanguageSchema.model_validate(model) for model in models]

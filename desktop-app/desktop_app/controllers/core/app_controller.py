@@ -1,8 +1,9 @@
-from views.core import AppView
+import asyncio
+
 from config import Context
 from controllers.base import BaseController
 from services.core import AppService
-import asyncio
+from views.core import AppView
 
 
 class AppController(BaseController[AppService]):

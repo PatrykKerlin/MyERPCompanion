@@ -1,21 +1,25 @@
-from models.core import Endpoint, Group, SettingKey, Text
+from models.core import AssocGroupModule, AssocUserGroup, Endpoint, Group, Language, Theme
 from utils.factories import RepositoryFactory
 
 from .module_repository import ModuleRepository
-from .setting_repository import SettingRepository
 from .text_repository import TextRepository
 from .user_repository import UserRepository
 
+AssocGroupModuleRepository = RepositoryFactory.create(AssocGroupModule)
+AssocUserGroupRepository = RepositoryFactory.create(AssocUserGroup)
 EndpointRepository = RepositoryFactory.create(Endpoint)
 GroupRepository = RepositoryFactory.create(Group)
-SettingKeyRepository = RepositoryFactory.create(SettingKey)
+LanguageRepository = RepositoryFactory.create(Language)
+ThemeRepository = RepositoryFactory.create(Theme)
 
 __all__ = [
+    "AssocGroupModuleRepository",
+    "AssocUserGroupRepository",
     "EndpointRepository",
     "GroupRepository",
+    "LanguageRepository",
     "ModuleRepository",
-    "SettingKeyRepository",
-    "SettingRepository",
     "TextRepository",
+    "ThemeRepository",
     "UserRepository",
 ]

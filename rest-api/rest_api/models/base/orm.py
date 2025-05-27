@@ -2,10 +2,10 @@ from typing import Any
 
 from sqlalchemy.orm import relationship as base_relationship
 from sqlalchemy.orm.relationships import (
-    _RelationshipDeclared,
     _LazyLoadArgumentType,
-    _RelationshipArgumentType,
     _ORMColCollectionArgument,
+    _RelationshipArgumentType,
+    _RelationshipDeclared,
 )
 
 

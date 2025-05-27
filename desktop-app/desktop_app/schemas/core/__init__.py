@@ -1,6 +1,6 @@
 from .group_schema import GroupInputSchema, GroupOutputSchema
-from .setting_schema import SettingInputSchema, SettingOutputSchema
 from .setting_key_schema import SettingKeyInputSchema, SettingKeyOutputSchema
+from .setting_schema import SettingInputSchema, SettingOutputSchema
 from .token_schema import TokenInputSchema
 from .user_schema import UserInputSchema
 

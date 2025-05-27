@@ -1,5 +1,7 @@
-import flet as ft
 from collections.abc import Callable
+
+import flet as ft
+
 from styles import MenuStyles
 
 

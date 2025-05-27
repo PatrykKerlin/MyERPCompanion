@@ -1,4 +1,5 @@
 import flet as ft
+
 from views.base import BaseDialog
 
 

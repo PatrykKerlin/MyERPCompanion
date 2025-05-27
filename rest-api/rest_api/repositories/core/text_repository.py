@@ -1,11 +1,8 @@
-from collections.abc import Sequence
-
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.core import Text, Setting, SettingKey
+from models.core import Language, Text
 from repositories.base import BaseRepository
 
 
@@ -21,7 +18,6 @@ class TextRepository(BaseRepository[Text]):
     ) -> Select:
         query = super()._build_query(additional_filters, sort_by, sort_order)
         return query.options(
-            selectinload(cls._model_cls.language).selectinload(Setting.key),
-            with_loader_criteria(Setting, cls._expr(Setting.is_active == True)),
-            with_loader_criteria(SettingKey, cls._expr(SettingKey.is_active == True)),
+            selectinload(cls._model_cls.language),
+            with_loader_criteria(Language, cls._expr(Language.is_active == True)),
         )

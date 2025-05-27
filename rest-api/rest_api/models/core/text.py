@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String, UniqueConstraint
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
 
 class Text(BaseModel):
     __tablename__ = "texts"
-    __table_args__ = [UniqueConstraint("key", "language_id", name="uq_texts_key_language")]
+    __table_args__ = (UniqueConstraint("key", "language_id", name="uq_texts_key_language"),)
 
     key: Mapped[str] = mapped_column(String(25), nullable=False)
     value: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)

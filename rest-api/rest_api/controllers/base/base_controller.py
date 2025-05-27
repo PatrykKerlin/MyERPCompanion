@@ -27,8 +27,6 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         self._settings = context.settings
         self._service = self._service_cls()
 
-    async def _validate_data(self, data: TInputSchema) -> None: ...
-
     @Auth.restrict_access()
     async def get_all(
         self,
@@ -78,14 +76,12 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
     @Auth.restrict_access()
     async def create(self, request: Request, data: Annotated[TInputSchema, Body()]) -> TOutputSchema:
         user = request.state.user
-        await self._validate_data(data)
         async with self._get_session() as session:
             return await self._service.create(session, user.id, data)
 
     @Auth.restrict_access()
     async def update(self, request: Request, data: Annotated[TInputSchema, Body()], model_id: int) -> TOutputSchema:
         user = request.state.user
-        await self._validate_data(data)
         async with self._get_session() as session:
             schema = await self._service.update(session, model_id, user.id, data)
             if not schema:

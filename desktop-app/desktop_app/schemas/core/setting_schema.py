@@ -3,6 +3,7 @@ from typing import Annotated
 from pydantic import Field
 
 from schemas.base import BaseInputSchema, BaseOutputSchema
+
 from .setting_key_schema import SettingKeyInputSchema
 
 

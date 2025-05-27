@@ -1,4 +1,5 @@
 import flet as ft
+
 from styles import MenuStyles
 
 

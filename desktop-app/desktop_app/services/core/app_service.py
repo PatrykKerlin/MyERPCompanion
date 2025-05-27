@@ -1,12 +1,14 @@
 import asyncio
 import getpass
 import socket
-from typing import cast, Awaitable, Any
+from typing import Any, Awaitable, cast
+
 from httpx import HTTPError
-from services.base import BaseService
 from redis.asyncio import Redis
 from redis.exceptions import ConnectionError
+
 from config import Context, Settings
+from services.base import BaseService
 
 
 class AppService(BaseService):

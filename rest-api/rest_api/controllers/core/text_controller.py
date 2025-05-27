@@ -1,13 +1,17 @@
 from typing import Annotated
 
-from fastapi import Request, status, Depends
+from fastapi import Depends, Request, status
 
 from config import Context
 from controllers.base import BaseController
-from schemas.core import TextInputSchema, TextOutputSchema, TextOutputByLanguageSchema
-from services.core import SettingService, TextService
-from utils.validators import SettingsValidator
-from schemas.core import PaginatedResponseSchema, PaginationParamsSchema
+from schemas.core import (
+    PaginatedResponseSchema,
+    PaginationParamsSchema,
+    TextInputSchema,
+    TextOutputByLanguageSchema,
+    TextOutputSchema,
+)
+from services.core import TextService
 
 
 class TextController(BaseController[TextService, TextInputSchema, TextOutputSchema]):
@@ -15,7 +19,6 @@ class TextController(BaseController[TextService, TextInputSchema, TextOutputSche
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        self.setting_service = SettingService()
         self.router.add_api_route(
             path="/by-language/{language}",
             endpoint=self.texts_by_language,
@@ -43,7 +46,3 @@ class TextController(BaseController[TextService, TextInputSchema, TextOutputSche
                 has_next=has_next,
                 has_prev=has_prev,
             )
-
-    async def _validate_data(self, data: TextInputSchema) -> None:
-        async with self._get_session() as session:
-            await SettingsValidator.validate_key(session, self.setting_service, data.language_id, "language")

@@ -8,16 +8,17 @@ from schemas.core import GroupOutputSchema, LanguageOutputSchema, ThemeOutputSch
 
 class UserInputBaseSchema(BaseModel):
     username: Annotated[str, Field(min_length=5, max_length=25)]
-    groups: Annotated[list[Annotated[int, Field(ge=1)]], Field(min_length=1)]
     language_id: Annotated[int, Field(ge=1)]
     theme_id: Annotated[int, Field(ge=1)]
 
 
 class UserInputCreateSchema(BaseInputSchema, UserInputBaseSchema):
+    groups: Annotated[list[Annotated[int, Field(ge=1)]], Field(min_length=1)]
     password: Annotated[str, Field(min_length=8, max_length=128)]
 
 
 class UserInputUpdateSchema(BaseInputSchema, UserInputBaseSchema):
+    groups: Annotated[list[Annotated[int, Field(ge=1)]] | None, Field(default=None, min_length=1)]
     password: Annotated[str | None, Field(default=None, min_length=8, max_length=128)]
 
 

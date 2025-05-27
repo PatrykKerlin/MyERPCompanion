@@ -1,10 +1,11 @@
+from collections.abc import Callable
+from typing import cast
+
 from config import Context
 from controllers.base import BaseController
+from controllers.core import AppController
 from services.core import AuthService
 from views.components import AuthDialog
-from typing import cast
-from controllers.core import AppController
-from collections.abc import Callable
 
 
 class AuthController(BaseController[AuthService]):

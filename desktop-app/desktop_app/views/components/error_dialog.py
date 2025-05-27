@@ -1,6 +1,8 @@
-import flet as ft
-from views.base import BaseDialog
 from collections.abc import Callable
+
+import flet as ft
+
+from views.base import BaseDialog
 
 
 class ErrorDialog(BaseDialog):

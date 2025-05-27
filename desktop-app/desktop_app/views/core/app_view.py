@@ -1,8 +1,11 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
+
 import flet as ft
 import flet.canvas as cv
-from views.components import MenuBar, IconsBar, SideMenu
+
+from views.components import IconsBar, MenuBar, SideMenu
 
 if TYPE_CHECKING:
     from ...controllers.core import AppController

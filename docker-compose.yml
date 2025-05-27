@@ -33,7 +33,7 @@ services:
       - REFRESH_TOKEN_EXPIRE_DAYS=7
       - SUPERUSER_USERNAME=admin
       - SUPERUSER_PASSWORD=admin123
-      - ADMINS_GROUP_NAME=admins
+      - ADMINS_GROUP_KEY=admins
       - ADMINS_GROUP_DESC=Admins
     depends_on:
       - postgres

@@ -1,6 +1,7 @@
 import flet as ft
+
+from config import Context, Controllers, DefaultTranslation, Settings
 from controllers.core import AppController, AuthController
-from config import Context, Settings, Controllers, DefaultTranslation
 
 
 class App:

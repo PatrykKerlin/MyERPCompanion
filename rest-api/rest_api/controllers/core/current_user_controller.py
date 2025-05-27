@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Request, status
+
+from schemas.core import UserOutputSchema
 from utils.auth import Auth
 from utils.exceptions import InvalidCredentialsException
-from schemas.core import UserOutputSchema
 
 
 class CurrentUserController:

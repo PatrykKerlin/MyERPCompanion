@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings
 from schemas.core import UserOutputSchema
-from services.core import ModuleService, UserService
 from utils.exceptions import InvalidCredentialsException, NoPermissionException, NotFoundException
 
 
@@ -21,6 +20,8 @@ class Auth:
     async def authenticate(
         cls, session: AsyncSession, username: str, password: str, settings: Settings
     ) -> dict[str, str] | None:
+        from services.core import UserService
+
         service = UserService()
         schema = await service.get_by_name(session, username)
         if not schema or not cls.__verify_password(password, cast(str, schema.password)):
@@ -65,6 +66,8 @@ class Auth:
 
     @classmethod
     def restrict_access(cls) -> Callable:
+        from services.core import ModuleService
+
         def decorator(func: Callable) -> Callable:
             @wraps(func)
             async def wrapper(self: Any, *args: Any, request: Request, **kwargs: Any) -> Any:
@@ -83,8 +86,8 @@ class Auth:
                 if not module_schema:
                     raise NotFoundException()
 
-                allowed_groups = {group.name for group in module_schema.groups}
-                user_groups = {group.name for group in user_schema.groups}
+                allowed_groups = {group.key for group in module_schema.groups}
+                user_groups = {group.key for group in user_schema.groups}
 
                 if not user_groups.intersection(allowed_groups):
                     raise NoPermissionException()

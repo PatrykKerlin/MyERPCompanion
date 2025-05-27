@@ -4,8 +4,8 @@ from typing import Any, AsyncGenerator
 from fastapi import APIRouter, FastAPI
 
 from config import Context, CustomFastAPI, Database, Settings
-from controllers.core import AuthController, HealthCheckController, CurrentUserController
-from handlers import CheckDatabaseState, PopulateDatabase, RegisterDynamicEndpoints
+from controllers import core as cc
+from handlers import CheckDatabaseState, PopulateDatabase
 from middlewares import AuthMiddleware
 
 
@@ -23,18 +23,20 @@ class App:
     def __include_routers(self) -> None:
         api_router = APIRouter(prefix="/api")
 
-        health_check_controller = HealthCheckController()
-        auth_controller = AuthController(self.__context)
-        current_user_controller = CurrentUserController()
+        endpoints = [
+            {"router": cc.HealthCheckController().router, "tags": ["health_check"]},
+            {"router": cc.AuthController(self.__context).router, "tags": ["authorization"]},
+            {"router": cc.CurrentUserController().router, "tags": ["current_user"]},
+            {"router": cc.ModuleController(self.__context).router, "prefix": "/modules", "tags": ["modules"]},
+            {"router": cc.EndpointController(self.__context).router, "prefix": "/endpoints", "tags": ["endpoints"]},
+            {"router": cc.UserController(self.__context).router, "prefix": "/users", "tags": ["users"]},
+            {"router": cc.GroupController(self.__context).router, "prefix": "/groups", "tags": ["Groups"]},
+        ]
 
-        api_router.include_router(health_check_controller.router, tags=["health_check"])
-        api_router.include_router(auth_controller.router, tags=["authorization"])
-        api_router.include_router(current_user_controller.router, tags=["current_user"])
+        for endpoint in endpoints:
+            api_router.include_router(**endpoint)
 
         self.__app.include_router(api_router)
-
-    async def register_dynamic_endpoints(self) -> None:
-        await RegisterDynamicEndpoints(self.__context, self.__app).register()
 
     async def startup(self) -> None:
         async with self.__database.engine.begin() as conn:
@@ -58,7 +60,6 @@ def create_app() -> FastAPI:
         await populate.populate_admins_group()
         await populate.populate_from_csv()
         await populate.update_superuser()
-        await app_instance.register_dynamic_endpoints()
         yield
 
     app_instance = App(context=context, database=database, lifespan=lifespan)

@@ -1,5 +1,6 @@
-import flet as ft
 from typing import Sequence
+
+import flet as ft
 
 
 class BaseDialog(ft.AlertDialog):
