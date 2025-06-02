@@ -1,6 +1,9 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import httpx
 
-from config import Context
+if TYPE_CHECKING:
+    from config.context import Context
 
 
 class BaseService:

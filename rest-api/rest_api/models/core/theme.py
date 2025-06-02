@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 class Theme(BaseModel):
     __tablename__ = "themes"
 
-    key: Mapped[str] = mapped_column(String(6), nullable=False, unique=True)
-    colors: Mapped[str] = mapped_column(String(25), nullable=True)
+    key: Mapped[str] = mapped_column(String(25), nullable=False, unique=True)
 
     users: Mapped[list[User]] = relationship(argument="User", back_populates="theme", foreign_keys="User.theme_id")

@@ -1,6 +1,6 @@
 key,controller,path,in_menu,get_key,create_key,module_id
 users,UserController,/users,true,get_users,create_user,1
-current_user,CurrentUserController,/current-user,false,,,1
+current_user,CurrentUserController,/current-user,false,null,null,1
 endpoints,EndpointController,/endpoints,true,get_endpoints,create_endpoints,1
 groups,GroupController,/groups,true,get_groups,create_groups,1
 modules,ModuleController,/modules,true,get_modules,create_modules,1

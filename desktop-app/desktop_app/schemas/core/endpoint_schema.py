@@ -1,0 +1,24 @@
+from typing import Annotated
+
+from pydantic import Field
+
+from schemas.base import BaseInputSchema, BaseOutputSchema
+
+
+class EndpointInputSchema(BaseOutputSchema):
+    key: str
+    controller: str
+    path: str
+    in_menu: bool
+    get_key: str | None = None
+    create_key: str | None = None
+
+
+class EndpointOutputSchema(BaseInputSchema):
+    key: Annotated[str, Field(min_length=1, max_length=25)]
+    controller: Annotated[str, Field(min_length=1, max_length=50)]
+    path: Annotated[str, Field(min_length=1, max_length=100)]
+    in_menu: bool
+    get_key: Annotated[str | None, Field(default=None, min_length=1, max_length=25)]
+    create_key: Annotated[str | None, Field(default=None, min_length=1, max_length=25)]
+    module_id: Annotated[int, Field(ge=1)]

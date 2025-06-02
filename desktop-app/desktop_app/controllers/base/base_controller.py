@@ -1,27 +1,20 @@
-from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import flet as ft
 
-from config import Context
-from helpers import SafeExecutor
-from services.base import BaseService
 from views.components import ErrorDialog, LoadingDialog
 
-TService = TypeVar("TService", bound=BaseService)
+if TYPE_CHECKING:
+    from config.context import Context
 
 
-class BaseController(ABC, Generic[TService]):
-    _service_cls: type[TService]
+class BaseController:
 
     def __init__(self, context: Context) -> None:
         self._context = context
-        self._executor = SafeExecutor(context.page)
-        self._service = self._service_cls(context)
 
-    @abstractmethod
-    def show(self, *args, **kwargs) -> None:
-        pass
+    def show(self, *args, **kwargs) -> None: ...
 
     def _show_loading_dialog(self) -> LoadingDialog:
         loading_dialog = LoadingDialog(self._context.texts)

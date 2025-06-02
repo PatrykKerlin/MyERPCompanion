@@ -1,39 +1,38 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from collections.abc import Callable
 from typing import cast
 
-from config import Context
-from controllers.base import BaseController
-from controllers.core import AppController
+from controllers.base import BaseComponentController
 from services.core import AuthService
 from views.components import AuthDialog
 
+if TYPE_CHECKING:
+    from config.context import Context
+    from views.components.auth_dialog import AuthDialog
 
-class AuthController(BaseController[AuthService]):
+
+class AuthDialogController(BaseComponentController[AuthService, AuthDialog]):
     _service_cls = AuthService
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self.__auth_dialog: AuthDialog | None = None
-        self.__post_login_callback: Callable[[], None] | None = None
 
-    def show(self, *args, **kwargs) -> None:
-        self.__post_login_callback = kwargs.get("callback")
-        # self.__auth_dialog = AuthDialog(
-        #     texts=self._context.texts,
-        #     on_cancel=self.__on_cancel,
-        #     on_login=self.__on_login,
-        # )
-        # self._open_dialog(self.__auth_dialog)
-        self.__on_login("admin", "admin123")
+    @property
+    def component(self) -> AuthDialog:
+        self.__auth_dialog = AuthDialog(
+            texts=self._context.texts,
+            on_cancel=self.__on_cancel,
+            on_login=self.__on_login,
+        )
+        return self.__auth_dialog
 
-    # def __on_cancel(self) -> None:
-    #     self._context.page.window.destroy()
+    def __on_cancel(self) -> None:
+        self._context.page.window.destroy()
 
     def __on_login(self, username: str, password: str) -> None:
-        self._executor.run_async(
-            async_func=self.__handle_login,
-            async_args=[username, password],
-        )
+        self._context.page.run_task(self.__handle_login, "admin", "admin123")
 
     async def __handle_login(self, username: str, password: str) -> None:
         loading_dialog = self._show_loading_dialog()
@@ -45,8 +44,8 @@ class AuthController(BaseController[AuthService]):
             if self.__auth_dialog:
                 self._close_dialog(self.__auth_dialog)
             self._close_dialog(loading_dialog)
-            if self.__post_login_callback:
-                self._executor.run_ui(self.__post_login_callback)
+            app_controller = self._context.controllers.get("app")
+            app_controller.after_login()
         except Exception as e:
             self._close_dialog(loading_dialog)
             if self.__auth_dialog:

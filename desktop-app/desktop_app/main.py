@@ -1,25 +1,24 @@
 import flet as ft
 
-from config import Context, Controllers, DefaultTranslation, Settings
-from controllers.core import AppController, AuthController
+from config.context import Context
+from config.controllers import Controllers
+from config.default_translation import DefaultTranslation
+from config.settings import Settings
 
 
 class App:
     def main(self, page: ft.Page) -> None:
         settings = Settings()  # type: ignore
-        self.__controllers = Controllers()
-        self.__context = Context(
+        context = Context(
             settings=settings,
-            controllers=self.__controllers,
             page=page,
             texts=DefaultTranslation.texts,
         )
-        self.__register_controllers()
-        self.__controllers.app.show()
-
-    def __register_controllers(self):
-        self.__controllers.add("app", AppController(self.__context))
-        self.__controllers.add("auth", AuthController(self.__context))
+        controllers = Controllers(context)
+        context.controllers = controllers
+        controllers.initialize()
+        app_controller = controllers.get("app")
+        app_controller.show()
 
 
 if __name__ == "__main__":

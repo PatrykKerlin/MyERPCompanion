@@ -6,8 +6,8 @@ from schemas.base import BaseInputSchema, BaseOutputSchema
 
 
 class ThemeInputSchema(BaseInputSchema):
-    key: Annotated[str, Field(min_length=4, max_length=25)]
+    key: str
 
 
 class ThemeOutputSchema(BaseOutputSchema):
-    key: str
+    key: Annotated[str, Field(min_length=4, max_length=25)]

@@ -1,16 +1,25 @@
-from dataclasses import dataclass
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
-from flet import Page
+from dataclasses import dataclass, field
 
-from config import Controllers, Settings
-from schemas.core import TokenInputSchema, UserInputSchema
+from flet import Page, Control
+
+
+from schemas.core import TokenInputSchema, UserInputSchema, ModuleInputSchema
+
+if TYPE_CHECKING:
+    from controllers import Controllers
+    from settings import Settings
 
 
 @dataclass
 class Context:
     settings: Settings
-    controllers: Controllers
     page: Page
     texts: dict[str, str]
     tokens: TokenInputSchema | None = None
     user: UserInputSchema | None = None
+    controllers: Controllers = field(init=False)
+    modules: list[ModuleInputSchema] = field(default_factory=list)
+    active_views: dict[str, Control] = field(default_factory=dict)

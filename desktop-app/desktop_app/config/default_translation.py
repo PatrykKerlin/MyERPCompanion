@@ -24,4 +24,8 @@ class DefaultTranslation:
         "menu": "Menu",
         "api_not_responding": "API is not responding.",
         "invalid_credentials": "Invalid credentials.",
+        "users": "Users",
+        "endpoints": "Endpoints",
+        "groups": "Groups",
+        "modules": "Modules",
     }

@@ -1,14 +1,19 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import asyncio
 import getpass
 import socket
-from typing import Any, Awaitable, cast
+from typing import Awaitable, cast
 
 from httpx import HTTPError
 from redis.asyncio import Redis
 from redis.exceptions import ConnectionError
 
-from config import Context, Settings
 from services.base import BaseService
+from schemas.core import ModuleInputSchema
+
+if TYPE_CHECKING:
+    from config.context import Context
 
 
 class AppService(BaseService):
@@ -77,12 +82,27 @@ class AppService(BaseService):
                 f"texts/by-language/{self._context.settings.LANGUAGE}", params={"page": page, "page_size": page_size}
             )
             data = response.json()
-            texts.update({item["name"]: item["value"] for item in data.get("items", [])})
+            texts.update({item["key"]: item["value"] for item in data.get("items", [])})
             if not data.get("has_next", False):
                 break
             page += 1
 
         return texts
+
+    async def fetch_modules(self) -> list[ModuleInputSchema]:
+        page = 1
+        page_size = 100
+        modules: list[ModuleInputSchema] = []
+
+        while True:
+            response = await self._get("modules", params={"page": page, "page_size": page_size})
+            data = response.json()
+            modules.extend(ModuleInputSchema(**module) for module in data.get("items", []))
+            if not data.get("has_next", False):
+                break
+            page += 1
+
+        return modules
 
     def __get_redis(self) -> Redis:
         return Redis(

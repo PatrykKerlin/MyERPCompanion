@@ -26,6 +26,7 @@ class App:
         endpoints = [
             {"router": cc.HealthCheckController().router, "tags": ["health_check"]},
             {"router": cc.AuthController(self.__context).router, "tags": ["authorization"]},
+            {"router": cc.TextController(self.__context).router, "prefix": "/texts", "tags": ["texts"]},
             {"router": cc.CurrentUserController().router, "tags": ["current_user"]},
             {"router": cc.ModuleController(self.__context).router, "prefix": "/modules", "tags": ["modules"]},
             {"router": cc.EndpointController(self.__context).router, "prefix": "/endpoints", "tags": ["endpoints"]},
