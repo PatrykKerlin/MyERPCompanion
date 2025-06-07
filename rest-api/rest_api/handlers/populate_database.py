@@ -67,7 +67,7 @@ class PopulateDatabase:
     async def update_superuser(self) -> None:
         if self.__superuser:
             async with self.__get_session() as session:
-                self.__superuser.language_id = 1
+                self.__superuser.language_id = 2
                 self.__superuser.theme_id = 1
                 self.__superuser.modified_by = self.__superuser.id
                 session.add(self.__superuser)

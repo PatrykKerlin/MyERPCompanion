@@ -5,7 +5,7 @@ import flet as ft
 from views.base import BaseDialog
 
 
-class ErrorDialog(BaseDialog):
+class ErrorDialogComponent(BaseDialog):
     def __init__(self, texts: dict[str, str], message_key: str, on_click: Callable[[ft.ControlEvent], None]) -> None:
         super().__init__(
             texts=texts,

@@ -12,7 +12,7 @@ class App:
         context = Context(
             settings=settings,
             page=page,
-            texts=DefaultTranslation.texts,
+            texts=DefaultTranslation().texts,
         )
         controllers = Controllers(context)
         context.controllers = controllers

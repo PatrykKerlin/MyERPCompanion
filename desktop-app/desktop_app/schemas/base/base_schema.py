@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class BaseSchema(BaseModel):
@@ -17,4 +18,4 @@ class BaseInputSchema(BaseSchema):
 
 
 class BaseOutputSchema(BaseSchema):
-    pass
+    id: Annotated[int, Field(ge=1, exclude=True)]

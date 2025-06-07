@@ -1,37 +1,30 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from collections.abc import Callable
-from typing import cast
 
 from controllers.base import BaseComponentController
 from services.core import AuthService
-from views.components import AuthDialog
+from views.components import AuthDialogComponent
 
 if TYPE_CHECKING:
     from config.context import Context
-    from views.components.auth_dialog import AuthDialog
 
 
-class AuthDialogController(BaseComponentController[AuthService, AuthDialog]):
+class AuthDialogController(BaseComponentController[AuthService, AuthDialogComponent]):
     _service_cls = AuthService
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        self.__auth_dialog: AuthDialog | None = None
+        self.__auth_dialog: AuthDialogComponent | None = None
 
     @property
-    def component(self) -> AuthDialog:
-        self.__auth_dialog = AuthDialog(
-            texts=self._context.texts,
-            on_cancel=self.__on_cancel,
-            on_login=self.__on_login,
-        )
+    def component(self) -> AuthDialogComponent:
+        self.__auth_dialog = AuthDialogComponent(self, texts=self._context.texts)
         return self.__auth_dialog
 
-    def __on_cancel(self) -> None:
+    def on_cancel(self) -> None:
         self._context.page.window.destroy()
 
-    def __on_login(self, username: str, password: str) -> None:
+    def on_login(self, username: str, password: str) -> None:
         self._context.page.run_task(self.__handle_login, "admin", "admin123")
 
     async def __handle_login(self, username: str, password: str) -> None:

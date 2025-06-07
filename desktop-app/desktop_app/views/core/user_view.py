@@ -2,14 +2,11 @@ import flet as ft
 
 
 class UserView(ft.Card):
-    def __init__(self) -> None:
+    def __init__(self, texts: dict[str, str]) -> None:
         super().__init__(
             content=ft.Container(
-                content=ft.Text("User", size=20),
+                content=ft.Text("User"),
                 alignment=ft.alignment.center,
-                padding=20,
-                bgcolor=ft.Colors.WHITE,
-                border_radius=12,
                 expand=True,
             )
         )

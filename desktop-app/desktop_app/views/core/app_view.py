@@ -2,15 +2,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import flet as ft
 
-from views.components.menu_bar import MenuBar
+from views.components.menu_bar_component import MenuBarComponent
 
 
 if TYPE_CHECKING:
     from controllers.core.app_controller import AppController
     from schemas.core.user_schema import UserInputSchema
-    from views.components.buttons_bar import ButtonsBar
-    from views.components.side_menu import SideMenu
-    from views.components.tabs_bar import TabsBar
+    from views.components.buttons_bar_component import ButtonsBarComponent
+    from views.components.footer_bar_component import FooterBarComponent
+    from views.components.side_menu_component import SideMenuComponent
+    from views.components.tabs_bar_component import TabsBarComponent
 
 
 class AppView:
@@ -20,7 +21,7 @@ class AppView:
         self._texts = texts
         self.__theme = theme
         self.__user: UserInputSchema | None = None
-        self.__view_container: ft.Container | None = None
+        self.__view_stack: ft.Stack | None = None
 
         self._page.window.width = 1024
         self._page.window.height = 768
@@ -36,19 +37,30 @@ class AppView:
         self.__user = user
 
     def set_view_content(self, content: ft.Control) -> None:
-        if self.__view_container:
-            self.__view_container.content = content
-            self._page.update()
+        if not self.__view_stack:
+            return
+        if content not in self.__view_stack.controls:
+            self.__view_stack.controls.append(content)
+        for view in self.__view_stack.controls:
+            view.visible = view == content
+        self._page.update()
 
-    def rebuild(self, texts: dict[str, str], side_menu: SideMenu, buttons_bar: ButtonsBar, tabs_bar: TabsBar) -> None:
+    def rebuild(
+        self,
+        texts: dict[str, str],
+        side_menu: SideMenuComponent,
+        buttons_bar: ButtonsBarComponent,
+        tabs_bar: TabsBarComponent,
+        footer_bar: FooterBarComponent,
+    ) -> None:
         if not self.__user:
             return
 
         self._texts = texts
-        menu_bar = MenuBar(self._texts)
+        menu_bar = MenuBarComponent(self._texts)
         horizontal_divider = ft.Divider(height=1, thickness=1, color=ft.Colors.OUTLINE)
 
-        self.__view_container = ft.Container(expand=True)
+        self.__view_stack = ft.Stack(expand=True)
 
         self._page.clean()
         self._page.overlay.clear()
@@ -65,13 +77,15 @@ class AppView:
                             ft.Column(
                                 controls=[
                                     tabs_bar,
-                                    self.__view_container,
+                                    self.__view_stack,
                                 ],
                                 expand=True,
                             ),
                         ],
                         expand=True,
                     ),
+                    horizontal_divider,
+                    footer_bar,
                 ],
                 alignment=ft.MainAxisAlignment.START,
                 horizontal_alignment=ft.CrossAxisAlignment.STRETCH,

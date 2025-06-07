@@ -5,9 +5,12 @@ import flet as ft
 
 class BaseDialog(ft.AlertDialog):
     def __init__(
-        self, texts: dict[str, str], controls: Sequence[ft.Control], actions: Sequence[ft.Control] = [], **kwargs
+        self,
+        controls: Sequence[ft.Control],
+        actions: Sequence[ft.Control] = [],
+        title: str | ft.Control | None = None,
+        **kwargs,
     ) -> None:
-        self._texts = texts
         super().__init__(
             modal=True,
             alignment=ft.alignment.center,
@@ -20,5 +23,6 @@ class BaseDialog(ft.AlertDialog):
                 ),
             ),
             actions=list(actions),
+            title=title,
             **kwargs,
         )

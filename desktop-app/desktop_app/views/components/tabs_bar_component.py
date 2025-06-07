@@ -1,14 +1,16 @@
 from __future__ import annotations
 from typing import cast, TYPE_CHECKING
 import flet as ft
+from views.base import BaseView
 
 if TYPE_CHECKING:
     from controllers.components.tabs_bar_controller import TabsBarController
 
 
-class TabsBar(ft.Container):
+class TabsBarComponent(BaseView, ft.Container):
     def __init__(self, controller: TabsBarController, texts: dict[str, str], tabs: list[str], active_tab: str) -> None:
-        super().__init__()
+        BaseView.__init__(self, controller, texts)
+        ft.Container.__init__(self)
         self.tabs = tabs
         self.active_tab = active_tab
         self.content = ft.Row(
@@ -16,7 +18,7 @@ class TabsBar(ft.Container):
             scroll=ft.ScrollMode.AUTO,
             expand=True,
         )
-        self.__controller = controller
+        self._controller = controller
         self.__build_controls()
 
     def __build_controls(self) -> None:
@@ -24,17 +26,17 @@ class TabsBar(ft.Container):
             ft.Row(
                 controls=[
                     ft.TextButton(
-                        text=tab,
-                        on_click=lambda _, tab=tab: self.__controller.on_tab_open(tab),
+                        text=self._texts[key],
+                        on_click=lambda _, k=key: self._controller.on_tab_open(k),
                     ),
                     ft.IconButton(
                         icon=ft.Icons.CLOSE,
-                        on_click=lambda _, tab=tab: self.__controller.on_tab_close(tab),
+                        on_click=lambda _, k=key: self._controller.on_tab_close(k),
                         expand=True,
                     ),
                 ]
             )
-            for tab in self.tabs
+            for key in self.tabs
         ]
         cast(ft.Row, self.content).controls = controls
 

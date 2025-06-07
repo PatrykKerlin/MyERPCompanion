@@ -1,20 +1,14 @@
 from dataclasses import dataclass, field
-from typing import Type
-from flet import Control
-
-from views.core import GroupView, UserView
 
 
 @dataclass
 class Views:
-    _views: dict[str, Type[Control]] = field(
+    _views: dict[str, str] = field(
         default_factory=lambda: {
-            "get_users": UserView,
-            "create_users": UserView,
-            "get_groups": GroupView,
-            "create_groups": GroupView,
+            "get_groups": "groups",
+            "create_groups": "groups",
         }
     )
 
-    def get(self, key: str) -> Type[Control]:
+    def get(self, key: str) -> str:
         return self._views[key]

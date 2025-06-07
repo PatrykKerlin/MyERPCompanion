@@ -1,6 +1,6 @@
-key,controller,path,in_menu,get_key,create_key,module_id
-users,UserController,/users,true,get_users,create_user,1
-current_user,CurrentUserController,/current-user,false,null,null,1
-endpoints,EndpointController,/endpoints,true,get_endpoints,create_endpoints,1
-groups,GroupController,/groups,true,get_groups,create_groups,1
-modules,ModuleController,/modules,true,get_modules,create_modules,1
+key,controller,path,in_menu,order,get_key,create_key,module_id
+groups,GroupController,/groups,true,1,get_groups,create_group,1
+users,UserController,/users,true,2,get_users,create_user,1
+current_user,CurrentUserController,/current-user,false,3,null,null,1
+modules,ModuleController,/modules,true,4,get_modules,create_module,1
+endpoints,EndpointController,/endpoints,true,5,get_endpoints,create_endpoint,1

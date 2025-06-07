@@ -31,7 +31,7 @@ class App:
             {"router": cc.ModuleController(self.__context).router, "prefix": "/modules", "tags": ["modules"]},
             {"router": cc.EndpointController(self.__context).router, "prefix": "/endpoints", "tags": ["endpoints"]},
             {"router": cc.UserController(self.__context).router, "prefix": "/users", "tags": ["users"]},
-            {"router": cc.GroupController(self.__context).router, "prefix": "/groups", "tags": ["Groups"]},
+            {"router": cc.GroupController(self.__context).router, "prefix": "/groups", "tags": ["groups"]},
         ]
 
         for endpoint in endpoints:

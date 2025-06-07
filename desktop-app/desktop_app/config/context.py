@@ -19,7 +19,7 @@ class Context:
     page: Page
     texts: dict[str, str]
     tokens: TokenInputSchema | None = None
-    user: UserInputSchema | None = None
+    user: UserInputSchema = field(init=False)
     controllers: Controllers = field(init=False)
     modules: list[ModuleInputSchema] = field(default_factory=list)
     active_views: dict[str, Control] = field(default_factory=dict)

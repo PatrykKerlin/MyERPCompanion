@@ -15,13 +15,8 @@ TService = TypeVar("TService", bound=BaseService)
 TComponent = TypeVar("TComponent", bound=Control)
 
 
-class BaseComponentController(ABC, BaseController, Generic[TService, TComponent]):
+class BaseComponentController(BaseController[TService], Generic[TService, TComponent], ABC):
     _service_cls: type[TService] | None = None
-
-    def __init__(self, context: Context) -> None:
-        super().__init__(context)
-        if self._service_cls:
-            self._service = self._service_cls(context)
 
     @property
     @abstractmethod

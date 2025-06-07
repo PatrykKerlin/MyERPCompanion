@@ -3,7 +3,7 @@ import flet as ft
 from styles import MenuStyles
 
 
-class MenuBar(ft.MenuBar):
+class MenuBarComponent(ft.MenuBar):
     def __init__(self, texts: dict[str, str]) -> None:
         super().__init__(
             style=MenuStyles.flat,
