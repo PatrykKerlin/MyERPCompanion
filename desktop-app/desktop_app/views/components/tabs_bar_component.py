@@ -1,15 +1,15 @@
 from __future__ import annotations
 from typing import cast, TYPE_CHECKING
 import flet as ft
-from views.base import BaseView
+from views.base import BaseComponent
 
 if TYPE_CHECKING:
     from controllers.components.tabs_bar_controller import TabsBarController
 
 
-class TabsBarComponent(BaseView, ft.Container):
+class TabsBarComponent(BaseComponent, ft.Container):
     def __init__(self, controller: TabsBarController, texts: dict[str, str], tabs: list[str], active_tab: str) -> None:
-        BaseView.__init__(self, controller, texts)
+        BaseComponent.__init__(self, controller, texts)
         ft.Container.__init__(self)
         self.tabs = tabs
         self.active_tab = active_tab

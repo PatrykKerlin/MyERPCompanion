@@ -16,7 +16,7 @@ class App:
         )
         controllers = Controllers(context)
         context.controllers = controllers
-        controllers.initialize()
+        controllers.initialize_window_controllers()
         app_controller = controllers.get("app")
         app_controller.show()
 

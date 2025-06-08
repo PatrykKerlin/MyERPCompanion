@@ -1,26 +1,19 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, TypeVar, Generic
+from typing import TYPE_CHECKING
 from collections.abc import Awaitable, Callable
 import asyncio
 
 import flet as ft
 
-from services.base import BaseService
 from views.components import ErrorDialogComponent, LoadingDialogComponent
 
 if TYPE_CHECKING:
     from config.context import Context
 
-TService = TypeVar("TService", bound=BaseService)
 
-
-class BaseController(Generic[TService]):
-    _service_cls: type[TService] | None = None
-
+class BaseController:
     def __init__(self, context: Context) -> None:
         self._context = context
-        if self._service_cls:
-            self._service = self._service_cls(context)
 
     def _show_loading_dialog(self) -> LoadingDialogComponent:
         loading_dialog = LoadingDialogComponent(self._context.texts)

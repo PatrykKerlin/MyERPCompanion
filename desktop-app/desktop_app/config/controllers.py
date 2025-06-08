@@ -15,6 +15,7 @@ from controllers.components import (
 if TYPE_CHECKING:
     from controllers.base.base_controller import BaseController
     from context import Context
+    from schemas.core.endpoint_schema import EndpointInputSchema
 
 ControllerName = Literal["app", "auth_dialog", "buttons_bar", "footer_bar", "side_menu", "tabs_bar", "groups"]
 
@@ -24,8 +25,7 @@ class Controllers:
         self.__context = context
         self.__controllers: dict[str, BaseController] = {}
 
-    def initialize(self) -> None:
-        # Main window controllers
+    def initialize_window_controllers(self) -> None:
         self.__controllers["app"] = AppController(self.__context)
         self.__controllers["auth_dialog"] = AuthDialogController(self.__context)
         self.__controllers["buttons_bar"] = ButtonsBarController(self.__context)
@@ -33,8 +33,9 @@ class Controllers:
         self.__controllers["side_menu"] = SideMenuController(self.__context)
         self.__controllers["tabs_bar"] = TabsBarController(self.__context)
 
-        # Core views controllers
-        self.__controllers["groups"] = GroupController(self.__context)
+    def initialize_view_controllers(self, endpoints: dict[str, EndpointInputSchema]) -> None:
+        if "groups" in endpoints.keys():
+            self.__controllers["groups"] = GroupController(self.__context, endpoints["groups"])
 
     @overload
     def get(self, name: Literal["app"]) -> AppController: ...

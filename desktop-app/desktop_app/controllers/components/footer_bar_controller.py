@@ -12,10 +12,9 @@ if TYPE_CHECKING:
 
 
 class FooterBarController(BaseComponentController[AppService, FooterBarComponent]):
-    _service_cls = AppService
-
     def __init__(self, context: Context) -> None:
         super().__init__(context)
+        self.__service = AppService(context)
         self.__footer: FooterBarComponent | None = None
 
     @property
@@ -51,7 +50,7 @@ class FooterBarController(BaseComponentController[AppService, FooterBarComponent
             if not self.__footer:
                 continue
             try:
-                await self._service.api_health_check()
+                await self.__service.api_health_check()
                 self.__footer.set_status(True)
             except Exception:
                 self.__footer.set_status(False)

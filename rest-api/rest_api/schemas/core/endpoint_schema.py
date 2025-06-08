@@ -11,8 +11,6 @@ class EndpointInputSchema(BaseInputSchema):
     path: Annotated[str, Field(min_length=1, max_length=100)]
     in_menu: bool
     order: Annotated[int, Field(ge=1)]
-    get_key: Annotated[str | None, Field(default=None, min_length=1, max_length=25)]
-    create_key: Annotated[str | None, Field(default=None, min_length=1, max_length=25)]
     module_id: Annotated[int, Field(ge=1)]
 
 
@@ -22,5 +20,3 @@ class EndpointOutputSchema(BaseOutputSchema):
     path: str
     in_menu: bool
     order: int
-    get_key: str | None = None
-    create_key: str | None = None

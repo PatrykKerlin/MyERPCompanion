@@ -10,10 +10,9 @@ if TYPE_CHECKING:
 
 
 class AuthDialogController(BaseComponentController[AuthService, AuthDialogComponent]):
-    _service_cls = AuthService
-
     def __init__(self, context: Context) -> None:
         super().__init__(context)
+        self.__service = AuthService(context)
         self.__auth_dialog: AuthDialogComponent | None = None
 
     @property
@@ -30,9 +29,9 @@ class AuthDialogController(BaseComponentController[AuthService, AuthDialogCompon
     async def __handle_login(self, username: str, password: str) -> None:
         loading_dialog = self._show_loading_dialog()
         try:
-            tokens = await self._service.fetch_tokens(username, password)
+            tokens = await self.__service.fetch_tokens(username, password)
             self._context.tokens = tokens
-            user = await self._service.fetch_current_user()
+            user = await self.__service.fetch_current_user()
             self._context.user = user
             if self.__auth_dialog:
                 self._close_dialog(self.__auth_dialog)

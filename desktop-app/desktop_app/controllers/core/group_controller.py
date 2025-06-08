@@ -11,26 +11,25 @@ from views.components import LoadingDialogComponent
 
 if TYPE_CHECKING:
     from config.context import Context
+    from schemas.core.endpoint_schema import EndpointInputSchema
 
 
 class GroupController(BaseViewController[GroupService, GroupView, GroupOutputSchema]):
-    _schema_cls = GroupOutputSchema
+    _output_schema_cls = GroupOutputSchema
     _service_cls = GroupService
 
-    def __init__(self, context: Context) -> None:
-        super().__init__(context)
+    def __init__(self, context: Context, endpoint: EndpointInputSchema) -> None:
+        super().__init__(context, endpoint)
         self.__view: GroupView | None = None
         self.__search_fields: set[str] = set()
         self.__field_values: dict[str, str] = {}
 
-    def view(self, key: str) -> GroupView:
-        if key == "get_groups":
-            self.__view = GroupView(self, self._context.texts)
-            return self.__view
-        raise ValueError("Requested view not found.")
+    def view(self, key: str, row: dict[str, Any] | None = None) -> GroupView:
+        self.__view = GroupView(self, self._context.texts, self._endpoint.key, row)
+        return self.__view
 
     def get_constraint(self, field: str, constraint: str) -> Any:
-        metadata = self._schema_cls.model_fields[field].metadata
+        metadata = self._output_schema_cls.model_fields[field].metadata
         for item in metadata:
             if hasattr(item, constraint):
                 return getattr(item, constraint)
@@ -54,12 +53,12 @@ class GroupController(BaseViewController[GroupService, GroupView, GroupOutputSch
             if self.__view:
                 self.__view.set_field_error(field, error)
 
-    def on_search_click(self, _: ft.ControlEvent) -> None:
+    def on_search_click(self) -> None:
         self._context.page.run_task(self.__perform_search)
 
     def __validate_field(self, field: str, value: Any) -> str | None:
         try:
-            self._schema_cls(**{field: value})
+            self._output_schema_cls(**{field: value})
         except ValidationError as err:
             for e in err.errors():
                 if e["loc"] == (field,):
@@ -72,7 +71,7 @@ class GroupController(BaseViewController[GroupService, GroupView, GroupOutputSch
         self._open_dialog(loading_dialog)
         for field in self.__search_fields:
             filters[field] = self.__field_values.get(field, "").strip()
-        results = await self._service.get_all_groups(filters=filters)
+        results = await self._service.get_all(filters=filters)
         self._close_dialog(loading_dialog)
         if self.__view:
             self.__view.replace_content([result.model_dump() for result in results])

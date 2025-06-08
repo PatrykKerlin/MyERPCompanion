@@ -1,23 +1,33 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any
+from collections.abc import Callable
 
 import flet as ft
 
-from views.base import BaseView
+from views.base import BaseComponent
 
 if TYPE_CHECKING:
     from controllers.base.base_view_controller import BaseViewController
 
 
-class SearchResultsComponent(BaseView, ft.Column):
+class SearchResultsComponent(BaseComponent, ft.Column):
     def __init__(
-        self, controller: BaseViewController, texts: dict[str, str], columns: list[str], data: list[dict[str, Any]]
+        self,
+        controller: BaseViewController,
+        texts: dict[str, str],
+        key: str,
+        columns: list[str],
+        data: list[dict[str, Any]],
+        on_button_click: Callable[[], None],
+        on_row_click: Callable[[str, dict[str, Any]], None],
     ) -> None:
-        BaseView.__init__(self, controller, texts)
+        BaseComponent.__init__(self, controller, texts)
+        self.__key = key
         self.__data = data
         self.__columns = columns
+        self.__on_row_click = on_row_click
 
-        back_button = ft.ElevatedButton(text="placeholder")
+        back_button = ft.ElevatedButton(text=self._texts["back"], on_click=lambda _: on_button_click())
 
         data_table = ft.Row(
             controls=[self._build_table()],
@@ -49,7 +59,7 @@ class SearchResultsComponent(BaseView, ft.Column):
             expand=True,
         )
 
-        data_rows = [self._build_row(row, headers) for row in self.__data]
+        data_rows = [self._build_row(row) for row in self.__data]
 
         return ft.Column(
             controls=[header_row, *data_rows],
@@ -57,7 +67,7 @@ class SearchResultsComponent(BaseView, ft.Column):
             expand=True,
         )
 
-    def _build_row(self, row: dict[str, Any], headers: list[str]) -> ft.Container:
+    def _build_row(self, row: dict[str, Any]) -> ft.Container:
         cells = [
             ft.Container(
                 content=ft.Text(str(row[key]), overflow=ft.TextOverflow.ELLIPSIS, max_lines=1),
@@ -70,7 +80,7 @@ class SearchResultsComponent(BaseView, ft.Column):
 
         container = ft.Container(
             content=row_content,
-            on_click=lambda _, r=row: print("Kliknięto wiersz:", r),
+            on_click=lambda _, k=self.__key, r=row: self.__on_row_click(k, r),
             on_hover=self._on_hover,
         )
 

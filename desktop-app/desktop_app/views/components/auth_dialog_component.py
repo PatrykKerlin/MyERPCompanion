@@ -4,15 +4,15 @@ from typing import TYPE_CHECKING
 import flet as ft
 
 from styles import ButtonStyles
-from views.base import BaseDialog, BaseView
+from views.base import BaseDialog, BaseComponent
 
 if TYPE_CHECKING:
     from controllers.components.auth_dialog_controller import AuthDialogController
 
 
-class AuthDialogComponent(BaseView, BaseDialog):
+class AuthDialogComponent(BaseComponent, BaseDialog):
     def __init__(self, controller: AuthDialogController, texts: dict[str, str]) -> None:
-        BaseView.__init__(self, controller, texts)
+        BaseComponent.__init__(self, controller, texts)
         login_field = ft.TextField(label=texts["login"], autofocus=True)
         password_field = ft.TextField(label=texts["password"], password=True, can_reveal_password=True)
         login_button = ft.ElevatedButton(

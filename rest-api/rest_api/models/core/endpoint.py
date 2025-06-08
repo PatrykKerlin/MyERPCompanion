@@ -21,8 +21,5 @@ class Endpoint(BaseModel):
     in_menu: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
     order: Mapped[int] = mapped_column(Integer(), nullable=False, unique=True)
 
-    get_key: Mapped[str] = mapped_column(String(25), nullable=True)
-    create_key: Mapped[str] = mapped_column(String(25), nullable=True)
-
     module_id: Mapped[int] = mapped_column(ForeignKey("modules.id"), nullable=True)
     module: Mapped[Module] = relationship(argument="Module", back_populates="endpoints", foreign_keys=[module_id])

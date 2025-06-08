@@ -11,8 +11,11 @@ if TYPE_CHECKING:
 
 
 class GroupView(BaseView, ft.Card):
-    def __init__(self, controller: GroupController, texts: dict[str, str]) -> None:
-        BaseView.__init__(self, controller, texts)
+    def __init__(
+        self, controller: GroupController, texts: dict[str, str], key: str, row: dict[str, Any] | None = None
+    ) -> None:
+        BaseView.__init__(self, controller, texts, key)
+        self.__row = row
         self.__inputs: dict[str, tuple[ft.TextField, ft.ColorValue | None, ft.ColorValue | None]] = {}
         self.__markers: dict[str, ft.IconButton] = {}
         self.column = ft.Column(
@@ -22,15 +25,24 @@ class GroupView(BaseView, ft.Card):
         self.fields = {
             "id": {
                 "column": self.column,
+                "read_only": True if row else False,
+                "disabled": False,
+                "value": row["id"] if row else None,
             },
             "key": {
                 "column": self.column,
                 "max_length": self._controller.get_constraint("key", "max_length"),
+                "read_only": True if row else False,
+                "disabled": False,
+                "value": row["key"] if row else None,
             },
             "description": {
                 "column": self.column,
                 "lines": 5,
                 "max_length": self._controller.get_constraint("description", "max_length"),
+                "read_only": True if row else False,
+                "disabled": False,
+                "value": row["description"] if row else None,
             },
         }
         for key, params in self.fields.items():
@@ -38,17 +50,23 @@ class GroupView(BaseView, ft.Card):
         self.column.controls.append(ft.Text(value=""))
         self.__add_button(column=self.column)
 
-        scrollable_wrapper = ft.ListView(controls=[self.column], expand=True)
-        ft.Card.__init__(self, content=scrollable_wrapper, expand=True)
+        self.scrollable_wrapper = ft.ListView(controls=[self.column], expand=True)
+        ft.Card.__init__(self, content=self.scrollable_wrapper, expand=True)
 
-    def replace_content(self, data: list[dict[str, Any]]) -> None:
-        results_container = SearchResultsComponent(
-            self._controller,
-            self._texts,
-            columns=list(self.fields.keys()),
-            data=data,
-        )
-        self.content = results_container
+    def replace_content(self, data: list[dict[str, Any]] | None = None) -> None:
+        if self.content == self.scrollable_wrapper and data:
+            results_container = SearchResultsComponent(
+                controller=self._controller,
+                texts=self._texts,
+                key=self._key,
+                columns=list(self.fields.keys()),
+                data=data,
+                on_button_click=self.replace_content,
+                on_row_click=self._controller.on_row_click,
+            )
+            self.content = results_container
+        else:
+            self.content = self.scrollable_wrapper
         self.update()
 
     def toggle_search_marker(self, field: str) -> None:
@@ -72,12 +90,18 @@ class GroupView(BaseView, ft.Card):
         ratio: tuple[int, int] = (1, 2),
         lines: int = 1,
         max_length: int = 255,
+        read_only: bool = False,
+        disabled: bool = False,
+        value: str | None = None,
     ) -> None:
-        search_marker = ft.IconButton(
-            icon=ft.Icons.CHECK_BOX_OUTLINE_BLANK,
-            tooltip=self._texts["marker_tooltip"],
-            on_click=lambda _, k=key: self.toggle_search_marker(k),
-        )
+        if not self.__row:
+            search_marker = ft.IconButton(
+                icon=ft.Icons.CHECK_BOX_OUTLINE_BLANK,
+                tooltip=self._texts["marker_tooltip"],
+                on_click=lambda _, k=key: self.toggle_search_marker(k),
+            )
+        else:
+            search_marker = None
         label_field = ft.Text(value=self._texts[key], expand=ratio[0])
         text_field = ft.TextField(
             multiline=lines > 1,
@@ -86,14 +110,18 @@ class GroupView(BaseView, ft.Card):
             max_length=max_length,
             expand=ratio[1],
             on_change=lambda e, k=key: self._controller.set_field_value(k, e.control.value),
+            read_only=read_only,
+            disabled=disabled,
+            value=value,
         )
         row = ft.Row(
-            controls=[label_field, text_field, search_marker],
+            controls=[label_field, text_field] + ([search_marker] if search_marker else []),
             alignment=ft.MainAxisAlignment.START,
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
         self.__inputs[key] = (text_field, text_field.border_color, text_field.focused_border_color)
-        self.__markers[key] = search_marker
+        if search_marker:
+            self.__markers[key] = search_marker
         column.controls.append(row)
 
     def __add_button(self, column: ft.Column) -> None:
@@ -103,7 +131,7 @@ class GroupView(BaseView, ft.Card):
                     ft.Container(expand=True),
                     ft.ElevatedButton(
                         text=self._texts["search"],
-                        on_click=self._controller.on_search_click,
+                        on_click=lambda _: self._controller.on_search_click(),
                     ),
                 ],
                 alignment=ft.MainAxisAlignment.END,

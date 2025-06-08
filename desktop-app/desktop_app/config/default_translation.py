@@ -5,6 +5,7 @@ class DefaultTranslation:
         "cancel": "Cancel",
         "ok": "OK",
         "search": "Search",
+        "back": "Back",
     }
     __auth = {
         "login": "Login",
@@ -31,17 +32,11 @@ class DefaultTranslation:
     }
     __endpoints = {
         "users": "Users",
-        "get_users": "List all users",
-        "create_user": "Create new user",
         "endpoints": "Endpoints",
-        "get_endpoints": "List all endpoints",
-        "create_endpoint": "Create new endpoint",
         "groups": "Groups",
-        "get_groups": "List all groups",
-        "create_group": "Create new group",
+        "groups_{id}": "Group: {key}",
+        "groups_1": "<TEST>",
         "modules": "Modules",
-        "get_modules": "List all modules",
-        "create_module": "Create new module",
     }
     __views = {
         "marker_tooltip": "Check to search by this field.",

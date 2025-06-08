@@ -5,15 +5,15 @@ import flet as ft
 
 from styles import MenuStyles
 
-from views.base import BaseView
+from views.base import BaseComponent
 
 if TYPE_CHECKING:
     from controllers.components.buttons_bar_controller import ButtonsBarController
 
 
-class ButtonsBarComponent(BaseView, ft.MenuBar):
+class ButtonsBarComponent(BaseComponent, ft.MenuBar):
     def __init__(self, controller: ButtonsBarController, texts: dict[str, str]) -> None:
-        BaseView.__init__(self, controller, texts)
+        BaseComponent.__init__(self, controller, texts)
         ft.MenuBar.__init__(
             self,
             style=MenuStyles.flat,

@@ -1,15 +1,15 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 import flet as ft
-from views.base import BaseView
+from views.base import BaseComponent
 
 if TYPE_CHECKING:
     from controllers.components.footer_bar_controller import FooterBarController
 
 
-class FooterBarComponent(BaseView, ft.Container):
+class FooterBarComponent(BaseComponent, ft.Container):
     def __init__(self, controller: FooterBarController, texts: dict[str, str]) -> None:
-        BaseView.__init__(self, controller, texts)
+        BaseComponent.__init__(self, controller, texts)
         self.timestamp = ft.Text()
         self.status_message = ft.Text()
         self.status_icon = ft.Icon()
