@@ -98,3 +98,4 @@ class BaseRepository(Generic[TModel]):
             )
             for item in related_items:
                 setattr(item, "is_active", False)
+                setattr(item, "modified_by", model.modified_by)

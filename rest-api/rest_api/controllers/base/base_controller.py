@@ -1,6 +1,6 @@
 from typing import Annotated, Generic, Literal, TypeVar
 
-from fastapi import APIRouter, Body, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy import String
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql.elements import ColumnElement
@@ -19,6 +19,7 @@ TOutputSchema = TypeVar("TOutputSchema", bound=BaseOutputSchema)
 
 
 class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
+    _input_schema_cls: type[TInputSchema]
     _service_cls: type[TService]
 
     def __init__(self, context: Context) -> None:
@@ -74,16 +75,20 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             return schema
 
     @Auth.restrict_access()
-    async def create(self, request: Request, data: Annotated[TInputSchema, Body()]) -> TOutputSchema:
+    async def create(self, request: Request) -> TOutputSchema:
         user = request.state.user
+        body = await request.json()
+        schema = self._input_schema_cls(**body)
         async with self._get_session() as session:
-            return await self._service.create(session, user.id, data)
+            return await self._service.create(session, user.id, schema)
 
     @Auth.restrict_access()
-    async def update(self, request: Request, data: Annotated[TInputSchema, Body()], model_id: int) -> TOutputSchema:
+    async def update(self, request: Request, model_id: int) -> TOutputSchema:
         user = request.state.user
+        body = await request.json()
+        schema = self._input_schema_cls(**body)
         async with self._get_session() as session:
-            schema = await self._service.update(session, model_id, user.id, data)
+            schema = await self._service.update(session, model_id, user.id, schema)
             if not schema:
                 raise NotFoundException()
             return schema

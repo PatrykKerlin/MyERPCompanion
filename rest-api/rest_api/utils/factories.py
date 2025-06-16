@@ -77,6 +77,7 @@ class ControllerFactory:
                     path=path,
                 )
 
+            namespace["_input_schema_cls"] = input_schema_cls
             namespace["_service_cls"] = service_cls
             namespace["__init__"] = __init__
 

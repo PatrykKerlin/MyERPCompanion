@@ -15,6 +15,7 @@ from services.core import TextService
 
 
 class TextController(BaseController[TextService, TextInputSchema, TextOutputSchema]):
+    _input_schema_cls: type[TextInputSchema]
     _service_cls = TextService
 
     def __init__(self, context: Context) -> None:

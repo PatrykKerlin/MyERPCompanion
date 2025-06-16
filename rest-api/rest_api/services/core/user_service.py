@@ -61,6 +61,7 @@ class UserService(
             raise ConflictException()
         except Exception:
             raise SaveException()
+        await session.refresh(saved_model)
         return self._output_schema_cls.model_validate(saved_model)
 
     async def update(
@@ -99,4 +100,5 @@ class UserService(
             raise ConflictException()
         except Exception:
             raise SaveException()
+        await session.refresh(updated_model)
         return self._output_schema_cls.model_validate(updated_model)

@@ -55,7 +55,8 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
             saved_model = await self._repository_cls.save(session, model)
             if not saved_model:
                 raise SQLAlchemyError()
-        except IntegrityError:
+        except IntegrityError as e:
+            print(f"error: {e}")
             raise ConflictException()
         except Exception:
             raise SaveException()
@@ -115,6 +116,6 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
             assoc_model = model_cls(
                 **{owner_field: owner_id, related_field: related_model.id, "created_by": created_by}
             )
-            updated_assoc_model = assoc_repo_cls.save(session, assoc_model, commit=index == related_ids_count)
+            updated_assoc_model = await assoc_repo_cls.save(session, assoc_model, commit=index == related_ids_count)
             if not updated_assoc_model:
                 raise SQLAlchemyError()
