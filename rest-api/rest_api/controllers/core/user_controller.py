@@ -1,12 +1,13 @@
 from typing import Union
 
+from fastapi import Request
+
 from config import Context
 from controllers.base import BaseController
 from schemas.core import UserInputCreateSchema, UserInputUpdateSchema, UserOutputSchema
 from services.core import UserService
 from utils.auth import Auth
 from utils.exceptions import NotFoundException
-from fastapi import Request
 
 
 class UserController(
