@@ -75,7 +75,7 @@ class AppController(BaseController):
             self._close_dialog(loading_dialog)
         except TimeoutError:
             self._close_dialog(loading_dialog)
-            self._show_error_dialog("api_not_responding")
+            self._show_error_dialog(message_key="api_not_responding")
 
     def __show_auth_dialog(self) -> None:
         auth_dialog_controller = self._context.controllers.get("auth_dialog")

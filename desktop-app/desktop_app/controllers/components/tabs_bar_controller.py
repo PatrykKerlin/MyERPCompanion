@@ -14,9 +14,9 @@ if TYPE_CHECKING:
 class TabsBarController(BaseComponentController[BaseService, TabsBarComponent]):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
+        self.active_view_key: str = ""
         self.__tabs_bar: TabsBarComponent | None = None
         self.__tabs: list[str] = []
-        self.__active: str = ""
 
     @property
     def component(self) -> TabsBarComponent:
@@ -24,7 +24,7 @@ class TabsBarController(BaseComponentController[BaseService, TabsBarComponent]):
             controller=self,
             texts=self._context.texts,
             tabs=self.__tabs,
-            active_tab=self.__active,
+            active_tab=self.active_view_key,
         )
         return self.__tabs_bar
 
@@ -34,13 +34,14 @@ class TabsBarController(BaseComponentController[BaseService, TabsBarComponent]):
         if key not in self.__tabs:
             self.__tabs.append(key)
             self._context.active_views[key].visible = True
+        self._context.controllers.get("buttons_bar").set_lock_view_button_disabled(False)
         self.on_tab_open(key)
 
     def on_tab_open(self, key: str) -> None:
-        self.__active = key
+        self.active_view_key = key
         self.__refresh()
-        for k, v in self._context.active_views.items():
-            v.visible = k == key
+        for key, view in self._context.active_views.items():
+            view.set_visible(key == self.active_view_key)
         self._context.page.update()
 
     def on_tab_close(self, key: str) -> None:
@@ -55,16 +56,16 @@ class TabsBarController(BaseComponentController[BaseService, TabsBarComponent]):
             stack = inner_column.controls[1]
             self._remove_control(stack, view)
         if self.__tabs:
-            self.__active = self.__tabs[-1]
+            self.active_view_key = self.__tabs[-1]
         else:
-            self.__active = ""
+            self.active_view_key = ""
         self.__refresh()
-        for k, v in self._context.active_views.items():
-            v.visible = k == self.__active
+        for key, view in self._context.active_views.items():
+            view.set_visible(key == self.active_view_key)
         self._context.page.update()
 
     def __refresh(self) -> None:
         if self.__tabs_bar:
             self.__tabs_bar.tabs = self.__tabs
-            self.__tabs_bar.active_tab = self.__active
+            self.__tabs_bar.active_tab = self.active_view_key
             self.__tabs_bar.refresh()

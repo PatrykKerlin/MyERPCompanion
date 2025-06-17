@@ -11,6 +11,7 @@ from schemas.core import TokenInputSchema, UserInputSchema, ModuleInputSchema
 if TYPE_CHECKING:
     from controllers import Controllers
     from settings import Settings
+    from views.base.base_view import BaseView
 
 
 @dataclass
@@ -22,4 +23,4 @@ class Context:
     user: UserInputSchema = field(init=False)
     controllers: Controllers = field(init=False)
     modules: list[ModuleInputSchema] = field(default_factory=list)
-    active_views: dict[str, Control] = field(default_factory=dict)
+    active_views: dict[str, BaseView] = field(default_factory=dict)

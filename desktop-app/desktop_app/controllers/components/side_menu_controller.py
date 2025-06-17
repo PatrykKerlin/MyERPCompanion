@@ -27,10 +27,8 @@ class SideMenuController(BaseComponentController[BaseService, SideMenuComponent]
     def on_menu_click(self, key: str) -> None:
         if key not in self._context.active_views.keys():
             controller = self._context.controllers.get_view_controller(key)
-            view = controller.view(key)
+            view = controller.view()
             self._context.active_views[key] = view
         view = self._context.active_views[key]
-        tabs_bar_controller = self._context.controllers.get("tabs_bar")
-        tabs_bar_controller.add_tab(key)
-        app_controller = self._context.controllers.get("app")
-        app_controller.render_view(view)
+        self._context.controllers.get("tabs_bar").add_tab(key)
+        self._context.controllers.get("app").render_view(view)

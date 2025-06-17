@@ -24,6 +24,13 @@ class BaseService:
             response.raise_for_status()
             return response
 
+    async def _put(self, endpoint: str, payload: dict) -> httpx.Response:
+        headers = self.__prepare_headers()
+        async with httpx.AsyncClient(base_url=self._context.settings.API_URL, headers=headers) as client:
+            response = await client.put(url=endpoint, json=payload)
+            response.raise_for_status()
+            return response
+
     def __prepare_headers(self) -> dict[str, str]:
         headers: dict[str, str] = {}
         if self._context.tokens:

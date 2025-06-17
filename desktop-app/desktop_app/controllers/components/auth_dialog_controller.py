@@ -38,8 +38,8 @@ class AuthDialogController(BaseComponentController[AuthService, AuthDialogCompon
             self._close_dialog(loading_dialog)
             app_controller = self._context.controllers.get("app")
             app_controller.after_login()
-        except Exception as e:
+        except Exception as error:
             self._close_dialog(loading_dialog)
             if self.__auth_dialog:
                 self._close_dialog(self.__auth_dialog)
-            self._show_error_dialog(str(e))
+            self._show_error_dialog(message=str(error))

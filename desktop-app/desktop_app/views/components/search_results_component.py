@@ -15,14 +15,12 @@ class SearchResultsComponent(BaseComponent, ft.Column):
         self,
         controller: BaseViewController,
         texts: dict[str, str],
-        key: str,
         columns: list[str],
         data: list[dict[str, Any]],
         on_button_click: Callable[[], None],
-        on_row_click: Callable[[str, dict[str, Any]], None],
+        on_row_click: Callable[[dict[str, Any]], None],
     ) -> None:
         BaseComponent.__init__(self, controller, texts)
-        self.__key = key
         self.__data = data
         self.__columns = columns
         self.__on_row_click = on_row_click
@@ -80,7 +78,7 @@ class SearchResultsComponent(BaseComponent, ft.Column):
 
         container = ft.Container(
             content=row_content,
-            on_click=lambda _, k=self.__key, r=row: self.__on_row_click(k, r),
+            on_click=lambda _: self.__on_row_click(row["id"]),
             on_hover=self._on_hover,
         )
 

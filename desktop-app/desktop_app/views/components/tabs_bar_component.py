@@ -27,11 +27,11 @@ class TabsBarComponent(BaseComponent, ft.Container):
                 controls=[
                     ft.TextButton(
                         text=self._texts[key],
-                        on_click=lambda _, k=key: self._controller.on_tab_open(k),
+                        on_click=lambda _, key=key: self._controller.on_tab_open(key),
                     ),
                     ft.IconButton(
                         icon=ft.Icons.CLOSE,
-                        on_click=lambda _, k=key: self._controller.on_tab_close(k),
+                        on_click=lambda _, key=key: self._controller.on_tab_close(key),
                         expand=True,
                     ),
                 ]

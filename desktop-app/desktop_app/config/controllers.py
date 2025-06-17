@@ -35,7 +35,7 @@ class Controllers:
 
     def initialize_view_controllers(self, endpoints: dict[str, EndpointInputSchema]) -> None:
         if "groups" in endpoints.keys():
-            self.__controllers["groups"] = GroupController(self.__context, endpoints["groups"])
+            self.__controllers["groups"] = GroupController(self.__context, endpoints["groups"], "key")
 
     @overload
     def get(self, name: Literal["app"]) -> AppController: ...

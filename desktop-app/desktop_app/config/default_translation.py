@@ -34,8 +34,6 @@ class DefaultTranslation:
         "users": "Users",
         "endpoints": "Endpoints",
         "groups": "Groups",
-        "groups_{id}": "Group: {key}",
-        "groups_1": "<TEST>",
         "modules": "Modules",
     }
     __views = {
@@ -43,15 +41,25 @@ class DefaultTranslation:
         "id": "Id",
         "key": "Key",
         "description": "Description",
+        "save": "Save",
     }
     __errors = {
+        "error": "Error",
         "api_not_responding": "API is not responding.",
         "invalid_credentials": "Invalid credentials.",
+        "validation_errors": "Validation errors:",
+        "record_create_fail": "An error occurred while saving the data.",
+        "record_fetch_fail": "An error occurred while fetching the data.",
     }
     __footer = {
         "connection_status": "Connection status",
         "connected": "Connected",
         "not_connected": "Not connected",
+    }
+    __messages = {
+        "record_created_success": "Record created successfully.",
+        "record_updated_success": "Record updated successfully.",
+        "no_records_found": "No matching records found.",
     }
 
     @property
@@ -66,6 +74,7 @@ class DefaultTranslation:
             self.__views,
             self.__errors,
             self.__footer,
+            self.__messages,
         ]
         result: dict[str, str] = {}
         duplicates: set[str] = set()
