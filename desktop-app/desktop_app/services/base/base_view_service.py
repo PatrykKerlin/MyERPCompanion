@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, TypeVar, Generic
 
-from services.base import BaseService
+from typing import TYPE_CHECKING, Generic, TypeVar
+
 from schemas.base import BaseInputSchema, BaseOutputSchema
+from services.base import BaseService
 
 if TYPE_CHECKING:
     from config.context import Context

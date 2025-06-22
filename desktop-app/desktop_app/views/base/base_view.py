@@ -1,14 +1,16 @@
-from typing import TypeVar, Generic, TYPE_CHECKING, Any
-from views.base import BaseComponent
-import flet as ft
-from utils.view_modes import ViewMode
-from views.components.search_results_component import SearchResultsComponent
 from functools import partial
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
+
+import flet as ft
+
+from utils.view_modes import ViewMode
+from views.base import BaseComponent
+from views.components.search_results_component import SearchResultsComponent
 
 if TYPE_CHECKING:
     from controllers.base.base_view_controller import BaseViewController
-    from services.base.base_view_service import BaseViewService
     from schemas.base.base_schema import BaseOutputSchema
+    from services.base.base_view_service import BaseViewService
 
 TController = TypeVar("TController", bound="BaseViewController[BaseViewService, BaseView, BaseOutputSchema]")
 
@@ -80,6 +82,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
 
     def set_create_mode(self) -> None:
         self.__mode = ViewMode.CREATE
+        self.clear_inputs()
         self.__default_checkbox_width = self._markers[0]["id"].width
         for inputs, markers in zip(self._inputs, self._markers):
             for key in inputs.keys():
@@ -155,17 +158,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self._save_button.disabled = self._controller.has_validation_errors
         self._save_button.update()
 
-    def clear_inputs(self) -> None:
-        for inputs in self._inputs:
-            for field in inputs.values():
-                if isinstance(field, ft.TextField):
-                    field.value = ""
-                elif isinstance(field, ft.Dropdown):
-                    field.value = None
-                elif isinstance(field, ft.Checkbox):
-                    field.value = False
-                field.update()
-
     def update_inputs(self, data_row: dict[str, Any]) -> None:
         self.__data_row = data_row
         for inputs in self._inputs:
@@ -180,6 +172,27 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 elif isinstance(field, ft.Checkbox):
                     field.value = value
                 field.update()
+
+    def restore_input_data(self) -> None:
+        if self.__data_row:
+            self.update_inputs(self.__data_row)
+
+    def clear_inputs(self) -> None:
+        for inputs in self._inputs:
+            for field in inputs.values():
+                if isinstance(field, ft.TextField):
+                    field.value = ""
+                elif isinstance(field, ft.Dropdown):
+                    field.value = None
+                elif isinstance(field, ft.Checkbox):
+                    field.value = False
+                field.update()
+
+    def clear_search_markers(self) -> None:
+        for markers in self._markers:
+            for marker in markers.values():
+                marker.value = False
+                marker.update()
 
     def _add_input_rows(self) -> None:
         for column, inputs, markers in zip(self._columns, self._inputs, self._markers):

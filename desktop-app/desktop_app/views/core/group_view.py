@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
-from views.base import BaseView
 from utils.view_modes import ViewMode
+from views.base import BaseView
 
 if TYPE_CHECKING:
     from controllers.core.group_controller import GroupController

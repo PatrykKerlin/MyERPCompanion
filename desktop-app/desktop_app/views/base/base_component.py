@@ -1,5 +1,4 @@
-from typing import TypeVar, Generic, TYPE_CHECKING
-
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 if TYPE_CHECKING:
     from controllers.base.base_controller import BaseController

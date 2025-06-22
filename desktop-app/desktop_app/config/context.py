@@ -1,17 +1,17 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from logging import Logger
 
 from dataclasses import dataclass, field
+from logging import Logger
+from typing import TYPE_CHECKING
 
 from flet import Page
 
-
-from schemas.core import TokenInputSchema, UserInputSchema, ModuleInputSchema
+from schemas.core import ModuleInputSchema, TokenInputSchema, UserInputSchema
 
 if TYPE_CHECKING:
-    from controllers import Controllers
     from settings import Settings
+
+    from config.controllers import Controllers
     from views.base.base_view import BaseView
 
 

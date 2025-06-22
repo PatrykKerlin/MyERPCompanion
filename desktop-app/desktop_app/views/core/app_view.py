@@ -1,17 +1,18 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
+
 import flet as ft
 
 from views.components.menu_bar_component import MenuBarComponent
 
-
 if TYPE_CHECKING:
     from controllers.core.app_controller import AppController
     from schemas.core.user_schema import UserInputSchema
-    from views.components.toolbar_component import ToolbarComponent
     from views.components.footer_component import FooterComponent
     from views.components.side_menu_component import SideMenuComponent
     from views.components.tabs_bar_component import TabsBarComponent
+    from views.components.toolbar_component import ToolbarComponent
 
 
 class AppView:

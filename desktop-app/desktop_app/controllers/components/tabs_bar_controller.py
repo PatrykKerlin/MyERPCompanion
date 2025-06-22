@@ -1,7 +1,6 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, cast
 
-import flet as ft
+from typing import TYPE_CHECKING
 
 from controllers.base import BaseComponentController
 from services.base import BaseService

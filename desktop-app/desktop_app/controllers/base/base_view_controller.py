@@ -1,17 +1,18 @@
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
-from typing import Generic, TypeVar
 from concurrent.futures import Future
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
+
+import flet as ft
+from httpx import HTTPStatusError
+from pydantic import ValidationError
 
 from controllers.base import BaseController
-from services.base import BaseViewService
 from schemas.base import BaseOutputSchema
-from views.base import BaseView
-import flet as ft
-from pydantic import ValidationError
+from services.base import BaseViewService
 from utils.view_modes import ViewMode
-from httpx import HTTPStatusError
+from views.base import BaseView
 
 if TYPE_CHECKING:
     from config.context import Context
@@ -60,8 +61,11 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
         if not self._view:
             return
         if self._view.mode == ViewMode.EDIT:
+            self.reset_view()
+            self._view.restore_input_data()
             self._view.set_read_mode()
         elif self._view.mode == ViewMode.CREATE:
+            self.reset_view()
             self._view.set_search_mode()
         self._context.controllers.get("toolbar").refresh()
 
@@ -100,6 +104,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
         self._view.set_input_enabled(key, enabled, inputs)
         if enabled:
             self._search_fields.add(key)
+            self._input_values[key] = inputs[key].value or ""
             error = self.__validate_field(key)
             if self._view:
                 self._view.set_field_error(key, error)
@@ -116,6 +121,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
             error = self.__validate_field(key)
             if self._view:
                 self._view.set_field_error(key, error)
+        print(self._input_values)
 
     def reset_view(self) -> None:
         self._input_values.clear()
@@ -123,6 +129,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
         if self._view:
             self._view.set_search_mode()
             self._view.clear_inputs()
+            self._view.clear_search_markers()
 
     def __validate_field(self, key: str) -> str | None:
         if self._view and self._view.mode == ViewMode.CREATE:

@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
+
 from controllers.base import BaseComponentController
 from services.base import BaseService
 from views.components import SideMenuComponent

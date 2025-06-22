@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from services.base import BaseViewService
 from schemas.core import GroupInputSchema
+from services.base import BaseViewService
 
 if TYPE_CHECKING:
     from config.context import Context

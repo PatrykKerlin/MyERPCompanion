@@ -1,5 +1,6 @@
-import flet as ft
 import logging
+
+import flet as ft
 
 from config.context import Context
 from config.controllers import Controllers

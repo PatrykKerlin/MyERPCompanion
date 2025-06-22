@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import flet as ft
 
 from styles import ButtonStyles
-from views.base import BaseDialog, BaseComponent
+from views.base import BaseComponent, BaseDialog
 
 if TYPE_CHECKING:
     from controllers.components.auth_dialog_controller import AuthDialogController

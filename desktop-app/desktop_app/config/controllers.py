@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, overload, cast
+from typing import TYPE_CHECKING, Literal, cast, overload
 
-from controllers.core import AppController, GroupController
 from controllers.base import BaseViewController
 from controllers.components import (
     AuthDialogController,
-    ToolbarController,
+    FooterController,
     SideMenuController,
     TabsBarController,
-    FooterController,
+    ToolbarController,
 )
+from controllers.core import AppController, GroupController
 
 if TYPE_CHECKING:
-    from controllers.base.base_controller import BaseController
     from context import Context
+
+    from controllers.base.base_controller import BaseController
     from schemas.core.endpoint_schema import EndpointInputSchema
 
 ControllerName = Literal["app", "auth_dialog", "toolbar", "footer", "side_menu", "tabs_bar", "groups"]

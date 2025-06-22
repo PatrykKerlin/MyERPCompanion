@@ -1,16 +1,16 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from collections.abc import Awaitable, Callable
+
 import asyncio
-from views.components import LoadingDialogComponent
+from collections.abc import Awaitable, Callable
+from typing import TYPE_CHECKING
 
 import flet as ft
 
 from views.components import (
+    ConfirmDialogComponent,
     ErrorDialogComponent,
     LoadingDialogComponent,
     MessageDialogComponent,
-    ConfirmDialogComponent,
 )
 
 if TYPE_CHECKING:

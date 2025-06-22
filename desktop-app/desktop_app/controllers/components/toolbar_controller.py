@@ -1,11 +1,12 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, cast
+
+from typing import TYPE_CHECKING
 
 from controllers.base import BaseComponentController
 from services.base import BaseService
+from utils.view_modes import ViewMode
 from views.base import BaseView
 from views.components import ToolbarComponent
-from utils.view_modes import ViewMode
 
 if TYPE_CHECKING:
     from config.context import Context

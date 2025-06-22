@@ -1,11 +1,12 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
+
+from typing import Any
 
 from controllers.base import BaseViewController
-from services.core import GroupService
-from views.core import GroupView
 from schemas.core import GroupOutputSchema
+from services.core import GroupService
 from utils.view_modes import ViewMode
+from views.core import GroupView
 
 
 class GroupController(BaseViewController[GroupService, GroupView, GroupOutputSchema]):

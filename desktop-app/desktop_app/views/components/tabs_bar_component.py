@@ -1,6 +1,9 @@
 from __future__ import annotations
-from typing import cast, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, cast
+
 import flet as ft
+
 from views.base import BaseComponent
 
 if TYPE_CHECKING:

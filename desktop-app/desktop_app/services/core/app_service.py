@@ -1,16 +1,16 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+
 import asyncio
 import getpass
 import socket
-from typing import Awaitable, cast
+from typing import TYPE_CHECKING, Awaitable, cast
 
 from httpx import HTTPError
 from redis.asyncio import Redis
 from redis.exceptions import ConnectionError
 
-from services.base import BaseService
 from schemas.core import ModuleInputSchema
+from services.base import BaseService
 
 if TYPE_CHECKING:
     from config.context import Context
