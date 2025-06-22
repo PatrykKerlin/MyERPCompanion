@@ -5,21 +5,20 @@ import asyncio
 
 from controllers.base import BaseComponentController
 from services.core import AppService
-from views.components import FooterBarComponent
+from views.components import FooterComponent
 
 if TYPE_CHECKING:
     from config.context import Context
 
 
-class FooterBarController(BaseComponentController[AppService, FooterBarComponent]):
+class FooterController(BaseComponentController[AppService, FooterComponent]):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
+        self.__footer: FooterComponent | None = None
         self.__service = AppService(context)
-        self.__footer: FooterBarComponent | None = None
 
-    @property
-    def component(self) -> FooterBarComponent:
-        self.__footer = FooterBarComponent(self, self._context.texts)
+    def get_new_component(self) -> FooterComponent:
+        self.__footer = FooterComponent(self, self._context.texts)
         return self.__footer
 
     def start_clock(self) -> None:

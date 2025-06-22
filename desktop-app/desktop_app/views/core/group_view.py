@@ -18,8 +18,9 @@ class GroupView(BaseView):
         columns: int,
         data_row: dict[str, Any] | None,
         mode: ViewMode,
+        controller_key: str,
     ) -> None:
-        super().__init__(controller, texts, columns, data_row, mode)
+        super().__init__(controller, texts, columns, data_row, mode, controller_key)
         self._inputs[0].update(
             {
                 "key": ft.TextField(

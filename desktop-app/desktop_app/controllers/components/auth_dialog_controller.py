@@ -12,18 +12,17 @@ if TYPE_CHECKING:
 class AuthDialogController(BaseComponentController[AuthService, AuthDialogComponent]):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        self.__service = AuthService(context)
         self.__auth_dialog: AuthDialogComponent | None = None
+        self.__service = AuthService(context)
 
-    @property
-    def component(self) -> AuthDialogComponent:
+    def get_new_component(self) -> AuthDialogComponent:
         self.__auth_dialog = AuthDialogComponent(self, texts=self._context.texts)
         return self.__auth_dialog
 
-    def on_cancel(self) -> None:
+    def on_cancel_click(self) -> None:
         self._context.page.window.destroy()
 
-    def on_login(self, username: str, password: str) -> None:
+    def on_login_click(self, username: str, password: str) -> None:
         self._context.page.run_task(self.__handle_login, "admin", "admin123")
 
     async def __handle_login(self, username: str, password: str) -> None:

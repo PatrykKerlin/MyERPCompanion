@@ -8,8 +8,8 @@ from views.components.menu_bar_component import MenuBarComponent
 if TYPE_CHECKING:
     from controllers.core.app_controller import AppController
     from schemas.core.user_schema import UserInputSchema
-    from views.components.buttons_bar_component import ButtonsBarComponent
-    from views.components.footer_bar_component import FooterBarComponent
+    from views.components.toolbar_component import ToolbarComponent
+    from views.components.footer_component import FooterComponent
     from views.components.side_menu_component import SideMenuComponent
     from views.components.tabs_bar_component import TabsBarComponent
 
@@ -21,7 +21,7 @@ class AppView:
         self._texts = texts
         self.__theme = theme
         self.__user: UserInputSchema | None = None
-        self.__view_stack: ft.Stack | None = None
+        self.__view_stack = ft.Stack(expand=True)
 
         self._page.window.width = 1024
         self._page.window.height = 768
@@ -29,6 +29,10 @@ class AppView:
         self._page.window.min_height = 600
 
         self._build()
+
+    @property
+    def view_stack(self) -> ft.Stack:
+        return self.__view_stack
 
     def set_controller(self, controller: AppController) -> None:
         self._controller = controller
@@ -49,9 +53,9 @@ class AppView:
         self,
         texts: dict[str, str],
         side_menu: SideMenuComponent,
-        buttons_bar: ButtonsBarComponent,
+        toolbar: ToolbarComponent,
         tabs_bar: TabsBarComponent,
-        footer_bar: FooterBarComponent,
+        footer: FooterComponent,
     ) -> None:
         if not self.__user:
             return
@@ -60,8 +64,6 @@ class AppView:
         menu_bar = MenuBarComponent(self._texts)
         horizontal_divider = ft.Divider(height=1, thickness=1, color=ft.Colors.OUTLINE)
 
-        self.__view_stack = ft.Stack(expand=True)
-
         self._page.clean()
         self._page.overlay.clear()
         self._page.add(
@@ -69,7 +71,7 @@ class AppView:
                 controls=[
                     menu_bar,
                     horizontal_divider,
-                    buttons_bar,
+                    toolbar,
                     horizontal_divider,
                     ft.Row(
                         controls=[
@@ -85,7 +87,7 @@ class AppView:
                         expand=True,
                     ),
                     horizontal_divider,
-                    footer_bar,
+                    footer,
                 ],
                 alignment=ft.MainAxisAlignment.START,
                 horizontal_alignment=ft.CrossAxisAlignment.STRETCH,

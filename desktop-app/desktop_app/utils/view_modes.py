@@ -6,3 +6,4 @@ class ViewMode(StrEnum):
     CREATE = "create"
     READ = "read"
     EDIT = "edit"
+    LIST = "list"

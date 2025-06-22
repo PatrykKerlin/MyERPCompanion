@@ -6,7 +6,12 @@ from views.components import LoadingDialogComponent
 
 import flet as ft
 
-from views.components import ErrorDialogComponent, LoadingDialogComponent, MessageDialogComponent
+from views.components import (
+    ErrorDialogComponent,
+    LoadingDialogComponent,
+    MessageDialogComponent,
+    ConfirmDialogComponent,
+)
 
 if TYPE_CHECKING:
     from config.context import Context
@@ -34,9 +39,20 @@ class BaseController:
         message_dialog = MessageDialogComponent(
             texts=self._context.texts,
             message_key=message_key,
-            on_click=lambda _: self._close_dialog(message_dialog),
+            on_click=lambda: self._close_dialog(message_dialog),
         )
         self._open_dialog(message_dialog)
+
+    async def _show_confirm_dialog(self, message_key: str) -> bool:
+        confirm_dialog = ConfirmDialogComponent(
+            texts=self._context.texts,
+            message_key=message_key,
+            loop=self._context.page.loop,
+        )
+        self._open_dialog(confirm_dialog)
+        result = await confirm_dialog.future
+        self._close_dialog(confirm_dialog)
+        return result
 
     def _open_dialog(self, dialog: ft.AlertDialog) -> None:
         self._context.page.overlay.append(dialog)

@@ -18,6 +18,10 @@ class AppController(BaseController):
         self.__view = AppView(page=context.page, texts=context.texts, theme=context.settings.THEME)
         self.__view.set_controller(self)
 
+    @property
+    def view_stack(self) -> ft.Stack:
+        return self.__view.view_stack
+
     def show(self) -> None:
         future = self._context.page.run_task(self.__run_startup_sequence)
         future.add_done_callback(lambda _: self._context.page.run_thread(self.__show_auth_dialog))
@@ -50,19 +54,18 @@ class AppController(BaseController):
         self.__view.set_user(user)
         endpoints, side_menu_content = self.__prepare_endpoints()
         self._context.controllers.initialize_view_controllers(endpoints)
-        side_menu_controller = self._context.controllers.get("side_menu")
-        side_menu_controller.set_content(side_menu_content)
+        self._context.controllers.get("side_menu").set_content(side_menu_content)
 
         self._context.page.run_thread(
             self.__view.rebuild,
             self._context.texts,
-            side_menu_controller.component,
-            self._context.controllers.get("buttons_bar").component,
-            self._context.controllers.get("tabs_bar").component,
-            self._context.controllers.get("footer_bar").component,
+            self._context.controllers.get("side_menu").get_new_component(),
+            self._context.controllers.get("toolbar").get_new_component(),
+            self._context.controllers.get("tabs_bar").get_new_component(),
+            self._context.controllers.get("footer").get_new_component(),
         )
 
-        self._context.controllers.get("footer_bar").start_clock()
+        self._context.controllers.get("footer").start_clock()
 
     async def __run_startup_sequence(self) -> None:
         loading_dialog = self._show_loading_dialog()
@@ -78,8 +81,7 @@ class AppController(BaseController):
             self._show_error_dialog(message_key="api_not_responding")
 
     def __show_auth_dialog(self) -> None:
-        auth_dialog_controller = self._context.controllers.get("auth_dialog")
-        auth_dialog = auth_dialog_controller.component
+        auth_dialog = self._context.controllers.get("auth_dialog").get_new_component()
         self._open_dialog(auth_dialog)
 
     def __prepare_endpoints(self) -> tuple[dict[str, EndpointInputSchema], dict[str, list[str]]]:

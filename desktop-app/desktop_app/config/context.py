@@ -1,9 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from logging import Logger
 
 from dataclasses import dataclass, field
 
-from flet import Page, Control
+from flet import Page
 
 
 from schemas.core import TokenInputSchema, UserInputSchema, ModuleInputSchema
@@ -19,6 +20,7 @@ class Context:
     settings: Settings
     page: Page
     texts: dict[str, str]
+    logger: Logger
     tokens: TokenInputSchema | None = None
     user: UserInputSchema = field(init=False)
     controllers: Controllers = field(init=False)

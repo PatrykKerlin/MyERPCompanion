@@ -14,7 +14,6 @@ class SideMenuComponent(BaseComponent, ft.Container):
         self.__labels: list[str] = []
         self.__controls: list[ft.Control] = []
         self.__build_controls()
-        self.calculated_width = self.__calculate_width()
         ft.Container.__init__(
             self,
             content=ft.Column(
@@ -25,7 +24,7 @@ class SideMenuComponent(BaseComponent, ft.Container):
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             alignment=ft.alignment.top_center,
-            width=self.calculated_width,
+            width=self.__calculate_width(),
             opacity=1.0,
             animate_opacity=300,
             animate_size=300,

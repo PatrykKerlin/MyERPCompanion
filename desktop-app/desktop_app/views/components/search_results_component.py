@@ -17,7 +17,7 @@ class SearchResultsComponent(BaseComponent, ft.Column):
         texts: dict[str, str],
         columns: list[str],
         data: list[dict[str, Any]],
-        on_button_click: Callable[[], None],
+        on_back_click: Callable[[], None],
         on_row_click: Callable[[dict[str, Any]], None],
     ) -> None:
         BaseComponent.__init__(self, controller, texts)
@@ -25,7 +25,7 @@ class SearchResultsComponent(BaseComponent, ft.Column):
         self.__columns = columns
         self.__on_row_click = on_row_click
 
-        back_button = ft.ElevatedButton(text=self._texts["back"], on_click=lambda _: on_button_click())
+        back_button = ft.ElevatedButton(text=self._texts["back"], on_click=lambda _: on_back_click())
 
         data_table = ft.Row(
             controls=[self._build_table()],

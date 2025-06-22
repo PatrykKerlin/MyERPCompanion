@@ -2,6 +2,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 from typing import Generic, TypeVar
+from concurrent.futures import Future
 
 from controllers.base import BaseController
 from services.base import BaseViewService
@@ -37,20 +38,23 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
         self._active_view_keys: list[str] = []
 
     @abstractmethod
-    def view(self, data_row: dict[str, Any] | None = None, mode: ViewMode = ViewMode.SEARCH) -> TView:
+    def get_new_view(self, data_row: dict[str, Any] | None = None, mode: ViewMode = ViewMode.SEARCH) -> TView:
         pass
 
     def on_search_click(self) -> None:
-        self._context.page.run_task(self.__open_search_results_on_button_click)
+        future = self._context.page.run_task(self.__open_search_results_on_button_click)
+        future.add_done_callback(lambda _: self._context.controllers.get("toolbar").refresh())
 
     def on_save_click(self) -> None:
         if not self._view:
             return
+        future: Future[None] | None = None
         if self._view.mode == ViewMode.EDIT:
-            self._context.page.run_task(self.__update_and_refresh_tab_on_button_click)
+            future = self._context.page.run_task(self.__update_and_refresh_tab_on_button_click)
         elif self._view.mode == ViewMode.CREATE:
-            self._context.page.run_task(self.__create_and_open_new_tab_on_button_click)
-        self._context.controllers.get("buttons_bar").toggle_lock_view_button()
+            future = self._context.page.run_task(self.__create_and_open_new_tab_on_button_click)
+        if future:
+            future.add_done_callback(lambda _: self._context.controllers.get("toolbar").refresh())
 
     def on_cancel_click(self) -> None:
         if not self._view:
@@ -59,10 +63,26 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
             self._view.set_read_mode()
         elif self._view.mode == ViewMode.CREATE:
             self._view.set_search_mode()
-        self._context.controllers.get("buttons_bar").toggle_lock_view_button()
+        self._context.controllers.get("toolbar").refresh()
 
     def on_row_click(self, result_id: int) -> None:
-        self._context.page.run_task(self.__open_new_tab_on_row_click, result_id)
+        future = self._context.page.run_task(self.__open_new_tab_on_row_click, result_id)
+        future.add_done_callback(lambda _: self._context.controllers.get("toolbar").refresh())
+
+    def on_back_click(self) -> None:
+        if not self._view:
+            return
+        self._view.replace_content()
+        self._context.controllers.get("toolbar").refresh()
+
+    def on_record_delete(self) -> None:
+        if not self._view or self._view.mode != ViewMode.READ:
+            return
+        future = self._context.page.run_task(self.__delete_and_close_tab_on_button_click)
+        future.add_done_callback(lambda _: self._context.controllers.get("toolbar").refresh())
+
+    def set_view(self, view: TView | None) -> None:
+        self._view = view
 
     def get_constraint(self, field: str, constraint: str) -> Any:
         metadata = self._output_schema_cls.model_fields[field].metadata
@@ -88,20 +108,26 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
             if self._view:
                 self._view.set_field_error(key, None)
 
-    def set_field_value(self, field: str, value: str) -> None:
+    def set_field_value(self, key: str, value: str) -> None:
         if not self._view:
             return
-        self._input_values[field] = value
-        if field in self._search_fields or self._view.mode in (ViewMode.CREATE, ViewMode.EDIT):
-            error = self.__validate_field(field)
+        self._input_values[key] = value
+        if key in self._search_fields or self._view.mode in (ViewMode.CREATE, ViewMode.EDIT):
+            error = self.__validate_field(key)
             if self._view:
-                self._view.set_field_error(field, error)
+                self._view.set_field_error(key, error)
+
+    def reset_view(self) -> None:
+        self._input_values.clear()
+        self._search_fields.clear()
+        if self._view:
+            self._view.set_search_mode()
+            self._view.clear_inputs()
 
     def __validate_field(self, key: str) -> str | None:
         if self._view and self._view.mode == ViewMode.CREATE:
             self._input_values["id"] = self._input_values.get("id", 1)
         try:
-            print(self._input_values)
             self._output_schema_cls(**self._input_values)
             self.has_validation_errors = False
         except ValidationError as validation_error:
@@ -134,6 +160,10 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
         input_schema = await self._service.update(output_schema)
         return input_schema.model_dump()
 
+    async def __perform_delete(self) -> None:
+        output_schema = self._output_schema_cls(**self._input_values)
+        await self._service.delete(output_schema.id)
+
     async def __open_search_results_on_button_click(self) -> None:
         loading_dialog = self._show_loading_dialog()
         try:
@@ -142,7 +172,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
                 self._view.replace_content(results)
                 await self._close_dialog_with_delay(loading_dialog)
         except Exception as err:
-            print(err)
+            self._context.logger.error(err)
             await self._close_dialog_with_delay(loading_dialog)
             self._show_message_dialog("no_records_found")
 
@@ -153,7 +183,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
             self.__open_new_read_tab(result)
             await self._close_dialog_with_delay(loading_dialog)
         except Exception as err:
-            print(err)
+            self._context.logger.error(err)
             await self._close_dialog_with_delay(loading_dialog)
             self._show_message_dialog("record_fetch_fail")
             return None
@@ -164,7 +194,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
             result = await self.__perform_create()
             await self._close_dialog_with_delay(loading_dialog)
             self._show_message_dialog("record_created_success")
-            self.__reset_view()
+            self.reset_view()
             self.__open_new_read_tab(result)
         except ValidationError as validation_error:
             error_messages = [self._context.texts["validation_errors"]]
@@ -176,7 +206,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
             await self._close_dialog_with_delay(loading_dialog)
             self._show_error_dialog(message=final_message)
         except HTTPStatusError as status_error:
-            print(status_error)
+            self._context.logger.error(status_error)
             await self._close_dialog_with_delay(loading_dialog)
             self._show_error_dialog(message_key="record_create_fail")
 
@@ -200,26 +230,33 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
             await self._close_dialog_with_delay(loading_dialog)
             self._show_error_dialog(message=final_message)
         except HTTPStatusError as status_error:
-            print(status_error)
+            self._context.logger.error(status_error)
             await self._close_dialog_with_delay(loading_dialog)
             self._show_error_dialog(message_key="record_create_fail")
+
+    async def __delete_and_close_tab_on_button_click(self) -> None:
+        confirmation = await self._show_confirm_dialog("confirm_delete")
+        if not confirmation:
+            return
+        loading_dialog = self._show_loading_dialog()
+        try:
+            await self.__perform_delete()
+            await self._close_dialog_with_delay(loading_dialog)
+            self._show_message_dialog("record_deleted_success")
+            self._context.controllers.get("tabs_bar").on_tab_close()
+        except Exception as err:
+            self._context.logger.error(err)
+            await self._close_dialog_with_delay(loading_dialog)
+            self._show_error_dialog(message_key="record_delete_fail")
 
     def __open_new_read_tab(self, result: dict[str, Any]) -> None:
         new_key = f"{self._endpoint.key}_{result["id"]}"
         self._context.texts[new_key] = f"{self._context.texts[self._endpoint.key]}: {result[self._postfix]}"
         if new_key not in self._context.active_views.keys():
             controller = self._context.controllers.get_view_controller(self._endpoint.key)
-            view = controller.view(data_row=result, mode=ViewMode.READ)
+            view = controller.get_new_view(data_row=result, mode=ViewMode.READ)
             self._context.active_views[new_key] = view
         view = self._context.active_views[new_key]
         self._context.controllers.get("tabs_bar").add_tab(new_key)
         self._context.controllers.get("app").render_view(view)
         view.set_read_mode()
-
-    def __reset_view(self) -> None:
-        self._input_values.clear()
-        self._search_fields.clear()
-        self._context.controllers.get("buttons_bar").toggle_lock_view_button()
-        if self._view:
-            self._view.set_search_mode()
-            self._view.clear_inputs()

@@ -24,8 +24,10 @@ class DefaultTranslation:
         "redo": "Redo",
         "about": "About",
     }
-    __buttons_bar = {
+    __toolbar = {
         "hide_menu": "Hide/Show side menu",
+        "unlock_form": "Unlock form",
+        "delete_record": "Delete record",
     }
     __modules = {
         "administration": "Administration",
@@ -49,6 +51,7 @@ class DefaultTranslation:
         "invalid_credentials": "Invalid credentials.",
         "validation_errors": "Validation errors:",
         "record_create_fail": "An error occurred while saving the data.",
+        "record_delete_fail": "An error occurred while deleting the data.",
         "record_fetch_fail": "An error occurred while fetching the data.",
     }
     __footer = {
@@ -57,6 +60,9 @@ class DefaultTranslation:
         "not_connected": "Not connected",
     }
     __messages = {
+        "are_you_sure": "Are you sure?",
+        "confirm_delete": "This action cannot be undone. Proceed with deletion?",
+        "record_deleted_success": "Record deleted successfully.",
         "record_created_success": "Record created successfully.",
         "record_updated_success": "Record updated successfully.",
         "no_records_found": "No matching records found.",
@@ -68,7 +74,7 @@ class DefaultTranslation:
             self.__common,
             self.__auth,
             self.__menu_bar,
-            self.__buttons_bar,
+            self.__toolbar,
             self.__modules,
             self.__endpoints,
             self.__views,

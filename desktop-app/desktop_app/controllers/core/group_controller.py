@@ -12,6 +12,6 @@ class GroupController(BaseViewController[GroupService, GroupView, GroupOutputSch
     _output_schema_cls = GroupOutputSchema
     _service_cls = GroupService
 
-    def view(self, data_row: dict[str, Any] | None = None, mode: ViewMode = ViewMode.SEARCH) -> GroupView:
-        self._view = GroupView(self, self._context.texts, 1, data_row, mode)
+    def get_new_view(self, data_row: dict[str, Any] | None = None, mode: ViewMode = ViewMode.SEARCH) -> GroupView:
+        self._view = GroupView(self, self._context.texts, 1, data_row, mode, self._endpoint.key)
         return self._view

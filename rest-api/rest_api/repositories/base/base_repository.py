@@ -88,10 +88,15 @@ class BaseRepository(Generic[TModel]):
         for relation in cls._model_cls.__mapper__.relationships:
             if not relation.info.get("cascade_soft_delete", False):
                 continue
-            if any(isinstance(column, Column) and column.nullable for column in relation.local_columns):
-                continue
             related = getattr(model, relation.key)
             if related is None:
+                continue
+            is_nullable = all(isinstance(column, Column) and column.nullable for column in relation.local_columns)
+            if is_nullable:
+                if relation.uselist:
+                    setattr(model, relation.key, [])
+                else:
+                    setattr(model, relation.key, None)
                 continue
             related_items = (
                 related if isinstance(related, (Sequence, set)) and not isinstance(related, (str, bytes)) else [related]

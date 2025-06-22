@@ -43,3 +43,6 @@ class BaseViewService(BaseService, Generic[TInputSchema]):
         payload = schema.model_dump()
         response = await self._put(f"{self._endpoint}/{schema.id}", payload=payload)
         return self._input_schema_cls(**response.json())
+
+    async def delete(self, id: int) -> None:
+        await self._delete(f"{self._endpoint}/{id}")

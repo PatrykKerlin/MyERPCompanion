@@ -14,17 +14,20 @@ if TYPE_CHECKING:
 class TabsBarController(BaseComponentController[BaseService, TabsBarComponent]):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        self.active_view_key: str = ""
-        self.__tabs_bar: TabsBarComponent | None = None
+        self.__active_view_key: str = ""
         self.__tabs: list[str] = []
+        self.__tabs_bar: TabsBarComponent | None = None
 
     @property
-    def component(self) -> TabsBarComponent:
+    def active_view_key(self) -> str:
+        return self.__active_view_key
+
+    def get_new_component(self) -> TabsBarComponent:
         self.__tabs_bar = TabsBarComponent(
             controller=self,
             texts=self._context.texts,
             tabs=self.__tabs,
-            active_tab=self.active_view_key,
+            active_tab=self.__active_view_key,
         )
         return self.__tabs_bar
 
@@ -34,38 +37,46 @@ class TabsBarController(BaseComponentController[BaseService, TabsBarComponent]):
         if key not in self.__tabs:
             self.__tabs.append(key)
             self._context.active_views[key].visible = True
-        self._context.controllers.get("buttons_bar").set_lock_view_button_disabled(False)
         self.on_tab_open(key)
 
     def on_tab_open(self, key: str) -> None:
-        self.active_view_key = key
+        self.__active_view_key = key
         self.__refresh()
         for key, view in self._context.active_views.items():
-            view.set_visible(key == self.active_view_key)
+            view.set_visible(key == self.__active_view_key)
+        active_view = self._context.active_views[self.__active_view_key]
+        view_controller = self._context.controllers.get_view_controller(active_view.controller_key)
+        view_controller.set_view(active_view)
+        self._context.controllers.get("toolbar").refresh()
         self._context.page.update()
 
-    def on_tab_close(self, key: str) -> None:
-        if key not in self.__tabs:
+    def on_tab_close(self, key: str | None = None) -> None:
+        if key and key not in self.__tabs:
             return
+        if not key:
+            key = self.__active_view_key
         self.__tabs.remove(key)
-        view = self._context.active_views.pop(key, None)
-        if view and self._context.page.controls:
-            outer_column = cast(ft.Column, self._context.page.controls[0])
-            row = cast(ft.Row, outer_column.controls[4])
-            inner_column = cast(ft.Column, row.controls[1])
-            stack = inner_column.controls[1]
-            self._remove_control(stack, view)
+        old_view = self._context.active_views.pop(key, None)
+        if old_view:
+            view_controller = self._context.controllers.get_view_controller(old_view.controller_key)
+            view_controller.set_view(None)
+            view_stack = self._context.controllers.get("app").view_stack
+            self._remove_control(view_stack, old_view)
         if self.__tabs:
-            self.active_view_key = self.__tabs[-1]
+            self.__active_view_key = self.__tabs[-1]
+            new_view = self._context.active_views[self.__active_view_key]
+            new_view_controller = self._context.controllers.get_view_controller(new_view.controller_key)
+            new_view_controller.set_view(new_view)
         else:
-            self.active_view_key = ""
+            self.__active_view_key = ""
         self.__refresh()
         for key, view in self._context.active_views.items():
-            view.set_visible(key == self.active_view_key)
+            view.set_visible(key == self.__active_view_key)
+        self._context.controllers.get("toolbar").refresh()
         self._context.page.update()
 
     def __refresh(self) -> None:
         if self.__tabs_bar:
             self.__tabs_bar.tabs = self.__tabs
-            self.__tabs_bar.active_tab = self.active_view_key
+            self.__tabs_bar.active_tab = self.__active_view_key
             self.__tabs_bar.refresh()
