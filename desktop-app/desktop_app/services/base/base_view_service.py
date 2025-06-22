@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from schemas.base import BaseInputSchema, BaseOutputSchema
+from schemas.core import PaginatedResponseSchema
 from services.base import BaseService
 
 if TYPE_CHECKING:
@@ -20,16 +21,20 @@ class BaseViewService(BaseService, Generic[TInputSchema]):
         super().__init__(context)
         self._endpoint = endpoint
 
-    async def get_all(self, filters: dict[str, str] = {}) -> list[TInputSchema]:
+    async def get_all(
+        self, filters: dict[str, str], sort_by: str, order: str, page: int, page_size: int
+    ) -> PaginatedResponseSchema[TInputSchema]:
         params = {
-            "page": 1,
-            "page_size": 100,
-            "sort_by": "id",
-            "order": "asc",
+            "page": page,
+            "page_size": page_size,
+            "sort_by": sort_by,
+            "order": order,
             **filters,
         }
         response = await self._get(self._endpoint, params=params)
-        return [self._input_schema_cls(**item) for item in response.json()["items"]]
+        data = response.json()
+        data["items"] = [self._input_schema_cls(**item) for item in data["items"]]
+        return PaginatedResponseSchema[TInputSchema](**data)
 
     async def get_one(self, id: int) -> TInputSchema:
         response = await self._get(f"{self._endpoint}/{id}")

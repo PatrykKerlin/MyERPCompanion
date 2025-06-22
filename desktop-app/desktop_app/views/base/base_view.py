@@ -125,7 +125,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self.__set_buttons()
 
     def replace_content(self, data: list[dict[str, Any]] | None = None) -> None:
-        if self._scrollable_wrapper.controls[0] == self._master_column and data:
+        if data:
             columns = [key for inputs in self._inputs for key in inputs]
             search_results = SearchResultsComponent(
                 controller=self._controller,
@@ -134,6 +134,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 data=data,
                 on_back_click=self._controller.on_back_click,
                 on_row_click=self._controller.on_row_click,
+                on_page_change=self._controller.on_page_change,
             )
             self._scrollable_wrapper.controls = [search_results]
             self._mode = ViewMode.LIST

@@ -34,13 +34,53 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
         self._postfix = postfix
         self._service = self._service_cls(context, endpoint.path)
         self._view: TView | None = None
-        self._search_fields: set[str] = set()
         self._input_values: dict[str, Any] = {}
         self._active_view_keys: list[str] = []
+        self._filters: set[str] = set()
+        self._sort_by = "id"
+        self._order = "asc"
+        self._page = 1
+        self._page_size = 10
+        self._has_next = False
+        self._has_prev = False
+        self._total = 0
+        self._page_sizes = [10, 25, 50, 100]
 
     @abstractmethod
     def get_new_view(self, data_row: dict[str, Any] | None = None, mode: ViewMode = ViewMode.SEARCH) -> TView:
         pass
+
+    @property
+    def sort_by(self) -> str:
+        return self._sort_by
+
+    @property
+    def order(self) -> str:
+        return self._order
+
+    @property
+    def page(self) -> int:
+        return self._page
+
+    @property
+    def page_size(self) -> int:
+        return self._page_size
+
+    @property
+    def has_next(self) -> bool:
+        return self._has_next
+
+    @property
+    def has_prev(self) -> bool:
+        return self._has_prev
+
+    @property
+    def page_sizes(self) -> list[int]:
+        return self._page_sizes
+
+    @property
+    def total(self) -> int:
+        return self._total
 
     def on_search_click(self) -> None:
         future = self._context.page.run_task(self.__open_search_results_on_button_click)
@@ -79,6 +119,26 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
         self._view.replace_content()
         self._context.controllers.get("toolbar").refresh()
 
+    def on_sort_click(self, key: str) -> None:
+        if self._sort_by == key:
+            self._order = "desc" if self._order == "asc" else "asc"
+        else:
+            self._sort_by = key
+            self._order = "asc"
+        self.on_search_click()
+
+    def on_page_change(self, direction: str) -> None:
+        if direction == "next" and self._has_next:
+            self._page += 1
+        elif direction == "prev" and self._page > 1:
+            self._page -= 1
+        self.on_search_click()
+
+    def on_page_size_change(self, new_size: int) -> None:
+        self._page_size = new_size
+        self._page = 1
+        self.on_search_click()
+
     def on_record_delete(self) -> None:
         if not self._view or self._view.mode != ViewMode.READ:
             return
@@ -103,13 +163,13 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
         enabled = event.control.value
         self._view.set_input_enabled(key, enabled, inputs)
         if enabled:
-            self._search_fields.add(key)
+            self._filters.add(key)
             self._input_values[key] = inputs[key].value or ""
             error = self.__validate_field(key)
             if self._view:
                 self._view.set_field_error(key, error)
         else:
-            self._search_fields.discard(key)
+            self._filters.discard(key)
             if self._view:
                 self._view.set_field_error(key, None)
 
@@ -117,14 +177,14 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
         if not self._view:
             return
         self._input_values[key] = value
-        if key in self._search_fields or self._view.mode in (ViewMode.CREATE, ViewMode.EDIT):
+        if key in self._filters or self._view.mode in (ViewMode.CREATE, ViewMode.EDIT):
             error = self.__validate_field(key)
             if self._view:
                 self._view.set_field_error(key, error)
 
     def reset_view(self) -> None:
         self._input_values.clear()
-        self._search_fields.clear()
+        self._filters.clear()
         if self._view:
             self._view.set_search_mode()
             self._view.clear_inputs()
@@ -145,11 +205,17 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
 
     async def __perform_get_all(self) -> list[dict[str, Any]]:
         filters: dict[str, str] = {}
-        for field in self._search_fields:
+        for field in self._filters:
             filters[field] = self._input_values.get(field, "").strip()
-        schemas = await self._service.get_all(filters=filters)
-        results = [schema.model_dump() for schema in schemas]
-        return results
+        result = await self._service.get_all(
+            filters=filters, sort_by=self._sort_by, order=self._order, page=self._page, page_size=self._page_size
+        )
+        self._has_next = result.has_next
+        self._has_prev = result.has_prev
+        self._total = result.total
+        self._page = result.page
+        self._page_size = result.page_size
+        return [item.model_dump() for item in result.items]
 
     async def __perform_get_one(self, result_id: int) -> dict[str, Any]:
         schema = await self._service.get_one(result_id)
