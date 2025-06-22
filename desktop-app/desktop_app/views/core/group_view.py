@@ -51,5 +51,4 @@ class GroupView(BaseView):
             )
         )
         self._master_column.controls.extend(self._columns)
-        self.input_keys = [key for inputs in self._inputs for key in inputs]
         ft.Card.__init__(self, content=self._scrollable_wrapper, expand=True)

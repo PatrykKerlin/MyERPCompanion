@@ -13,14 +13,14 @@ if TYPE_CHECKING:
 class FooterComponent(BaseComponent, ft.Container):
     def __init__(self, controller: FooterController, texts: dict[str, str]) -> None:
         BaseComponent.__init__(self, controller, texts)
-        self.timestamp = ft.Text()
-        self.status_message = ft.Text()
-        self.status_icon = ft.Icon()
+        self.__timestamp = ft.Text()
+        self.__status_message = ft.Text()
+        self.__status_icon = ft.Icon()
         self.__status_row = ft.Row(
             controls=[
                 ft.Text(value=f"{texts["connection_status"]}:"),
-                self.status_message,
-                self.status_icon,
+                self.__status_message,
+                self.__status_icon,
             ]
         )
         ft.Container.__init__(
@@ -32,16 +32,28 @@ class FooterComponent(BaseComponent, ft.Container):
             expand=False,
         )
 
+    @property
+    def timestamp(self) -> ft.Text:
+        return self.__timestamp
+
+    @property
+    def status_message(self) -> ft.Text:
+        return self.__status_message
+
+    @property
+    def status_icon(self) -> ft.Icon:
+        return self.__status_icon
+
     def set_time(self, value: str) -> None:
-        self.timestamp.value = value
-        self.timestamp.update()
+        self.__timestamp.value = value
+        self.__timestamp.update()
 
     def set_status(self, success: bool) -> None:
         if success:
-            self.status_message.value = self._texts["connected"]
-            self.status_icon.name = ft.Icons.CHECK_OUTLINED
+            self.__status_message.value = self._texts["connected"]
+            self.__status_icon.name = ft.Icons.CHECK_OUTLINED
         else:
-            self.status_message.value = self._texts["not_connected"]
-            self.status_icon.name = ft.Icons.ERROR_OUTLINE
-        self.status_message.update()
-        self.status_icon.update()
+            self.__status_message.value = self._texts["not_connected"]
+            self.__status_icon.name = ft.Icons.ERROR_OUTLINE
+        self.__status_message.update()
+        self.__status_icon.update()

@@ -21,7 +21,7 @@ class AppService(BaseService):
         super().__init__(context)
         system_username = getpass.getuser()
         system_host = socket.gethostname()
-        self.system_id = f"{system_username}@{system_host}"
+        self.__system_id = f"{system_username}@{system_host}"
 
     async def check_redis_ready(self) -> None:
         redis = self.__get_redis()
@@ -38,8 +38,8 @@ class AppService(BaseService):
     async def load_settings_from_redis(self) -> None:
         redis = self.__get_redis()
         try:
-            raw_language = redis.hget(self.system_id, "LANGUAGE")
-            raw_theme = redis.hget(self.system_id, "THEME")
+            raw_language = redis.hget(self.__system_id, "LANGUAGE")
+            raw_theme = redis.hget(self.__system_id, "THEME")
             language = await cast(Awaitable[str | None], raw_language)
             theme = await cast(Awaitable[str | None], raw_theme)
             if language:
@@ -53,7 +53,7 @@ class AppService(BaseService):
         redis = self.__get_redis()
         try:
             hset_result = redis.hset(
-                self.system_id,
+                self.__system_id,
                 mapping={
                     "LANGUAGE": self._context.settings.LANGUAGE,
                     "THEME": self._context.settings.THEME,

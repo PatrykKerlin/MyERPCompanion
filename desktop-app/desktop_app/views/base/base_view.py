@@ -26,9 +26,9 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         controller_key: str,
     ) -> None:
         BaseComponent.__init__(self, controller, texts)
-        self.__mode = mode
-        self.__data_row = data_row
-        self.__controller_key = controller_key
+        self._mode = mode
+        self._data_row = data_row
+        self._controller_key = controller_key
         self._columns: list[ft.Column] = [ft.Column(expand=True) for _ in range(columns)]
         self._inputs: list[dict[str, ft.TextField | ft.Dropdown | ft.Checkbox]] = [
             {"id": ft.TextField(value=data_row["id"] if data_row else None, expand=1)}
@@ -54,21 +54,21 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
 
     @property
     def mode(self) -> str:
-        return self.__mode
+        return self._mode
 
     @property
     def data_row(self) -> dict[str, Any] | None:
-        return self.__data_row
+        return self._data_row
 
     @property
     def controller_key(self) -> str:
-        return self.__controller_key
+        return self._controller_key
 
     def set_visible(self, visible: bool) -> None:
         self.visible = visible
 
     def set_search_mode(self) -> None:
-        self.__mode = ViewMode.SEARCH
+        self._mode = ViewMode.SEARCH
         for inputs, markers in zip(self._inputs, self._markers):
             for key in inputs.keys():
                 if hasattr(inputs[key], "read_only"):
@@ -81,7 +81,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self.__set_buttons()
 
     def set_create_mode(self) -> None:
-        self.__mode = ViewMode.CREATE
+        self._mode = ViewMode.CREATE
         self.clear_inputs()
         self.__default_checkbox_width = self._markers[0]["id"].width
         for inputs, markers in zip(self._inputs, self._markers):
@@ -100,7 +100,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self.__set_buttons()
 
     def set_read_mode(self) -> None:
-        self.__mode = ViewMode.READ
+        self._mode = ViewMode.READ
         for inputs in self._inputs:
             for key in inputs.keys():
                 if hasattr(inputs[key], "read_only"):
@@ -111,7 +111,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self.__set_buttons()
 
     def set_edit_mode(self) -> None:
-        self.__mode = ViewMode.EDIT
+        self._mode = ViewMode.EDIT
         for inputs in self._inputs:
             for key in inputs.keys():
                 if key == "id":
@@ -136,10 +136,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 on_row_click=self._controller.on_row_click,
             )
             self._scrollable_wrapper.controls = [search_results]
-            self.__mode = ViewMode.LIST
+            self._mode = ViewMode.LIST
         else:
             self._scrollable_wrapper.controls = [self._master_column]
-            self.__mode = ViewMode.SEARCH
+            self._mode = ViewMode.SEARCH
         self.update()
 
     def set_input_enabled(
@@ -159,7 +159,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self._save_button.update()
 
     def update_inputs(self, data_row: dict[str, Any]) -> None:
-        self.__data_row = data_row
+        self._data_row = data_row
         for inputs in self._inputs:
             for key, field in inputs.items():
                 if key not in data_row:
@@ -174,8 +174,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 field.update()
 
     def restore_input_data(self) -> None:
-        if self.__data_row:
-            self.update_inputs(self.__data_row)
+        if self._data_row:
+            self.update_inputs(self._data_row)
 
     def clear_inputs(self) -> None:
         for inputs in self._inputs:

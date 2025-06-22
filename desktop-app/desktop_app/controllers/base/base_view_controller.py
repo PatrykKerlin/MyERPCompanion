@@ -121,7 +121,6 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
             error = self.__validate_field(key)
             if self._view:
                 self._view.set_field_error(key, error)
-        print(self._input_values)
 
     def reset_view(self) -> None:
         self._input_values.clear()

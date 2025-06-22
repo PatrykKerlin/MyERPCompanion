@@ -14,8 +14,8 @@ class TabsBarComponent(BaseComponent, ft.Container):
     def __init__(self, controller: TabsBarController, texts: dict[str, str], tabs: list[str], active_tab: str) -> None:
         BaseComponent.__init__(self, controller, texts)
         ft.Container.__init__(self)
-        self.tabs = tabs
-        self.active_tab = active_tab
+        self.__tabs = tabs
+        self.__active_tab = active_tab
         self.content = ft.Row(
             controls=[],
             scroll=ft.ScrollMode.AUTO,
@@ -23,6 +23,22 @@ class TabsBarComponent(BaseComponent, ft.Container):
         )
         self._controller = controller
         self.__build_controls()
+
+    @property
+    def tabs(self) -> list[str]:
+        return self.__tabs
+
+    @tabs.setter
+    def tabs(self, tabs: list[str]) -> None:
+        self.__tabs = tabs
+
+    @property
+    def active_tab(self) -> str:
+        return self.__active_tab
+
+    @active_tab.setter
+    def active_tab(self, active_tab: str) -> None:
+        self.__active_tab = active_tab
 
     def __build_controls(self) -> None:
         controls = [
@@ -39,7 +55,7 @@ class TabsBarComponent(BaseComponent, ft.Container):
                     ),
                 ]
             )
-            for key in self.tabs
+            for key in self.__tabs
         ]
         cast(ft.Row, self.content).controls = controls
 
