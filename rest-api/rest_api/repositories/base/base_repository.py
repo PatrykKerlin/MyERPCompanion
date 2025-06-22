@@ -59,9 +59,12 @@ class BaseRepository(Generic[TModel]):
         return result.scalars().first()
 
     @classmethod
-    async def save(cls, session: AsyncSession, model: TModel) -> TModel | None:
+    async def save(cls, session: AsyncSession, model: TModel, commit: bool = True) -> TModel | None:
         session.add(model)
-        await session.commit()
+        if commit:
+            await session.commit()
+        else:
+            await session.flush()
         return await cls.get_one_by_id(session, int(model.id))
 
     @classmethod
@@ -85,13 +88,19 @@ class BaseRepository(Generic[TModel]):
         for relation in cls._model_cls.__mapper__.relationships:
             if not relation.info.get("cascade_soft_delete", False):
                 continue
-            if any(isinstance(column, Column) and column.nullable for column in relation.local_columns):
-                continue
             related = getattr(model, relation.key)
             if related is None:
+                continue
+            is_nullable = all(isinstance(column, Column) and column.nullable for column in relation.local_columns)
+            if is_nullable:
+                if relation.uselist:
+                    setattr(model, relation.key, [])
+                else:
+                    setattr(model, relation.key, None)
                 continue
             related_items = (
                 related if isinstance(related, (Sequence, set)) and not isinstance(related, (str, bytes)) else [related]
             )
             for item in related_items:
                 setattr(item, "is_active", False)
+                setattr(item, "modified_by", model.modified_by)

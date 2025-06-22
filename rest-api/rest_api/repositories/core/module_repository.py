@@ -3,7 +3,7 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.core import Endpoint, Group, Module, AssocGroupModule
+from models.core import AssocGroupModule, Endpoint, Group, Module
 from repositories.base import BaseRepository
 
 

@@ -2,10 +2,10 @@ from .assoc_group_module import AssocGroupModule
 from .assoc_user_group import AssocUserGroup
 from .endpoint import Endpoint
 from .group import Group
+from .language import Language
 from .module import Module
-from .setting import Setting
-from .setting_key import SettingKey
 from .text import Text
+from .theme import Theme
 from .user import User
 
 __all__ = [
@@ -13,9 +13,9 @@ __all__ = [
     "AssocUserGroup",
     "Endpoint",
     "Group",
+    "Language",
     "Module",
-    "Setting",
-    "SettingKey",
     "Text",
+    "Theme",
     "User",
 ]

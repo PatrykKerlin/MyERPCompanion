@@ -41,24 +41,24 @@ class PopulateDatabase:
     async def populate_admins_group(self) -> None:
         if self.__superuser:
             async with self.__get_session() as session:
-                name = getenv("ADMINS_GROUP_NAME")
+                key = getenv("ADMINS_GROUP_KEY")
                 description = getenv("ADMINS_GROUP_DESC")
-                admins = mc.Group(name=name, description=description, created_by=self.__superuser.id)
+                admins = mc.Group(key=key, description=description, created_by=self.__superuser.id)
                 session.add(admins)
                 await session.commit()
 
     async def populate_from_csv(self) -> None:
         if self.__superuser:
             data_to_write = [
-                ("settings_keys", mc.SettingKey, sc.SettingKeyInputSchema),
-                ("settings", mc.Setting, sc.SettingInputSchema),
+                ("languages", mc.Language, sc.LanguageInputSchema),
+                ("texts", mc.Text, sc.TextInputSchema),
+                ("themes", mc.Theme, sc.ThemeInputSchema),
                 ("groups", mc.Group, sc.GroupInputSchema),
                 ("users", mc.User, sc.UserInputCreateSchema),
                 ("users_groups", mc.AssocUserGroup, sc.AssocUserGroupInputSchema),
                 ("modules", mc.Module, sc.ModuleInputSchema),
                 ("endpoints", mc.Endpoint, sc.EndpointInputSchema),
                 ("groups_modules", mc.AssocGroupModule, sc.AssocGroupModuleInputSchema),
-                ("texts", mc.Text, sc.TextInputSchema),
             ]
             for file_name, model_cls, schema_cls in data_to_write:
                 file_path = self.__base_path / f"{file_name}.csv"
@@ -67,8 +67,8 @@ class PopulateDatabase:
     async def update_superuser(self) -> None:
         if self.__superuser:
             async with self.__get_session() as session:
-                self.__superuser.language_id = 1
-                self.__superuser.theme_id = 3
+                self.__superuser.language_id = 2
+                self.__superuser.theme_id = 1
                 self.__superuser.modified_by = self.__superuser.id
                 session.add(self.__superuser)
                 await session.commit()

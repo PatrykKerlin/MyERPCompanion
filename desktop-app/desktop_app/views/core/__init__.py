@@ -1,4 +1,4 @@
-from .app_window import AppWindow
-from .auth_modal import AuthModal
+from .app_view import AppView
+from .group_view import GroupView
 
-__all__ = ["AppWindow", "AuthModal"]
+__all__ = ["AppView", "GroupView"]

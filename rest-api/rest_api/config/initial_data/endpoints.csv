@@ -1,8 +1,6 @@
-controller,path,tag,module_id
-TextController,/texts,texts,1
-UserController,/users,users,1
-EndpointController,/endpoints,endpoints,1
-GroupController,/groups,groups,1
-ModuleController,/modules,modules,1
-SettingKeyController,/settings-keys,setting_keys,1
-SettingController,/settings,settings,1
+key,controller,path,in_menu,order,module_id
+groups,GroupController,/groups,true,1,1
+users,UserController,/users,true,2,1
+current_user,CurrentUserController,/current-user,false,3,1
+modules,ModuleController,/modules,true,4,1
+endpoints,EndpointController,/endpoints,true,5,1

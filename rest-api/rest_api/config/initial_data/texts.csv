@@ -1,11 +1,21 @@
-language_id,name,value,
-1,myerpcompanion,MyERPCompanion
-2,myerpcompanion,MyERPCompanion
-1,login,Login
-2,login,Logowanie
-1,log_in,Log in
-2,log_in,Zaloguj
-1,username,Username
-2,username,Użytkownik
-1,password,Password
-2,password,Hasło
+key,value,language_id
+myerpcompanion,MyERPCompanion,1
+myerpcompanion,MyERPCompanion,2
+error,Error,1
+error,Błąd,2
+login,Login,1
+login,Logowanie,2
+log_in,Log in,1
+log_in,Zaloguj,2
+cancel,Cancel,1
+cancel,Anuluj,2
+username,Username,1
+username,Użytkownik,2
+password,Password,1
+password,Hasło,2
+loading,Loading...,1
+loading,Ładuję dane...,2
+ok,OK,1
+ok,OK,2
+api_not_responding,API is not responding.,1
+api_not_responding,API nie odpowiada.,2

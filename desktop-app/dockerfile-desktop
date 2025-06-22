@@ -8,8 +8,15 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH="/desktop_app" \
     NVM_DIR=/root/.nvm
 
+
 RUN apt-get update && \
-    apt-get install -y curl x11-apps libx11-dev tk --no-install-recommends && \
+    apt-get install -y \
+    curl x11-apps libx11-dev libgl1 libegl1 libxkbcommon0 libxcb1 libxcb-cursor0 libxcb-util1 \
+    libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-render0 libxcb-shape0 libxcb-shm0 \
+    libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 libxcomposite1 libxcursor1 \
+    libxdamage1 libxfixes3 libxi6 libxtst6 libnss3 libatk1.0-0 libatk-bridge2.0-0 libgtk-3-0 \
+    qt6-base-dev qtwayland5 tk \
+    --no-install-recommends && \
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash && \
     . "$NVM_DIR/nvm.sh" && nvm install 23 && \
     . "$NVM_DIR/nvm.sh" && nvm alias default 23 && \

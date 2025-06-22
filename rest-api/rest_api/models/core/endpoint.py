@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import Boolean, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from models.base import BaseModel
@@ -14,9 +15,11 @@ if TYPE_CHECKING:
 class Endpoint(BaseModel):
     __tablename__ = "endpoints"
 
-    controller: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    path: Mapped[str] = mapped_column(String(25), nullable=False)
-    tag: Mapped[str | None] = mapped_column(String(25), nullable=True)
+    key: Mapped[str] = mapped_column(String(25), nullable=False, unique=True)
+    controller: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
+    path: Mapped[str] = mapped_column(String(100), nullable=False)
+    in_menu: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
+    order: Mapped[int] = mapped_column(Integer(), nullable=False, unique=True)
 
-    module_id: Mapped[int] = mapped_column(ForeignKey("modules.id"), nullable=False)
+    module_id: Mapped[int] = mapped_column(ForeignKey("modules.id"), nullable=True)
     module: Mapped[Module] = relationship(argument="Module", back_populates="endpoints", foreign_keys=[module_id])

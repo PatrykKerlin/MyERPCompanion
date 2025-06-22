@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, ForeignKey, String
@@ -10,7 +11,8 @@ from models.base.orm import relationship
 if TYPE_CHECKING:
     from .assoc_user_group import AssocUserGroup
     from .group import Group
-    from .setting import Setting
+    from .language import Language
+    from .theme import Theme
 
 
 class User(BaseModel):
@@ -20,13 +22,14 @@ class User(BaseModel):
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     password: Mapped[str] = mapped_column(String(128), nullable=False)
 
-    language_id: Mapped[int | None] = mapped_column(ForeignKey("settings.id"), nullable=True)
-    theme_id: Mapped[int | None] = mapped_column(ForeignKey("settings.id"), nullable=True)
-
-    language: Mapped[Setting] = relationship(
-        argument="Setting", back_populates="user_languages", foreign_keys=[language_id]
+    language_id: Mapped[int | None] = mapped_column(ForeignKey("languages.id"), nullable=True)
+    language: Mapped[Language | None] = relationship(
+        argument="Language", back_populates="users", foreign_keys=[language_id]
     )
-    theme: Mapped[Setting] = relationship(argument="Setting", back_populates="user_themes", foreign_keys=[theme_id])
+
+    theme_id: Mapped[int | None] = mapped_column(ForeignKey("themes.id"), nullable=True)
+    theme: Mapped[Theme | None] = relationship(argument="Theme", back_populates="users", foreign_keys=[theme_id])
+
     user_groups: Mapped[list[AssocUserGroup]] = relationship(
         argument="AssocUserGroup", back_populates="user", foreign_keys="AssocUserGroup.user_id"
     )

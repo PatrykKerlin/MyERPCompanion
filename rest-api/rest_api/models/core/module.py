@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String
+from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from models.base import BaseModel
@@ -16,8 +17,8 @@ if TYPE_CHECKING:
 class Module(BaseModel):
     __tablename__ = "modules"
 
-    name: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
-    label: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
+    key: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
+    order: Mapped[int] = mapped_column(Integer(), nullable=False, unique=True)
 
     endpoints: Mapped[list[Endpoint]] = relationship(
         argument="Endpoint", back_populates="module", foreign_keys="Endpoint.module_id"

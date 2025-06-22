@@ -3,7 +3,7 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.core import Group, User, AssocUserGroup, Setting, SettingKey
+from models.core import AssocUserGroup, Group, Language, Theme, User
 from repositories.base import BaseRepository
 
 
@@ -20,11 +20,11 @@ class UserRepository(BaseRepository[User]):
         query = super()._build_query(additional_filters, sort_by, sort_order)
         return query.options(
             selectinload(cls._model_cls.user_groups).selectinload(AssocUserGroup.group),
-            selectinload(cls._model_cls.language).selectinload(Setting.key),
-            selectinload(cls._model_cls.theme).selectinload(Setting.key),
+            selectinload(cls._model_cls.language),
+            selectinload(cls._model_cls.theme),
             with_loader_criteria(Group, cls._expr(Group.is_active == True)),
-            with_loader_criteria(Setting, cls._expr(Setting.is_active == True)),
-            with_loader_criteria(SettingKey, cls._expr(SettingKey.is_active == True)),
+            with_loader_criteria(Language, cls._expr(Language.is_active == True)),
+            with_loader_criteria(Theme, cls._expr(Theme.is_active == True)),
         )
 
     @classmethod

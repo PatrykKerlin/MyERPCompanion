@@ -1,48 +1,33 @@
-import asyncio
-import locale
-import threading
+import logging
 
-import customtkinter as ctk
+import flet as ft
 
-from config import Context, Controllers, Settings
-from controllers.core import AppController, AuthController
+from config.context import Context
+from config.controllers import Controllers
+from config.default_translation import DefaultTranslation
+from config.settings import Settings
 
 
 class App:
-    def __init__(self) -> None:
-        self.__master = ctk.CTk()
-        self.__init_locale()
+    def main(self, page: ft.Page) -> None:
         settings = Settings()  # type: ignore
-        loop = asyncio.new_event_loop()
-        language = self.__detect_language()
-        controllers = Controllers()
-        self.__context = Context(settings=settings, loop=loop, controllers=controllers, language=language)
-        self.__start_async_loop()
-        self.__register_controllers()
-
-    def __init_locale(self) -> None:
-        ctk.set_appearance_mode("system")
-        locale.setlocale(locale.LC_ALL, "")
-
-    def __detect_language(self) -> str:
-        current_locale = locale.getlocale()
-        return current_locale[0].split("_")[0] if current_locale[0] else "en"
-
-    def __start_async_loop(self) -> None:
-        threading.Thread(target=self.__run_loop, daemon=True).start()
-
-    def __run_loop(self) -> None:
-        asyncio.set_event_loop(self.__context.loop)
-        self.__context.loop.run_forever()
-
-    def __register_controllers(self) -> None:
-        self.__context.controllers.add("app", AppController(self.__master, self.__context))
-        self.__context.controllers.add("auth", AuthController(self.__master, self.__context))
-
-    def run(self) -> None:
-        self.__context.controllers.app.show()
-        self.__master.mainloop()
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+        )
+        logger = logging.getLogger("app")
+        context = Context(
+            settings=settings,
+            page=page,
+            logger=logger,
+            texts=DefaultTranslation().texts,
+        )
+        controllers = Controllers(context)
+        context.controllers = controllers
+        controllers.initialize_window_controllers()
+        app_controller = controllers.get("app")
+        app_controller.show()
 
 
 if __name__ == "__main__":
-    App().run()
+    ft.app(target=App().main)
