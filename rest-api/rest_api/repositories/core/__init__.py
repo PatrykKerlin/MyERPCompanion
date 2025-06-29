@@ -1,11 +1,11 @@
-from models.core import AssocGroupModule, AssocUserGroup, Group, Language, Theme, View
+from models.core import AssocModuleGroup, AssocUserGroup, Group, Language, Theme, View
 from utils.factories import RepositoryFactory
 
 from .module_repository import ModuleRepository
 from .translation_repository import TranslationRepository
 from .user_repository import UserRepository
 
-AssocGroupModuleRepository = RepositoryFactory.create(AssocGroupModule)
+AssocModuleGroupRepository = RepositoryFactory.create(AssocModuleGroup)
 AssocUserGroupRepository = RepositoryFactory.create(AssocUserGroup)
 GroupRepository = RepositoryFactory.create(Group)
 LanguageRepository = RepositoryFactory.create(Language)
@@ -13,7 +13,7 @@ ThemeRepository = RepositoryFactory.create(Theme)
 ViewRepository = RepositoryFactory.create(View)
 
 __all__ = [
-    "AssocGroupModuleRepository",
+    "AssocModuleGroupRepository",
     "AssocUserGroupRepository",
     "GroupRepository",
     "LanguageRepository",

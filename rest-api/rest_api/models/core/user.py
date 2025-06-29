@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from models.base import BaseModel
 from models.base.orm import relationship
+from models.business import Employee
 
 if TYPE_CHECKING:
     from .assoc_user_group import AssocUserGroup
@@ -21,6 +22,11 @@ class User(BaseModel):
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     password: Mapped[str] = mapped_column(String(128), nullable=False)
+
+    employee_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id"), unique=True, nullable=True)
+    employee: Mapped[Employee | None] = relationship(
+        argument="Employee", back_populates="user", foreign_keys=[employee_id]
+    )
 
     language_id: Mapped[int | None] = mapped_column(ForeignKey("languages.id"), nullable=True)
     language: Mapped[Language | None] = relationship(

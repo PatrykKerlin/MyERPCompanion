@@ -1,5 +1,5 @@
 # isort: off
-from .assoc_schema import AssocGroupModuleStrictSchema, AssocUserGroupStrictSchema
+from .assoc_schema import AssocModuleGroupStrictSchema, AssocUserGroupStrictSchema
 from .auth_schema import AuthStrictSchema
 from .group_schema import GroupStrictSchema, GroupPlainSchema
 from .language_schema import LanguageStrictSchema, LanguagePlainSchema
@@ -11,7 +11,7 @@ from .translation_schema import TranslationStrictSchema, TranslationByLanguagePl
 from .user_schema import UserStrictCreateSchema, UserStrictUpdateSchema, UserPlainSchema
 
 __all__ = [
-    "AssocGroupModuleStrictSchema",
+    "AssocModuleGroupStrictSchema",
     "AssocUserGroupStrictSchema",
     "AuthStrictSchema",
     "FilterParamsSchema",

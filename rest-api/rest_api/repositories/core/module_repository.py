@@ -3,7 +3,7 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.core import AssocGroupModule, Group, Module, View
+from models.core import AssocModuleGroup, Group, Module, View
 from repositories.base import BaseRepository
 
 
@@ -19,7 +19,7 @@ class ModuleRepository(BaseRepository[Module]):
     ) -> Select:
         query = super()._build_query(additional_filters, sort_by, sort_order)
         return query.options(
-            selectinload(cls._model_cls.module_groups).selectinload(AssocGroupModule.group),
+            selectinload(cls._model_cls.module_groups).selectinload(AssocModuleGroup.group),
             selectinload(cls._model_cls.views),
             with_loader_criteria(Group, cls._expr(Group.is_active == True)),
             with_loader_criteria(View, cls._expr(View.is_active == True)),

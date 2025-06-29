@@ -1,4 +1,4 @@
-from .assoc_group_module import AssocGroupModule
+from .assoc_module_group import AssocModuleGroup
 from .assoc_user_group import AssocUserGroup
 from .group import Group
 from .language import Language
@@ -9,7 +9,7 @@ from .user import User
 from .view import View
 
 __all__ = [
-    "AssocGroupModule",
+    "AssocModuleGroup",
     "AssocUserGroup",
     "Group",
     "Language",

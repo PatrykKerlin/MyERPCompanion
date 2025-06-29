@@ -1,6 +1,5 @@
-key,controller,path,in_menu,order,module_id
-groups,GroupController,/groups,true,1,1
-users,UserController,/users,true,2,1
-current_user,CurrentUserController,/current-user,false,3,1
-modules,ModuleController,/modules,true,4,1
-views,ViewController,/views,true,5,1
+key,controller,path,order,module_id
+groups,GroupController,/groups,1,1
+users,UserController,/users,2,1
+modules,ModuleController,/modules,4,1
+views,ViewController,/views,5,1

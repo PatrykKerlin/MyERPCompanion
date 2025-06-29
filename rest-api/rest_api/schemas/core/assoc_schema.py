@@ -5,7 +5,7 @@ from pydantic import Field
 from schemas.base import BaseStrictSchema
 
 
-class AssocGroupModuleStrictSchema(BaseStrictSchema):
+class AssocModuleGroupStrictSchema(BaseStrictSchema):
     group_id: Annotated[int, Field(ge=1)]
     module_id: Annotated[int, Field(ge=1)]
 

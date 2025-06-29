@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.exc import NoResultFound
 
-from models.core import AssocGroupModule, Module
-from repositories.core import AssocGroupModuleRepository, GroupRepository, ModuleRepository
+from models.core import AssocModuleGroup, Module
+from repositories.core import AssocModuleGroupRepository, GroupRepository, ModuleRepository
 from schemas.core import ModulePlainSchema, ModuleStrictSchema
 from services.base import BaseService
 
@@ -31,8 +31,8 @@ class ModuleService(BaseService[Module, ModuleRepository, ModuleStrictSchema, Mo
         await self._handle_assoc_table(
             session=session,
             owner_model=saved_model,
-            assoc_repo_cls=AssocGroupModuleRepository,
-            model_cls=AssocGroupModule,
+            assoc_repo_cls=AssocModuleGroupRepository,
+            model_cls=AssocModuleGroup,
             owner_field="module_id",
             related_field="group_id",
             owner_id=saved_model.id,
@@ -55,8 +55,8 @@ class ModuleService(BaseService[Module, ModuleRepository, ModuleStrictSchema, Mo
         await self._handle_assoc_table(
             session=session,
             owner_model=updated_model,
-            assoc_repo_cls=AssocGroupModuleRepository,
-            model_cls=AssocGroupModule,
+            assoc_repo_cls=AssocModuleGroupRepository,
+            model_cls=AssocModuleGroup,
             owner_field="module_id",
             related_field="group_id",
             owner_id=updated_model.id,

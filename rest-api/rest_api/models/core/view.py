@@ -21,5 +21,5 @@ class View(BaseModel):
     in_menu: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
     order: Mapped[int] = mapped_column(Integer(), nullable=False, unique=True)
 
-    module_id: Mapped[int] = mapped_column(ForeignKey("modules.id"), nullable=True)
+    module_id: Mapped[int] = mapped_column(ForeignKey("modules.id"), nullable=False)
     module: Mapped[Module] = relationship(argument="Module", back_populates="views", foreign_keys=[module_id])
