@@ -3,7 +3,7 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.core import AssocGroupModule, Endpoint, Group, Module
+from models.core import AssocGroupModule, View, Group, Module
 from repositories.base import BaseRepository
 
 
@@ -20,13 +20,13 @@ class ModuleRepository(BaseRepository[Module]):
         query = super()._build_query(additional_filters, sort_by, sort_order)
         return query.options(
             selectinload(cls._model_cls.module_groups).selectinload(AssocGroupModule.group),
-            selectinload(cls._model_cls.endpoints),
+            selectinload(cls._model_cls.views),
             with_loader_criteria(Group, cls._expr(Group.is_active == True)),
-            with_loader_criteria(Endpoint, cls._expr(Endpoint.is_active == True)),
+            with_loader_criteria(View, cls._expr(View.is_active == True)),
         )
 
     @classmethod
     async def get_one_by_controller(cls, session: AsyncSession, controller: str) -> Module | None:
-        query = cls._build_query([cls._expr(Endpoint.controller == controller)])
+        query = cls._build_query([cls._expr(View.controller == controller)])
         result = await session.execute(query)
         return result.scalars().first()

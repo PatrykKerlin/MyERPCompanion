@@ -3,14 +3,14 @@ from datetime import UTC, datetime, timedelta
 from functools import wraps
 from typing import Any, cast
 
-from fastapi import Request
+from fastapi import Request, HTTPException, status
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import NoResultFound
 
 from config import Settings
-from schemas.core import UserOutputSchema
-from utils.exceptions import InvalidCredentialsException, NoPermissionException, NotFoundException
+from schemas.core import UserPlainSchema
 
 
 class Auth:
@@ -49,19 +49,15 @@ class Auth:
         return token
 
     @classmethod
-    async def validate_refresh_token(cls, session: AsyncSession, token: str, settings: Settings) -> UserOutputSchema:
+    async def validate_refresh_token(cls, session: AsyncSession, token: str, settings: Settings) -> UserPlainSchema:
         from services.core import UserService
 
         payload = cls.decode_access_token(token, settings)
-        if payload.get("type") != "refresh":
-            raise InvalidCredentialsException()
-        user_id = payload.get("user", None)
-        if not isinstance(user_id, int):
-            raise InvalidCredentialsException()
+        user_id = int(payload["user"])
         service = UserService()
         schema = await service.get_one_by_id(session, user_id)
         if not schema:
-            raise InvalidCredentialsException()
+            raise NoResultFound()
         return schema
 
     @classmethod
@@ -73,7 +69,7 @@ class Auth:
             async def wrapper(self: Any, *args: Any, request: Request, **kwargs: Any) -> Any:
                 user_schema = request.state.user
                 if not user_schema:
-                    raise InvalidCredentialsException()
+                    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
                 if getattr(user_schema, "is_superuser", False):
                     return await func(self, *args, request=request, **kwargs)
 
@@ -84,13 +80,13 @@ class Auth:
                     module_schema = await service.get_by_controller(session, controller)
 
                 if not module_schema:
-                    raise NotFoundException()
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
                 allowed_groups = {group.key for group in module_schema.groups}
                 user_groups = {group.key for group in user_schema.groups}
 
                 if not user_groups.intersection(allowed_groups):
-                    raise NoPermissionException()
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
                 return await func(self, *args, request=request, **kwargs)
 

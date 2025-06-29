@@ -7,11 +7,11 @@ class BaseSchema(BaseModel):
     model_config = {"from_attributes": True, "arbitrary_types_allowed": True}
 
 
-class BaseInputSchema(BaseSchema):
+class BaseStrictSchema(BaseSchema):
     pass
 
 
-class BaseOutputSchema(BaseSchema):
+class BasePlainSchema(BaseSchema):
     id: int
     is_active: bool
     created_at: datetime

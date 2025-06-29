@@ -1,3 +1,3 @@
-from .base_schema import BaseInputSchema, BaseOutputSchema
+from .base_schema import BaseStrictSchema, BasePlainSchema
 
-__all__ = ["BaseInputSchema", "BaseOutputSchema"]
+__all__ = ["BaseStrictSchema", "BasePlainSchema"]

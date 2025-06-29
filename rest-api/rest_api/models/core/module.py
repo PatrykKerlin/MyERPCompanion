@@ -10,8 +10,8 @@ from models.base.orm import relationship
 
 if TYPE_CHECKING:
     from .assoc_group_module import AssocGroupModule
-    from .endpoint import Endpoint
     from .group import Group
+    from .view import View
 
 
 class Module(BaseModel):
@@ -20,9 +20,7 @@ class Module(BaseModel):
     key: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
     order: Mapped[int] = mapped_column(Integer(), nullable=False, unique=True)
 
-    endpoints: Mapped[list[Endpoint]] = relationship(
-        argument="Endpoint", back_populates="module", foreign_keys="Endpoint.module_id"
-    )
+    views: Mapped[list[View]] = relationship(argument="View", back_populates="module", foreign_keys="View.module_id")
     module_groups: Mapped[list[AssocGroupModule]] = relationship(
         argument="AssocGroupModule", back_populates="module", foreign_keys="AssocGroupModule.module_id"
     )

@@ -59,13 +59,14 @@ class BaseRepository(Generic[TModel]):
         return result.scalars().first()
 
     @classmethod
-    async def save(cls, session: AsyncSession, model: TModel, commit: bool = True) -> TModel | None:
+    async def save(cls, session: AsyncSession, model: TModel, commit: bool = True) -> TModel:
         session.add(model)
         if commit:
             await session.commit()
         else:
             await session.flush()
-        return await cls.get_one_by_id(session, int(model.id))
+        await session.refresh(model)
+        return model
 
     @classmethod
     async def delete(cls, session: AsyncSession, model: TModel) -> bool:

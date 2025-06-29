@@ -1,19 +1,18 @@
 from abc import ABC
 from typing import Generic, TypeVar
 
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
 from models.base import BaseModel
 from repositories.base import BaseRepository
-from schemas.base import BaseInputSchema, BaseOutputSchema
-from utils.exceptions import ConflictException, ItemNotFoundException, SaveException
+from schemas.base import BaseStrictSchema, BasePlainSchema
 
 TModel = TypeVar("TModel", bound=BaseModel)
 TRepository = TypeVar("TRepository", bound=BaseRepository)
-TInputSchema = TypeVar("TInputSchema", bound=BaseInputSchema)
-TOutputSchema = TypeVar("TOutputSchema", bound=BaseOutputSchema)
+TInputSchema = TypeVar("TInputSchema", bound=BaseStrictSchema)
+TOutputSchema = TypeVar("TOutputSchema", bound=BasePlainSchema)
 
 
 class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]):
@@ -51,15 +50,7 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
     async def create(self, session: AsyncSession, created_by: int, schema: TInputSchema) -> TOutputSchema:
         model = self._model_cls(**schema.model_dump())
         setattr(model, "created_by", created_by)
-        try:
-            saved_model = await self._repository_cls.save(session, model)
-            if not saved_model:
-                raise SQLAlchemyError()
-        except IntegrityError as e:
-            print(f"error: {e}")
-            raise ConflictException()
-        except Exception:
-            raise SaveException()
+        saved_model = await self._repository_cls.save(session, model)
         return self._output_schema_cls.model_validate(saved_model)
 
     async def update(
@@ -71,14 +62,7 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         for key, value in schema.model_dump(exclude_unset=True).items():
             setattr(model, key, value)
         setattr(model, "modified_by", modified_by)
-        try:
-            updated_model = await self._repository_cls.save(session, model)
-            if not updated_model:
-                raise SQLAlchemyError()
-        except IntegrityError:
-            raise ConflictException()
-        except Exception:
-            raise SaveException()
+        updated_model = await self._repository_cls.save(session, model)
         return self._output_schema_cls.model_validate(updated_model)
 
     async def delete(self, session: AsyncSession, model_id: int, modified_by: int) -> bool:
@@ -112,10 +96,8 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         for index, related_id in enumerate(related_ids, start=1):
             related_model = await related_repo_cls.get_one_by_id(session, related_id)
             if not related_model:
-                raise ItemNotFoundException(related_repo_cls._model_cls.__name__, related_id)
+                raise NoResultFound()
             assoc_model = model_cls(
                 **{owner_field: owner_id, related_field: related_model.id, "created_by": created_by}
             )
-            updated_assoc_model = await assoc_repo_cls.save(session, assoc_model, commit=index == related_ids_count)
-            if not updated_assoc_model:
-                raise SQLAlchemyError()
+            await assoc_repo_cls.save(session, assoc_model, commit=index == related_ids_count)

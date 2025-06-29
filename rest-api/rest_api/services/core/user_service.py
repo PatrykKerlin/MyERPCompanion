@@ -5,28 +5,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.core import AssocUserGroup, User
 from repositories.core import AssocUserGroupRepository, GroupRepository, UserRepository
-from schemas.base import BaseInputSchema
-from schemas.core import UserInputCreateSchema, UserInputUpdateSchema, UserOutputSchema
+from schemas.base import BaseStrictSchema
+from schemas.core import UserStrictCreateSchema, UserStrictUpdateSchema, UserPlainSchema
 from services.base import BaseService
 from utils.auth import Auth
-from utils.exceptions import ConflictException, SaveException
 
-TInputSchema = TypeVar("TInputSchema", bound=BaseInputSchema)
+TInputSchema = TypeVar("TInputSchema", bound=BaseStrictSchema)
 
 
 class UserService(
     BaseService[
         User,
         UserRepository,
-        Union[UserInputCreateSchema, UserInputUpdateSchema],
-        UserOutputSchema,
+        Union[UserStrictCreateSchema, UserStrictUpdateSchema],
+        UserPlainSchema,
     ]
 ):
     _repository_cls = UserRepository
     _model_cls = User
-    _output_schema_cls = UserOutputSchema
+    _output_schema_cls = UserPlainSchema
 
-    async def get_by_name(self, session: AsyncSession, username: str) -> UserOutputSchema | None:
+    async def get_by_name(self, session: AsyncSession, username: str) -> UserPlainSchema | None:
         model = await self._repository_cls.get_one_by_username(session, username)
         if not model:
             return None
@@ -36,31 +35,24 @@ class UserService(
         self,
         session: AsyncSession,
         created_by: int,
-        schema: Union[UserInputCreateSchema, UserInputUpdateSchema],
-    ) -> UserOutputSchema:
+        schema: Union[UserStrictCreateSchema, UserStrictUpdateSchema],
+    ) -> UserPlainSchema:
         model = self._model_cls(**schema.model_dump(exclude={"groups"}))
         model.created_by = created_by
         if schema.password:
             model.password = Auth.get_password_hash(schema.password)
-        try:
-            saved_model = await self._repository_cls.save(session, model, False)
-            if not saved_model:
-                raise SQLAlchemyError()
-            await self._handle_assoc_table(
-                session=session,
-                assoc_repo_cls=AssocUserGroupRepository,
-                model_cls=AssocUserGroup,
-                owner_field="user_id",
-                related_field="group_id",
-                owner_id=saved_model.id,
-                related_ids=schema.groups or [],
-                related_repo_cls=GroupRepository,
-                created_by=created_by,
-            )
-        except IntegrityError:
-            raise ConflictException()
-        except Exception:
-            raise SaveException()
+        saved_model = await self._repository_cls.save(session, model, False)
+        await self._handle_assoc_table(
+            session=session,
+            assoc_repo_cls=AssocUserGroupRepository,
+            model_cls=AssocUserGroup,
+            owner_field="user_id",
+            related_field="group_id",
+            owner_id=saved_model.id,
+            related_ids=schema.groups or [],
+            related_repo_cls=GroupRepository,
+            created_by=created_by,
+        )
         await session.refresh(saved_model)
         return self._output_schema_cls.model_validate(saved_model)
 
@@ -69,8 +61,8 @@ class UserService(
         session: AsyncSession,
         model_id: int,
         modified_by: int,
-        schema: Union[UserInputCreateSchema, UserInputUpdateSchema],
-    ) -> UserOutputSchema | None:
+        schema: Union[UserStrictCreateSchema, UserStrictUpdateSchema],
+    ) -> UserPlainSchema | None:
         model = await self._repository_cls.get_one_by_id(session, model_id)
         if not model:
             return None
@@ -79,26 +71,19 @@ class UserService(
         model.modified_by = modified_by
         if schema.password:
             model.password = Auth.get_password_hash(schema.password)
-        try:
-            updated_model = await self._repository_cls.save(session, model)
-            if not updated_model:
-                raise SQLAlchemyError()
-            if schema.groups:
-                await self._handle_assoc_table(
-                    session=session,
-                    assoc_repo_cls=AssocUserGroupRepository,
-                    model_cls=AssocUserGroup,
-                    owner_field="user_id",
-                    related_field="group_id",
-                    owner_id=updated_model.id,
-                    related_ids=schema.groups,
-                    related_repo_cls=GroupRepository,
-                    created_by=modified_by,
-                    modified_by=modified_by,
-                )
-        except IntegrityError:
-            raise ConflictException()
-        except Exception:
-            raise SaveException()
+        updated_model = await self._repository_cls.save(session, model)
+        if schema.groups:
+            await self._handle_assoc_table(
+                session=session,
+                assoc_repo_cls=AssocUserGroupRepository,
+                model_cls=AssocUserGroup,
+                owner_field="user_id",
+                related_field="group_id",
+                owner_id=updated_model.id,
+                related_ids=schema.groups,
+                related_repo_cls=GroupRepository,
+                created_by=modified_by,
+                modified_by=modified_by,
+            )
         await session.refresh(updated_model)
         return self._output_schema_cls.model_validate(updated_model)

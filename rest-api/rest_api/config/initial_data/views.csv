@@ -3,4 +3,4 @@ groups,GroupController,/groups,true,1,1
 users,UserController,/users,true,2,1
 current_user,CurrentUserController,/current-user,false,3,1
 modules,ModuleController,/modules,true,4,1
-endpoints,EndpointController,/endpoints,true,5,1
+views,ViewController,/views,true,5,1

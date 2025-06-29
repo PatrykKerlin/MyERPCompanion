@@ -2,12 +2,12 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.core import Language, Text
+from models.core import Language, Translation
 from repositories.base import BaseRepository
 
 
-class TextRepository(BaseRepository[Text]):
-    _model_cls = Text
+class TranslationRepository(BaseRepository[Translation]):
+    _model_cls = Translation
 
     @classmethod
     def _build_query(

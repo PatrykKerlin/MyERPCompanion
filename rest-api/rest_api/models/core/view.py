@@ -12,8 +12,8 @@ if TYPE_CHECKING:
     from .module import Module
 
 
-class Endpoint(BaseModel):
-    __tablename__ = "endpoints"
+class View(BaseModel):
+    __tablename__ = "views"
 
     key: Mapped[str] = mapped_column(String(25), nullable=False, unique=True)
     controller: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
@@ -22,4 +22,4 @@ class Endpoint(BaseModel):
     order: Mapped[int] = mapped_column(Integer(), nullable=False, unique=True)
 
     module_id: Mapped[int] = mapped_column(ForeignKey("modules.id"), nullable=True)
-    module: Mapped[Module] = relationship(argument="Module", back_populates="endpoints", foreign_keys=[module_id])
+    module: Mapped[Module] = relationship(argument="Module", back_populates="views", foreign_keys=[module_id])

@@ -1,36 +1,37 @@
-from .assoc_schema import AssocGroupModuleInputSchema, AssocUserGroupInputSchema
-from .auth_schema import AuthInputSchema
-from .endpoint_schema import EndpointInputSchema, EndpointOutputSchema
-from .group_schema import GroupInputSchema, GroupOutputSchema
-from .language_schema import LanguageInputSchema, LanguageOutputSchema
-from .module_schema import ModuleInputSchema, ModuleOutputSchema
-from .query_param_schema import FilterParamsSchema, PaginatedResponseSchema, PaginationParamsSchema, SortingParamsSchema
-from .text_schema import TextInputSchema, TextOutputByLanguageSchema, TextOutputSchema
-from .theme_schema import ThemeInputSchema, ThemeOutputSchema
-from .user_schema import UserInputCreateSchema, UserInputUpdateSchema, UserOutputSchema
+# isort: off
+from .assoc_schema import AssocGroupModuleStrictSchema, AssocUserGroupStrictSchema
+from .auth_schema import AuthStrictSchema
+from .group_schema import GroupStrictSchema, GroupPlainSchema
+from .language_schema import LanguageStrictSchema, LanguagePlainSchema
+from .view_schema import ViewStrictSchema, ViewPlainSchema
+from .module_schema import ModuleStrictSchema, ModulePlainSchema
+from .param_schema import FilterParamsSchema, PaginatedResponseSchema, PaginationParamsSchema, SortingParamsSchema
+from .theme_schema import ThemeStrictSchema, ThemePlainSchema
+from .translation_schema import TranslationStrictSchema, TranslationByLanguagePlainSchema, TranslationPlainSchema
+from .user_schema import UserStrictCreateSchema, UserStrictUpdateSchema, UserPlainSchema
 
 __all__ = [
-    "AssocGroupModuleInputSchema",
-    "AssocUserGroupInputSchema",
-    "AuthInputSchema",
-    "EndpointInputSchema",
-    "EndpointOutputSchema",
+    "AssocGroupModuleStrictSchema",
+    "AssocUserGroupStrictSchema",
+    "AuthStrictSchema",
     "FilterParamsSchema",
-    "GroupInputSchema",
-    "GroupOutputSchema",
-    "LanguageInputSchema",
-    "LanguageOutputSchema",
-    "ModuleInputSchema",
-    "ModuleOutputSchema",
+    "GroupStrictSchema",
+    "GroupPlainSchema",
+    "LanguageStrictSchema",
+    "LanguagePlainSchema",
+    "ModuleStrictSchema",
+    "ModulePlainSchema",
     "PaginatedResponseSchema",
     "PaginationParamsSchema",
     "SortingParamsSchema",
-    "TextInputSchema",
-    "TextOutputByLanguageSchema",
-    "TextOutputSchema",
-    "ThemeInputSchema",
-    "ThemeOutputSchema",
-    "UserInputCreateSchema",
-    "UserInputUpdateSchema",
-    "UserOutputSchema",
+    "TranslationStrictSchema",
+    "ThemeStrictSchema",
+    "ThemePlainSchema",
+    "TranslationByLanguagePlainSchema",
+    "TranslationPlainSchema",
+    "UserStrictCreateSchema",
+    "UserStrictUpdateSchema",
+    "UserPlainSchema",
+    "ViewStrictSchema",
+    "ViewPlainSchema",
 ]

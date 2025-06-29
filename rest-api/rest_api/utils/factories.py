@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from ..controllers.base import BaseController
     from ..models.base import BaseModel
     from ..repositories.base import BaseRepository
-    from ..schemas.base import BaseInputSchema, BaseOutputSchema
+    from ..schemas.base import BaseStrictSchema, BasePlainSchema
     from ..services.base import BaseService
 
 

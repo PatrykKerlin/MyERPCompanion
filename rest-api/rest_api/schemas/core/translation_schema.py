@@ -3,23 +3,23 @@ from typing import Annotated
 
 from pydantic import Field
 
-from schemas.base import BaseInputSchema, BaseOutputSchema
-from schemas.core import LanguageOutputSchema
+from schemas.base import BaseStrictSchema, BasePlainSchema
+from schemas.core import LanguagePlainSchema
 
 
-class TextInputSchema(BaseInputSchema):
+class TranslationStrictSchema(BaseStrictSchema):
     key: Annotated[str, Field(min_length=1, max_length=25)]
     value: Annotated[str, Field(min_length=1, max_length=255)]
     language_id: Annotated[int, Field(ge=1)]
 
 
-class TextOutputSchema(BaseOutputSchema):
+class TranslationPlainSchema(BasePlainSchema):
     key: str
     value: str
-    language: LanguageOutputSchema
+    language: LanguagePlainSchema
 
 
-class TextOutputByLanguageSchema(BaseOutputSchema):
+class TranslationByLanguagePlainSchema(BasePlainSchema):
     key: str
     value: str
     is_active: Annotated[bool, Field(exclude=True)]

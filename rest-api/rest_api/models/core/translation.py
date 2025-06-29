@@ -12,12 +12,14 @@ if TYPE_CHECKING:
     from .language import Language
 
 
-class Text(BaseModel):
-    __tablename__ = "texts"
-    __table_args__ = (UniqueConstraint("key", "language_id", name="uq_texts_key_language"),)
+class Translation(BaseModel):
+    __tablename__ = "translations"
+    __table_args__ = (UniqueConstraint("key", "language_id", name="uq_translations_key_language"),)
 
     key: Mapped[str] = mapped_column(String(25), nullable=False)
     value: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
 
     language_id: Mapped[int] = mapped_column(ForeignKey("languages.id"), nullable=False)
-    language: Mapped[Language] = relationship(argument="Language", back_populates="texts", foreign_keys=[language_id])
+    language: Mapped[Language] = relationship(
+        argument="Language", back_populates="translations", foreign_keys=[language_id]
+    )

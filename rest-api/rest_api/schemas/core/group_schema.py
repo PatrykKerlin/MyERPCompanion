@@ -2,14 +2,14 @@ from typing import Annotated
 
 from pydantic import Field
 
-from schemas.base import BaseInputSchema, BaseOutputSchema
+from schemas.base import BaseStrictSchema, BasePlainSchema
 
 
-class GroupInputSchema(BaseInputSchema):
+class GroupStrictSchema(BaseStrictSchema):
     key: Annotated[str, Field(min_length=1, max_length=10)]
     description: Annotated[str, Field(min_length=1, max_length=255)]
 
 
-class GroupOutputSchema(BaseOutputSchema):
+class GroupPlainSchema(BasePlainSchema):
     key: str
     description: str

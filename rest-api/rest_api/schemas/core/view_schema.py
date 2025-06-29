@@ -2,10 +2,10 @@ from typing import Annotated
 
 from pydantic import Field
 
-from schemas.base import BaseInputSchema, BaseOutputSchema
+from schemas.base import BaseStrictSchema, BasePlainSchema
 
 
-class EndpointInputSchema(BaseInputSchema):
+class ViewStrictSchema(BaseStrictSchema):
     key: Annotated[str, Field(min_length=1, max_length=25)]
     controller: Annotated[str, Field(min_length=1, max_length=50)]
     path: Annotated[str, Field(min_length=1, max_length=100)]
@@ -14,7 +14,7 @@ class EndpointInputSchema(BaseInputSchema):
     module_id: Annotated[int, Field(ge=1)]
 
 
-class EndpointOutputSchema(BaseOutputSchema):
+class ViewPlainSchema(BasePlainSchema):
     key: str
     controller: str
     path: str

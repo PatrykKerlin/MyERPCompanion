@@ -1,4 +1,6 @@
-import csv
+from aiofiles import open
+from csv import DictReader
+from io import StringIO
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 from os import getenv
@@ -10,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models import core as mc
 from models.base import BaseModel
 from schemas import core as sc
-from schemas.base import BaseInputSchema
+from schemas.base import BaseStrictSchema
 from utils.auth import Auth
 
 
@@ -50,15 +52,15 @@ class PopulateDatabase:
     async def populate_from_csv(self) -> None:
         if self.__superuser:
             data_to_write = [
-                ("languages", mc.Language, sc.LanguageInputSchema),
-                ("texts", mc.Text, sc.TextInputSchema),
-                ("themes", mc.Theme, sc.ThemeInputSchema),
-                ("groups", mc.Group, sc.GroupInputSchema),
-                ("users", mc.User, sc.UserInputCreateSchema),
-                ("users_groups", mc.AssocUserGroup, sc.AssocUserGroupInputSchema),
-                ("modules", mc.Module, sc.ModuleInputSchema),
-                ("endpoints", mc.Endpoint, sc.EndpointInputSchema),
-                ("groups_modules", mc.AssocGroupModule, sc.AssocGroupModuleInputSchema),
+                ("languages", mc.Language, sc.LanguageStrictSchema),
+                ("translations", mc.Translation, sc.TranslationStrictSchema),
+                ("themes", mc.Theme, sc.ThemeStrictSchema),
+                ("groups", mc.Group, sc.GroupStrictSchema),
+                ("users", mc.User, sc.UserStrictCreateSchema),
+                ("users_groups", mc.AssocUserGroup, sc.AssocUserGroupStrictSchema),
+                ("modules", mc.Module, sc.ModuleStrictSchema),
+                ("views", mc.View, sc.ViewStrictSchema),
+                ("groups_modules", mc.AssocGroupModule, sc.AssocGroupModuleStrictSchema),
             ]
             for file_name, model_cls, schema_cls in data_to_write:
                 file_path = self.__base_path / f"{file_name}.csv"
@@ -73,14 +75,18 @@ class PopulateDatabase:
                 session.add(self.__superuser)
                 await session.commit()
 
-    async def __write_new_rows(self, file_path: Path, model: type[BaseModel], schema: type[BaseInputSchema]) -> None:
+    async def __write_new_rows(
+        self, file_path: Path, model: type[BaseModel], schema_cls: type[BaseStrictSchema]
+    ) -> None:
         async with self.__get_session() as session:
-            with open(file_path) as csv_file:
-                reader = csv.DictReader(csv_file)
+            async with open(file_path, mode="r", encoding="utf-8") as file:
+                content = await file.read()
+                csv_file = StringIO(content)
+                reader = DictReader(csv_file)
                 for row in reader:
                     if "password" in row.keys() and row["password"]:
                         row["password"] = Auth.get_password_hash(row["password"])
-                    validated_row = schema(**row)
+                    validated_row = schema_cls.model_validate(row)
                     instance = model(**validated_row.model_dump(exclude_unset=True))
                     instance.created_by = self.__superuser.id if self.__superuser else None
                     session.add(instance)
