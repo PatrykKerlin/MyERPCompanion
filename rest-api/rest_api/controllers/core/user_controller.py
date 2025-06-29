@@ -2,7 +2,7 @@ from typing import Union
 
 from fastapi import HTTPException, Request, status
 from pydantic import ValidationError
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 
 from config import Context
 from controllers.base import BaseController
@@ -47,15 +47,14 @@ class UserController(
             body = await request.json()
             schema = UserStrictUpdateSchema(**body)
             async with self._get_session() as session:
-                schema = await self._service.update(session, model_id, user.id, schema)
-                if not schema:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
-                    )
-                return schema
+                return await self._service.update(session, model_id, user.id, schema)
         except HTTPException:
             raise
+        except NoResultFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
+            )
         except ValidationError as err:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
         except SQLAlchemyError as err:

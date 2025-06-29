@@ -9,7 +9,7 @@ from schemas.core import GroupPlainSchema, ViewPlainSchema
 class ModuleStrictSchema(BaseStrictSchema):
     key: Annotated[str, Field(min_length=1, max_length=25)]
     order: Annotated[int, Field(ge=1)]
-    groups: Annotated[list[Annotated[int, Field(ge=1)]] | None, Field(default=None)]
+    groups: Annotated[list[Annotated[int, Field(ge=1)]], Field(min_length=1)]
 
 
 class ModulePlainSchema(BasePlainSchema):

@@ -3,7 +3,7 @@ from typing import Annotated, Generic, Literal, TypeVar
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import ValidationError
 from sqlalchemy import String
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql.elements import ColumnElement
 
@@ -77,15 +77,14 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
     async def get_by_id(self, request: Request, model_id: int) -> TOutputSchema:
         try:
             async with self._get_session() as session:
-                schema = await self._service.get_one_by_id(session, model_id)
-                if not schema:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
-                    )
-                return schema
+                return await self._service.get_one_by_id(session, model_id)
         except HTTPException:
             raise
+        except NoResultFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
+            )
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
@@ -111,15 +110,14 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             body = await request.json()
             schema = self._input_schema_cls(**body)
             async with self._get_session() as session:
-                schema = await self._service.update(session, model_id, user.id, schema)
-                if not schema:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
-                    )
-                return schema
+                return await self._service.update(session, model_id, user.id, schema)
         except HTTPException:
             raise
+        except NoResultFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
+            )
         except ValidationError as err:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
         except SQLAlchemyError as err:
@@ -130,15 +128,15 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         try:
             user = request.state.user
             async with self._get_session() as session:
-                success = await self._service.delete(session, model_id, user.id)
-                if not success:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
-                    )
+                await self._service.delete(session, model_id, user.id)
                 return Response(status_code=status.HTTP_204_NO_CONTENT)
         except HTTPException:
             raise
+        except NoResultFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
+            )
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 

@@ -23,14 +23,14 @@ class TranslationController(BaseController[TranslationService, TranslationStrict
         super().__init__(context)
         self.router.add_api_route(
             path="/by-language/{language}",
-            endpoint=self.translations_by_language,
+            endpoint=self.get_all_by_language,
             methods=["GET"],
             response_model=PaginatedResponseSchema[TranslationByLanguagePlainSchema],
             status_code=status.HTTP_200_OK,
         )
         self._register_routes(TranslationPlainSchema)
 
-    async def translations_by_language(
+    async def get_all_by_language(
         self, request: Request, language: str, pagination: Annotated[PaginationParamsSchema, Depends()]
     ) -> PaginatedResponseSchema[TranslationByLanguagePlainSchema]:
         try:

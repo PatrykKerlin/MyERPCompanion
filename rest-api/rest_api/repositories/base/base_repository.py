@@ -69,11 +69,13 @@ class BaseRepository(Generic[TModel]):
         return model
 
     @classmethod
-    async def delete(cls, session: AsyncSession, model: TModel) -> bool:
+    async def delete(cls, session: AsyncSession, model: TModel, commit: bool = True) -> None:
         setattr(model, "is_active", False)
         await cls.__cascade_soft_delete(model)
-        await session.commit()
-        return True
+        if commit:
+            await session.commit()
+        else:
+            await session.flush()
 
     @classmethod
     async def count_all(cls, session: AsyncSession, filters: list[ColumnElement[bool]] | None = None) -> int:
