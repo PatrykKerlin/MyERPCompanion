@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 from collections.abc import Sequence
-from typing import Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 from sqlalchemy import asc, desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
-from sqlalchemy.sql.elements import ClauseElement, ColumnElement
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.schema import Column
 
 from models.base import BaseModel
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy.sql.elements import ClauseElement
 
 TModel = TypeVar("TModel", bound=BaseModel)
 
@@ -76,6 +81,14 @@ class BaseRepository(Generic[TModel]):
             await session.commit()
         else:
             await session.flush()
+
+    @classmethod
+    async def refresh(cls, session: AsyncSession, model: TModel) -> None:
+        await session.refresh(model)
+
+    @classmethod
+    async def commit(cls, session: AsyncSession) -> None:
+        await session.commit()
 
     @classmethod
     async def count_all(cls, session: AsyncSession, filters: list[ColumnElement[bool]] | None = None) -> int:

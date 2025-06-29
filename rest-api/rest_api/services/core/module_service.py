@@ -1,11 +1,13 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from models.core import Module, AssocGroupModule
-from repositories.core import ModuleRepository, GroupRepository, AssocGroupModuleRepository
+from sqlalchemy.exc import NoResultFound
+
+from models.core import AssocGroupModule, Module
+from repositories.core import AssocGroupModuleRepository, GroupRepository, ModuleRepository
 from schemas.core import ModulePlainSchema, ModuleStrictSchema
 from services.base import BaseService
-from sqlalchemy.exc import NoResultFound
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,6 +30,7 @@ class ModuleService(BaseService[Module, ModuleRepository, ModuleStrictSchema, Mo
         saved_model = await self._repository_cls.save(session, model, False)
         await self._handle_assoc_table(
             session=session,
+            owner_model=saved_model,
             assoc_repo_cls=AssocGroupModuleRepository,
             model_cls=AssocGroupModule,
             owner_field="module_id",
@@ -37,7 +40,6 @@ class ModuleService(BaseService[Module, ModuleRepository, ModuleStrictSchema, Mo
             related_repo_cls=GroupRepository,
             created_by=created_by,
         )
-        await session.refresh(saved_model)
         return self._output_schema_cls.model_validate(saved_model)
 
     async def update(
@@ -52,6 +54,7 @@ class ModuleService(BaseService[Module, ModuleRepository, ModuleStrictSchema, Mo
         updated_model = await self._repository_cls.save(session, model, False)
         await self._handle_assoc_table(
             session=session,
+            owner_model=updated_model,
             assoc_repo_cls=AssocGroupModuleRepository,
             model_cls=AssocGroupModule,
             owner_field="module_id",
@@ -62,5 +65,4 @@ class ModuleService(BaseService[Module, ModuleRepository, ModuleStrictSchema, Mo
             created_by=modified_by,
             modified_by=modified_by,
         )
-        await session.refresh(updated_model)
         return self._output_schema_cls.model_validate(updated_model)

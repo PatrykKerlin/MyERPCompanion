@@ -2,7 +2,7 @@ from typing import Union
 
 from fastapi import HTTPException, Request, status
 from pydantic import ValidationError
-from sqlalchemy.exc import SQLAlchemyError, NoResultFound
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 
 from config import Context
 from controllers.base import BaseController

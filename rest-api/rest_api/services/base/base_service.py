@@ -78,6 +78,7 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
     async def _handle_assoc_table(
         self,
         session: AsyncSession,
+        owner_model: TModel,
         assoc_repo_cls: type[BaseRepository],
         model_cls: type[BaseModel],
         owner_field: str,
@@ -111,4 +112,5 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
             )
             await assoc_repo_cls.save(session, assoc_model, False)
 
-        await session.commit()
+        await self._repository_cls.commit(session)
+        await self._repository_cls.refresh(session, owner_model)

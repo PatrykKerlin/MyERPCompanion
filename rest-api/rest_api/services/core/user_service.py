@@ -1,12 +1,14 @@
 from __future__ import annotations
-from typing import Union, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Union
+
+from sqlalchemy.exc import NoResultFound
 
 from models.core import AssocUserGroup, User
 from repositories.core import AssocUserGroupRepository, GroupRepository, UserRepository
 from schemas.core import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
 from services.base import BaseService
 from utils.auth import Auth
-from sqlalchemy.exc import NoResultFound
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,6 +42,7 @@ class UserService(
         saved_model = await self._repository_cls.save(session, model, False)
         await self._handle_assoc_table(
             session=session,
+            owner_model=saved_model,
             assoc_repo_cls=AssocUserGroupRepository,
             model_cls=AssocUserGroup,
             owner_field="user_id",
@@ -49,7 +52,6 @@ class UserService(
             related_repo_cls=GroupRepository,
             created_by=created_by,
         )
-        await session.refresh(saved_model)
         return self._output_schema_cls.model_validate(saved_model)
 
     async def update(
@@ -70,6 +72,7 @@ class UserService(
         updated_model = await self._repository_cls.save(session, model, False)
         await self._handle_assoc_table(
             session=session,
+            owner_model=updated_model,
             assoc_repo_cls=AssocUserGroupRepository,
             model_cls=AssocUserGroup,
             owner_field="user_id",
@@ -80,5 +83,4 @@ class UserService(
             created_by=modified_by,
             modified_by=modified_by,
         )
-        await session.refresh(updated_model)
         return self._output_schema_cls.model_validate(updated_model)
