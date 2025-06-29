@@ -1,14 +1,14 @@
 from typing import Annotated, Generic, Literal, TypeVar
 
-from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from pydantic import ValidationError
 from sqlalchemy import String
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql.elements import ColumnElement
-from sqlalchemy.exc import SQLAlchemyError
-from pydantic import ValidationError
 
 from config import Context
-from schemas.base import BaseStrictSchema, BasePlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
 from schemas.core import FilterParamsSchema, PaginatedResponseSchema, PaginationParamsSchema, SortingParamsSchema
 from services.base import BaseService
 from utils.auth import Auth

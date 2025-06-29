@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.core import Language, Translation
 from repositories.core import TranslationRepository
-from schemas.core import TranslationStrictSchema, TranslationByLanguagePlainSchema, TranslationPlainSchema
+from schemas.core import TranslationByLanguagePlainSchema, TranslationPlainSchema, TranslationStrictSchema
 from services.base import BaseService
 
 

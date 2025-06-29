@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Request, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from jose.exceptions import JWTError
-from sqlalchemy.exc import SQLAlchemyError, NoResultFound
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 
 from config import Context
 from schemas.core import AuthStrictSchema

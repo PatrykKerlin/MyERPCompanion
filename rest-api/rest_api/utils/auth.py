@@ -3,11 +3,11 @@ from datetime import UTC, datetime, timedelta
 from functools import wraps
 from typing import Any, cast
 
-from fastapi import Request, HTTPException, status
+from fastapi import HTTPException, Request, status
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings
 from schemas.core import UserPlainSchema

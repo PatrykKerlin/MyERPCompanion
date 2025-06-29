@@ -2,7 +2,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from schemas.base import BaseStrictSchema, BasePlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
 
 
 class ViewStrictSchema(BaseStrictSchema):

@@ -22,17 +22,26 @@ class App:
 
     def __include_routers(self) -> None:
         api_router = APIRouter(prefix="/api")
+        endpoints: list[dict[str, Any]] = []
 
-        endpoints = [
+        core_endpoints = [
             {"router": cc.HealthCheckController().router, "tags": ["health_check"]},
             {"router": cc.AuthController(self.__context).router, "tags": ["authorization"]},
-            {"router": cc.TranslationController(self.__context).router, "prefix": "/texts", "tags": ["texts"]},
+            {
+                "router": cc.TranslationController(self.__context).router,
+                "prefix": "/translations",
+                "tags": ["translations"],
+            },
             {"router": cc.CurrentUserController().router, "tags": ["current_user"]},
             {"router": cc.ModuleController(self.__context).router, "prefix": "/modules", "tags": ["modules"]},
-            {"router": cc.ViewController(self.__context).router, "prefix": "/endpoints", "tags": ["endpoints"]},
+            {"router": cc.ViewController(self.__context).router, "prefix": "/views", "tags": ["views"]},
             {"router": cc.UserController(self.__context).router, "prefix": "/users", "tags": ["users"]},
             {"router": cc.GroupController(self.__context).router, "prefix": "/groups", "tags": ["groups"]},
+            {"router": cc.LanguageController(self.__context).router, "prefix": "/languages", "tags": ["languages"]},
+            {"router": cc.ThemeController(self.__context).router, "prefix": "/themes", "tags": ["themes"]},
         ]
+
+        endpoints.extend(core_endpoints)
 
         for endpoint in endpoints:
             api_router.include_router(**endpoint)

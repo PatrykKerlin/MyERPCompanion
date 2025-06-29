@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.core import Module
 from repositories.core import ModuleRepository
-from schemas.core import ModuleStrictSchema, ModulePlainSchema
+from schemas.core import ModulePlainSchema, ModuleStrictSchema
 from services.base import BaseService
 
 

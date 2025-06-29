@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, status, HTTPException
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy.exc import SQLAlchemyError
 
 from schemas.core import UserPlainSchema

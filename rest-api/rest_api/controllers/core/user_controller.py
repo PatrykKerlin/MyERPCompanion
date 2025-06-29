@@ -1,12 +1,12 @@
 from typing import Union
 
-from fastapi import Request, HTTPException, status
-from sqlalchemy.exc import SQLAlchemyError
+from fastapi import HTTPException, Request, status
 from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 
 from config import Context
 from controllers.base import BaseController
-from schemas.core import UserStrictCreateSchema, UserStrictUpdateSchema, UserPlainSchema
+from schemas.core import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
 from services.core import UserService
 from utils.auth import Auth
 

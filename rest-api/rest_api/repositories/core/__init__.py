@@ -1,4 +1,4 @@
-from models.core import AssocGroupModule, AssocUserGroup, View, Group, Language, Theme
+from models.core import AssocGroupModule, AssocUserGroup, Group, Language, Theme, View
 from utils.factories import RepositoryFactory
 
 from .module_repository import ModuleRepository

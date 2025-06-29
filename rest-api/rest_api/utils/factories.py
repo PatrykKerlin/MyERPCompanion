@@ -7,13 +7,13 @@ if TYPE_CHECKING:
     from ..controllers.base import BaseController
     from ..models.base import BaseModel
     from ..repositories.base import BaseRepository
-    from ..schemas.base import BaseStrictSchema, BasePlainSchema
+    from ..schemas.base import BasePlainSchema, BaseStrictSchema
     from ..services.base import BaseService
 
 
 TModel = TypeVar("TModel", bound="BaseModel")
-TInputSchema = TypeVar("TInputSchema", bound="BaseInputSchema")
-TOutputSchema = TypeVar("TOutputSchema", bound="BaseOutputSchema")
+TInputSchema = TypeVar("TInputSchema", bound="BaseStrictSchema")
+TOutputSchema = TypeVar("TOutputSchema", bound="BasePlainSchema")
 TRepository = TypeVar("TRepository", bound="BaseRepository")
 TService = TypeVar("TService", bound="BaseService")
 TController = TypeVar("TController", bound="BaseController")

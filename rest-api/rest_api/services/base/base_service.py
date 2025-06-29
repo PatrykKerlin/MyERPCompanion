@@ -7,7 +7,7 @@ from sqlalchemy.sql.elements import ColumnElement
 
 from models.base import BaseModel
 from repositories.base import BaseRepository
-from schemas.base import BaseStrictSchema, BasePlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
 
 TModel = TypeVar("TModel", bound=BaseModel)
 TRepository = TypeVar("TRepository", bound=BaseRepository)

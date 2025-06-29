@@ -1,11 +1,11 @@
-from aiofiles import open
-from csv import DictReader
-from io import StringIO
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
+from csv import DictReader
+from io import StringIO
 from os import getenv
 from pathlib import Path
 
+from aiofiles import open
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

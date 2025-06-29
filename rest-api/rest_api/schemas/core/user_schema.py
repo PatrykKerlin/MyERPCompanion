@@ -2,7 +2,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from schemas.base import BaseStrictSchema, BasePlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
 from schemas.core import GroupPlainSchema, LanguagePlainSchema, ThemePlainSchema
 
 

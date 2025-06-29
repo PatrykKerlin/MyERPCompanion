@@ -1,12 +1,11 @@
 from typing import TypeVar, Union
 
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.core import AssocUserGroup, User
 from repositories.core import AssocUserGroupRepository, GroupRepository, UserRepository
 from schemas.base import BaseStrictSchema
-from schemas.core import UserStrictCreateSchema, UserStrictUpdateSchema, UserPlainSchema
+from schemas.core import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
 from services.base import BaseService
 from utils.auth import Auth
 

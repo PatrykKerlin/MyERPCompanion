@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, Request, status, HTTPException
+from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.exc import SQLAlchemyError
 
 from config import Context
@@ -8,9 +8,9 @@ from controllers.base import BaseController
 from schemas.core import (
     PaginatedResponseSchema,
     PaginationParamsSchema,
-    TranslationStrictSchema,
     TranslationByLanguagePlainSchema,
     TranslationPlainSchema,
+    TranslationStrictSchema,
 )
 from services.core import TranslationService
 

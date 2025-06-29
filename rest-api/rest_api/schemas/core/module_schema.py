@@ -2,8 +2,8 @@ from typing import Annotated
 
 from pydantic import Field
 
-from schemas.base import BaseStrictSchema, BasePlainSchema
-from schemas.core import ViewPlainSchema, GroupPlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.core import GroupPlainSchema, ViewPlainSchema
 
 
 class ModuleStrictSchema(BaseStrictSchema):

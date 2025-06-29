@@ -1,13 +1,17 @@
-from models.core import View, Group, Module
+from models.core import Group, Language, Module, Theme, View
 from schemas.core import (
-    ViewStrictSchema,
-    ViewPlainSchema,
-    GroupStrictSchema,
     GroupPlainSchema,
-    ModuleStrictSchema,
+    GroupStrictSchema,
+    LanguagePlainSchema,
+    LanguageStrictSchema,
     ModulePlainSchema,
+    ModuleStrictSchema,
+    ThemePlainSchema,
+    ThemeStrictSchema,
+    ViewPlainSchema,
+    ViewStrictSchema,
 )
-from services.core import EndpointService, GroupService, ModuleService
+from services.core import GroupService, LanguageService, ModuleService, ThemeService, ViewService
 from utils.factories import ControllerFactory
 
 from .auth_controller import AuthController
@@ -16,12 +20,17 @@ from .health_check_controller import HealthCheckController
 from .translation_controller import TranslationController
 from .user_controller import UserController
 
-
 GroupController = ControllerFactory.create(
     model_cls=Group,
     service_cls=GroupService,
     input_schema_cls=GroupStrictSchema,
     output_schema_cls=GroupPlainSchema,
+)
+LanguageController = ControllerFactory.create(
+    model_cls=Language,
+    service_cls=LanguageService,
+    input_schema_cls=LanguageStrictSchema,
+    output_schema_cls=LanguagePlainSchema,
 )
 ModuleController = ControllerFactory.create(
     model_cls=Module,
@@ -29,9 +38,15 @@ ModuleController = ControllerFactory.create(
     input_schema_cls=ModuleStrictSchema,
     output_schema_cls=ModulePlainSchema,
 )
+ThemeController = ControllerFactory.create(
+    model_cls=Theme,
+    service_cls=ThemeService,
+    input_schema_cls=ThemeStrictSchema,
+    output_schema_cls=ThemePlainSchema,
+)
 ViewController = ControllerFactory.create(
     model_cls=View,
-    service_cls=EndpointService,
+    service_cls=ViewService,
     input_schema_cls=ViewStrictSchema,
     output_schema_cls=ViewPlainSchema,
 )
@@ -42,7 +57,9 @@ __all__ = [
     "CurrentUserController",
     "GroupController",
     "HealthCheckController",
+    "LanguageController",
     "ModuleController",
+    "ThemeController",
     "TranslationController",
     "UserController",
     "ViewController",

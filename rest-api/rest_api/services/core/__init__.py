@@ -1,13 +1,22 @@
-from models.core import View, Group
-from repositories.core import ViewRepository, GroupRepository
-from schemas.core import ViewStrictSchema, ViewPlainSchema, GroupStrictSchema, GroupPlainSchema
+from models.core import Group, Language, Theme, View
+from repositories.core import GroupRepository, LanguageRepository, ThemeRepository, ViewRepository
+from schemas.core import (
+    GroupPlainSchema,
+    GroupStrictSchema,
+    LanguagePlainSchema,
+    LanguageStrictSchema,
+    ThemePlainSchema,
+    ThemeStrictSchema,
+    ViewPlainSchema,
+    ViewStrictSchema,
+)
 from utils.factories import ServiceFactory
 
 from .module_service import ModuleService
 from .translation_service import TranslationService
 from .user_service import UserService
 
-EndpointService = ServiceFactory.create(
+ViewService = ServiceFactory.create(
     model_cls=View,
     repository_cls=ViewRepository,
     input_schema_cls=ViewStrictSchema,
@@ -19,12 +28,26 @@ GroupService = ServiceFactory.create(
     input_schema_cls=GroupStrictSchema,
     output_schema_cls=GroupPlainSchema,
 )
+LanguageService = ServiceFactory.create(
+    model_cls=Language,
+    repository_cls=LanguageRepository,
+    input_schema_cls=LanguageStrictSchema,
+    output_schema_cls=LanguagePlainSchema,
+)
+ThemeService = ServiceFactory.create(
+    model_cls=Theme,
+    repository_cls=ThemeRepository,
+    input_schema_cls=ThemeStrictSchema,
+    output_schema_cls=ThemePlainSchema,
+)
 
 
 __all__ = [
-    "EndpointService",
     "GroupService",
+    "LanguageService",
     "ModuleService",
+    "ThemeService",
     "TranslationService",
     "UserService",
+    "ViewService",
 ]
