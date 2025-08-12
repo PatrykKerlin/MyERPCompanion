@@ -13,15 +13,15 @@ if TYPE_CHECKING:
     from .user import User
 
 
-class AssocUserGroup(BaseModel):
-    __tablename__ = "users_groups"
+class UserGroup(BaseModel):
+    __tablename__ = "user_groups"
 
     group_id: Mapped[int] = mapped_column(Integer, ForeignKey("groups.id"), primary_key=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), primary_key=True)
-
     group: Mapped[Group] = relationship(
         argument="Group", back_populates="group_users", foreign_keys=[group_id], cascade_soft_delete=False
     )
+
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), primary_key=True)
     user: Mapped[User] = relationship(
         argument="User", back_populates="user_groups", foreign_keys=[user_id], cascade_soft_delete=False
     )

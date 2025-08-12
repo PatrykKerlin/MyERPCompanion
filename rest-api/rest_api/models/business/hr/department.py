@@ -9,8 +9,8 @@ from models.base import BaseModel
 from models.base.orm import relationship
 
 if TYPE_CHECKING:
-    from .assoc_employee_department import AssocEmployeeDepartment
     from .employee import Employee
+    from .position import Position
 
 
 class Department(BaseModel):
@@ -19,12 +19,10 @@ class Department(BaseModel):
     key: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    employee_departments: Mapped[list[AssocEmployeeDepartment]] = relationship(
-        argument="AssocEmployeeDepartment",
-        back_populates="department",
-        foreign_keys="AssocEmployeeDepartment.department_id",
+    positions: Mapped[list[Position]] = relationship(
+        argument="Position", back_populates="department", foreign_keys="Position.department_id"
     )
 
-    @property
-    def employees(self) -> list[Employee]:
-        return [assoc.employee for assoc in self.employee_departments]
+    employees: Mapped[list[Employee]] = relationship(
+        argument="Employee", back_populates="department", foreign_keys="Employee.department_id"
+    )

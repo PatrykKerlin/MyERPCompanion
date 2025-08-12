@@ -1,4 +1,4 @@
-FROM redis:8.0.0-bookworm
+FROM redis:8.2.0-bookworm
 LABEL maintainer="Patryk Kerlin"
 
 RUN apt-get update

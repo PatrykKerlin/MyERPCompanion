@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, String, UniqueConstraint
+from sqlalchemy import ForeignKey, String, UniqueConstraint, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from models.base import BaseModel
@@ -19,7 +19,7 @@ class Translation(BaseModel):
     key: Mapped[str] = mapped_column(String(25), nullable=False)
     value: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
 
-    language_id: Mapped[int] = mapped_column(ForeignKey("languages.id"), nullable=False)
+    language_id: Mapped[int] = mapped_column(Integer, ForeignKey("languages.id"), nullable=False)
     language: Mapped[Language] = relationship(
         argument="Language", back_populates="translations", foreign_keys=[language_id]
     )
