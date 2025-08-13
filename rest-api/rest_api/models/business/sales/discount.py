@@ -10,9 +10,9 @@ from models.base import BaseModel
 from models.base.orm import relationship
 
 if TYPE_CHECKING:
-    from .category_discount import CategoryDiscount
-    from .customer_discount import CustomerDiscount
-    from .item_discount import ItemDiscount
+    from .assoc_category_discount import AssocCategoryDiscount
+    from .assoc_customer_discount import AssocCustomerDiscount
+    from .assoc_item_discount import AssocItemDiscount
     from .customer import Customer
     from ..logistic.category import Category
     from ..logistic.item import Item
@@ -21,9 +21,12 @@ if TYPE_CHECKING:
 class Discount(BaseModel):
     __tablename__ = "discounts"
 
-    __table_args__ = CheckConstraint(
-        "(percent IS NULL AND amount IS NOT NULL) OR (percent IS NOT NULL AND amount IS NULL)",
-        name="ck_discount_one_of_percent_or_amount",
+    __table_args__ = (
+        CheckConstraint(
+            "(percent IS NULL AND amount IS NOT NULL) OR (percent IS NOT NULL AND amount IS NULL)",
+            name="ck_discount_one_of_percent_or_amount",
+        ),
+        CheckConstraint("end_date IS NULL OR start_date <= end_date", name="ck_discount_valid_dates"),
     )
 
     key: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
@@ -40,14 +43,14 @@ class Discount(BaseModel):
     min_order_value: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     min_quantity: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    discount_categories: Mapped[list[CategoryDiscount]] = relationship(
-        argument="CategoryDiscount", back_populates="discount", foreign_keys="CategoryDiscount.discount_id"
+    discount_categories: Mapped[list[AssocCategoryDiscount]] = relationship(
+        argument="AssocCategoryDiscount", back_populates="discount", foreign_keys="AssocCategoryDiscount.discount_id"
     )
-    discount_customers: Mapped[list[CustomerDiscount]] = relationship(
-        argument="CustomerDiscount", back_populates="discount", foreign_keys="CustomerDiscount.discount_id"
+    discount_customers: Mapped[list[AssocCustomerDiscount]] = relationship(
+        argument="AssocCustomerDiscount", back_populates="discount", foreign_keys="AssocCustomerDiscount.discount_id"
     )
-    discount_items: Mapped[list[ItemDiscount]] = relationship(
-        argument="ItemDiscount", back_populates="discount", foreign_keys="ItemDiscount.discount_id"
+    discount_items: Mapped[list[AssocItemDiscount]] = relationship(
+        argument="AssocItemDiscount", back_populates="discount", foreign_keys="AssocItemDiscount.discount_id"
     )
 
     @property

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .user import User
 
 
-class UserGroup(BaseModel):
+class AssocUserGroup(BaseModel):
     __tablename__ = "user_groups"
 
     group_id: Mapped[int] = mapped_column(Integer, ForeignKey("groups.id"), primary_key=True)

@@ -34,6 +34,6 @@ class Supplier(BaseModel):
     bank_account: Mapped[str] = mapped_column(String(26), nullable=False)
     bank_name: Mapped[str] = mapped_column(String(50), nullable=False)
     tax_id: Mapped[str] = mapped_column(String(10), nullable=False)
-    payment_terms: Mapped[int] = mapped_column(Integer, nullable=False)
+    payment_term: Mapped[int] = mapped_column(Integer, nullable=False)
 
     notes: Mapped[str | None] = mapped_column(String(255), nullable=True)

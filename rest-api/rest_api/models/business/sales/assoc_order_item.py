@@ -14,13 +14,14 @@ if TYPE_CHECKING:
     from ..logistic.item import Item
 
 
-class OrderItem(BaseModel):
+class AssocOrderItem(BaseModel):
     __tablename__ = "order_items"
 
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
-    total_net: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
-    total_vat: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
-    total_gross: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
+    total_net: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    total_vat: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    total_gross: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    total_discount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
 
     order_id: Mapped[int] = mapped_column(Integer, ForeignKey("orders.id"), nullable=False)
     order: Mapped[Order] = relationship(argument="Order", back_populates="order_items", foreign_keys=[order_id])

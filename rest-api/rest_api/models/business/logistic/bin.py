@@ -8,7 +8,7 @@ from models.base import BaseModel
 from models.base.orm import relationship
 
 if TYPE_CHECKING:
-    from .bin_item import BinItem
+    from .assoc_bin_item import AssocBinItem
     from .item import Item
     from .warehouse import Warehouse
 
@@ -28,8 +28,8 @@ class Bin(BaseModel):
         argument="Warehouse", back_populates="bins", foreign_keys=[warehouse_id]
     )
 
-    bin_items: Mapped[list[BinItem]] = relationship(
-        argument="BinItem", back_populates="bin", foreign_keys="BinItem.bin_id"
+    bin_items: Mapped[list[AssocBinItem]] = relationship(
+        argument="AssocBinItem", back_populates="bin", foreign_keys="AssocBinItem.bin_id"
     )
 
     @property

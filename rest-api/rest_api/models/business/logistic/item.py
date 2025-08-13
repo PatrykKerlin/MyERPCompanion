@@ -10,14 +10,16 @@ from models.base import BaseModel
 from models.base.orm import relationship
 
 if TYPE_CHECKING:
-    from .bin_item import BinItem
+    from .assoc_bin_item import AssocBinItem
     from .bin import Bin
     from .category import Category
-    from .package import Package
     from .unit import Unit
     from .supplier import Supplier
-    from ..sales.item_discount import ItemDiscount
+    from ..sales.currency import Currency
     from ..sales.discount import Discount
+    from ..sales.assoc_item_discount import AssocItemDiscount
+    from ..sales.assoc_order_item import AssocOrderItem
+    from ..sales.order import Order
 
 
 class Item(BaseModel):
@@ -31,13 +33,19 @@ class Item(BaseModel):
     sku: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
 
     purchase_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-    sales_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-    percent: Mapped[float | None] = mapped_column(Numeric(3, 2), nullable=True)
+    vat_rate: Mapped[float | None] = mapped_column(Numeric(3, 2), nullable=True)
     margin: Mapped[float] = mapped_column(Numeric(3, 2), nullable=False)
 
     is_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_fragile: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_package: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_returnable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
     expiration_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+
+    width: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    height: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    length: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     weight: Mapped[float] = mapped_column(Numeric(10, 3), nullable=False)
 
     stock_quantity: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -45,8 +53,8 @@ class Item(BaseModel):
     max_stock_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
     moq: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    package_id: Mapped[int] = mapped_column(Integer, ForeignKey("packages.id"), nullable=False)
-    package: Mapped[Package] = relationship(argument="Package", back_populates="items", foreign_keys=[package_id])
+    currency_id: Mapped[int] = mapped_column(Integer, ForeignKey("currencies.id"), nullable=False)
+    currency: Mapped[Currency] = relationship(argument="Currency", back_populates="items", foreign_keys=[currency_id])
 
     category_id: Mapped[int] = mapped_column(Integer, ForeignKey("categories.id"), nullable=False)
     category: Mapped[Category] = relationship(argument="Category", back_populates="items", foreign_keys=[category_id])
@@ -57,11 +65,14 @@ class Item(BaseModel):
     supplier_id: Mapped[int] = mapped_column(Integer, ForeignKey("suppliers.id"), nullable=False)
     supplier: Mapped[Supplier] = relationship(argument="Supplier", back_populates="items", foreign_keys=[supplier_id])
 
-    item_bins: Mapped[list[BinItem]] = relationship(
-        argument="BinItem", back_populates="item", foreign_keys="BinItem.item_id"
+    item_bins: Mapped[list[AssocBinItem]] = relationship(
+        argument="AssocBinItem", back_populates="item", foreign_keys="AssocBinItem.item_id"
     )
-    item_discounts: Mapped[list[ItemDiscount]] = relationship(
-        argument="ItemDiscount", back_populates="item", foreign_keys="ItemDiscount.item_id"
+    item_discounts: Mapped[list[AssocItemDiscount]] = relationship(
+        argument="AssocItemDiscount", back_populates="item", foreign_keys="AssocItemDiscount.item_id"
+    )
+    item_orders: Mapped[list[AssocOrderItem]] = relationship(
+        argument="AssocOrderItem", back_populates="item", foreign_keys="AssocOrderItem.item_id"
     )
 
     @property
@@ -71,3 +82,7 @@ class Item(BaseModel):
     @property
     def discounts(self) -> list[Discount]:
         return [row.discount for row in self.item_discounts]
+
+    @property
+    def orders(self) -> list[Order]:
+        return [row.order for row in self.item_orders]

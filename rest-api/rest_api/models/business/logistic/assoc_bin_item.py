@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .item import Item
 
 
-class BinItem(BaseModel):
+class AssocBinItem(BaseModel):
     __tablename__ = "bin_items"
 
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)

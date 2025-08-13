@@ -9,7 +9,7 @@ from models.base.orm import relationship
 
 if TYPE_CHECKING:
     from .item import Item
-    from ..sales.category_discount import CategoryDiscount
+    from ..sales.category_discount import AssocCategoryDiscount
     from ..sales.discount import Discount
 
 
@@ -23,7 +23,7 @@ class Category(BaseModel):
         argument="Item", back_populates="category", foreign_keys="Item.category_id"
     )
 
-    category_discounts: Mapped[list[CategoryDiscount]] = relationship(
+    category_discounts: Mapped[list[AssocCategoryDiscount]] = relationship(
         argument="CategoryDiscount", back_populates="category", foreign_keys="CategoryDiscount.category_id"
     )
 

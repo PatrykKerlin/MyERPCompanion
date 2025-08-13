@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ..logistic.category import Category
 
 
-class CategoryDiscount(BaseModel):
+class AssocCategoryDiscount(BaseModel):
     __tablename__ = "category_discounts"
 
     category_id: Mapped[int] = mapped_column(Integer, ForeignKey("categories.id"), primary_key=True)

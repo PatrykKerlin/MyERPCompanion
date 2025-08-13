@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .customer import Customer
 
 
-class CustomerDiscount(BaseModel):
+class AssocCustomerDiscount(BaseModel):
     __tablename__ = "customer_discounts"
 
     customer_id: Mapped[int] = mapped_column(Integer, ForeignKey("customers.id"), primary_key=True)

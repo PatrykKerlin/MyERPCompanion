@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from sqlalchemy import String, Boolean, Numeric
+from sqlalchemy import String, Numeric
 from sqlalchemy.orm import Mapped, mapped_column
 
 from models.base import BaseModel

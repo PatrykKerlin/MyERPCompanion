@@ -9,8 +9,8 @@ from models.base import BaseModel
 from models.base.orm import relationship
 
 if TYPE_CHECKING:
-    from .module_group import ModuleGroup
-    from .user_group import UserGroup
+    from .assoc_module_group import AssocModuleGroup
+    from .assoc_user_group import AssocUserGroup
     from .module import Module
     from .user import User
 
@@ -21,11 +21,11 @@ class Group(BaseModel):
     key: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    group_modules: Mapped[list[ModuleGroup]] = relationship(
-        argument="ModuleGroup", back_populates="group", foreign_keys="ModuleGroup.group_id"
+    group_modules: Mapped[list[AssocModuleGroup]] = relationship(
+        argument="AssocModuleGroup", back_populates="group", foreign_keys="AssocModuleGroup.group_id"
     )
-    group_users: Mapped[list[UserGroup]] = relationship(
-        argument="UserGroup", back_populates="group", foreign_keys="UserGroup.group_id"
+    group_users: Mapped[list[AssocUserGroup]] = relationship(
+        argument="AssocUserGroup", back_populates="group", foreign_keys="AssocUserGroup.group_id"
     )
 
     @property

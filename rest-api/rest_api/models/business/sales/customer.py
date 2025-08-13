@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from sqlalchemy import String, Boolean
+from sqlalchemy import String, Boolean, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from models.base import BaseModel
 from models.base.orm import relationship
 
 if TYPE_CHECKING:
-    from .customer_discount import CustomerDiscount
+    from .assoc_customer_discount import AssocCustomerDiscount
     from .discount import Discount
     from .order import Order
 
@@ -22,6 +22,8 @@ class Customer(BaseModel):
 
     is_company: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     company_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    payment_term: Mapped[int] = mapped_column(Integer, nullable=False)
 
     email: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     phone_number: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
@@ -45,6 +47,10 @@ class Customer(BaseModel):
     orders: Mapped[list[Order]] = relationship(
         argument="Order", back_populates="customer", foreign_keys="Order.customer_id"
     )
-    customer_discounts: Mapped[list[CustomerDiscount]] = relationship(
-        argument="CustomerDiscount", back_populates="customer", foreign_keys="CustomerDiscount.customer_id"
+    customer_discounts: Mapped[list[AssocCustomerDiscount]] = relationship(
+        argument="AssocCustomerDiscount", back_populates="customer", foreign_keys="AssocCustomerDiscount.customer_id"
     )
+
+    @property
+    def discounts(self) -> list[Discount]:
+        return [row.discount for row in self.customer_discounts]

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .module import Module
 
 
-class ModuleGroup(BaseModel):
+class AssocModuleGroup(BaseModel):
     __tablename__ = "module_groups"
 
     group_id: Mapped[int] = mapped_column(Integer, ForeignKey("groups.id"), primary_key=True)

@@ -10,7 +10,7 @@ from models.base.orm import relationship
 from models.business import Employee
 
 if TYPE_CHECKING:
-    from .user_group import UserGroup
+    from .assoc_user_group import AssocUserGroup
     from .group import Group
     from .language import Language
     from .theme import Theme
@@ -36,8 +36,8 @@ class User(BaseModel):
     theme_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("themes.id"), nullable=True)
     theme: Mapped[Theme | None] = relationship(argument="Theme", back_populates="users", foreign_keys=[theme_id])
 
-    user_groups: Mapped[list[UserGroup]] = relationship(
-        argument="UserGroup", back_populates="user", foreign_keys="UserGroup.user_id"
+    user_groups: Mapped[list[AssocUserGroup]] = relationship(
+        argument="AssocUserGroup", back_populates="user", foreign_keys="AssocUserGroup.user_id"
     )
 
     @property
