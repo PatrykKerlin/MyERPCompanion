@@ -3,11 +3,10 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, ForeignKey, Date, Integer, CheckConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import CheckConstraint
+from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel
-from models.base.orm import relationship
+from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
     from ...core.user import User
@@ -28,56 +27,60 @@ class Employee(BaseModel):
             "(id_card_number IS NOT NULL AND id_card_expiry IS NOT NULL)",
             name="chk_id_card_expiry_required",
         ),
+        CheckConstraint(
+            "id_card_number IS NOT NULL OR passport_number IS NOT NULL",
+            name="chk_employee_document_required",
+        ),
     )
 
-    first_name: Mapped[str] = mapped_column(String(50), nullable=False)
-    middle_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    last_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    first_name: Mapped[str] = Fields.string_50()
+    middle_name: Mapped[str | None] = Fields.string_50(nullable=True)
+    last_name: Mapped[str] = Fields.string_50()
 
-    pesel: Mapped[str | None] = mapped_column(String(11), nullable=True)
-    birth_date: Mapped[date] = mapped_column(Date, nullable=False)
-    birth_place: Mapped[str] = mapped_column(String(50), nullable=False)
+    pesel: Mapped[str | None] = Fields.pesel()
+    birth_date: Mapped[date] = Fields.date()
+    birth_place: Mapped[str] = Fields.string_50()
 
-    passport_number: Mapped[str | None] = mapped_column(String(9), unique=True, nullable=True)
-    passport_expiry: Mapped[date | None] = mapped_column(Date, nullable=True)
-    id_card_number: Mapped[str | None] = mapped_column(String(9), unique=True, nullable=True)
-    id_card_expiry: Mapped[date | None] = mapped_column(Date, nullable=True)
+    passport_number: Mapped[str | None] = Fields.id_document(nullable=True)
+    passport_expiry: Mapped[date | None] = Fields.date(nullable=True)
+    id_card_number: Mapped[str | None] = Fields.id_document(nullable=True)
+    id_card_expiry: Mapped[date | None] = Fields.date(nullable=True)
 
-    email: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    phone_number: Mapped[str | None] = mapped_column(String(25), unique=True, nullable=True)
+    email: Mapped[str | None] = Fields.string_100(unique=True, nullable=True)
+    phone_number: Mapped[str] = Fields.string_20(unique=True)
 
-    hire_date: Mapped[date] = mapped_column(Date, nullable=False)
-    termination_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    salary: Mapped[int] = mapped_column(Integer, nullable=False)
+    hire_date: Mapped[date] = Fields.date()
+    termination_date: Mapped[date | None] = Fields.date(nullable=True)
+    salary: Mapped[int] = Fields.integer()
 
-    street: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    house_number: Mapped[str] = mapped_column(String(10), nullable=False)
-    apartment_number: Mapped[str | None] = mapped_column(String(10), nullable=True)
-    postal_code: Mapped[str] = mapped_column(String(6), nullable=False)
-    city: Mapped[str] = mapped_column(String(50), nullable=False)
-    country: Mapped[str] = mapped_column(String(50), nullable=False)
+    street: Mapped[str | None] = Fields.string_50(nullable=True)
+    house_number: Mapped[str] = Fields.string_10()
+    apartment_number: Mapped[str | None] = Fields.string_10(nullable=True)
+    postal_code: Mapped[str] = Fields.postal_code()
+    city: Mapped[str] = Fields.string_50()
+    country: Mapped[str] = Fields.string_50()
 
-    bank_account: Mapped[str] = mapped_column(String(26), nullable=False)
-    bank_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    bank_account: Mapped[str] = Fields.bank_account()
+    bank_name: Mapped[str] = Fields.string_50()
 
-    manager_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("employees.id"), nullable=True)
-    manager: Mapped[Employee | None] = relationship(
+    manager_id: Mapped[int | None] = Fields.foreign_key(column="employees.id", nullable=True)
+    manager: Mapped[Employee | None] = Fields.relationship(
         argument="Employee", back_populates="subordinates", foreign_keys=[manager_id], remote_side="Employee.id"
     )
-    subordinates: Mapped[list[Employee]] = relationship(
+    subordinates: Mapped[list[Employee]] = Fields.relationship(
         argument="Employee", back_populates="manager", foreign_keys="Employee.manager_id"
     )
 
-    position_id: Mapped[int] = mapped_column(Integer, ForeignKey("positions.id"), nullable=False)
-    position: Mapped[Position] = relationship(
+    position_id: Mapped[int] = Fields.foreign_key(column="positions.id")
+    position: Mapped[Position] = Fields.relationship(
         argument="Position", back_populates="employees", foreign_keys=[position_id]
     )
 
-    department_id: Mapped[int] = mapped_column(Integer, ForeignKey("departments.id"), nullable=False)
-    department: Mapped[Department] = relationship(
+    department_id: Mapped[int] = Fields.foreign_key(column="departments.id")
+    department: Mapped[Department] = Fields.relationship(
         argument="Department", back_populates="employees", foreign_keys=[department_id]
     )
 
-    user: Mapped[User | None] = relationship(
+    user: Mapped[User | None] = Fields.relationship(
         argument="User", back_populates="employee", foreign_keys="User.employee_id", uselist=False
     )

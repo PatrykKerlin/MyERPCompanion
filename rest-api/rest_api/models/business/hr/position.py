@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Integer, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel
-from models.base.orm import relationship
+from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
     from .department import Department
@@ -16,16 +14,16 @@ if TYPE_CHECKING:
 class Position(BaseModel):
     __tablename__ = "positions"
 
-    key: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
-    level: Mapped[int] = mapped_column(Integer, nullable=False)
-    min_salary: Mapped[int] = mapped_column(Integer, nullable=False)
-    max_salary: Mapped[int] = mapped_column(Integer, nullable=False)
+    key: Mapped[str] = Fields.key()
+    level: Mapped[int] = Fields.integer()
+    min_salary: Mapped[int] = Fields.integer()
+    max_salary: Mapped[int] = Fields.integer()
 
-    department_id: Mapped[int] = mapped_column(Integer, ForeignKey("departments.id"), nullable=False)
-    department: Mapped[Department] = relationship(
+    department_id: Mapped[int] = Fields.foreign_key(column="departments.id")
+    department: Mapped[Department] = Fields.relationship(
         argument="Department", back_populates="positions", foreign_keys=[department_id]
     )
 
-    employees: Mapped[list[Employee]] = relationship(
+    employees: Mapped[list[Employee]] = Fields.relationship(
         argument="Employee", back_populates="position", foreign_keys="Employee.position_id"
     )

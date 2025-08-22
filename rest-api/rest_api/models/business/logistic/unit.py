@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
 
-from models.base import BaseModel
-from models.base.orm import relationship
+from sqlalchemy.orm import Mapped
+
+from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
     from .item import Item
@@ -14,8 +13,8 @@ if TYPE_CHECKING:
 class Unit(BaseModel):
     __tablename__ = "units"
 
-    key: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
-    symbol: Mapped[str] = mapped_column(String(10), nullable=False)
-    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    key: Mapped[str] = Fields.key()
+    symbol: Mapped[str] = Fields.symbol()
+    description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
-    items: Mapped[list[Item]] = relationship(argument="Item", back_populates="unit", foreign_keys="Item.unit_id")
+    items: Mapped[list[Item]] = Fields.relationship(argument="Item", back_populates="unit", foreign_keys="Item.unit_id")

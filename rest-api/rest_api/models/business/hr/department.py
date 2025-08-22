@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel
-from models.base.orm import relationship
+from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
     from .employee import Employee
@@ -16,13 +14,13 @@ if TYPE_CHECKING:
 class Department(BaseModel):
     __tablename__ = "departments"
 
-    key: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
-    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    key: Mapped[str] = Fields.key()
+    description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
-    positions: Mapped[list[Position]] = relationship(
+    positions: Mapped[list[Position]] = Fields.relationship(
         argument="Position", back_populates="department", foreign_keys="Position.department_id"
     )
 
-    employees: Mapped[list[Employee]] = relationship(
+    employees: Mapped[list[Employee]] = Fields.relationship(
         argument="Employee", back_populates="department", foreign_keys="Employee.department_id"
     )

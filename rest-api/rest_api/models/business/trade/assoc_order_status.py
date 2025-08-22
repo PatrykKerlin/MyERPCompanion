@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Integer, ForeignKey, Boolean
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel
-from models.base.orm import relationship
+from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
     from .order import Order
@@ -16,12 +14,12 @@ if TYPE_CHECKING:
 class AssocOrderStatus(BaseModel):
     __tablename__ = "order_statuses"
 
-    order_id: Mapped[int] = mapped_column(Integer, ForeignKey("orders.id"), primary_key=True)
-    order: Mapped[Order] = relationship(
+    order_id: Mapped[int] = Fields.foreign_key(column="orders.id", primary_key=True)
+    order: Mapped[Order] = Fields.relationship(
         argument="Order", back_populates="order_statuses", foreign_keys=[order_id], cascade_soft_delete=False
     )
 
-    status_id: Mapped[int] = mapped_column(Integer, ForeignKey("statuses.id"), primary_key=True)
-    status: Mapped[Status] = relationship(
+    status_id: Mapped[int] = Fields.foreign_key(column="statuses.id", primary_key=True)
+    status: Mapped[Status] = Fields.relationship(
         argument="Status", back_populates="status_orders", foreign_keys=[status_id], cascade_soft_delete=False
     )

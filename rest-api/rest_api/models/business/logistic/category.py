@@ -1,30 +1,28 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel
-from models.base.orm import relationship
+from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
     from .item import Item
-    from ..sales.category_discount import AssocCategoryDiscount
-    from ..sales.discount import Discount
+    from ..trade.assoc_category_discount import AssocCategoryDiscount
+    from ..trade.discount import Discount
 
 
 class Category(BaseModel):
     __tablename__ = "categories"
 
-    key: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
-    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    key: Mapped[str] = Fields.key()
+    description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
-    items: Mapped[list[Item]] = relationship(
+    items: Mapped[list[Item]] = Fields.relationship(
         argument="Item", back_populates="category", foreign_keys="Item.category_id"
     )
 
-    category_discounts: Mapped[list[AssocCategoryDiscount]] = relationship(
-        argument="CategoryDiscount", back_populates="category", foreign_keys="CategoryDiscount.category_id"
+    category_discounts: Mapped[list[AssocCategoryDiscount]] = Fields.relationship(
+        argument="AssocCategoryDiscount", back_populates="category", foreign_keys="AssocCategoryDiscount.category_id"
     )
 
     @property

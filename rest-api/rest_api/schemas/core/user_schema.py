@@ -18,7 +18,7 @@ class UserStrictCreateSchema(BaseStrictSchema, UserStrictBaseSchema):
 
 
 class UserStrictUpdateSchema(BaseStrictSchema, UserStrictBaseSchema):
-    password: Annotated[str | None, Field(default=None, min_length=8, max_length=128)]
+    password: Annotated[str | None, Field(min_length=8, max_length=128)]
 
 
 class UserPlainSchema(BasePlainSchema):

@@ -3,11 +3,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Boolean, Integer, Numeric, CheckConstraint, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import CheckConstraint
+from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel
-from models.base.orm import relationship
+from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
     from .assoc_category_discount import AssocCategoryDiscount
@@ -20,7 +19,6 @@ if TYPE_CHECKING:
 
 class Discount(BaseModel):
     __tablename__ = "discounts"
-
     __table_args__ = (
         CheckConstraint(
             "(percent IS NULL AND amount IS NOT NULL) OR (percent IS NOT NULL AND amount IS NULL)",
@@ -29,27 +27,26 @@ class Discount(BaseModel):
         CheckConstraint("end_date IS NULL OR start_date <= end_date", name="ck_discount_valid_dates"),
     )
 
-    key: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
-    index: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
-    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    key: Mapped[str] = Fields.key()
+    index: Mapped[str] = Fields.string_10(unique=True)
+    description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
-    start_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    end_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    start_date: Mapped[datetime] = Fields.datetime()
+    end_date: Mapped[datetime | None] = Fields.datetime(nullable=True)
 
-    percent: Mapped[float | None] = mapped_column(Numeric(3, 2), nullable=True)
-    amount: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
-    max_amount: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    percent: Mapped[float | None] = Fields.numeric_3_2(nullable=True)
+    amount: Mapped[float | None] = Fields.numeric_10_2(nullable=True)
 
-    min_order_value: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
-    min_quantity: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    min_order_value: Mapped[float | None] = Fields.numeric_10_2(nullable=True)
+    min_quantity: Mapped[int | None] = Fields.integer(nullable=True)
 
-    discount_categories: Mapped[list[AssocCategoryDiscount]] = relationship(
+    discount_categories: Mapped[list[AssocCategoryDiscount]] = Fields.relationship(
         argument="AssocCategoryDiscount", back_populates="discount", foreign_keys="AssocCategoryDiscount.discount_id"
     )
-    discount_customers: Mapped[list[AssocCustomerDiscount]] = relationship(
+    discount_customers: Mapped[list[AssocCustomerDiscount]] = Fields.relationship(
         argument="AssocCustomerDiscount", back_populates="discount", foreign_keys="AssocCustomerDiscount.discount_id"
     )
-    discount_items: Mapped[list[AssocItemDiscount]] = relationship(
+    discount_items: Mapped[list[AssocItemDiscount]] = Fields.relationship(
         argument="AssocItemDiscount", back_populates="discount", foreign_keys="AssocItemDiscount.discount_id"
     )
 

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
 
-from models.base import BaseModel
-from models.base.orm import relationship
+from sqlalchemy.orm import Mapped
+
+from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
     from .delivery_method import DeliveryMethod
@@ -17,20 +16,22 @@ if TYPE_CHECKING:
 class Currency(BaseModel):
     __tablename__ = "currencies"
 
-    code: Mapped[str] = mapped_column(String(3), unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(25), nullable=False)
-    symbol: Mapped[str] = mapped_column(String(8), nullable=True)
+    code: Mapped[str] = Fields.symbol()
+    name: Mapped[str] = Fields.string_20()
+    sign: Mapped[str] = Fields.symbol()
 
-    base_rates: Mapped[list[ExchangeRate]] = relationship(
+    base_rates: Mapped[list[ExchangeRate]] = Fields.relationship(
         argument="ExchangeRate", back_populates="base_currency", foreign_keys="ExchangeRate.base_currency_id"
     )
-    quote_rates: Mapped[list[ExchangeRate]] = relationship(
+    quote_rates: Mapped[list[ExchangeRate]] = Fields.relationship(
         argument="ExchangeRate", back_populates="quote_currency", foreign_keys="ExchangeRate.quote_currency_id"
     )
-    orders: Mapped[list[Order]] = relationship(
+    orders: Mapped[list[Order]] = Fields.relationship(
         argument="Order", back_populates="currency", foreign_keys="Order.currency_id"
     )
-    delivery_methods: Mapped[list[DeliveryMethod]] = relationship(
+    delivery_methods: Mapped[list[DeliveryMethod]] = Fields.relationship(
         argument="DeliveryMethod", back_populates="currency", foreign_keys="DeliveryMethod.currency_id"
     )
-    items: Mapped[list[Item]] = relationship(argument=Item, back_populates="currency", foreign_keys="Item.currency_id")
+    items: Mapped[list[Item]] = Fields.relationship(
+        argument="Item", back_populates="currency", foreign_keys="Item.currency_id"
+    )

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from sqlalchemy import String, Boolean, ForeignKey, Integer, Numeric
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import CheckConstraint
+from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel
-from models.base.orm import relationship
+from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
     from .assoc_bin_item import AssocBinItem
@@ -15,20 +14,26 @@ if TYPE_CHECKING:
 
 class Bin(BaseModel):
     __tablename__ = "bins"
+    __table_args__ = (
+        CheckConstraint(
+            "(is_inbound IS NULL AND is_outbound IS NOT NULL) OR (is_inbound IS NOT NULL AND is_outbound IS NULL)",
+            name="chk_bin_flags",
+        ),
+    )
 
-    location: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
-    is_inbound: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    is_outbound: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    location: Mapped[str] = Fields.string_10(unique=True)
+    is_inbound: Mapped[bool] = Fields.boolean(default=False)
+    is_outbound: Mapped[bool] = Fields.boolean(default=False)
 
-    max_volume: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-    max_weight: Mapped[int] = mapped_column(Integer, nullable=False)
+    max_volume: Mapped[float] = Fields.numeric_10_2()
+    max_weight: Mapped[int] = Fields.integer()
 
-    warehouse_id: Mapped[Warehouse] = mapped_column(Integer, ForeignKey("warehouses.id"), nullable=False)
-    warehouse: Mapped[Warehouse] = relationship(
+    warehouse_id: Mapped[int] = Fields.foreign_key(column="warehouses.id")
+    warehouse: Mapped[Warehouse] = Fields.relationship(
         argument="Warehouse", back_populates="bins", foreign_keys=[warehouse_id]
     )
 
-    bin_items: Mapped[list[AssocBinItem]] = relationship(
+    bin_items: Mapped[list[AssocBinItem]] = Fields.relationship(
         argument="AssocBinItem", back_populates="bin", foreign_keys="AssocBinItem.bin_id"
     )
 

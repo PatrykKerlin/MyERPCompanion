@@ -15,5 +15,5 @@ class ModuleStrictSchema(BaseStrictSchema):
 class ModulePlainSchema(BasePlainSchema):
     key: str
     order: int
-    views: list[ViewPlainSchema] = []
-    groups: list[GroupPlainSchema] = []
+    views: list[ViewPlainSchema]
+    groups: list[GroupPlainSchema]

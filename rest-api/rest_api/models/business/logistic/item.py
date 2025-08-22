@@ -3,11 +3,9 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Integer, ForeignKey, Boolean, Numeric, Date
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel
-from models.base.orm import relationship
+from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
     from .assoc_bin_item import AssocBinItem
@@ -15,63 +13,68 @@ if TYPE_CHECKING:
     from .category import Category
     from .unit import Unit
     from .supplier import Supplier
-    from ..sales.currency import Currency
-    from ..sales.discount import Discount
-    from ..sales.assoc_item_discount import AssocItemDiscount
-    from ..sales.assoc_order_item import AssocOrderItem
-    from ..sales.order import Order
+    from ..trade.currency import Currency
+    from ..trade.discount import Discount
+    from ..trade.assoc_item_discount import AssocItemDiscount
+    from ..trade.assoc_order_item import AssocOrderItem
+    from ..trade.order import Order
 
 
 class Item(BaseModel):
     __tablename__ = "items"
 
-    index: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(50), nullable=False)
-    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    index: Mapped[str] = Fields.string_10(unique=True, nullable=False)
+    name: Mapped[str] = Fields.string_100()
+    description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
-    ean: Mapped[str] = mapped_column(String(13), unique=True, nullable=False)
-    sku: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    ean: Mapped[str] = Fields.ean()
 
-    purchase_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-    vat_rate: Mapped[float | None] = mapped_column(Numeric(3, 2), nullable=True)
-    margin: Mapped[float] = mapped_column(Numeric(3, 2), nullable=False)
+    purchase_price: Mapped[float] = Fields.numeric_10_2()
+    vat_rate: Mapped[float | None] = Fields.numeric_3_2()
+    margin: Mapped[float] = Fields.numeric_5_2()
 
-    is_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    is_fragile: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    is_package: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    is_returnable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_available: Mapped[bool] = Fields.boolean(default=True)
+    is_fragile: Mapped[bool] = Fields.boolean(default=False)
+    is_package: Mapped[bool] = Fields.boolean(default=False)
+    is_returnable: Mapped[bool] = Fields.boolean(default=False)
 
-    expiration_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    expiration_date: Mapped[date | None] = Fields.date(nullable=True)
 
-    width: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-    height: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-    length: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-    weight: Mapped[float] = mapped_column(Numeric(10, 3), nullable=False)
+    width: Mapped[float] = Fields.numeric_10_2()
+    height: Mapped[float] = Fields.numeric_10_2()
+    length: Mapped[float] = Fields.numeric_10_2()
+    weight: Mapped[float] = Fields.numeric_10_3()
 
-    stock_quantity: Mapped[int] = mapped_column(Integer, nullable=False)
-    min_stock_level: Mapped[int] = mapped_column(Integer, nullable=False)
-    max_stock_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    moq: Mapped[int] = mapped_column(Integer, nullable=False)
+    stock_quantity: Mapped[int] = Fields.integer()
+    min_stock_level: Mapped[int] = Fields.integer()
+    max_stock_level: Mapped[int | None] = Fields.integer(nullable=True)
+    moq: Mapped[int] = Fields.integer()
 
-    currency_id: Mapped[int] = mapped_column(Integer, ForeignKey("currencies.id"), nullable=False)
-    currency: Mapped[Currency] = relationship(argument="Currency", back_populates="items", foreign_keys=[currency_id])
+    currency_id: Mapped[int] = Fields.foreign_key(column="currencies.id")
+    currency: Mapped[Currency] = Fields.relationship(
+        argument="Currency", back_populates="items", foreign_keys=[currency_id]
+    )
 
-    category_id: Mapped[int] = mapped_column(Integer, ForeignKey("categories.id"), nullable=False)
-    category: Mapped[Category] = relationship(argument="Category", back_populates="items", foreign_keys=[category_id])
+    category_id: Mapped[int] = Fields.foreign_key(column="categories.id")
+    category: Mapped[Category] = Fields.relationship(
+        argument="Category", back_populates="items", foreign_keys=[category_id]
+    )
 
-    unit_id: Mapped[int] = mapped_column(Integer, ForeignKey("units.id"), nullable=False)
-    unit: Mapped[Unit] = relationship(argument="Unit", back_populates="items", foreign_keys=[unit_id])
+    unit_id: Mapped[int] = Fields.foreign_key(column="units.id")
+    unit: Mapped[Unit] = Fields.relationship(argument="Unit", back_populates="items", foreign_keys=[unit_id])
 
-    supplier_id: Mapped[int] = mapped_column(Integer, ForeignKey("suppliers.id"), nullable=False)
-    supplier: Mapped[Supplier] = relationship(argument="Supplier", back_populates="items", foreign_keys=[supplier_id])
+    supplier_id: Mapped[int] = Fields.foreign_key(column="suppliers.id")
+    supplier: Mapped[Supplier] = Fields.relationship(
+        argument="Supplier", back_populates="items", foreign_keys=[supplier_id]
+    )
 
-    item_bins: Mapped[list[AssocBinItem]] = relationship(
+    item_bins: Mapped[list[AssocBinItem]] = Fields.relationship(
         argument="AssocBinItem", back_populates="item", foreign_keys="AssocBinItem.item_id"
     )
-    item_discounts: Mapped[list[AssocItemDiscount]] = relationship(
+    item_discounts: Mapped[list[AssocItemDiscount]] = Fields.relationship(
         argument="AssocItemDiscount", back_populates="item", foreign_keys="AssocItemDiscount.item_id"
     )
-    item_orders: Mapped[list[AssocOrderItem]] = relationship(
+    item_orders: Mapped[list[AssocOrderItem]] = Fields.relationship(
         argument="AssocOrderItem", back_populates="item", foreign_keys="AssocOrderItem.item_id"
     )
 

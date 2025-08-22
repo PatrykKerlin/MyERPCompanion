@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel
-from models.base.orm import relationship
+from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
     from .translation import Translation
@@ -16,11 +14,12 @@ if TYPE_CHECKING:
 class Language(BaseModel):
     __tablename__ = "languages"
 
-    key: Mapped[str] = mapped_column(String(2), nullable=False, unique=True)
+    key: Mapped[str] = Fields.key()
+    symbol: Mapped[str] = Fields.symbol()
 
-    translations: Mapped[list[Translation]] = relationship(
+    translations: Mapped[list[Translation]] = Fields.relationship(
         argument="Translation", back_populates="language", foreign_keys="Translation.language_id"
     )
-    users: Mapped[list[User]] = relationship(
+    users: Mapped[list[User]] = Fields.relationship(
         argument="User", back_populates="language", foreign_keys="User.language_id"
     )

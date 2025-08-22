@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel
-from models.base.orm import relationship
+from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
     from .assoc_module_group import AssocModuleGroup
@@ -17,11 +15,13 @@ if TYPE_CHECKING:
 class Module(BaseModel):
     __tablename__ = "modules"
 
-    key: Mapped[str] = mapped_column(String(25), unique=True, nullable=False)
-    order: Mapped[int] = mapped_column(Integer(), nullable=False, unique=True)
+    key: Mapped[str] = Fields.key()
+    order: Mapped[int] = Fields.integer(unique=True)
 
-    views: Mapped[list[View]] = relationship(argument="View", back_populates="module", foreign_keys="View.module_id")
-    module_groups: Mapped[list[AssocModuleGroup]] = relationship(
+    views: Mapped[list[View]] = Fields.relationship(
+        argument="View", back_populates="module", foreign_keys="View.module_id"
+    )
+    module_groups: Mapped[list[AssocModuleGroup]] = Fields.relationship(
         argument="AssocModuleGroup", back_populates="module", foreign_keys="AssocModuleGroup.module_id"
     )
 
