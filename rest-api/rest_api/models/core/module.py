@@ -16,6 +16,7 @@ class Module(BaseModel):
     __tablename__ = "modules"
 
     key: Mapped[str] = Fields.key()
+    description: Mapped[str | None] = Fields.string_1000(nullable=True)
     order: Mapped[int] = Fields.integer(unique=True)
 
     views: Mapped[list[View]] = Fields.relationship(

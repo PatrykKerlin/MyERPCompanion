@@ -15,6 +15,7 @@ class Position(BaseModel):
     __tablename__ = "positions"
 
     key: Mapped[str] = Fields.key()
+    description: Mapped[str | None] = Fields.string_1000(nullable=True)
     level: Mapped[int] = Fields.integer()
     min_salary: Mapped[int] = Fields.integer()
     max_salary: Mapped[int] = Fields.integer()

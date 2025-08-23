@@ -15,7 +15,7 @@ class Warehouse(BaseModel):
 
     name: Mapped[str] = Fields.string_100(unique=True)
     email: Mapped[str] = Fields.string_100(unique=True)
-    phone_number: Mapped[str | None] = Fields.string_20(unique=True)
+    phone_number: Mapped[str] = Fields.string_20(unique=True)
 
     street: Mapped[str | None] = Fields.string_50(nullable=True)
     house_number: Mapped[str] = Fields.string_10()

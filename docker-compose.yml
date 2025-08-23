@@ -25,6 +25,7 @@ services:
       - "8000:8000"
     volumes:
       - ./rest-api/rest_api/:/rest_api
+      - ./shared/schemas:/rest_api/schemas
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:changeme@postgres/MyERPCompanion
       - SECRET_KEY=secret

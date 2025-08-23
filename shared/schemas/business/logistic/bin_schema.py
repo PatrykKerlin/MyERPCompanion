@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-from typing import Annotated, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from pydantic import Field, model_validator
+from pydantic import model_validator
 
-from schemas.base import BaseStrictSchema, BasePlainSchema
+from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints
 
 if TYPE_CHECKING:
     from .warehouse_schema import WarehousePlainSchema
 
 
 class BinStrictSchema(BaseStrictSchema):
-    location: Annotated[str, Field(pattern=r"^[A-Z]{2}\d{5}$", min_length=7, max_length=7)]
-    is_inbound: Annotated[bool, Field(default=False)]
-    is_outbound: Annotated[bool, Field(default=False)]
-    max_volume: Annotated[float, Field(gt=0)]
-    max_weight: Annotated[int, Field(ge=1)]
-    warehouse_id: Annotated[int, Field(ge=1)]
+    location: Constraints.String10
+    is_inbound: Constraints.BooleanFalse
+    is_outbound: Constraints.BooleanTrue
+    max_volume: Constraints.PositiveFloat
+    max_weight: Constraints.PositiveInteger
+    warehouse_id: Constraints.PositiveInteger
 
     @model_validator(mode="after")
     def _validate_flags(self) -> BinStrictSchema:

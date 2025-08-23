@@ -61,6 +61,7 @@ class Employee(BaseModel):
     country: Mapped[str] = Fields.string_50()
 
     bank_account: Mapped[str] = Fields.bank_account()
+    bank_swift: Mapped[str] = Fields.bank_swift()
     bank_name: Mapped[str] = Fields.string_50()
 
     manager_id: Mapped[int | None] = Fields.foreign_key(column="employees.id", nullable=True)

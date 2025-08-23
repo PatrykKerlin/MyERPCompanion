@@ -16,9 +16,9 @@ class Supplier(BaseModel):
 
     name: Mapped[str] = Fields.string_100()
 
-    email: Mapped[str | None] = Fields.string_50(nullable=True)
-    phone_number: Mapped[str | None] = Fields.string_20(nullable=True)
-    website: Mapped[str | None] = Fields.string_50(nullable=True)
+    company_email: Mapped[str | None] = Fields.string_50(nullable=True)
+    company_phone: Mapped[str | None] = Fields.string_20(nullable=True)
+    company_website: Mapped[str | None] = Fields.string_50(nullable=True)
 
     street: Mapped[str | None] = Fields.string_50(nullable=True)
     house_number: Mapped[str] = Fields.string_10()
@@ -29,10 +29,11 @@ class Supplier(BaseModel):
 
     first_name: Mapped[str] = Fields.string_50()
     last_name: Mapped[str] = Fields.string_50()
-    contact_phone: Mapped[str] = Fields.string_20()
-    contact_email: Mapped[str] = Fields.string_100(unique=True)
+    phone_number: Mapped[str] = Fields.string_20()
+    email: Mapped[str] = Fields.string_100(unique=True)
 
     bank_account: Mapped[str] = Fields.bank_account()
+    bank_swift: Mapped[str] = Fields.bank_swift()
     bank_name: Mapped[str] = Fields.string_50()
     tax_id: Mapped[str] = Fields.string_10()
     payment_term: Mapped[int] = Fields.integer()

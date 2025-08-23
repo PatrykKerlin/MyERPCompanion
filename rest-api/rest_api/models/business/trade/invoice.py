@@ -10,7 +10,7 @@ from models.base import BaseModel, Fields
 if TYPE_CHECKING:
     from .order import Order
     from .payment_method import PaymentMethod
-    from ..sales.currency import Currency
+    from ..trade.currency import Currency
 
 
 class Invoice(BaseModel):

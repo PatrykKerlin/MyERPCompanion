@@ -16,6 +16,7 @@ class Language(BaseModel):
 
     key: Mapped[str] = Fields.key()
     symbol: Mapped[str] = Fields.symbol()
+    description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     translations: Mapped[list[Translation]] = Fields.relationship(
         argument="Translation", back_populates="language", foreign_keys="Translation.language_id"

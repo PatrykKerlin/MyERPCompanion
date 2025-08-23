@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Annotated, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from pydantic import Field, model_validator, EmailStr, ValidationInfo
+from pydantic import Field, model_validator, ValidationInfo
 
-from schemas.base import BaseStrictSchema, BasePlainSchema
+from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints
 
 if TYPE_CHECKING:
     from ...core.user_schema import UserPlainSchema
@@ -14,39 +14,40 @@ if TYPE_CHECKING:
 
 
 class EmployeeStrictSchema(BaseStrictSchema):
-    first_name: Annotated[str, Field(min_length=1, max_length=50)]
-    middle_name: Annotated[str | None, Field(max_length=50)]
-    last_name: Annotated[str, Field(min_length=1, max_length=50)]
+    first_name: Constraints.String50
+    middle_name: Constraints.String50Optional
+    last_name: Constraints.String50
 
-    pesel: Annotated[str | None, Field(min_length=11, max_length=11)]
+    pesel: Constraints.PeselOptional
     birth_date: date
-    birth_place: Annotated[str, Field(min_length=1, max_length=50)]
+    birth_place: Constraints.String50
 
-    passport_number: Annotated[str | None, Field(min_length=9, max_length=9)]
+    passport_number: Constraints.IdDocumentOptional
     passport_expiry: date | None
-    id_card_number: Annotated[str | None, Field(min_length=9, max_length=9)]
+    id_card_number: Constraints.IdDocumentOptional
     id_card_expiry: date | None
 
-    email: Annotated[EmailStr | None, Field(max_length=100)]
-    phone_number: Annotated[str | None, Field(pattern=r"^[0-9+\-\s]+$", min_length=9, max_length=25)]
+    email: Constraints.EmailOptional
+    phone_number: Constraints.PhoneNumber
 
     hire_date: date
     termination_date: date | None
-    salary: Annotated[int, Field(ge=1)]
+    salary: Constraints.PositiveInteger
 
-    street: Annotated[str | None, Field(max_length=50)]
-    house_number: Annotated[str, Field(min_length=1, max_length=10)]
-    apartment_number: Annotated[str | None, Field(max_length=10)]
-    postal_code: Annotated[str, Field(pattern=r"^\d{2}-\d{3}$", min_length=6, max_length=6)]
-    city: Annotated[str, Field(min_length=1, max_length=50)]
-    country: Annotated[str, Field(min_length=1, max_length=50)]
+    street: Constraints.String50Optional
+    house_number: Constraints.String10
+    apartment_number: Constraints.String10Optional
+    postal_code: Constraints.PostalCode
+    city: Constraints.String50
+    country: Constraints.String50
 
-    bank_account: Annotated[str, Field(pattern=r"^\d+$", min_length=26, max_length=26)]
-    bank_name: Annotated[str, Field(min_length=1, max_length=50)]
+    bank_account: Constraints.BankAccount
+    bank_swift: Constraints.BankSwift
+    bank_name: Constraints.String50
 
-    manager_id: Annotated[int | None, Field(ge=1)]
-    position_id: Annotated[int, Field(ge=1)]
-    department_id: Annotated[int, Field(ge=1)]
+    manager_id: Constraints.PositiveIntegerOptional
+    department_id: Constraints.PositiveInteger
+    position_id: Constraints.PositiveInteger
 
     @model_validator(mode="after")
     def _validate_data(self, info: ValidationInfo) -> EmployeeStrictSchema:
@@ -94,8 +95,8 @@ class EmployeePlainSchema(BasePlainSchema):
     id_card_number: str | None
     id_card_expiry: date | None
 
-    email: str
-    phone_number: str | None
+    email: str | None
+    phone_number: str
 
     hire_date: date
     termination_date: date | None
@@ -109,6 +110,7 @@ class EmployeePlainSchema(BasePlainSchema):
     country: str
 
     bank_account: str
+    bank_swift: str
     bank_name: str
 
     manager_id: int | None

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class User(BaseModel):
     __tablename__ = "users"
 
-    username: Mapped[str] = Fields.string_50(unique=True)
+    username: Mapped[str] = Fields.string_20(unique=True)
     is_superuser: Mapped[bool] = Fields.boolean(default=False)
     password: Mapped[str] = Fields.string_100()
 

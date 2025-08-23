@@ -16,7 +16,7 @@ class Fields:
     def foreign_key(
         column: str, nullable: bool = False, unique: bool = False, primary_key: bool = False
     ) -> Mapped[int]:
-        return mapped_column(Integer, ForeignKey(column), nullable=nullable, primary_key=primary_key)
+        return mapped_column(Integer, ForeignKey(column), nullable=nullable, unique=unique, primary_key=primary_key)
 
     @staticmethod
     def relationship(
@@ -99,6 +99,10 @@ class Fields:
     @staticmethod
     def bank_account() -> Mapped[str]:
         return mapped_column(String(26), nullable=False)
+
+    @staticmethod
+    def bank_swift() -> Mapped[str]:
+        return mapped_column(String(11), nullable=False)
 
     @staticmethod
     def ean() -> Mapped[str]:
