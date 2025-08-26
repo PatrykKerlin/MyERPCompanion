@@ -15,8 +15,8 @@ class Status(BaseModel):
     __tablename__ = "statuses"
 
     key: Mapped[str] = Fields.key()
-    step_number: Mapped[int] = Fields.integer(unique=True)
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
+    step_number: Mapped[int] = Fields.integer(unique=True)
 
     status_orders: Mapped[list[AssocOrderStatus]] = Fields.relationship(
         argument="AssocOrderStatus", back_populates="status", foreign_keys="AssocOrderStatus.status_id"

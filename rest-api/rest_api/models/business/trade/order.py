@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint
 from sqlalchemy.orm import Mapped
 
 from models.base import BaseModel, Fields
@@ -21,12 +20,6 @@ if TYPE_CHECKING:
 
 class Order(BaseModel):
     __tablename__ = "orders"
-    __table_args__ = (
-        CheckConstraint(
-            "(customer_id IS NOT NULL AND supplier_id IS NULL) OR (customer_id IS NULL AND supplier_id IS NOT NULL)",
-            name="ck_order_customer_or_supplier",
-        ),
-    )
 
     number: Mapped[str] = Fields.string_20(unique=True)
     is_sales: Mapped[bool] = Fields.boolean(default=True)

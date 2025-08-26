@@ -1,6 +1,7 @@
 from .assoc_module_group import AssocModuleGroup
 from .assoc_user_group import AssocUserGroup
 from .group import Group
+from .image import Image
 from .language import Language
 from .module import Module
 from .theme import Theme
@@ -12,6 +13,7 @@ __all__ = [
     "AssocModuleGroup",
     "AssocUserGroup",
     "Group",
+    "Image",
     "Language",
     "Module",
     "Theme",

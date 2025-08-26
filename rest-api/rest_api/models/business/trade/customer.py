@@ -15,26 +15,13 @@ if TYPE_CHECKING:
 
 class Customer(BaseModel):
     __tablename__ = "customers"
-    __table_args__ = (
-        CheckConstraint(
-            "(is_company AND company_name IS NOT NULL) OR (NOT is_company AND company_name IS NULL)",
-            name="chk_customer_is_company",
-        ),
-        CheckConstraint(
-            "(use_one_address AND billing_house_number IS NULL AND billing_postal_code IS NULL AND "
-            "billing_city IS NULL AND billing_country IS NULL) OR "
-            "(NOT use_one_address AND billing_house_number IS NOT NULL AND billing_postal_code IS NOT NULL AND "
-            "billing_city IS NOT NULL AND billing_country IS NOT NULL)",
-            name="chk_customer_second_address",
-        ),
-    )
 
     first_name: Mapped[str] = Fields.string_50()
     middle_name: Mapped[str | None] = Fields.string_50(nullable=True)
     last_name: Mapped[str] = Fields.string_50()
 
     is_company: Mapped[bool] = Fields.boolean(default=False)
-    company_name: Mapped[str | None] = Fields.string_50(nullable=True)
+    company_name: Mapped[str | None] = Fields.string_100(nullable=True)
 
     payment_term: Mapped[int] = Fields.integer()
 

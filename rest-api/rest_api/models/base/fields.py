@@ -65,12 +65,12 @@ class Fields:
         return mapped_column(Numeric(3, 2), nullable=nullable)
 
     @staticmethod
-    def numeric_5_2(nullable: bool = False) -> Mapped[Any]:
-        return mapped_column(Numeric(5, 2), nullable=nullable)
-
-    @staticmethod
     def numeric_10_2(nullable: bool = False) -> Mapped[Any]:
         return mapped_column(Numeric(10, 2), nullable=nullable)
+
+    @staticmethod
+    def numeric_6_3(nullable: bool = False) -> Mapped[Any]:
+        return mapped_column(Numeric(7, 3), nullable=nullable)
 
     @staticmethod
     def numeric_10_3(nullable: bool = False) -> Mapped[Any]:

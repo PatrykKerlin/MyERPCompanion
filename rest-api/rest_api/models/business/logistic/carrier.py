@@ -7,12 +7,12 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
-    from .item import Item
-    from ..trade.order import Order
+    from ..trade.currency import Currency
+    from ..trade.delivery_method import DeliveryMethod
 
 
-class Supplier(BaseModel):
-    __tablename__ = "suppliers"
+class Carrier(BaseModel):
+    __tablename__ = "carriers"
 
     name: Mapped[str] = Fields.string_100(unique=True)
 
@@ -39,9 +39,11 @@ class Supplier(BaseModel):
 
     notes: Mapped[str | None] = Fields.string_1000(nullable=True)
 
-    items: Mapped[list[Item]] = Fields.relationship(
-        argument="Item", back_populates="supplier", foreign_keys="Item.supplier_id"
+    currency_id: Mapped[int] = Fields.foreign_key(column="currencies.id")
+    currency: Mapped[Currency] = Fields.relationship(
+        argument="Currency", back_populates="carriers", foreign_keys=[currency_id]
     )
-    order: Mapped[list[Order]] = Fields.relationship(
-        argument="Order", back_populates="supplier", foreign_keys="Order.supplier_id"
+
+    delivery_methods: Mapped[list[DeliveryMethod]] = Fields.relationship(
+        argument="DeliveryMethod", back_populates="carrier", foreign_keys="DeliveryMethod.carrier_id"
     )

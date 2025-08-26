@@ -1,0 +1,26 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+from sqlalchemy import UniqueConstraint, Index, text
+from sqlalchemy.orm import Mapped
+
+from models.base import BaseModel, Fields
+
+if TYPE_CHECKING:
+    from ..business.logistic.item import Item
+
+
+class Image(BaseModel):
+    __tablename__ = "images"
+    __table_args__ = (
+        UniqueConstraint("item_id", "order", name="uq_item_image_order"),
+        Index("uq_item_images_only_one_primary", "item_id", unique=True, postgresql_where=text("is_primary")),
+    )
+
+    url: Mapped[str] = Fields.string_1000(nullable=False)
+    is_primary: Mapped[bool] = Fields.boolean(default=False)
+    order: Mapped[int] = Fields.integer()
+    description: Mapped[str | None] = Fields.string_1000(nullable=True)
+
+    item_id: Mapped[int] = Fields.foreign_key(column="items.id")
+    item: Mapped[Item] = Fields.relationship(argument="Item", back_populates="images", foreign_keys=[item_id])

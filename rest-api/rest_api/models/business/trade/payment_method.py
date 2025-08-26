@@ -17,7 +17,7 @@ class PaymentMethod(BaseModel):
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     provider: Mapped[str] = Fields.string_50()
-    api_url: Mapped[str] = Fields.string_100()
+    api_url: Mapped[str] = Fields.string_1000()
     surcharge_percent: Mapped[float] = Fields.numeric_3_2()
 
     invoices: Mapped[list[Invoice]] = Fields.relationship(

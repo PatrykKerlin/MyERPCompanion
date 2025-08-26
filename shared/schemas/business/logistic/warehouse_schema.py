@@ -1,7 +1,3 @@
-from typing import Any
-
-from pydantic import field_validator
-
 from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints, Normalizers
 
 
@@ -29,10 +25,3 @@ class WarehousePlainSchema(BasePlainSchema):
     postal_code: str
     city: str
     country: str
-
-    bins: list[int]
-
-    @field_validator("bins", mode="before")
-    @classmethod
-    def _normalize_bins(cls, bins: Any) -> list[int]:
-        return Normalizers.normalize_related_ids(bins, "bins")

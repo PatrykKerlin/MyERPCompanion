@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from sqlalchemy import CheckConstraint
 from sqlalchemy.orm import Mapped
 
 from models.base import BaseModel, Fields
@@ -14,12 +13,6 @@ if TYPE_CHECKING:
 
 class Bin(BaseModel):
     __tablename__ = "bins"
-    __table_args__ = (
-        CheckConstraint(
-            "(is_inbound IS NULL AND is_outbound IS NOT NULL) OR (is_inbound IS NOT NULL AND is_outbound IS NULL)",
-            name="chk_bin_flags",
-        ),
-    )
 
     location: Mapped[str] = Fields.string_10(unique=True)
     is_inbound: Mapped[bool] = Fields.boolean(default=False)

@@ -19,13 +19,6 @@ if TYPE_CHECKING:
 
 class Discount(BaseModel):
     __tablename__ = "discounts"
-    __table_args__ = (
-        CheckConstraint(
-            "(percent IS NULL AND amount IS NOT NULL) OR (percent IS NOT NULL AND amount IS NULL)",
-            name="ck_discount_one_of_percent_or_amount",
-        ),
-        CheckConstraint("end_date IS NULL OR start_date <= end_date", name="ck_discount_valid_dates"),
-    )
 
     key: Mapped[str] = Fields.key()
     index: Mapped[str] = Fields.string_10(unique=True)
@@ -37,7 +30,7 @@ class Discount(BaseModel):
     percent: Mapped[float | None] = Fields.numeric_3_2(nullable=True)
     amount: Mapped[float | None] = Fields.numeric_10_2(nullable=True)
 
-    min_order_value: Mapped[float | None] = Fields.numeric_10_2(nullable=True)
+    min_value: Mapped[float | None] = Fields.numeric_10_2(nullable=True)
     min_quantity: Mapped[int | None] = Fields.integer(nullable=True)
 
     discount_categories: Mapped[list[AssocCategoryDiscount]] = Fields.relationship(

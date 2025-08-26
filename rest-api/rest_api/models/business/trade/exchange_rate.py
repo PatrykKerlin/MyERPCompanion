@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from typing import TYPE_CHECKING
-from sqlalchemy import CheckConstraint, UniqueConstraint
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped
 
 from models.base import BaseModel, Fields
@@ -14,12 +14,10 @@ if TYPE_CHECKING:
 class ExchangeRate(BaseModel):
     __tablename__ = "exchange_rates"
     __table_args__ = (
-        CheckConstraint("base_currency_id <> quote_currency_id", name="ck_rate_diff_currencies"),
-        CheckConstraint("valid_to IS NULL OR valid_from <= valid_to", name="ck_rate_valid_dates"),
         UniqueConstraint("base_currency_id", "quote_currency_id", "valid_from", name="uq_rate_pair_from"),
     )
 
-    rate: Mapped[float] = Fields.numeric_10_3()
+    rate: Mapped[float] = Fields.numeric_10_2()
     valid_from: Mapped[date] = Fields.date()
     valid_to: Mapped[date | None] = Fields.date(nullable=True)
 

@@ -1,11 +1,13 @@
 from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints
 
 
-class CategoryStrictSchema(BaseStrictSchema):
+class StatusStrictSchema(BaseStrictSchema):
     key: Constraints.Key
     description: Constraints.String1000Optional
+    step_number: Constraints.PositiveInteger
 
 
-class CategoryPlainSchema(BasePlainSchema):
+class StatusPlainSchema(BasePlainSchema):
     key: str
     description: str | None
+    step_number: int

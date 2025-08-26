@@ -64,12 +64,12 @@ class EmployeeStrictSchema(BaseStrictSchema):
             raise ValueError("birth_date cannot be in the future")
         if self.hire_date < self.birth_date:
             raise ValueError("hire_date cannot be earlier than birth_date")
-        if self.termination_date is not None and self.termination_date < self.hire_date:
+        if self.termination_date and self.termination_date < self.hire_date:
             raise ValueError("termination_date cannot be earlier than hire_date")
 
-        if self.passport_expiry is not None and self.passport_expiry < today:
+        if self.passport_expiry and self.passport_expiry < today:
             raise ValueError("passport_expiry must be today or later")
-        if self.id_card_expiry is not None and self.id_card_expiry < today:
+        if self.id_card_expiry and self.id_card_expiry < today:
             raise ValueError("id_card_expiry must be today or later")
 
         rng = info.context.get("position_salary_range") if info.context else None

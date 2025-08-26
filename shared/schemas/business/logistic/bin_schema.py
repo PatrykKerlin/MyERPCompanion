@@ -19,7 +19,7 @@ class BinStrictSchema(BaseStrictSchema):
     warehouse_id: Constraints.PositiveInteger
 
     @model_validator(mode="after")
-    def _validate_flags(self) -> BinStrictSchema:
+    def _validate_data(self) -> BinStrictSchema:
         if not self.is_inbound and not self.is_outbound:
             raise ValueError("at least one of is_inbound or is_outbound must be true")
         return self

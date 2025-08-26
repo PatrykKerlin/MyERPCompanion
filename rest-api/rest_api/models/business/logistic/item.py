@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from ..trade.assoc_item_discount import AssocItemDiscount
     from ..trade.assoc_order_item import AssocOrderItem
     from ..trade.order import Order
+    from ...core.image import Image
 
 
 class Item(BaseModel):
@@ -30,8 +31,8 @@ class Item(BaseModel):
     ean: Mapped[str] = Fields.ean()
 
     purchase_price: Mapped[float] = Fields.numeric_10_2()
-    vat_rate: Mapped[float | None] = Fields.numeric_3_2()
-    margin: Mapped[float] = Fields.numeric_5_2()
+    vat_rate: Mapped[float] = Fields.numeric_3_2()
+    margin: Mapped[float] = Fields.numeric_6_3()
 
     is_available: Mapped[bool] = Fields.boolean(default=True)
     is_fragile: Mapped[bool] = Fields.boolean(default=False)
@@ -40,10 +41,10 @@ class Item(BaseModel):
 
     expiration_date: Mapped[date | None] = Fields.date(nullable=True)
 
-    width: Mapped[float] = Fields.numeric_10_2()
-    height: Mapped[float] = Fields.numeric_10_2()
-    length: Mapped[float] = Fields.numeric_10_2()
-    weight: Mapped[float] = Fields.numeric_10_3()
+    width: Mapped[float] = Fields.numeric_6_3()
+    height: Mapped[float] = Fields.numeric_6_3()
+    length: Mapped[float] = Fields.numeric_6_3()
+    weight: Mapped[float] = Fields.numeric_6_3()
 
     stock_quantity: Mapped[int] = Fields.integer()
     min_stock_level: Mapped[int] = Fields.integer()
@@ -66,6 +67,10 @@ class Item(BaseModel):
     supplier_id: Mapped[int] = Fields.foreign_key(column="suppliers.id")
     supplier: Mapped[Supplier] = Fields.relationship(
         argument="Supplier", back_populates="items", foreign_keys=[supplier_id]
+    )
+
+    images: Mapped[list[Image]] = Fields.relationship(
+        argument="Image", back_populates="item", foreign_keys="Image.item_id"
     )
 
     item_bins: Mapped[list[AssocBinItem]] = Fields.relationship(

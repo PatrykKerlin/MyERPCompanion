@@ -66,10 +66,10 @@ def create_app() -> FastAPI:
         populate = PopulateDatabase(database.get_session)
         await CheckDatabaseState(database.get_session).wait_for_db()
         await app_instance.startup()
-        await populate.populate_superuser()
-        await populate.populate_admins_group()
-        await populate.populate_from_csv()
-        await populate.update_superuser()
+        # await populate.populate_superuser()
+        # await populate.populate_admins_group()
+        # await populate.populate_from_csv()
+        # await populate.update_superuser()
         yield
 
     app_instance = App(context=context, database=database, lifespan=lifespan)

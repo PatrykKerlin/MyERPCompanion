@@ -1,7 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints
 
+if TYPE_CHECKING:
+    from ..trade.currency_schema import CurrencyPlainSchema
 
-class SupplierStrictSchema(BaseStrictSchema):
+
+class CarrierStrictSchema(BaseStrictSchema):
     name: Constraints.String100
 
     company_email: Constraints.EmailOptional
@@ -27,8 +34,10 @@ class SupplierStrictSchema(BaseStrictSchema):
 
     notes: Constraints.String1000Optional
 
+    currency_id: Constraints.PositiveInteger
 
-class SupplierPlainSchema(BasePlainSchema):
+
+class CarrierPlainSchema(BasePlainSchema):
     name: str
 
     company_email: str | None
@@ -53,3 +62,5 @@ class SupplierPlainSchema(BasePlainSchema):
     payment_term: int
 
     notes: str
+
+    currency: CurrencyPlainSchema

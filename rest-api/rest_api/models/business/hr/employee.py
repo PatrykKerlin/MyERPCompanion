@@ -16,22 +16,6 @@ if TYPE_CHECKING:
 
 class Employee(BaseModel):
     __tablename__ = "employees"
-    __table_args__ = (
-        CheckConstraint(
-            "(passport_number IS NULL AND passport_expiry IS NULL) OR "
-            "(passport_number IS NOT NULL AND passport_expiry IS NOT NULL)",
-            name="chk_passport_expiry_required",
-        ),
-        CheckConstraint(
-            "(id_card_number IS NULL AND id_card_expiry IS NULL) OR "
-            "(id_card_number IS NOT NULL AND id_card_expiry IS NOT NULL)",
-            name="chk_id_card_expiry_required",
-        ),
-        CheckConstraint(
-            "id_card_number IS NOT NULL OR passport_number IS NOT NULL",
-            name="chk_employee_document_required",
-        ),
-    )
 
     first_name: Mapped[str] = Fields.string_50()
     middle_name: Mapped[str | None] = Fields.string_50(nullable=True)

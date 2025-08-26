@@ -7,10 +7,10 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
-    from .delivery_method import DeliveryMethod
     from .exchange_rate import ExchangeRate
     from .order import Order
     from ..logistic.item import Item
+    from ..logistic.carrier import Carrier
 
 
 class Currency(BaseModel):
@@ -29,8 +29,8 @@ class Currency(BaseModel):
     orders: Mapped[list[Order]] = Fields.relationship(
         argument="Order", back_populates="currency", foreign_keys="Order.currency_id"
     )
-    delivery_methods: Mapped[list[DeliveryMethod]] = Fields.relationship(
-        argument="DeliveryMethod", back_populates="currency", foreign_keys="DeliveryMethod.currency_id"
+    carriers: Mapped[list[Carrier]] = Fields.relationship(
+        argument="Carrier", back_populates="currency", foreign_keys="Carrier.currency_id"
     )
     items: Mapped[list[Item]] = Fields.relationship(
         argument="Item", back_populates="currency", foreign_keys="Item.currency_id"
