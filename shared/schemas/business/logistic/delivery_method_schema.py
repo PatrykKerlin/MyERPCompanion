@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints
 
 if TYPE_CHECKING:
-    from ..logistic.carrier_schema import CarrierPlainSchema
-    from ..logistic.unit_schema import UnitPlainSchema
+    from .carrier_schema import CarrierPlainSchema
+    from .unit_schema import UnitPlainSchema
 
 
 class DeliveryMethodStrictSchema(BaseStrictSchema):

@@ -12,12 +12,12 @@ if TYPE_CHECKING:
     from .bin import Bin
     from .category import Category
     from .unit import Unit
-    from .supplier import Supplier
     from ..trade.currency import Currency
     from ..trade.discount import Discount
     from ..trade.assoc_item_discount import AssocItemDiscount
     from ..trade.assoc_order_item import AssocOrderItem
     from ..trade.order import Order
+    from ..trade.supplier import Supplier
     from ...core.image import Image
 
 

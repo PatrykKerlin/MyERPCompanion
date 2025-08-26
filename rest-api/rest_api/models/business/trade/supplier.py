@@ -7,8 +7,8 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
-    from .item import Item
-    from ..trade.order import Order
+    from .order import Order
+    from ..logistic.item import Item
 
 
 class Supplier(BaseModel):

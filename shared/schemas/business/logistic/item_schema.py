@@ -10,8 +10,8 @@ from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints  # , Nor
 if TYPE_CHECKING:
     from .category_schema import CategoryPlainSchema
     from .unit_schema import UnitPlainSchema
-    from .supplier_schema import SupplierPlainSchema
     from ..trade.currency_schema import CurrencyPlainSchema
+    from ..trade.supplier_schema import SupplierPlainSchema
 
 
 class ItemStrictSchema(BaseStrictSchema):

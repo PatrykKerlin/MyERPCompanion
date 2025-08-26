@@ -8,9 +8,9 @@ from pydantic import Field, model_validator, ValidationInfo
 from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints
 
 if TYPE_CHECKING:
-    from ...core.user_schema import UserPlainSchema
     from .department_schema import DepartmentPlainSchema
     from .position_schema import PositionPlainSchema
+    from ...core.user_schema import UserPlainSchema
 
 
 class EmployeeStrictSchema(BaseStrictSchema):

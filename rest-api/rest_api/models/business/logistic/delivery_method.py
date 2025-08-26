@@ -7,9 +7,9 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
-    from .order import Order
-    from ..logistic.unit import Unit
-    from ..logistic.carrier import Carrier
+    from .unit import Unit
+    from .carrier import Carrier
+    from ..trade.order import Order
 
 
 class DeliveryMethod(BaseModel):

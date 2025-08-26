@@ -9,8 +9,8 @@ from models.base import BaseModel, Fields
 if TYPE_CHECKING:
     from .exchange_rate import ExchangeRate
     from .order import Order
-    from ..logistic.item import Item
     from ..logistic.carrier import Carrier
+    from ..logistic.item import Item
 
 
 class Currency(BaseModel):

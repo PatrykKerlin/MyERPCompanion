@@ -7,8 +7,8 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
+    from .delivery_method import DeliveryMethod
     from ..trade.currency import Currency
-    from ..trade.delivery_method import DeliveryMethod
 
 
 class Carrier(BaseModel):

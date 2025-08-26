@@ -10,9 +10,9 @@ from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints, Normali
 
 if TYPE_CHECKING:
     from .customer_schema import CustomerPlainSchema
-    from ..logistic.supplier_schema import SupplierPlainSchema
-    from .delivery_method_schema import DeliveryMethodPlainSchema
     from .invoice_schema import InvoicePlainSchema
+    from .supplier_schema import SupplierPlainSchema
+    from ..logistic.delivery_method_schema import DeliveryMethodPlainSchema
 
 
 class OrderStrictSchema(BaseStrictSchema):
