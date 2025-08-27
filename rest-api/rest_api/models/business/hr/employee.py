@@ -8,9 +8,9 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
+    from ...core.user import User
     from .department import Department
     from .position import Position
-    from ...core.user import User
 
 
 class Employee(BaseModel):

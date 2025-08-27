@@ -7,8 +7,8 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
-    from .discount import Discount
     from ..logistic.category import Category
+    from .discount import Discount
 
 
 class AssocCategoryDiscount(BaseModel):

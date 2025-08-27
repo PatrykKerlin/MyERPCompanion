@@ -1,10 +1,10 @@
+from ast import literal_eval
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 from csv import DictReader
 from io import StringIO
 from os import getenv
 from pathlib import Path
-from ast import literal_eval
 
 from aiofiles import open
 from sqlalchemy import func, select

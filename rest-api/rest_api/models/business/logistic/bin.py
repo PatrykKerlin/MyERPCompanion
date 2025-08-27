@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
 from sqlalchemy.orm import Mapped
 
 from models.base import BaseModel, Fields

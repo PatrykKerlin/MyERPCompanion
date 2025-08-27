@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pydantic import model_validator
 
-from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints, Normalizers
+from schemas.base import (BasePlainSchema, BaseStrictSchema, Constraints,
+                          Normalizers)
 
 
 class CustomerStrictSchema(BaseStrictSchema):

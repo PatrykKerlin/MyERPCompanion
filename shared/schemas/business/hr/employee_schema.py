@@ -3,14 +3,14 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from pydantic import Field, model_validator, ValidationInfo
+from pydantic import Field, ValidationInfo, model_validator
 
-from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints
+from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
 
 if TYPE_CHECKING:
+    from ...core.user_schema import UserPlainSchema
     from .department_schema import DepartmentPlainSchema
     from .position_schema import PositionPlainSchema
-    from ...core.user_schema import UserPlainSchema
 
 
 class EmployeeStrictSchema(BaseStrictSchema):

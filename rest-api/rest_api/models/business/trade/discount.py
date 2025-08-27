@@ -9,12 +9,12 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
+    from ..logistic.category import Category
+    from ..logistic.item import Item
     from .assoc_category_discount import AssocCategoryDiscount
     from .assoc_customer_discount import AssocCustomerDiscount
     from .assoc_item_discount import AssocItemDiscount
     from .customer import Customer
-    from ..logistic.category import Category
-    from ..logistic.item import Item
 
 
 class Discount(BaseModel):

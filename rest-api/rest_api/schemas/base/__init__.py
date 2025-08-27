@@ -1,6 +1,6 @@
+from ..validation.constraints import Constraints
+from ..validation.normalizers import Normalizers
 from .base_schema import BasePlainSchema, BaseStrictSchema
-from .constraints import Constraints
-from .normalizers import Normalizers
 
 __all__ = [
     "BaseStrictSchema",

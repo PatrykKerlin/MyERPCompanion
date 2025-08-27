@@ -1,4 +1,5 @@
-from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints, Normalizers
+from schemas.base import (BasePlainSchema, BaseStrictSchema, Constraints,
+                          Normalizers)
 
 
 class WarehouseStrictSchema(BaseStrictSchema):

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from datetime import date
+from typing import TYPE_CHECKING
 
 from pydantic import model_validator
 
-from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints
+from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
 
 if TYPE_CHECKING:
     from .currency_schema import CurrencyPlainSchema

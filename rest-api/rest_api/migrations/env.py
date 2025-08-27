@@ -3,13 +3,14 @@ from logging.config import fileConfig
 from typing import Any
 
 from alembic import context
-from alembic.operations.ops import CreateForeignKeyOp, CreateTableOp, MigrateOperation
+from alembic.operations.ops import (CreateForeignKeyOp, CreateTableOp,
+                                    MigrateOperation)
 from sqlalchemy import Column, ForeignKeyConstraint, pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
-import models.core  # noqa: F401
 import models.business  # noqa: F401
+import models.core  # noqa: F401
 from config import Database, Settings
 
 # this is the Alembic Config object, which provides

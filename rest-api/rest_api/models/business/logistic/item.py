@@ -8,17 +8,17 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
+    from ...core.image import Image
+    from ..trade.assoc_item_discount import AssocItemDiscount
+    from ..trade.assoc_order_item import AssocOrderItem
+    from ..trade.currency import Currency
+    from ..trade.discount import Discount
+    from ..trade.order import Order
+    from ..trade.supplier import Supplier
     from .assoc_bin_item import AssocBinItem
     from .bin import Bin
     from .category import Category
     from .unit import Unit
-    from ..trade.currency import Currency
-    from ..trade.discount import Discount
-    from ..trade.assoc_item_discount import AssocItemDiscount
-    from ..trade.assoc_order_item import AssocOrderItem
-    from ..trade.order import Order
-    from ..trade.supplier import Supplier
-    from ...core.image import Image
 
 
 class Item(BaseModel):

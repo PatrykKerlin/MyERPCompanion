@@ -1,4 +1,4 @@
-from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints
+from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
 
 
 class ImageStrictSchema(BaseStrictSchema):

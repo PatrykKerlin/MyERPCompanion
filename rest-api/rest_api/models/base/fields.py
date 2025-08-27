@@ -1,14 +1,13 @@
-from sqlalchemy import ForeignKey, Integer, String, Boolean, Date, Numeric, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
 from typing import Any
 
+from sqlalchemy import (Boolean, Date, DateTime, ForeignKey, Integer, Numeric,
+                        String)
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import relationship as base_relationship
-from sqlalchemy.orm.relationships import (
-    _LazyLoadArgumentType,
-    _ORMColCollectionArgument,
-    _RelationshipArgumentType,
-    _RelationshipDeclared,
-)
+from sqlalchemy.orm.relationships import (_LazyLoadArgumentType,
+                                          _ORMColCollectionArgument,
+                                          _RelationshipArgumentType,
+                                          _RelationshipDeclared)
 
 
 class Fields:

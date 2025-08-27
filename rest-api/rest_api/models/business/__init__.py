@@ -23,7 +23,6 @@ from .trade.payment_method import PaymentMethod
 from .trade.status import Status
 from .trade.supplier import Supplier
 
-
 __all__ = [
     "Department",
     "Employee",

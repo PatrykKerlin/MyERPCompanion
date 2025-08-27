@@ -7,10 +7,10 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
-    from .exchange_rate import ExchangeRate
-    from .order import Order
     from ..logistic.carrier import Carrier
     from ..logistic.item import Item
+    from .exchange_rate import ExchangeRate
+    from .order import Order
 
 
 class Currency(BaseModel):

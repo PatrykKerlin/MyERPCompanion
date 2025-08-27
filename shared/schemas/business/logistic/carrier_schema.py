@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints
+from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
 
 if TYPE_CHECKING:
     from ..trade.currency_schema import CurrencyPlainSchema

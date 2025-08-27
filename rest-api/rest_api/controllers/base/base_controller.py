@@ -1,6 +1,7 @@
 from typing import Annotated, Generic, Literal, TypeVar
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import (APIRouter, Depends, HTTPException, Request, Response,
+                     status)
 from pydantic import ValidationError
 from sqlalchemy import String
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
@@ -9,7 +10,8 @@ from sqlalchemy.sql.elements import ColumnElement
 
 from config import Context
 from schemas.base import BasePlainSchema, BaseStrictSchema
-from schemas.core import FilterParamsSchema, PaginatedResponseSchema, PaginationParamsSchema, SortingParamsSchema
+from schemas.core import (FilterParamsSchema, PaginatedResponseSchema,
+                          PaginationParamsSchema, SortingParamsSchema)
 from services.base import BaseService
 from utils.auth import Auth
 from utils.parsers import FilterParamsParser

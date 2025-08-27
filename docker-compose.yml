@@ -28,6 +28,7 @@ services:
       - ./shared/schemas/business:/rest_api/schemas/business
       - ./shared/schemas/core:/rest_api/schemas/core
       - ./shared/schemas/validation:/rest_api/schemas/validation
+      - ./rest-api/rest_api/schemas/base:/rest_api/schemas/base
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:changeme@postgres/MyERPCompanion
       - SECRET_KEY=secret

@@ -8,14 +8,14 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
-    from .customer import Customer
-    from .invoice import Invoice
-    from .assoc_order_item import AssocOrderItem
-    from .assoc_order_status import AssocOrderStatus
-    from .status import Status
-    from .supplier import Supplier
     from ..logistic.delivery_method import DeliveryMethod
     from ..logistic.item import Item
+    from .assoc_order_item import AssocOrderItem
+    from .assoc_order_status import AssocOrderStatus
+    from .customer import Customer
+    from .invoice import Invoice
+    from .status import Status
+    from .supplier import Supplier
 
 
 class Order(BaseModel):

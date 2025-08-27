@@ -1,18 +1,18 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import TYPE_CHECKING, Any
 
-from pydantic import model_validator, field_validator
+from pydantic import field_validator, model_validator
 
-from datetime import date
-
-from schemas.base import BaseStrictSchema, BasePlainSchema, Constraints, Normalizers
+from schemas.base import (BasePlainSchema, BaseStrictSchema, Constraints,
+                          Normalizers)
 
 if TYPE_CHECKING:
+    from ..logistic.delivery_method_schema import DeliveryMethodPlainSchema
     from .customer_schema import CustomerPlainSchema
     from .invoice_schema import InvoicePlainSchema
     from .supplier_schema import SupplierPlainSchema
-    from ..logistic.delivery_method_schema import DeliveryMethodPlainSchema
 
 
 class OrderStrictSchema(BaseStrictSchema):

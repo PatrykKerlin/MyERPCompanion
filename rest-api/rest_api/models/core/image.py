@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UniqueConstraint, Index, text
+from sqlalchemy import Index, UniqueConstraint, text
 from sqlalchemy.orm import Mapped
 
 from models.base import BaseModel, Fields

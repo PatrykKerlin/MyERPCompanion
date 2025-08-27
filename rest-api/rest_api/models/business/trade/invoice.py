@@ -8,9 +8,9 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
+    from ..trade.currency import Currency
     from .order import Order
     from .payment_method import PaymentMethod
-    from ..trade.currency import Currency
 
 
 class Invoice(BaseModel):

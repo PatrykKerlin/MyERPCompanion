@@ -7,9 +7,9 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
+    from ..logistic.item import Item
     from .discount import Discount
     from .order import Order
-    from ..logistic.item import Item
 
 
 class AssocOrderItem(BaseModel):

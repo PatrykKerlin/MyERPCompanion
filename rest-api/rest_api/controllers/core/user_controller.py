@@ -6,7 +6,8 @@ from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 
 from config import Context
 from controllers.base import BaseController
-from schemas.core import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
+from schemas.core import (UserPlainSchema, UserStrictCreateSchema,
+                          UserStrictUpdateSchema)
 from services.core import UserService
 from utils.auth import Auth
 

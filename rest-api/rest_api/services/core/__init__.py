@@ -1,15 +1,10 @@
 from models.core import Group, Language, Theme, View
-from repositories.core import GroupRepository, LanguageRepository, ThemeRepository, ViewRepository
-from schemas.core import (
-    GroupPlainSchema,
-    GroupStrictSchema,
-    LanguagePlainSchema,
-    LanguageStrictSchema,
-    ThemePlainSchema,
-    ThemeStrictSchema,
-    ViewPlainSchema,
-    ViewStrictSchema,
-)
+from repositories.core import (GroupRepository, LanguageRepository,
+                               ThemeRepository, ViewRepository)
+from schemas.core import (GroupPlainSchema, GroupStrictSchema,
+                          LanguagePlainSchema, LanguageStrictSchema,
+                          ThemePlainSchema, ThemeStrictSchema, ViewPlainSchema,
+                          ViewStrictSchema)
 from utils.factories import ServiceFactory
 
 from .module_service import ModuleService

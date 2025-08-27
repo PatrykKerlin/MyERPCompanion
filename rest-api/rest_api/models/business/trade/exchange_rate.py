@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from typing import TYPE_CHECKING
+
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped
 
