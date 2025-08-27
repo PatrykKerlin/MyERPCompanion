@@ -5,10 +5,8 @@ from typing import TYPE_CHECKING, Union
 from sqlalchemy.exc import NoResultFound
 
 from models.core import AssocUserGroup, User
-from repositories.core import (AssocUserGroupRepository, GroupRepository,
-                               UserRepository)
-from schemas.core import (UserPlainSchema, UserStrictCreateSchema,
-                          UserStrictUpdateSchema)
+from repositories.core import AssocUserGroupRepository, GroupRepository, UserRepository
+from schemas.core import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
 from services.base import BaseService
 from utils.auth import Auth
 

@@ -3,8 +3,7 @@ from logging.config import fileConfig
 from typing import Any
 
 from alembic import context
-from alembic.operations.ops import (CreateForeignKeyOp, CreateTableOp,
-                                    MigrateOperation)
+from alembic.operations.ops import CreateForeignKeyOp, CreateTableOp, MigrateOperation
 from sqlalchemy import Column, ForeignKeyConstraint, pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine

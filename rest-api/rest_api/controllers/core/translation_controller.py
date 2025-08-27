@@ -5,9 +5,13 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from config import Context
 from controllers.base import BaseController
-from schemas.core import (PaginatedResponseSchema, PaginationParamsSchema,
-                          TranslationByLanguagePlainSchema,
-                          TranslationPlainSchema, TranslationStrictSchema)
+from schemas.core import (
+    PaginatedResponseSchema,
+    PaginationParamsSchema,
+    TranslationByLanguagePlainSchema,
+    TranslationPlainSchema,
+    TranslationStrictSchema,
+)
 from services.core import TranslationService
 
 

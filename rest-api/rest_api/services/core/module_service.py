@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy.exc import NoResultFound
 
 from models.core import AssocModuleGroup, Module
-from repositories.core import (AssocModuleGroupRepository, GroupRepository,
-                               ModuleRepository)
+from repositories.core import AssocModuleGroupRepository, GroupRepository, ModuleRepository
 from schemas.core import ModulePlainSchema, ModuleStrictSchema
 from services.base import BaseService
 

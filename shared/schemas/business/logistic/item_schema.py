@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING  # , Any
 
 from pydantic import model_validator  # , field_validator
 
-from schemas.base import (BasePlainSchema, BaseStrictSchema,  # , Normalizers
-                          Constraints)
+from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints  # , Normalizers
 
 if TYPE_CHECKING:
     from ..trade.currency_schema import CurrencyPlainSchema

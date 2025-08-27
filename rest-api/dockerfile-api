@@ -6,7 +6,8 @@ ENV PYTHONUNBUFFERED=1 \
     VIRTUAL_ENV=/project \
     PATH="/project/bin:$PATH" \
     PYTHONPATH="/rest_api" \
-    NVM_DIR=/root/.nvm
+    NVM_DIR=/root/.nvm \
+    PRISMA_NODEENV_EXTRA_ARGS="--node=system"
 
 RUN apt-get update && \
     apt-get install -y curl postgresql-client --no-install-recommends && \
@@ -25,7 +26,6 @@ RUN python -m venv $VIRTUAL_ENV && \
     pip install -r /tmp/requirements.txt && \
     rm -rf /tmp/requirements.txt
 
-COPY ./rest_api /rest_api
 WORKDIR /rest_api
 
 RUN useradd -m -d /rest_api -s /bin/bash rest-api && \

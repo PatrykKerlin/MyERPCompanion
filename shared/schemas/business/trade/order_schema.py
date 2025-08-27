@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import field_validator, model_validator
 
-from schemas.base import (BasePlainSchema, BaseStrictSchema, Constraints,
-                          Normalizers)
+from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints, Normalizers
 
 if TYPE_CHECKING:
     from ..logistic.delivery_method_schema import DeliveryMethodPlainSchema

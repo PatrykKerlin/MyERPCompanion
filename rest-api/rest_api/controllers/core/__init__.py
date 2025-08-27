@@ -1,11 +1,17 @@
 from models.core import Group, Language, Module, Theme, View
-from schemas.core import (GroupPlainSchema, GroupStrictSchema,
-                          LanguagePlainSchema, LanguageStrictSchema,
-                          ModulePlainSchema, ModuleStrictSchema,
-                          ThemePlainSchema, ThemeStrictSchema, ViewPlainSchema,
-                          ViewStrictSchema)
-from services.core import (GroupService, LanguageService, ModuleService,
-                           ThemeService, ViewService)
+from schemas.core import (
+    GroupPlainSchema,
+    GroupStrictSchema,
+    LanguagePlainSchema,
+    LanguageStrictSchema,
+    ModulePlainSchema,
+    ModuleStrictSchema,
+    ThemePlainSchema,
+    ThemeStrictSchema,
+    ViewPlainSchema,
+    ViewStrictSchema,
+)
+from services.core import GroupService, LanguageService, ModuleService, ThemeService, ViewService
 from utils.factories import ControllerFactory
 
 from .auth_controller import AuthController
