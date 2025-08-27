@@ -32,7 +32,6 @@ RUN python -m venv $VIRTUAL_ENV && \
     pip install -r /tmp/requirements.txt && \
     rm -rf /tmp/requirements.txt
 
-COPY ./desktop_app /desktop_app
 WORKDIR /desktop_app
 RUN useradd -m -d /desktop_app -s /bin/bash desktop-app && \
     chown -R desktop-app:desktop-app /desktop_app && \
