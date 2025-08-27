@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
+from collections.abc import Sequence
 
 from models.core import AssocModuleGroup, Group, Module, View
 from repositories.base import BaseRepository
@@ -26,7 +27,8 @@ class ModuleRepository(BaseRepository[Module]):
         )
 
     @classmethod
-    async def get_one_by_controller(cls, session: AsyncSession, controller: str) -> Module | None:
-        query = cls._build_query([cls._expr(View.controller == controller)])
+    async def get_all_by_controller(cls, session: AsyncSession, controller: str) -> Sequence[Module]:
+        filter_expr = cls._expr(cls._model_cls.views.any(View.controllers.contains([controller])))
+        query = cls._build_query([filter_expr])
         result = await session.execute(query)
-        return result.scalars().first()
+        return result.scalars().unique().all()

@@ -77,12 +77,12 @@ class Auth:
 
                 async with self._get_session() as session:
                     service = ModuleService()
-                    module_schema = await service.get_by_controller(session, controller)
+                    module_schemas = await service.get_all_by_controller(session, controller)
 
-                if not module_schema:
+                if not module_schemas:
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-                allowed_groups = {group.key for group in module_schema.groups}
+                allowed_groups = {group.key for module_schema in module_schemas for group in module_schema.groups}
                 user_groups = {group.key for group in user_schema.groups}
 
                 if not user_groups.intersection(allowed_groups):

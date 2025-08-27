@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import relationship as base_relationship
 from sqlalchemy.orm.relationships import (
@@ -95,6 +95,10 @@ class Fields:
     @staticmethod
     def string_1000(nullable: bool = False, unique: bool = False) -> Mapped[Any]:
         return mapped_column(String(1000), nullable=nullable, unique=unique)
+
+    @staticmethod
+    def string_list(nullable: bool = False) -> Mapped[Any]:
+        return mapped_column(ARRAY(String(50)), nullable=nullable)
 
     @staticmethod
     def bank_account() -> Mapped[str]:

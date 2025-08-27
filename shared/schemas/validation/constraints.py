@@ -29,6 +29,7 @@ class Constraints:
     String20Optional = Annotated[str | None, Field(min_length=1, max_length=20)]
     String50 = Annotated[str, Field(min_length=1, max_length=50)]
     String50Optional = Annotated[str | None, Field(min_length=1, max_length=50)]
+    String50List = Annotated[list[Annotated[str, Field(min_length=1, max_length=50)]], Field(min_length=1)]
     String100 = Annotated[str, Field(min_length=1, max_length=100)]
     String100Optional = Annotated[str | None, Field(min_length=1, max_length=100)]
     String1000 = Annotated[str, Field(min_length=1, max_length=1000)]
