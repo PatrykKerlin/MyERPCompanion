@@ -3,17 +3,33 @@ from typing import Any
 
 class Normalizers:
     @staticmethod
-    def normalize_related_ids(values: Any, field_name: str = "items") -> list[int]:
+    def normalize_related_id_list(values: list[Any]) -> list[int]:
         if not values:
             return []
-
-        if not isinstance(values, list):
-            raise ValueError(f"{field_name} must be a list")
 
         if all(isinstance(value, int) for value in values):
             return values
 
-        try:
-            return [getattr(value, "id") for value in values]
-        except AttributeError as e:
-            raise ValueError(f"all elements in {field_name} must be integers or objects with an 'id' attribute") from e
+        id_list: list[int] = []
+        for value in values:
+            if hasattr(value, "id"):
+                id = getattr(value, "id")
+                if isinstance(id, int):
+                    id_list.append(id)
+
+        return id_list
+
+    @staticmethod
+    def normalize_related_single_id(value: Any) -> int | None:
+        if not value:
+            return None
+
+        if isinstance(value, int):
+            return value
+
+        if hasattr(value, "id"):
+            id = getattr(value, "id")
+            if isinstance(id, int):
+                return id
+
+        return None

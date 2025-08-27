@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any
 
-from pydantic import model_validator
+from pydantic import model_validator, field_validator
 
-from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
-
-if TYPE_CHECKING:
-    from .warehouse_schema import WarehousePlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.validation import Constraints, Normalizers
 
 
 class BinStrictSchema(BaseStrictSchema):
@@ -31,4 +29,15 @@ class BinPlainSchema(BasePlainSchema):
     is_outbound: bool
     max_volume: float
     max_weight: int
-    warehouse: WarehousePlainSchema
+    warehouse_id: int
+    items: list[int]
+
+    @field_validator("warehouse_id", mode="before")
+    @classmethod
+    def _normalize_warehouse_id(cls, value: Any) -> int | None:
+        return Normalizers.normalize_related_single_id(value)
+
+    @field_validator("items", mode="before")
+    @classmethod
+    def _normalize_items(cls, values: list[Any]) -> list[int]:
+        return Normalizers.normalize_related_id_list(values)

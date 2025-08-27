@@ -3,6 +3,7 @@ from .hr.employee import Employee
 from .hr.position import Position
 from .logistic.assoc_bin_item import AssocBinItem
 from .logistic.bin import Bin
+from .logistic.carrier import Carrier
 from .logistic.category import Category
 from .logistic.delivery_method import DeliveryMethod
 from .logistic.item import Item
@@ -29,6 +30,7 @@ __all__ = [
     "Position",
     "AssocBinItem",
     "Bin",
+    "Carrier",
     "Category",
     "DeliveryMethod",
     "Item",

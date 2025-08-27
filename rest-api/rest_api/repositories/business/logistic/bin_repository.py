@@ -1,0 +1,26 @@
+from sqlalchemy.orm import selectinload, with_loader_criteria
+from sqlalchemy.sql import Select
+from sqlalchemy.sql.elements import ColumnElement
+
+from models.business import Bin, Warehouse, AssocBinItem, Item
+from repositories.base import BaseRepository
+
+
+class BinRepository(BaseRepository[Bin]):
+    _model_cls = Bin
+
+    @classmethod
+    def _build_query(
+        cls,
+        additional_filters: list[ColumnElement[bool]] | None = None,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
+    ) -> Select:
+        query = super()._build_query(additional_filters, sort_by, sort_order)
+        return query.options(
+            selectinload(cls._model_cls.bin_items).selectinload(AssocBinItem.item),
+            selectinload(cls._model_cls.warehouse),
+            with_loader_criteria(AssocBinItem, cls._expr(AssocBinItem.is_active == True)),
+            with_loader_criteria(Item, cls._expr(Item.is_active == True)),
+            with_loader_criteria(Warehouse, cls._expr(Warehouse.is_active == True)),
+        )

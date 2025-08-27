@@ -1,17 +1,12 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import TYPE_CHECKING  # , Any
+from typing import Any
 
-from pydantic import model_validator  # , field_validator
+from pydantic import model_validator, field_validator
 
-from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints  # , Normalizers
-
-if TYPE_CHECKING:
-    from ..trade.currency_schema import CurrencyPlainSchema
-    from ..trade.supplier_schema import SupplierPlainSchema
-    from .category_schema import CategoryPlainSchema
-    from .unit_schema import UnitPlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.validation import Constraints, Normalizers
 
 
 class ItemStrictSchema(BaseStrictSchema):
@@ -88,10 +83,11 @@ class ItemPlainSchema(BasePlainSchema):
     max_stock_level: int | None
     moq: int
 
-    currency: CurrencyPlainSchema
-    category: CategoryPlainSchema
-    unit: UnitPlainSchema
-    supplier: SupplierPlainSchema
+    currency: int
+    category: int
+    unit: int
+    supplier: int
+    images: list[int]
 
     # bins: list[int]
     # discounts: list[int]
@@ -100,14 +96,14 @@ class ItemPlainSchema(BasePlainSchema):
     # @field_validator("bins", mode="before")
     # @classmethod
     # def _normalize_bins(cls, bins: Any) -> list[int]:
-    #     return Normalizers.normalize_related_ids(bins, "bins")
+    #     return Normalizers.normalize_related_ids(bins)
 
     # @field_validator("discounts", mode="before")
     # @classmethod
     # def _normalize_discounts(cls, discounts: Any) -> list[int]:
-    #     return Normalizers.normalize_related_ids(discounts, "discounts")
+    #     return Normalizers.normalize_related_ids(discounts)
 
     # @field_validator("images", mode="before")
     # @classmethod
     # def _normalize_images(cls, images: Any) -> list[int]:
-    #     return Normalizers.normalize_related_ids(images, "images")
+    #     return Normalizers.normalize_related_ids(images)

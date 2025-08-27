@@ -22,6 +22,7 @@ class ModuleRepository(BaseRepository[Module]):
         return query.options(
             selectinload(cls._model_cls.module_groups).selectinload(AssocModuleGroup.group),
             selectinload(cls._model_cls.views),
+            with_loader_criteria(AssocModuleGroup, cls._expr(AssocModuleGroup.is_active == True)),
             with_loader_criteria(Group, cls._expr(Group.is_active == True)),
             with_loader_criteria(View, cls._expr(View.is_active == True)),
         )

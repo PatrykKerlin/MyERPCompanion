@@ -1,16 +1,12 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import TYPE_CHECKING
+from typing import Any
 
-from pydantic import Field, ValidationInfo, model_validator
+from pydantic import ValidationInfo, model_validator, field_validator
 
-from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
-
-if TYPE_CHECKING:
-    from ...core.user_schema import UserPlainSchema
-    from .department_schema import DepartmentPlainSchema
-    from .position_schema import PositionPlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.validation import Constraints, Normalizers
 
 
 class EmployeeStrictSchema(BaseStrictSchema):
@@ -114,8 +110,33 @@ class EmployeePlainSchema(BasePlainSchema):
     bank_name: str
 
     manager_id: int | None
-    subordinates: list[int] = Field(default_factory=list)
+    subordinates: list[int]
 
-    position: PositionPlainSchema
-    department: DepartmentPlainSchema
-    user: UserPlainSchema | None
+    position_id: int
+    department_id: int
+    user_id: int | None
+
+    @field_validator("manager_id", mode="before")
+    @classmethod
+    def _normalize_manager_id(cls, value: Any) -> int | None:
+        return Normalizers.normalize_related_single_id(value)
+
+    @field_validator("subordinates", mode="before")
+    @classmethod
+    def _normalize_subordinates(cls, values: list[Any]) -> list[int]:
+        return Normalizers.normalize_related_id_list(values)
+
+    @field_validator("position_id", mode="before")
+    @classmethod
+    def _normalize_position_id(cls, value: Any) -> int | None:
+        return Normalizers.normalize_related_single_id(value)
+
+    @field_validator("department_id", mode="before")
+    @classmethod
+    def _normalize_department_id(cls, value: Any) -> int | None:
+        return Normalizers.normalize_related_single_id(value)
+
+    @field_validator("user_id", mode="before")
+    @classmethod
+    def _normalize_user_id(cls, value: Any) -> int | None:
+        return Normalizers.normalize_related_single_id(value)

@@ -76,9 +76,9 @@ class OrderPlainSchema(BasePlainSchema):
     @field_validator("items", mode="before")
     @classmethod
     def _normalize_items(cls, items: Any) -> list[int]:
-        return Normalizers.normalize_related_ids(items, "items")
+        return Normalizers.normalize_related_id_list(items, "items")
 
     @field_validator("statuses", mode="before")
     @classmethod
     def _normalize_statuses(cls, statuses: Any) -> list[int]:
-        return Normalizers.normalize_related_ids(statuses, "statuses")
+        return Normalizers.normalize_related_id_list(statuses, "statuses")

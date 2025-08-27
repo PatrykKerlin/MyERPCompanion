@@ -22,6 +22,7 @@ class UserRepository(BaseRepository[User]):
             selectinload(cls._model_cls.user_groups).selectinload(AssocUserGroup.group),
             selectinload(cls._model_cls.language),
             selectinload(cls._model_cls.theme),
+            with_loader_criteria(AssocUserGroup, cls._expr(AssocUserGroup.is_active == True)),
             with_loader_criteria(Group, cls._expr(Group.is_active == True)),
             with_loader_criteria(Language, cls._expr(Language.is_active == True)),
             with_loader_criteria(Theme, cls._expr(Theme.is_active == True)),
