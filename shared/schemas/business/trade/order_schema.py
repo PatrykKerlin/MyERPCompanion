@@ -1,17 +1,12 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from pydantic import field_validator, model_validator
 
-from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints, Normalizers
-
-if TYPE_CHECKING:
-    from ..logistic.delivery_method_schema import DeliveryMethodPlainSchema
-    from .customer_schema import CustomerPlainSchema
-    from .invoice_schema import InvoicePlainSchema
-    from .supplier_schema import SupplierPlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.validation import Constraints, Normalizers
 
 
 class OrderStrictSchema(BaseStrictSchema):
@@ -66,19 +61,20 @@ class OrderPlainSchema(BasePlainSchema):
     notes: str | None
     internal_notes: str | None
 
-    customer: CustomerPlainSchema
-    supplier: SupplierPlainSchema
-    delivery_method: DeliveryMethodPlainSchema
-    invoice: InvoicePlainSchema | None
+    customer_id: int
+    supplier_id: int
+    delivery_method_id: int
+    invoice_id: int | None
+
     items: list[int]
     statuses: list[int]
 
     @field_validator("items", mode="before")
     @classmethod
     def _normalize_items(cls, items: Any) -> list[int]:
-        return Normalizers.normalize_related_id_list(items, "items")
+        return Normalizers.normalize_related_ids(items)
 
     @field_validator("statuses", mode="before")
     @classmethod
     def _normalize_statuses(cls, statuses: Any) -> list[int]:
-        return Normalizers.normalize_related_id_list(statuses, "statuses")
+        return Normalizers.normalize_related_ids(statuses)

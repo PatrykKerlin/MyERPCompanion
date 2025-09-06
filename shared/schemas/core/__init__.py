@@ -7,6 +7,7 @@ from .view_schema import ViewStrictSchema, ViewPlainSchema
 from .module_schema import ModuleStrictSchema, ModulePlainSchema
 from .param_schema import FilterParamsSchema, PaginatedResponseSchema, PaginationParamsSchema, SortingParamsSchema
 from .theme_schema import ThemeStrictSchema, ThemePlainSchema
+from .token_schema import TokenPlainSchema
 from .translation_schema import TranslationStrictSchema, TranslationByLanguagePlainSchema, TranslationPlainSchema
 from .user_schema import UserStrictCreateSchema, UserStrictUpdateSchema, UserPlainSchema
 
@@ -27,6 +28,7 @@ __all__ = [
     "TranslationStrictSchema",
     "ThemeStrictSchema",
     "ThemePlainSchema",
+    "TokenPlainSchema",
     "TranslationByLanguagePlainSchema",
     "TranslationPlainSchema",
     "UserStrictCreateSchema",

@@ -1,4 +1,4 @@
-FROM python:3.13.5-bookworm
+FROM python:3.13-bookworm
 LABEL maintainer="Patryk Kerlin"
 
 ENV PYTHONUNBUFFERED=1 \
@@ -33,6 +33,7 @@ RUN python -m venv $VIRTUAL_ENV && \
     rm -rf /tmp/requirements.txt
 
 WORKDIR /desktop_app
+
 RUN useradd -m -d /desktop_app -s /bin/bash desktop-app && \
     chown -R desktop-app:desktop-app /desktop_app && \
     chmod -R 755 /desktop_app

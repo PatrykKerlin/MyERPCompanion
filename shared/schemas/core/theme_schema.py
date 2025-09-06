@@ -1,4 +1,5 @@
-from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.validation import Constraints
 
 
 class ThemeStrictSchema(BaseStrictSchema):

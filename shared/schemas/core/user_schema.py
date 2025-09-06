@@ -1,15 +1,10 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
-
-if TYPE_CHECKING:
-    from .group_schema import GroupPlainSchema
-    from .language_schema import LanguagePlainSchema
-    from .theme_schema import ThemePlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.core import GroupPlainSchema, LanguagePlainSchema, ThemePlainSchema
+from schemas.validation import Constraints
 
 
 class UserStrictBaseSchema(BaseModel):

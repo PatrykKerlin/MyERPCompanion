@@ -1,8 +1,5 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint
 from sqlalchemy.orm import Mapped
 
 from models.base import BaseModel, Fields

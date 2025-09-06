@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-from pydantic import model_validator, field_validator
+from pydantic import model_validator
 
 from schemas.base import BasePlainSchema, BaseStrictSchema
 from schemas.validation import Constraints, Normalizers
+
+if TYPE_CHECKING:
+    from ...core.image_schema import ImagePlainSchema
+    from ..trade.discount_schema import DiscountPlainSchema
 
 
 class ItemStrictSchema(BaseStrictSchema):
@@ -41,6 +45,8 @@ class ItemStrictSchema(BaseStrictSchema):
     category_id: Constraints.PositiveInteger
     unit_id: Constraints.PositiveInteger
     supplier_id: Constraints.PositiveInteger
+
+    images: Constraints.PositiveIntegerListOptional
 
     @model_validator(mode="after")
     def _validate_data(self) -> ItemStrictSchema:
@@ -83,27 +89,19 @@ class ItemPlainSchema(BasePlainSchema):
     max_stock_level: int | None
     moq: int
 
-    currency: int
-    category: int
-    unit: int
-    supplier: int
-    images: list[int]
+    currency_id: int
+    category_id: int
+    unit_id: int
+    supplier_id: int
 
-    # bins: list[int]
-    # discounts: list[int]
-    # images: list[int]
+    discounts: list[DiscountPlainSchema]
+    images: list[ImagePlainSchema]
 
-    # @field_validator("bins", mode="before")
-    # @classmethod
-    # def _normalize_bins(cls, bins: Any) -> list[int]:
-    #     return Normalizers.normalize_related_ids(bins)
+    bin_ids: list[int]
 
-    # @field_validator("discounts", mode="before")
-    # @classmethod
-    # def _normalize_discounts(cls, discounts: Any) -> list[int]:
-    #     return Normalizers.normalize_related_ids(discounts)
-
-    # @field_validator("images", mode="before")
-    # @classmethod
-    # def _normalize_images(cls, images: Any) -> list[int]:
-    #     return Normalizers.normalize_related_ids(images)
+    @model_validator(mode="before")
+    @classmethod
+    def _extract_bin_ids(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "bins" in data and "bin_ids" not in data:
+            data["bin_ids"] = Normalizers.normalize_related_ids(data["bins"])
+        return data

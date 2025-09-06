@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import TYPE_CHECKING
 
 from pydantic import model_validator
 
-from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
-
-if TYPE_CHECKING:
-    from .currency_schema import CurrencyPlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.validation import Constraints
 
 
 class ExchangeRateStrictSchema(BaseStrictSchema):
@@ -35,5 +32,5 @@ class ExchangeRatePlainSchema(BasePlainSchema):
     valid_from: date
     valid_to: date | None
 
-    base_currency: CurrencyPlainSchema
-    quote_currency: CurrencyPlainSchema
+    base_currency_id: int
+    quote_currency_id: int

@@ -1,4 +1,4 @@
-from __future__ import annotations
+# from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from concurrent.futures import Future
@@ -9,30 +9,32 @@ from httpx import HTTPStatusError
 from pydantic import ValidationError
 
 from controllers.base import BaseController
-from schemas.base import BaseOutputSchema
+from schemas.base import BaseStrictSchema, BasePlainSchema
 from services.base import BaseViewService
-from utils.view_modes import ViewMode
+from config.enums import ViewMode
 from views.base import BaseView
 
 if TYPE_CHECKING:
     from config.context import Context
-    from schemas.core.endpoint_schema import EndpointInputSchema
+    from config.enums import Endpoint
 
 TService = TypeVar("TService", bound=BaseViewService)
 TView = TypeVar("TView", bound=BaseView)
-TOutputSchema = TypeVar("TOutputSchema", bound=BaseOutputSchema)
+TInputSchema = TypeVar("TInputSchema", bound=BasePlainSchema)
+TOutputSchema = TypeVar("TOutputSchema", bound=BaseStrictSchema)
 
 
-class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema], ABC):
+class BaseViewController(BaseController, Generic[TService, TView, TInputSchema, TOutputSchema], ABC):
+    _input_schema_cls: type[TInputSchema]
     _output_schema_cls: type[TOutputSchema]
     _service_cls: type[TService]
 
-    def __init__(self, context: Context, endpoint: EndpointInputSchema, postfix: str) -> None:
+    def __init__(self, context: Context, postfix: str) -> None:
         super().__init__(context)
         self.has_validation_errors = True
-        self._endpoint = endpoint
+        # self._view_schema = view_schema
         self._postfix = postfix
-        self._service = self._service_cls(context, endpoint.path)
+        self._service = self._service_cls(context)
         self._view: TView | None = None
         self._input_values: dict[str, Any] = {}
         self._active_view_keys: list[str] = []
@@ -203,38 +205,43 @@ class BaseViewController(BaseController, Generic[TService, TView, TOutputSchema]
                     return error["msg"]
         return None
 
-    async def __perform_get_all(self) -> list[dict[str, Any]]:
+    async def __perform_get_all(self, endpoint: Endpoint) -> list[TInputSchema]:
         filters: dict[str, str] = {}
         for field in self._filters:
             filters[field] = self._input_values.get(field, "").strip()
         result = await self._service.get_all(
-            filters=filters, sort_by=self._sort_by, order=self._order, page=self._page, page_size=self._page_size
+            endpoint=endpoint,
+            filters=filters,
+            sort_by=self._sort_by,
+            order=self._order,
+            page=self._page,
+            page_size=self._page_size,
         )
         self._has_next = result.has_next
         self._has_prev = result.has_prev
         self._total = result.total
         self._page = result.page
         self._page_size = result.page_size
-        return [item.model_dump() for item in result.items]
+        return result.items
 
-    async def __perform_get_one(self, result_id: int) -> dict[str, Any]:
-        schema = await self._service.get_one(result_id)
-        result = schema.model_dump()
-        return result
+    async def __perform_get_one(self, endpoint: Endpoint, result_id: int) -> TInputSchema:
+        # schema = await self._service.get_one(endpoint, result_id)
+        # result = schema.model_dump()
+        return await self._service.get_one(endpoint, result_id)
 
-    async def __perform_create(self) -> dict[str, Any]:
+    async def __perform_create(self, endpoint: Endpoint) -> dict[str, Any]:
         output_schema = self._output_schema_cls(**self._input_values)
-        input_schema = await self._service.create(output_schema)
+        input_schema = await self._service.create(endpoint, output_schema)
         return input_schema.model_dump()
 
-    async def __perform_update(self) -> dict[str, Any]:
+    async def __perform_update(self, endpoint: Endpoint) -> dict[str, Any]:
         output_schema = self._output_schema_cls(**self._input_values)
-        input_schema = await self._service.update(output_schema)
+        input_schema = await self._service.update(endpoint, output_schema)
         return input_schema.model_dump()
 
-    async def __perform_delete(self) -> None:
+    async def __perform_delete(self, endpoint: Endpoint) -> None:
         output_schema = self._output_schema_cls(**self._input_values)
-        await self._service.delete(output_schema.id)
+        await self._service.delete(endpoint, output_schema.id)
 
     async def __open_search_results_on_button_click(self) -> None:
         loading_dialog = self._show_loading_dialog()

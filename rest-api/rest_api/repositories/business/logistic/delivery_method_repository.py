@@ -20,6 +20,6 @@ class DeliveryMethodRepository(BaseRepository[DeliveryMethod]):
         return query.options(
             selectinload(cls._model_cls.carrier),
             selectinload(cls._model_cls.unit),
-            with_loader_criteria(Carrier, cls._expr(Carrier.is_active == True)),
-            with_loader_criteria(Unit, cls._expr(Unit.is_active == True)),
+            with_loader_criteria(Carrier, cls._expr(Carrier.is_active.is_(True))),
+            with_loader_criteria(Unit, cls._expr(Unit.is_active.is_(True))),
         )

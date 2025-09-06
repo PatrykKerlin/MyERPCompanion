@@ -18,17 +18,17 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         request.state.user = None
-        auth_header = request.headers.get("Authorization", None)
+
+        auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer"):
             token = auth_header.split(" ")[1]
             payload = Auth.decode_access_token(token, self.__settings)
-            user_id = payload.get("user", None)
+            user_id = payload.get("user")
 
             if isinstance(user_id, int) and payload.get("type") == "access":
-                service = UserService()
+                user_service = UserService()
                 async with self.__get_session() as session:
-                    schema = await service.get_one_by_id(session, user_id)
-                    if schema:
-                        request.state.user = schema
+                    user_schema = await user_service.get_one_by_id(session, user_id)
+                    request.state.user = user_schema
 
         return await call_next(request)

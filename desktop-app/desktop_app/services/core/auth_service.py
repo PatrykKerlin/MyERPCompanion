@@ -1,12 +1,12 @@
-from schemas.core import TokenInputSchema, UserInputSchema
+from schemas.core import TokenPlainSchema, UserPlainSchema
 from services.base import BaseService
 
 
 class AuthService(BaseService):
-    async def fetch_tokens(self, username: str, password: str) -> TokenInputSchema:
+    async def fetch_tokens(self, username: str, password: str) -> TokenPlainSchema:
         response = await self._post("/auth", {"username": username, "password": password})
-        return TokenInputSchema(**response.json())
+        return TokenPlainSchema(**response.json())
 
-    async def fetch_current_user(self) -> UserInputSchema:
+    async def fetch_current_user(self) -> UserPlainSchema:
         response = await self._get("/current-user")
-        return UserInputSchema(**response.json())
+        return UserPlainSchema(**response.json())

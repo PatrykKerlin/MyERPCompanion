@@ -4,7 +4,8 @@ from datetime import datetime
 
 from pydantic import model_validator
 
-from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.validation import Constraints
 
 
 class DiscountStrictSchema(BaseStrictSchema):

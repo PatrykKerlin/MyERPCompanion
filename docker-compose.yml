@@ -44,23 +44,23 @@ services:
     command:
       sh -c "uvicorn main:start_app --host 0.0.0.0 --port 8000 --reload"
 
-  redis:
-    build:
-      context: ./desktop-app
-      dockerfile: dockerfile-redis
-    networks:
-      - project_net
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    command: [
-      "redis-server",
-      "--requirepass", "changeme",
-      "--save", "60", "1",
-      "--appendonly", "no",
-      "--dir", "/data"
-    ]
+  # redis:
+  #   build:
+  #     context: ./desktop-app
+  #     dockerfile: dockerfile-redis
+  #   networks:
+  #     - project_net
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   command: [
+  #     "redis-server",
+  #     "--requirepass", "changeme",
+  #     "--save", "60", "1",
+  #     "--appendonly", "no",
+  #     "--dir", "/data"
+  #   ]
 
   desktop-app:
     build:
@@ -71,18 +71,13 @@ services:
     volumes:
       - ./desktop-app/desktop_app/:/desktop_app
       - /tmp/.X11-unix:/tmp/.X11-unix
-      - ./shared/schemas/business:/rest_api/schemas/business
-      - ./shared/schemas/core:/rest_api/schemas/core
-      - ./shared/schemas/validation:/rest_api/schemas/validation
+      - ./shared/schemas/business:/desktop_app/schemas/business
+      - ./shared/schemas/core:/desktop_app/schemas/core
+      - ./shared/schemas/validation:/desktop_app/schemas/validation
+      - ./desktop-app/desktop_app/schemas/base:/desktop_app/schemas/base
     environment:
       - DISPLAY=${DISPLAY}
       - API_URL=http://rest-api:8000/api
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=0
-      - REDIS_PASSWORD=changeme
-    depends_on:
-      - redis
     stdin_open: true
     tty: true
     command:
@@ -90,7 +85,7 @@ services:
 
 volumes:
   postgres-data:
-  redis-data:
+  # redis-data:
 
 networks:
   project_net:

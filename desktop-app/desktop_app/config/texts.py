@@ -1,4 +1,7 @@
-class DefaultTranslation:
+from .enums import TextKey
+
+
+class Texts:
     __common = {
         "myerpcompanion": "MyERPCompanion",
         "loading": "Loading",
@@ -68,27 +71,33 @@ class DefaultTranslation:
         "no_records_found": "No matching records found.",
     }
 
+    # @property
+    # def defaults(self) -> dict[str, str]:
+    #     dicts = [
+    #         self.__common,
+    #         self.__auth,
+    #         self.__menu_bar,
+    #         self.__toolbar,
+    #         self.__modules,
+    #         self.__endpoints,
+    #         self.__views,
+    #         self.__errors,
+    #         self.__footer,
+    #         self.__messages,
+    #     ]
+    #     result: dict[str, str] = {}
+    #     duplicates: set[str] = set()
+    #     for item in dicts:
+    #         for key, value in item.items():
+    #             if key in result.keys():
+    #                 duplicates.add(key)
+    #             result[key] = value
+    #     if duplicates:
+    #         raise ValueError(f"Duplicate translation keys found: {duplicates}")
+    #     return result
+
     @property
-    def texts(self) -> dict[str, str]:
-        dicts = [
-            self.__common,
-            self.__auth,
-            self.__menu_bar,
-            self.__toolbar,
-            self.__modules,
-            self.__endpoints,
-            self.__views,
-            self.__errors,
-            self.__footer,
-            self.__messages,
-        ]
-        result: dict[str, str] = {}
-        duplicates: set[str] = set()
-        for item in dicts:
-            for key, value in item.items():
-                if key in result.keys():
-                    duplicates.add(key)
-                result[key] = value
-        if duplicates:
-            raise ValueError(f"Duplicate translation keys found: {duplicates}")
-        return result
+    def defaults(self) -> dict[str, str]:
+        return {
+            TextKey.API_NOT_RESPONDING: "API is not responding.",
+        }

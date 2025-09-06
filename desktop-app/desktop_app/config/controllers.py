@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from context import Context
 
     from controllers.base.base_controller import BaseController
-    from schemas.core.endpoint_schema import EndpointInputSchema
+    from schemas.core.view_schema import ViewPlainSchema
 
 ControllerName = Literal["app", "auth_dialog", "toolbar", "footer", "side_menu", "tabs_bar", "groups"]
 
@@ -34,7 +34,7 @@ class Controllers:
         self.__controllers["side_menu"] = SideMenuController(self.__context)
         self.__controllers["tabs_bar"] = TabsBarController(self.__context)
 
-    def initialize_view_controllers(self, endpoints: dict[str, EndpointInputSchema]) -> None:
+    def initialize_view_controllers(self, endpoints: dict[str, ViewPlainSchema]) -> None:
         if "groups" in endpoints.keys():
             self.__controllers["groups"] = GroupController(self.__context, endpoints["groups"], "key")
 

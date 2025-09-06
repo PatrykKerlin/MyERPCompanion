@@ -3,12 +3,13 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy.orm import Mapped
+from sqlalchemy import select, literal_column
+from sqlalchemy.orm import Mapped, column_property
 
 from models.base import BaseModel, Fields
+from models.core import User
 
 if TYPE_CHECKING:
-    from ...core.user import User
     from .department import Department
     from .position import Position
 
@@ -65,6 +66,12 @@ class Employee(BaseModel):
         argument="Department", back_populates="employees", foreign_keys=[department_id]
     )
 
+    user_id: Mapped[int | None] = column_property(
+        select(User.id)
+        .where(User.employee_id == literal_column("employees.id"))
+        .where(User.is_active.is_(True))
+        .scalar_subquery()
+    )
     user: Mapped[User | None] = Fields.relationship(
         argument="User", back_populates="employee", foreign_keys="User.employee_id", uselist=False
     )

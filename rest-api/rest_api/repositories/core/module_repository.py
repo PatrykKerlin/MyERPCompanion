@@ -22,14 +22,7 @@ class ModuleRepository(BaseRepository[Module]):
         return query.options(
             selectinload(cls._model_cls.module_groups).selectinload(AssocModuleGroup.group),
             selectinload(cls._model_cls.views),
-            with_loader_criteria(AssocModuleGroup, cls._expr(AssocModuleGroup.is_active == True)),
-            with_loader_criteria(Group, cls._expr(Group.is_active == True)),
-            with_loader_criteria(View, cls._expr(View.is_active == True)),
+            with_loader_criteria(AssocModuleGroup, cls._expr(AssocModuleGroup.is_active.is_(True))),
+            with_loader_criteria(Group, cls._expr(Group.is_active.is_(True))),
+            with_loader_criteria(View, cls._expr(View.is_active.is_(True))),
         )
-
-    @classmethod
-    async def get_all_by_controller(cls, session: AsyncSession, controller: str) -> Sequence[Module]:
-        filter_expr = cls._expr(cls._model_cls.views.any(View.controllers.contains([controller])))
-        query = cls._build_query([filter_expr])
-        result = await session.execute(query)
-        return result.scalars().unique().all()

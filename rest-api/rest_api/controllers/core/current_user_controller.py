@@ -3,6 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from schemas.core import UserPlainSchema
 from utils.auth import Auth
+from config.enums import Action
 
 
 class CurrentUserController:
@@ -16,7 +17,7 @@ class CurrentUserController:
             status_code=status.HTTP_200_OK,
         )
 
-    @Auth.restrict_access()
+    @Auth.restrict_access(action=Action.GET_ONE)
     async def current_user(self, request: Request) -> UserPlainSchema:
         try:
             user = request.state.user

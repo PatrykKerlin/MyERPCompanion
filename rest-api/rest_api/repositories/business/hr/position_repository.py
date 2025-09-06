@@ -19,5 +19,5 @@ class PositionRepository(BaseRepository[Position]):
         query = super()._build_query(additional_filters, sort_by, sort_order)
         return query.options(
             selectinload(cls._model_cls.department),
-            with_loader_criteria(Department, cls._expr(Department.is_active == True)),
+            with_loader_criteria(Department, cls._expr(Department.is_active.is_(True))),
         )

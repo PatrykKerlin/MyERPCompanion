@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from sqlalchemy import UniqueConstraint, Index
@@ -8,7 +6,9 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
+    from .assoc_user_view import AssocUserView
     from .module import Module
+    from .user import User
 
 
 class View(BaseModel):
@@ -26,3 +26,7 @@ class View(BaseModel):
 
     module_id: Mapped[int] = Fields.foreign_key(column="modules.id")
     module: Mapped[Module] = Fields.relationship(argument="Module", back_populates="views", foreign_keys=[module_id])
+
+    view_users: Mapped[list[AssocUserView]] = Fields.relationship(
+        argument="AssocUserView", back_populates="user", foreign_keys="AssocUserView.user_id"
+    )

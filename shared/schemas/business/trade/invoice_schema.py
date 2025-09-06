@@ -1,13 +1,7 @@
-from __future__ import annotations
-
 from datetime import date
-from typing import TYPE_CHECKING
 
-from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
-
-if TYPE_CHECKING:
-    from .currency_schema import CurrencyPlainSchema
-    from .payment_method_schema import PaymentMethodPlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.validation import Constraints
 
 
 class InvoiceStrictSchema(BaseStrictSchema):
@@ -39,5 +33,5 @@ class InvoicePlainSchema(BasePlainSchema):
     total_gross: float
     total_discount: float
 
-    currency_id: CurrencyPlainSchema
-    payment_method_id: PaymentMethodPlainSchema
+    currency_id: int
+    payment_method_id: int

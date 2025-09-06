@@ -116,27 +116,7 @@ class EmployeePlainSchema(BasePlainSchema):
     department_id: int
     user_id: int | None
 
-    @field_validator("manager_id", mode="before")
-    @classmethod
-    def _normalize_manager_id(cls, value: Any) -> int | None:
-        return Normalizers.normalize_related_single_id(value)
-
     @field_validator("subordinates", mode="before")
     @classmethod
     def _normalize_subordinates(cls, values: list[Any]) -> list[int]:
-        return Normalizers.normalize_related_id_list(values)
-
-    @field_validator("position_id", mode="before")
-    @classmethod
-    def _normalize_position_id(cls, value: Any) -> int | None:
-        return Normalizers.normalize_related_single_id(value)
-
-    @field_validator("department_id", mode="before")
-    @classmethod
-    def _normalize_department_id(cls, value: Any) -> int | None:
-        return Normalizers.normalize_related_single_id(value)
-
-    @field_validator("user_id", mode="before")
-    @classmethod
-    def _normalize_user_id(cls, value: Any) -> int | None:
-        return Normalizers.normalize_related_single_id(value)
+        return Normalizers.normalize_related_ids(values)

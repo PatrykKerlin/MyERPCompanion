@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from typing import Annotated
 
 from pydantic import BaseModel, Field
@@ -8,7 +9,7 @@ class BaseSchema(BaseModel):
     model_config = {"from_attributes": True, "arbitrary_types_allowed": True}
 
 
-class BaseInputSchema(BaseSchema):
+class BasePlainSchema(BaseSchema):
     id: int
     is_active: bool
     created_at: datetime
@@ -17,5 +18,5 @@ class BaseInputSchema(BaseSchema):
     modified_by: int | None = None
 
 
-class BaseOutputSchema(BaseSchema):
-    id: Annotated[int, Field(ge=1, exclude=True)]
+class BaseStrictSchema(BaseSchema):
+    id: Annotated[int | None, Field(ge=1, exclude=True)] = None

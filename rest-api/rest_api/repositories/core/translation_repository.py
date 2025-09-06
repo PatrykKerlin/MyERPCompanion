@@ -19,5 +19,5 @@ class TranslationRepository(BaseRepository[Translation]):
         query = super()._build_query(additional_filters, sort_by, sort_order)
         return query.options(
             selectinload(cls._model_cls.language),
-            with_loader_criteria(Language, cls._expr(Language.is_active == True)),
+            with_loader_criteria(Language, cls._expr(Language.is_active.is_(True))),
         )

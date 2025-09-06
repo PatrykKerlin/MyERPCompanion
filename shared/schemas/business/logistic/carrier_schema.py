@@ -1,9 +1,10 @@
-from typing import Any
-
-from pydantic import field_validator
+from typing import TYPE_CHECKING
 
 from schemas.base import BasePlainSchema, BaseStrictSchema
-from schemas.validation import Constraints, Normalizers
+from schemas.validation import Constraints
+
+if TYPE_CHECKING:
+    from .delivery_method_schema import DeliveryMethodPlainSchema
 
 
 class CarrierStrictSchema(BaseStrictSchema):
@@ -63,7 +64,4 @@ class CarrierPlainSchema(BasePlainSchema):
 
     currency_id: int
 
-    @field_validator("currency_id", mode="before")
-    @classmethod
-    def _normalize_currency_id(cls, value: Any) -> int | None:
-        return Normalizers.normalize_related_single_id(value)
+    delivery_methods: list[DeliveryMethodPlainSchema]

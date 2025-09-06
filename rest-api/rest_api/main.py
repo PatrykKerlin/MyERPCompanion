@@ -6,7 +6,7 @@ from fastapi import APIRouter, FastAPI
 from config import Context, CustomFastAPI, Database, Settings
 from controllers import core as cc
 from handlers import CheckDatabaseState, PopulateDatabase
-from middlewares import AuthMiddleware
+from middlewares import AuthMiddleware, ViewMiddleware
 
 
 class App:
@@ -74,6 +74,7 @@ def create_app() -> FastAPI:
 
     app_instance = App(context=context, database=database, lifespan=lifespan)
     app_instance.get_app().add_middleware(AuthMiddleware, context=context)  # type: ignore
+    app_instance.get_app().add_middleware(ViewMiddleware, context=context)  # type: ignore
 
     return app_instance.get_app()
 

@@ -1,5 +1,6 @@
 from .assoc_module_group import AssocModuleGroup
 from .assoc_user_group import AssocUserGroup
+from .assoc_user_view import AssocUserView
 from .group import Group
 from .image import Image
 from .language import Language
@@ -12,6 +13,7 @@ from .view import View
 __all__ = [
     "AssocModuleGroup",
     "AssocUserGroup",
+    "AssocUserView",
     "Group",
     "Image",
     "Language",

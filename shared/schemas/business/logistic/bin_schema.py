@@ -32,12 +32,7 @@ class BinPlainSchema(BasePlainSchema):
     warehouse_id: int
     items: list[int]
 
-    @field_validator("warehouse_id", mode="before")
-    @classmethod
-    def _normalize_warehouse_id(cls, value: Any) -> int | None:
-        return Normalizers.normalize_related_single_id(value)
-
     @field_validator("items", mode="before")
     @classmethod
     def _normalize_items(cls, values: list[Any]) -> list[int]:
-        return Normalizers.normalize_related_id_list(values)
+        return Normalizers.normalize_related_ids(values)

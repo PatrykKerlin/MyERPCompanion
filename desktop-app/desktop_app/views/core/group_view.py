@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
-from utils.view_modes import ViewMode
+from config.enums import ViewMode
 from views.base import BaseView
 
 if TYPE_CHECKING:

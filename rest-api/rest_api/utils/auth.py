@@ -1,20 +1,29 @@
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from functools import wraps
-from typing import Any, cast
-
+from typing import Any, Awaitable, cast
+from config.enums import Permission, Action
 from fastapi import HTTPException, Request, status
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from sqlalchemy import select, exists
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings
 from schemas.core import UserPlainSchema
+from models.core import AssocUserView
 
 
 class Auth:
     __pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+    __action_to_permission = {
+        Action.GET_ALL: Permission.CAN_LIST,
+        Action.GET_ONE: Permission.CAN_SHOW,
+        Action.CREATE: Permission.CAN_CREATE,
+        Action.UPDATE: Permission.CAN_UPDATE,
+        Action.DELETE: Permission.CAN_DELETE,
+    }
 
     @classmethod
     async def authenticate(
@@ -61,32 +70,52 @@ class Auth:
         return schema
 
     @classmethod
-    def restrict_access(cls) -> Callable:
+    def restrict_access(cls, action: Action) -> Callable:
         from services.core import ModuleService
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
             @wraps(func)
             async def wrapper(self: Any, *args: Any, request: Request, **kwargs: Any) -> Any:
-                user_schema = request.state.user
-                if not user_schema:
+                user_schema = getattr(request.state, "user", None)
+                view_schema = getattr(request.state, "view", None)
+                if not user_schema or not view_schema:
                     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-                if getattr(user_schema, "is_superuser", False):
+                if user_schema.is_superuser:
                     return await func(self, *args, request=request, **kwargs)
 
-                controller = self.__class__.__name__
+                controller_name = self.__class__.__name__
+                if controller_name not in set(view_schema.controllers):
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
                 async with self._get_session() as session:
-                    service = ModuleService()
-                    module_schemas = await service.get_all_by_controller(session, controller)
+                    module_service = ModuleService()
+                    module_schema = await module_service.get_one_by_id(session, view_schema.module_id)
 
-                if not module_schemas:
-                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+                    if not module_schema:
+                        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-                allowed_groups = {group.key for module_schema in module_schemas for group in module_schema.groups}
-                user_groups = {group.key for group in user_schema.groups}
+                    allowed_groups = {group.key for group in module_schema.groups}
+                    user_groups = {group.key for group in user_schema.groups}
 
-                if not user_groups.intersection(allowed_groups):
-                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+                    if not user_groups.intersection(allowed_groups):
+                        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
+                    selected_permission = cls.__action_to_permission[action]
+                    permission_column = getattr(AssocUserView, selected_permission)
+
+                    has_permission = await session.scalar(
+                        select(
+                            exists().where(
+                                AssocUserView.is_active.is_(True),
+                                AssocUserView.user_id == user_schema.id,
+                                AssocUserView.view_id == view_schema.id,
+                                permission_column.is_(True),
+                            )
+                        )
+                    )
+
+                    if not has_permission:
+                        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
                 return await func(self, *args, request=request, **kwargs)
 

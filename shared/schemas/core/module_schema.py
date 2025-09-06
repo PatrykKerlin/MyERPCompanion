@@ -1,12 +1,6 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
-
-if TYPE_CHECKING:
-    from .group_schema import GroupPlainSchema
-    from .view_schema import ViewPlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.core import ViewPlainSchema, GroupPlainSchema
+from schemas.validation import Constraints
 
 
 class ModuleStrictSchema(BaseStrictSchema):

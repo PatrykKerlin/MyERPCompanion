@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pydantic import model_validator
 
-from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints, Normalizers
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.validation import Constraints
+
+if TYPE_CHECKING:
+    from .discount_schema import DiscountPlainSchema
 
 
 class CustomerStrictSchema(BaseStrictSchema):
@@ -80,3 +86,5 @@ class CustomerPlainSchema(BasePlainSchema):
     billing_postal_code: str | None
     billing_city: str | None
     billing_country: str | None
+
+    discounts: list[DiscountPlainSchema]

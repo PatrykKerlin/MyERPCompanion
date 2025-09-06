@@ -1,9 +1,5 @@
-from typing import Any
-
-from pydantic import field_validator
-
 from schemas.base import BasePlainSchema, BaseStrictSchema
-from schemas.validation import Constraints, Normalizers
+from schemas.validation import Constraints
 
 
 class DeliveryMethodStrictSchema(BaseStrictSchema):
@@ -34,13 +30,3 @@ class DeliveryMethodPlainSchema(BasePlainSchema):
 
     carrier_id: int
     unit_id: int
-
-    @field_validator("carrier_id", mode="before")
-    @classmethod
-    def _normalize_carrier_id(cls, value: Any) -> int | None:
-        return Normalizers.normalize_related_single_id(value)
-
-    @field_validator("unit_id", mode="before")
-    @classmethod
-    def _normalize_unit_id(cls, value: Any) -> int | None:
-        return Normalizers.normalize_related_single_id(value)

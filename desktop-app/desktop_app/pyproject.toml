@@ -1,5 +1,5 @@
 [tool.ruff]
-exclude = ["**/.cache"]
+exclude = ["**/.cache", ".vscode-server"]
 line-length = 120
 target-version = "py313"
 
@@ -15,7 +15,13 @@ exclude = '''
     \.cache
     | \.git
     | \.ruff_cache
+    | \.vscode-server
     | __pycache__
     | migrations/versions
 )/
 '''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip = [".vscode-server", "migrations/versions"]

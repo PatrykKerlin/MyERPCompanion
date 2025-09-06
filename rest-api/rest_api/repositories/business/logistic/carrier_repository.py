@@ -19,5 +19,5 @@ class CarrierRepository(BaseRepository[Carrier]):
         query = super()._build_query(additional_filters, sort_by, sort_order)
         return query.options(
             selectinload(cls._model_cls.currency),
-            with_loader_criteria(Currency, cls._expr(Currency.is_active == True)),
+            with_loader_criteria(Currency, cls._expr(Currency.is_active.is_(True))),
         )

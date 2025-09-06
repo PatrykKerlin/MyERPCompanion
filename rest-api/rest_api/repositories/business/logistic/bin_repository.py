@@ -20,7 +20,7 @@ class BinRepository(BaseRepository[Bin]):
         return query.options(
             selectinload(cls._model_cls.bin_items).selectinload(AssocBinItem.item),
             selectinload(cls._model_cls.warehouse),
-            with_loader_criteria(AssocBinItem, cls._expr(AssocBinItem.is_active == True)),
-            with_loader_criteria(Item, cls._expr(Item.is_active == True)),
-            with_loader_criteria(Warehouse, cls._expr(Warehouse.is_active == True)),
+            with_loader_criteria(AssocBinItem, cls._expr(AssocBinItem.is_active.is_(True))),
+            with_loader_criteria(Item, cls._expr(Item.is_active.is_(True))),
+            with_loader_criteria(Warehouse, cls._expr(Warehouse.is_active.is_(True))),
         )

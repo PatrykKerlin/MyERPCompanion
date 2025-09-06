@@ -1,4 +1,5 @@
-from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.validation import Constraints
 
 
 class ViewStrictSchema(BaseStrictSchema):
@@ -14,3 +15,4 @@ class ViewPlainSchema(BasePlainSchema):
     description: str | None
     order: int
     controllers: list[str]
+    module_id: int

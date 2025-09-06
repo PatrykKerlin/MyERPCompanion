@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
@@ -20,6 +18,10 @@ TModel = TypeVar("TModel", bound=BaseModel)
 class BaseRepository(Generic[TModel]):
     _model_cls: type[TModel]
 
+    @staticmethod
+    def _expr(expression: ClauseElement | bool) -> ColumnElement[bool]:
+        return cast(ColumnElement[bool], expression)
+
     @classmethod
     def _build_query(
         cls,
@@ -27,7 +29,7 @@ class BaseRepository(Generic[TModel]):
         sort_by: str | None = None,
         sort_order: str = "asc",
     ) -> Select:
-        filters = [cls._model_cls.is_active == True]
+        filters = [BaseRepository._expr(cls._model_cls.is_active.is_(True))]
         if additional_filters:
             filters.extend(additional_filters)
         query = select(cls._model_cls).filter(*filters)
@@ -38,10 +40,6 @@ class BaseRepository(Generic[TModel]):
             else:
                 query = query.order_by(desc(column))
         return query
-
-    @staticmethod
-    def _expr(expression: ClauseElement | bool) -> ColumnElement[bool]:
-        return cast(ColumnElement[bool], expression)
 
     @classmethod
     async def get_all(
@@ -92,7 +90,7 @@ class BaseRepository(Generic[TModel]):
 
     @classmethod
     async def count_all(cls, session: AsyncSession, filters: list[ColumnElement[bool]] | None = None) -> int:
-        query = select(func.count()).select_from(cls._model_cls).filter(cls._expr(cls._model_cls.is_active == True))
+        query = select(func.count()).select_from(cls._model_cls).filter(cls._expr(cls._model_cls.is_active.is_(True)))
         if filters:
             for filter in filters:
                 query = query.filter(cls._expr(filter))

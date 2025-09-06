@@ -1,17 +1,17 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
 
 from models.base import BaseModel, Fields
-from models.business import Employee
 
 if TYPE_CHECKING:
+    from ..business.hr.employee import Employee
     from .assoc_user_group import AssocUserGroup
+    from .assoc_user_view import AssocUserView
     from .group import Group
     from .language import Language
     from .theme import Theme
+    from .view import View
 
 
 class User(BaseModel):
@@ -23,7 +23,7 @@ class User(BaseModel):
 
     employee_id: Mapped[int | None] = Fields.foreign_key(column="employees.id", unique=True, nullable=True)
     employee: Mapped[Employee | None] = Fields.relationship(
-        argument="Employee", back_populates="user", foreign_keys=[employee_id]
+        argument="Employee", back_populates="user", foreign_keys=[employee_id], uselist=False
     )
 
     language_id: Mapped[int | None] = Fields.foreign_key(column="languages.id", nullable=True)
@@ -36,6 +36,10 @@ class User(BaseModel):
 
     user_groups: Mapped[list[AssocUserGroup]] = Fields.relationship(
         argument="AssocUserGroup", back_populates="user", foreign_keys="AssocUserGroup.user_id"
+    )
+
+    user_views: Mapped[list[AssocUserView]] = Fields.relationship(
+        argument="AssocUserView", back_populates="user", foreign_keys="AssocUserView.user_id"
     )
 
     @property

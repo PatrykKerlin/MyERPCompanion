@@ -1,6 +1,6 @@
-from schemas.core import GroupInputSchema
+from schemas.core import GroupPlainSchema
 from services.base import BaseViewService
 
 
-class GroupService(BaseViewService[GroupInputSchema]):
-    _input_schema_cls = GroupInputSchema
+class GroupService(BaseViewService[GroupPlainSchema]):
+    _input_schema_cls = GroupPlainSchema

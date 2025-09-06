@@ -1,4 +1,4 @@
-from __future__ import annotations
+# from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
@@ -10,7 +10,7 @@ from views.core import AppView
 
 if TYPE_CHECKING:
     from config.context import Context
-    from schemas.core.endpoint_schema import EndpointInputSchema
+    from schemas.core.view_schema import ViewPlainSchema
 
 
 class AppController(BaseController):
@@ -50,7 +50,7 @@ class AppController(BaseController):
             texts = await self.__service.fetch_texts()
             self._context.texts.update(texts)
 
-        await self.__service.save_settings_to_redis()
+        # await self.__service.save_settings_to_redis()
         modules = await self.__service.fetch_modules()
         self._context.modules.extend(modules)
         self.__view.set_user(user)
@@ -72,8 +72,8 @@ class AppController(BaseController):
     async def __run_startup_sequence(self) -> None:
         loading_dialog = self._show_loading_dialog()
         try:
-            await self.__service.check_redis_ready()
-            await self.__service.load_settings_from_redis()
+            # await self.__service.check_redis_ready()
+            # await self.__service.load_settings_from_redis()
             await self.__service.api_health_check()
             texts = await self.__service.fetch_texts()
             self._context.texts.update(texts)
@@ -86,9 +86,9 @@ class AppController(BaseController):
         auth_dialog = self._context.controllers.get("auth_dialog").get_new_component()
         self._open_dialog(auth_dialog)
 
-    def __prepare_endpoints(self) -> tuple[dict[str, EndpointInputSchema], dict[str, list[str]]]:
+    def __prepare_endpoints(self) -> tuple[dict[str, ViewPlainSchema], dict[str, list[str]]]:
         side_menu_content: dict[str, list[str]] = {}
-        endpoints: dict[str, EndpointInputSchema] = {}
+        endpoints: dict[str, ViewPlainSchema] = {}
         user_groups = {group.id for group in self._context.user.groups}
         for module in sorted(self._context.modules, key=lambda m: m.order):
             module_groups = {group.id for group in module.groups}

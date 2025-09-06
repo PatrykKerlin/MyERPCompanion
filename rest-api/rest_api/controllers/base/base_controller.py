@@ -8,6 +8,7 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql.elements import ColumnElement
 
 from config import Context
+from config.enums import Action
 from schemas.base import BasePlainSchema, BaseStrictSchema
 from schemas.core import FilterParamsSchema, PaginatedResponseSchema, PaginationParamsSchema, SortingParamsSchema
 from services.base import BaseService
@@ -30,7 +31,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         self._service = self._service_cls()
         self._404_message = "{model} with ID {id} not found."
 
-    @Auth.restrict_access()
+    @Auth.restrict_access(action=Action.GET_ALL)
     async def get_all(
         self,
         request: Request,
@@ -73,7 +74,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    @Auth.restrict_access()
+    @Auth.restrict_access(action=Action.GET_ONE)
     async def get_by_id(self, request: Request, model_id: int) -> TOutputSchema:
         try:
             async with self._get_session() as session:
@@ -88,7 +89,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    @Auth.restrict_access()
+    @Auth.restrict_access(action=Action.CREATE)
     async def create(self, request: Request) -> TOutputSchema:
         try:
             user = request.state.user
@@ -103,7 +104,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    @Auth.restrict_access()
+    @Auth.restrict_access(action=Action.UPDATE)
     async def update(self, request: Request, model_id: int) -> TOutputSchema:
         try:
             user = request.state.user
@@ -123,7 +124,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    @Auth.restrict_access()
+    @Auth.restrict_access(action=Action.DELETE)
     async def delete(self, request: Request, model_id: int) -> Response:
         try:
             user = request.state.user
@@ -143,12 +144,12 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
     def _register_routes(
         self,
         output_schema: type[TOutputSchema],
-        include: list[Literal["get_all", "get_by_id", "create", "update", "delete"]] | None = None,
+        include: list[Action] | None = None,
         path: str = "",
     ) -> None:
         id_param = "/{model_id}"
-        include = include if include else ["get_all", "get_by_id", "create", "update", "delete"]
-        if "get_all" in include:
+        include = include if include else list(Action)
+        if Action.GET_ALL in include:
             self.router.add_api_route(
                 path=path,
                 endpoint=self.get_all,
@@ -156,7 +157,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 response_model=PaginatedResponseSchema[output_schema],
                 status_code=status.HTTP_200_OK,
             )
-        if "get_by_id" in include:
+        if Action.GET_ONE in include:
             self.router.add_api_route(
                 path=path + id_param,
                 endpoint=self.get_by_id,
@@ -164,7 +165,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 response_model=output_schema,
                 status_code=status.HTTP_200_OK,
             )
-        if "create" in include:
+        if Action.CREATE in include:
             self.router.add_api_route(
                 path=path,
                 endpoint=self.create,
@@ -172,7 +173,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 response_model=output_schema,
                 status_code=status.HTTP_201_CREATED,
             )
-        if "update" in include:
+        if Action.UPDATE in include:
             self.router.add_api_route(
                 path=path + id_param,
                 endpoint=self.update,
@@ -180,7 +181,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 response_model=output_schema,
                 status_code=status.HTTP_200_OK,
             )
-        if "delete" in include:
+        if Action.DELETE in include:
             self.router.add_api_route(
                 path=path + id_param,
                 endpoint=self.delete,

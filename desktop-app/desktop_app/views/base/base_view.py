@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import flet as ft
 
-from utils.view_modes import ViewMode
+from config.enums import ViewMode
 from views.base import BaseComponent
 from views.components.search_results_component import SearchResultsComponent
 
 if TYPE_CHECKING:
     from controllers.base.base_view_controller import BaseViewController
-    from schemas.base.base_schema import BaseOutputSchema
+    from schemas.base.base_schema import BaseStrictSchema
     from services.base.base_view_service import BaseViewService
 
 TController = TypeVar("TController", bound="BaseViewController[BaseViewService, BaseView, BaseOutputSchema]")

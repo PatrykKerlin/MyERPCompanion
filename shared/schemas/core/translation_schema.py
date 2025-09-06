@@ -1,14 +1,10 @@
-from __future__ import annotations
-
 from datetime import datetime
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from pydantic import Field
 
-from schemas.base import BasePlainSchema, BaseStrictSchema, Constraints
-
-if TYPE_CHECKING:
-    from .language_schema import LanguagePlainSchema
+from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.validation import Constraints
 
 
 class TranslationStrictSchema(BaseStrictSchema):
@@ -20,7 +16,7 @@ class TranslationStrictSchema(BaseStrictSchema):
 class TranslationPlainSchema(BasePlainSchema):
     key: str
     value: str
-    language: LanguagePlainSchema
+    language_id: int
 
 
 class TranslationByLanguagePlainSchema(BasePlainSchema):

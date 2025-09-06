@@ -1,10 +1,9 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 import httpx
 
-from schemas.core import TokenInputSchema
+from config.enums import Endpoint
+from schemas.core import TokenPlainSchema
 
 if TYPE_CHECKING:
     from config.context import Context
@@ -72,10 +71,10 @@ class BaseService:
         payload = {"refresh": self._context.tokens.refresh}
         try:
             async with httpx.AsyncClient(base_url=self._context.settings.API_URL) as client:
-                response = await client.post("/refresh", json=payload)
+                response = await client.post(Endpoint.REFRESH, json=payload)
                 response.raise_for_status()
                 new_access = response.json()["access"]
-                self._context.tokens = TokenInputSchema(
+                self._context.tokens = TokenPlainSchema(
                     access=new_access,
                     refresh=self._context.tokens.refresh,
                 )

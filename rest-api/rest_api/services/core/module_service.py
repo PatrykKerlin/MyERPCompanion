@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from sqlalchemy.exc import NoResultFound
@@ -17,10 +15,6 @@ class ModuleService(BaseService[Module, ModuleRepository, ModuleStrictSchema, Mo
     _repository_cls = ModuleRepository
     _model_cls = Module
     _output_schema_cls = ModulePlainSchema
-
-    async def get_all_by_controller(self, session: AsyncSession, controller: str) -> list[ModulePlainSchema]:
-        models = await self._repository_cls.get_all_by_controller(session, controller)
-        return [ModulePlainSchema.model_validate(model) for model in models]
 
     async def create(self, session: AsyncSession, created_by: int, schema: ModuleStrictSchema) -> ModulePlainSchema:
         model = self._model_cls(**schema.model_dump(exclude={"groups"}))

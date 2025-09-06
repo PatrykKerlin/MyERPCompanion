@@ -4,7 +4,7 @@ import flet as ft
 
 from config.context import Context
 from config.controllers import Controllers
-from config.default_translation import DefaultTranslation
+from config.texts import Texts
 from config.settings import Settings
 
 
@@ -20,7 +20,7 @@ class App:
             settings=settings,
             page=page,
             logger=logger,
-            texts=DefaultTranslation().texts,
+            texts=Texts().defaults,
         )
         controllers = Controllers(context)
         context.controllers = controllers
