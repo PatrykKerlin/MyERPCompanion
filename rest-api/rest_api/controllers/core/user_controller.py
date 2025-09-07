@@ -9,7 +9,6 @@ from controllers.base import BaseController
 from schemas.core import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
 from services.core import UserService
 from utils.auth import Auth
-from config.enums import Action
 
 
 class UserController(
@@ -22,11 +21,11 @@ class UserController(
     _input_schema_cls = UserStrictCreateSchema
     _service_cls = UserService
 
-    def __init__(self, context: Context) -> None:
-        super().__init__(context)
+    def __init__(self, context: Context, auth: Auth) -> None:
+        super().__init__(context, auth)
         self._register_routes(UserPlainSchema)
+        self._service.set_auth(auth)
 
-    @Auth.restrict_access(action=Action.CREATE)
     async def create(self, request: Request) -> UserPlainSchema:
         try:
             user = request.state.user
@@ -41,7 +40,6 @@ class UserController(
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    @Auth.restrict_access(action=Action.UPDATE)
     async def update(self, request: Request, model_id: int) -> UserPlainSchema:
         try:
             user = request.state.user

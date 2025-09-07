@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint
 from sqlalchemy.orm import Mapped
 
 from models.base import BaseModel, Fields
@@ -12,6 +13,7 @@ if TYPE_CHECKING:
     from .assoc_category_discount import AssocCategoryDiscount
     from .assoc_customer_discount import AssocCustomerDiscount
     from .assoc_item_discount import AssocItemDiscount
+    from .assoc_order_item import AssocOrderItem
     from .customer import Customer
 
 
@@ -39,6 +41,10 @@ class Discount(BaseModel):
     )
     discount_items: Mapped[list[AssocItemDiscount]] = Fields.relationship(
         argument="AssocItemDiscount", back_populates="discount", foreign_keys="AssocItemDiscount.discount_id"
+    )
+
+    order_items: Mapped[list[AssocOrderItem]] = Fields.relationship(
+        argument="AssocOrderItem", back_populates="discount", foreign_keys="AssocOrderItem.discount_id"
     )
 
     @property

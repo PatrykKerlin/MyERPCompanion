@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
@@ -40,6 +42,6 @@ class Supplier(BaseModel):
     items: Mapped[list[Item]] = Fields.relationship(
         argument="Item", back_populates="supplier", foreign_keys="Item.supplier_id"
     )
-    order: Mapped[list[Order]] = Fields.relationship(
+    orders: Mapped[list[Order]] = Fields.relationship(
         argument="Order", back_populates="supplier", foreign_keys="Order.supplier_id"
     )

@@ -13,14 +13,15 @@ from schemas.core import (
     TranslationStrictSchema,
 )
 from services.core import TranslationService
+from utils.auth import Auth
 
 
 class TranslationController(BaseController[TranslationService, TranslationStrictSchema, TranslationPlainSchema]):
     _input_schema_cls: type[TranslationStrictSchema]
     _service_cls = TranslationService
 
-    def __init__(self, context: Context) -> None:
-        super().__init__(context)
+    def __init__(self, context: Context, auth: Auth) -> None:
+        super().__init__(context, auth)
         self.router.add_api_route(
             path="/by-language/{language}",
             endpoint=self.get_all_by_language,

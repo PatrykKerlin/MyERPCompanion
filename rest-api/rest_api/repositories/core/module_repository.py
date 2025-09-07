@@ -1,8 +1,6 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
-from collections.abc import Sequence
 
 from models.core import AssocModuleGroup, Group, Module, View
 from repositories.base import BaseRepository

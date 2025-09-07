@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
@@ -8,6 +10,7 @@ if TYPE_CHECKING:
     from ..logistic.carrier import Carrier
     from ..logistic.item import Item
     from .exchange_rate import ExchangeRate
+    from .invoice import Invoice
     from .order import Order
 
 
@@ -26,6 +29,9 @@ class Currency(BaseModel):
     )
     orders: Mapped[list[Order]] = Fields.relationship(
         argument="Order", back_populates="currency", foreign_keys="Order.currency_id"
+    )
+    invoices: Mapped[list[Invoice]] = Fields.relationship(
+        argument="Invoice", back_populates="currency", foreign_keys="Invoice.currency_id"
     )
     carriers: Mapped[list[Carrier]] = Fields.relationship(
         argument="Carrier", back_populates="currency", foreign_keys="Carrier.currency_id"

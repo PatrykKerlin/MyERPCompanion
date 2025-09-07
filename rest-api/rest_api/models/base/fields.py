@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, ARRAY
+from sqlalchemy import ARRAY, Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import relationship as base_relationship
 from sqlalchemy.orm.relationships import (

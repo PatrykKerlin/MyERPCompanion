@@ -1,0 +1,22 @@
+INSERT INTO translations (key, value, language_id, is_active, created_at, created_by)
+VALUES
+('myerpcompanion', 'MyERPCompanion', 1, TRUE, NOW(), :superuser_id),
+('myerpcompanion', 'MyERPCompanion', 2, TRUE, NOW(), :superuser_id),
+('error', 'Error', 1, TRUE, NOW(), :superuser_id),
+('error', 'Błąd', 2, TRUE, NOW(), :superuser_id),
+('login', 'Login', 1, TRUE, NOW(), :superuser_id),
+('login', 'Logowanie', 2, TRUE, NOW(), :superuser_id),
+('log_in', 'Log in', 1, TRUE, NOW(), :superuser_id),
+('log_in', 'Zaloguj', 2, TRUE, NOW(), :superuser_id),
+('cancel', 'Cancel', 1, TRUE, NOW(), :superuser_id),
+('cancel', 'Anuluj', 2, TRUE, NOW(), :superuser_id),
+('username', 'Username', 1, TRUE, NOW(), :superuser_id),
+('username', 'Użytkownik', 2, TRUE, NOW(), :superuser_id),
+('password', 'Password', 1, TRUE, NOW(), :superuser_id),
+('password', 'Hasło', 2, TRUE, NOW(), :superuser_id),
+('loading', 'Loading...', 1, TRUE, NOW(), :superuser_id),
+('loading', 'Ładuję dane...', 2, TRUE, NOW(), :superuser_id),
+('ok', 'OK', 1, TRUE, NOW(), :superuser_id),
+('ok', 'OK', 2, TRUE, NOW(), :superuser_id),
+('api_not_responding', 'API is not responding.', 1, TRUE, NOW(), :superuser_id),
+('api_not_responding', 'API nie odpowiada.',    2, TRUE, NOW(), :superuser_id);

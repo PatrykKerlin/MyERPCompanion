@@ -1,6 +1,8 @@
-from typing import Annotated, Generic, Literal, TypeVar
+from collections.abc import Mapping
+from typing import Annotated, Generic, TypeVar
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi.params import Depends as DependsParam
 from pydantic import ValidationError
 from sqlalchemy import String
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
@@ -24,14 +26,21 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
     _input_schema_cls: type[TInputSchema]
     _service_cls: type[TService]
 
-    def __init__(self, context: Context) -> None:
+    def __init__(self, context: Context, auth: Auth) -> None:
         self.router = APIRouter()
         self._get_session = context.get_session
         self._settings = context.settings
         self._service = self._service_cls()
+        self._auth = auth
         self._404_message = "{model} with ID {id} not found."
+        self.__default_actions_mapping = {
+            Action.GET_ALL: True,
+            Action.GET_ONE: True,
+            Action.CREATE: True,
+            Action.UPDATE: True,
+            Action.DELETE: True,
+        }
 
-    @Auth.restrict_access(action=Action.GET_ALL)
     async def get_all(
         self,
         request: Request,
@@ -74,7 +83,6 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    @Auth.restrict_access(action=Action.GET_ONE)
     async def get_by_id(self, request: Request, model_id: int) -> TOutputSchema:
         try:
             async with self._get_session() as session:
@@ -89,7 +97,6 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    @Auth.restrict_access(action=Action.CREATE)
     async def create(self, request: Request) -> TOutputSchema:
         try:
             user = request.state.user
@@ -104,7 +111,6 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    @Auth.restrict_access(action=Action.UPDATE)
     async def update(self, request: Request, model_id: int) -> TOutputSchema:
         try:
             user = request.state.user
@@ -124,7 +130,6 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    @Auth.restrict_access(action=Action.DELETE)
     async def delete(self, request: Request, model_id: int) -> Response:
         try:
             user = request.state.user
@@ -141,52 +146,62 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
+    def _restrict_access(self, action: Action, secured: bool) -> list[DependsParam]:
+        if not secured:
+            return []
+        return [Depends(self._auth.restrict_access(action=action, controller=self.__class__.__name__))]
+
     def _register_routes(
         self,
         output_schema: type[TOutputSchema],
-        include: list[Action] | None = None,
+        include: Mapping[Action, bool] | None = None,
         path: str = "",
     ) -> None:
         id_param = "/{model_id}"
-        include = include if include else list(Action)
-        if Action.GET_ALL in include:
+        mapping = self.__default_actions_mapping if include is None else include
+        if Action.GET_ALL in mapping:
             self.router.add_api_route(
                 path=path,
                 endpoint=self.get_all,
                 methods=["GET"],
                 response_model=PaginatedResponseSchema[output_schema],
                 status_code=status.HTTP_200_OK,
+                dependencies=self._restrict_access(action=Action.GET_ALL, secured=mapping[Action.GET_ALL]),
             )
-        if Action.GET_ONE in include:
+        if Action.GET_ONE in mapping:
             self.router.add_api_route(
                 path=path + id_param,
                 endpoint=self.get_by_id,
                 methods=["GET"],
                 response_model=output_schema,
                 status_code=status.HTTP_200_OK,
+                dependencies=self._restrict_access(action=Action.GET_ONE, secured=mapping[Action.GET_ONE]),
             )
-        if Action.CREATE in include:
+        if Action.CREATE in mapping:
             self.router.add_api_route(
                 path=path,
                 endpoint=self.create,
                 methods=["POST"],
                 response_model=output_schema,
                 status_code=status.HTTP_201_CREATED,
+                dependencies=self._restrict_access(action=Action.CREATE, secured=mapping[Action.CREATE]),
             )
-        if Action.UPDATE in include:
+        if Action.UPDATE in mapping:
             self.router.add_api_route(
                 path=path + id_param,
                 endpoint=self.update,
                 methods=["PUT"],
                 response_model=output_schema,
                 status_code=status.HTTP_200_OK,
+                dependencies=self._restrict_access(action=Action.UPDATE, secured=mapping[Action.UPDATE]),
             )
-        if Action.DELETE in include:
+        if Action.DELETE in mapping:
             self.router.add_api_route(
                 path=path + id_param,
                 endpoint=self.delete,
                 methods=["DELETE"],
                 status_code=status.HTTP_204_NO_CONTENT,
+                dependencies=self._restrict_access(action=Action.DELETE, secured=mapping[Action.DELETE]),
             )
 
     @staticmethod

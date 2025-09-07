@@ -1,5 +1,0 @@
-key,controller,path,order,module_id
-groups,GroupController,/groups,1,1
-users,UserController,/users,2,1
-modules,ModuleController,/modules,4,1
-views,ViewController,/views,5,1

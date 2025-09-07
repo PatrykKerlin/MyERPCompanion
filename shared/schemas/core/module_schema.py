@@ -1,5 +1,5 @@
 from schemas.base import BasePlainSchema, BaseStrictSchema
-from schemas.core import ViewPlainSchema, GroupPlainSchema
+from schemas.core import GroupPlainSchema, ViewPlainSchema
 from schemas.validation import Constraints
 
 

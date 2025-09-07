@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import model_validator, field_validator
+from pydantic import field_validator, model_validator
 
 from schemas.base import BasePlainSchema, BaseStrictSchema
 from schemas.validation import Constraints, Normalizers

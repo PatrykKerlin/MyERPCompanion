@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
@@ -11,7 +13,6 @@ if TYPE_CHECKING:
     from .group import Group
     from .language import Language
     from .theme import Theme
-    from .view import View
 
 
 class User(BaseModel):

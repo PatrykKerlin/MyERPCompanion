@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import select, literal_column
+from sqlalchemy import literal_column, select
 from sqlalchemy.orm import Mapped, column_property
 
 from models.base import BaseModel, Fields

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date
 from typing import TYPE_CHECKING
 
@@ -10,6 +12,7 @@ if TYPE_CHECKING:
     from ..logistic.item import Item
     from .assoc_order_item import AssocOrderItem
     from .assoc_order_status import AssocOrderStatus
+    from .currency import Currency
     from .customer import Customer
     from .invoice import Invoice
     from .status import Status
@@ -50,9 +53,14 @@ class Order(BaseModel):
         argument="DeliveryMethod", back_populates="orders", foreign_keys=[delivery_method_id]
     )
 
+    currency_id: Mapped[int] = Fields.foreign_key(column="currencies.id")
+    currency: Mapped[Currency] = Fields.relationship(
+        argument="Currency", back_populates="orders", foreign_keys=[currency_id]
+    )
+
     invoice_id: Mapped[int | None] = Fields.foreign_key(column="invoices.id", nullable=True)
     invoice: Mapped[list[Invoice]] = Fields.relationship(
-        argument="Invoice", back_populates="order", foreign_keys=[invoice_id]
+        argument="Invoice", back_populates="orders", foreign_keys=[invoice_id]
     )
 
     order_items: Mapped[list[AssocOrderItem]] = Fields.relationship(

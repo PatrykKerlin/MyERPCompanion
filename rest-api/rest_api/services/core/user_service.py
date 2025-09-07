@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Union
 
 from sqlalchemy.exc import NoResultFound
@@ -6,10 +8,11 @@ from models.core import AssocUserGroup, User
 from repositories.core import AssocUserGroupRepository, GroupRepository, UserRepository
 from schemas.core import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
 from services.base import BaseService
-from utils.auth import Auth
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
+
+    from utils.auth import Auth
 
 
 class UserService(
@@ -24,6 +27,13 @@ class UserService(
     _model_cls = User
     _output_schema_cls = UserPlainSchema
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.__auth: Auth | None = None
+
+    def set_auth(self, auth: Auth) -> None:
+        self.__auth = auth
+
     async def get_by_name(self, session: AsyncSession, username: str) -> UserPlainSchema | None:
         model = await self._repository_cls.get_one_by_username(session, username)
         if not model:
@@ -36,7 +46,7 @@ class UserService(
         model = self._model_cls(**schema.model_dump(exclude={"groups"}))
         model.created_by = created_by
         if schema.password:
-            model.password = Auth.get_password_hash(schema.password)
+            model.password = self.__auth.get_password_hash(schema.password) if self.__auth else ""
         saved_model = await self._repository_cls.save(session, model, False)
         await self._handle_assoc_table(
             session=session,
@@ -66,7 +76,7 @@ class UserService(
             setattr(model, key, value)
         model.modified_by = modified_by
         if schema.password:
-            model.password = Auth.get_password_hash(schema.password)
+            model.password = self.__auth.get_password_hash(schema.password) if self.__auth else ""
         updated_model = await self._repository_cls.save(session, model, False)
         await self._handle_assoc_table(
             session=session,

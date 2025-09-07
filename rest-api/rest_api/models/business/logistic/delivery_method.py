@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
@@ -23,14 +25,14 @@ class DeliveryMethod(BaseModel):
     max_length: Mapped[float] = Fields.numeric_6_3()
     max_weight: Mapped[float] = Fields.numeric_10_3()
 
-    carrier_id: Mapped[int] = Fields.foreign_key(column="cariers.id")
+    carrier_id: Mapped[int] = Fields.foreign_key(column="carriers.id")
     carrier: Mapped[Carrier] = Fields.relationship(
-        argument="Carrier", back_populates="carriers", foreign_keys=[carrier_id]
+        argument="Carrier", back_populates="delivery_methods", foreign_keys=[carrier_id]
     )
 
     unit_id: Mapped[int] = Fields.foreign_key(column="units.id")
     unit: Mapped[Unit] = Fields.relationship(argument="Unit", back_populates="delivery_methods", foreign_keys=[unit_id])
 
     orders: Mapped[list[Order]] = Fields.relationship(
-        argument="Order", back_populates="delivery_method", foreign_keys="Order.id"
+        argument="Order", back_populates="delivery_method", foreign_keys="Order.delivery_method_id"
     )

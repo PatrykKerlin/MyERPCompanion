@@ -1,14 +1,20 @@
+from __future__ import annotations
+
 from types import new_class
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from config import Context
+from config.enums import Action
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from ..controllers.base import BaseController
     from ..models.base import BaseModel
     from ..repositories.base import BaseRepository
     from ..schemas.base import BasePlainSchema, BaseStrictSchema
     from ..services.base import BaseService
+    from ..utils.auth import Auth
 
 
 TModel = TypeVar("TModel", bound="BaseModel")
@@ -64,16 +70,16 @@ class ControllerFactory:
         input_schema_cls: type[TInputSchema],
         output_schema_cls: type[TOutputSchema],
         path: str = "",
-        include: list[str] | None = None,
+        include: Mapping[Action, bool] | None = None,
     ) -> type["BaseController[TService, TInputSchema, TOutputSchema]"]:
         from controllers.base import BaseController
 
         def exec_body(namespace: dict[str, Any]) -> None:
-            def __init__(self, context: Context) -> None:
-                BaseController.__init__(self, context)
+            def __init__(self, context: Context, auth: Auth) -> None:
+                BaseController.__init__(self, context, auth)
                 self._register_routes(
                     output_schema=output_schema_cls,
-                    include=selected_methods,
+                    include=include,
                     path=path,
                 )
 
@@ -81,20 +87,15 @@ class ControllerFactory:
             namespace["_service_cls"] = service_cls
             namespace["__init__"] = __init__
 
-        method_map = {
-            "get_all": BaseController.get_all,
-            "get_by_id": BaseController.get_by_id,
-            "create": BaseController.create,
-            "update": BaseController.update,
-            "delete": BaseController.delete,
+        actions_mapping = {
+            Action.GET_ALL: True,
+            Action.GET_ONE: True,
+            Action.CREATE: True,
+            Action.UPDATE: True,
+            Action.DELETE: True,
         }
 
-        allowed_methods = method_map.keys()
-        selected_methods = include or list(allowed_methods)
-
-        invalid = [method for method in selected_methods if method not in allowed_methods]
-        if invalid:
-            raise ValueError(f"Invalid method(s): {invalid}. Allowed: {list(allowed_methods)}")
+        include = include or actions_mapping
 
         return new_class(
             f"{model_cls.__name__}Controller",

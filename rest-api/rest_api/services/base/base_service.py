@@ -103,7 +103,7 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
                     setattr(assoc_model, "modified_by", modified_by)
                 await assoc_repo_cls.delete(session, assoc_model, False)
 
-        for index, id_to_add in enumerate(ids_to_add, start=1):
+        for id_to_add in ids_to_add:
             related_model = await related_repo_cls.get_one_by_id(session, id_to_add)
             if not related_model:
                 raise NoResultFound(self._not_found_message.format(model=self._model_cls.__name__, id=id_to_add))

@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import importlib
 from typing import Any, AsyncGenerator
 
 from fastapi import APIRouter, FastAPI
@@ -7,12 +8,14 @@ from config import Context, CustomFastAPI, Database, Settings
 from controllers import core as cc
 from handlers import CheckDatabaseState, PopulateDatabase
 from middlewares import AuthMiddleware, ViewMiddleware
+from utils.auth import Auth
 
 
 class App:
-    def __init__(self, context: Context, database: Database, lifespan: Any = None) -> None:
+    def __init__(self, context: Context, database: Database, auth: Auth, lifespan: Any = None) -> None:
         self.__context = context
         self.__database = database
+        self.__auth = auth
         self.__app = CustomFastAPI(
             title="MyERPCompanion API",
             redoc_url=None,
@@ -25,20 +28,15 @@ class App:
         endpoints: list[dict[str, Any]] = []
 
         core_endpoints = [
-            {"router": cc.HealthCheckController().router, "tags": ["health_check"]},
-            {"router": cc.AuthController(self.__context).router, "tags": ["authorization"]},
-            {
-                "router": cc.TranslationController(self.__context).router,
-                "prefix": "/translations",
-                "tags": ["translations"],
-            },
-            {"router": cc.CurrentUserController().router, "tags": ["current_user"]},
-            {"router": cc.ModuleController(self.__context).router, "prefix": "/modules", "tags": ["modules"]},
-            {"router": cc.ViewController(self.__context).router, "prefix": "/views", "tags": ["views"]},
-            {"router": cc.UserController(self.__context).router, "prefix": "/users", "tags": ["users"]},
-            {"router": cc.GroupController(self.__context).router, "prefix": "/groups", "tags": ["groups"]},
-            {"router": cc.LanguageController(self.__context).router, "prefix": "/languages", "tags": ["languages"]},
-            {"router": cc.ThemeController(self.__context).router, "prefix": "/themes", "tags": ["themes"]},
+            {"router": cc.HealthCheckController().router},
+            {"router": cc.AuthController(self.__context.get_session, self.__auth).router},
+            {"router": cc.TranslationController(self.__context, self.__auth).router, "prefix": "/translations"},
+            {"router": cc.ModuleController(self.__context, self.__auth).router, "prefix": "/modules"},
+            {"router": cc.ViewController(self.__context, self.__auth).router, "prefix": "/views"},
+            {"router": cc.UserController(self.__context, self.__auth).router, "prefix": "/users"},
+            {"router": cc.GroupController(self.__context, self.__auth).router, "prefix": "/groups"},
+            {"router": cc.LanguageController(self.__context, self.__auth).router, "prefix": "/languages"},
+            {"router": cc.ThemeController(self.__context, self.__auth).router, "prefix": "/themes"},
         ]
 
         endpoints.extend(core_endpoints)
@@ -60,20 +58,23 @@ def create_app() -> FastAPI:
     settings = Settings()  # type: ignore
     database = Database(settings)
     context = Context(settings=settings, get_session=database.get_session)
+    auth = Auth(context)
+
+    def load_all_models() -> None:
+        for models in ("models.base", "models.business", "models.core"):
+            importlib.import_module(models)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
-        populate = PopulateDatabase(database.get_session)
+        load_all_models()
+        populate_database = PopulateDatabase(database.get_session, auth)
         await CheckDatabaseState(database.get_session).wait_for_db()
         await app_instance.startup()
-        # await populate.populate_superuser()
-        # await populate.populate_admins_group()
-        # await populate.populate_from_csv()
-        # await populate.update_superuser()
+        await populate_database.execute()
         yield
 
-    app_instance = App(context=context, database=database, lifespan=lifespan)
-    app_instance.get_app().add_middleware(AuthMiddleware, context=context)  # type: ignore
+    app_instance = App(context=context, database=database, auth=auth, lifespan=lifespan)
+    app_instance.get_app().add_middleware(AuthMiddleware, get_session=context.get_session, auth=auth)  # type: ignore
     app_instance.get_app().add_middleware(ViewMiddleware, context=context)  # type: ignore
 
     return app_instance.get_app()
