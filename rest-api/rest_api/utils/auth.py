@@ -10,7 +10,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Context
-from config.enums import Action, Permission
+from utils.enums import Permission
 from models.core import AssocUserView
 from schemas.core import UserPlainSchema
 from services.core import ModuleService, UserService
@@ -23,13 +23,6 @@ class Auth:
         self.__pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
         self.__user_service = UserService()
         self.__user_service.set_auth(self)
-        self.__action_to_permission = {
-            Action.GET_ALL: Permission.CAN_LIST,
-            Action.GET_ONE: Permission.CAN_SHOW,
-            Action.CREATE: Permission.CAN_CREATE,
-            Action.UPDATE: Permission.CAN_UPDATE,
-            Action.DELETE: Permission.CAN_DELETE,
-        }
 
     async def authenticate(self, session: AsyncSession, username: str, password: str) -> dict[str, str] | None:
         user_schema = await self.__user_service.get_by_name(session, username)
@@ -68,14 +61,14 @@ class Auth:
             raise NoResultFound()
         return user_schema
 
-    def restrict_access(self, action: Action, controller: str) -> Callable[..., Awaitable[None]]:
+    def restrict_access(self, permissions: list[Permission], controller: str) -> Callable[..., Awaitable[None]]:
         async def dependency(request: Request) -> None:
             user_schema = getattr(request.state, "user", None)
+            if user_schema and user_schema.is_superuser:
+                return
             view_schema = getattr(request.state, "view", None)
             if not user_schema or not view_schema:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-            if user_schema.is_superuser:
-                return
             if controller not in set(view_schema.controllers):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
@@ -92,8 +85,7 @@ class Auth:
                 if not user_groups.intersection(allowed_groups):
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-                selected_permission = self.__action_to_permission[action]
-                permission_column = getattr(AssocUserView, selected_permission)
+                permission_columns = [getattr(AssocUserView, permission) for permission in permissions]
 
                 has_permission = await session.scalar(
                     select(
@@ -101,7 +93,7 @@ class Auth:
                             AssocUserView.is_active.is_(True),
                             AssocUserView.user_id == user_schema.id,
                             AssocUserView.view_id == view_schema.id,
-                            permission_column.is_(True),
+                            *[column.is_(True) for column in permission_columns],
                         )
                     )
                 )

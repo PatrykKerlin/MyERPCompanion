@@ -37,6 +37,7 @@ services:
       - REFRESH_TOKEN_EXPIRE_DAYS=7
       - SUPERUSER_USERNAME=admin
       - SUPERUSER_PASSWORD=admin123
+      - VIEW_HEADER=X-View-Id
     depends_on:
       - postgres
     command:

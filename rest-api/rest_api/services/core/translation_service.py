@@ -20,7 +20,7 @@ class TranslationService(
         offset: int = 0,
         limit: int = 100,
     ) -> tuple[list[TranslationByLanguagePlainSchema], int]:
-        filters = [self._model_cls.language.has(Language.key == language)]
+        filters = [self._model_cls.language.has(Language.symbol == language)]
         models = await self._repository_cls.get_all(session=session, filters=filters, offset=offset, limit=limit)
         total = await self._repository_cls.count_all(session=session, filters=filters)
         schemas = [TranslationByLanguagePlainSchema.model_validate(model) for model in models]

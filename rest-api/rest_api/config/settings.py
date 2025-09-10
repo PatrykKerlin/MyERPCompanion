@@ -7,5 +7,6 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_DAYS: int
+    VIEW_HEADER: str
 
     model_config = {"env_file": ".env"}

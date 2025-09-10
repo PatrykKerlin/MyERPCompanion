@@ -10,7 +10,7 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql.elements import ColumnElement
 
 from config import Context
-from config.enums import Action
+from utils.enums import Action, Permission
 from schemas.base import BasePlainSchema, BaseStrictSchema
 from schemas.core import FilterParamsSchema, PaginatedResponseSchema, PaginationParamsSchema, SortingParamsSchema
 from services.base import BaseService
@@ -33,7 +33,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         self._service = self._service_cls()
         self._auth = auth
         self._404_message = "{model} with ID {id} not found."
-        self.__default_actions_mapping = {
+        self.__default_actions = {
             Action.GET_ALL: True,
             Action.GET_ONE: True,
             Action.CREATE: True,
@@ -146,10 +146,10 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    def _restrict_access(self, action: Action, secured: bool) -> list[DependsParam]:
+    def _restrict_access(self, permissions: list[Permission], secured: bool) -> list[DependsParam]:
         if not secured:
             return []
-        return [Depends(self._auth.restrict_access(action=action, controller=self.__class__.__name__))]
+        return [Depends(self._auth.restrict_access(permissions=permissions, controller=self.__class__.__name__))]
 
     def _register_routes(
         self,
@@ -158,7 +158,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         path: str = "",
     ) -> None:
         id_param = "/{model_id}"
-        mapping = self.__default_actions_mapping if include is None else include
+        mapping = self.__default_actions if include is None else include
         if Action.GET_ALL in mapping:
             self.router.add_api_route(
                 path=path,
@@ -166,7 +166,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 methods=["GET"],
                 response_model=PaginatedResponseSchema[output_schema],
                 status_code=status.HTTP_200_OK,
-                dependencies=self._restrict_access(action=Action.GET_ALL, secured=mapping[Action.GET_ALL]),
+                dependencies=self._restrict_access(permissions=[Permission.CAN_READ], secured=mapping[Action.GET_ALL]),
             )
         if Action.GET_ONE in mapping:
             self.router.add_api_route(
@@ -175,7 +175,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 methods=["GET"],
                 response_model=output_schema,
                 status_code=status.HTTP_200_OK,
-                dependencies=self._restrict_access(action=Action.GET_ONE, secured=mapping[Action.GET_ONE]),
+                dependencies=self._restrict_access(permissions=[Permission.CAN_READ], secured=mapping[Action.GET_ONE]),
             )
         if Action.CREATE in mapping:
             self.router.add_api_route(
@@ -184,7 +184,9 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 methods=["POST"],
                 response_model=output_schema,
                 status_code=status.HTTP_201_CREATED,
-                dependencies=self._restrict_access(action=Action.CREATE, secured=mapping[Action.CREATE]),
+                dependencies=self._restrict_access(
+                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.CREATE]
+                ),
             )
         if Action.UPDATE in mapping:
             self.router.add_api_route(
@@ -193,7 +195,9 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 methods=["PUT"],
                 response_model=output_schema,
                 status_code=status.HTTP_200_OK,
-                dependencies=self._restrict_access(action=Action.UPDATE, secured=mapping[Action.UPDATE]),
+                dependencies=self._restrict_access(
+                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.UPDATE]
+                ),
             )
         if Action.DELETE in mapping:
             self.router.add_api_route(
@@ -201,7 +205,9 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 endpoint=self.delete,
                 methods=["DELETE"],
                 status_code=status.HTTP_204_NO_CONTENT,
-                dependencies=self._restrict_access(action=Action.DELETE, secured=mapping[Action.DELETE]),
+                dependencies=self._restrict_access(
+                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.DELETE]
+                ),
             )
 
     @staticmethod

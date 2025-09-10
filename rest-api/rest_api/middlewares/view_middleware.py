@@ -13,7 +13,7 @@ class ViewMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp, context: Context) -> None:
         super().__init__(app)
         self.__get_session = context.get_session
-        self.__header = "X-View-Id"
+        self.__header = context.settings.VIEW_HEADER
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         request.state.view = None

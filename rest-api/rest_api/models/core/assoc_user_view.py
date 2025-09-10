@@ -14,11 +14,8 @@ if TYPE_CHECKING:
 class AssocUserView(BaseModel):
     __tablename__ = "user_views"
 
-    can_list: Mapped[bool] = Fields.boolean(default=True)
     can_read: Mapped[bool] = Fields.boolean(default=False)
-    can_create: Mapped[bool] = Fields.boolean(default=False)
-    can_update: Mapped[bool] = Fields.boolean(default=False)
-    can_delete: Mapped[bool] = Fields.boolean(default=False)
+    can_modify: Mapped[bool] = Fields.boolean(default=False)
 
     user_id: Mapped[int] = Fields.foreign_key(column="users.id", primary_key=True)
     user: Mapped[User] = Fields.relationship(

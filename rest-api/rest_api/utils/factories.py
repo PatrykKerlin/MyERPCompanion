@@ -4,7 +4,7 @@ from types import new_class
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from config import Context
-from config.enums import Action
+from utils.enums import Action
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
