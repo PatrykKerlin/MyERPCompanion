@@ -1,10 +1,6 @@
 from enum import StrEnum
 
 
-class TextKey(StrEnum):
-    API_NOT_RESPONDING = "API is not responding."
-
-
 class ViewMode(StrEnum):
     SEARCH = "search"
     CREATE = "create"
@@ -16,4 +12,4 @@ class ViewMode(StrEnum):
 class Endpoint(StrEnum):
     HEALTH_CHECK = "health-check"
     REFRESH = "refresh"
-    TEXTS_BY_LANGUAGE = "texts/by-language"
+    TRANSLATIONS_BY_LANGUAGE = "translations/by-language"

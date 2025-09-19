@@ -1,28 +1,20 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from logging import Logger
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from flet import Page
-
-from schemas.core import ModulePlainSchema, TokenPlainSchema, UserPlainSchema
-
 if TYPE_CHECKING:
-    from settings import Settings
+    from logging import Logger
+    from flet import Page
+    from ..events.event_bus import EventBus
+    from ..states.state_store import StateStore
+    from .settings import Settings
 
-    from config.controllers import Controllers
-    from views.base.base_view import BaseView
 
-
-@dataclass
+@dataclass(frozen=True)
 class Context:
     settings: Settings
     page: Page
-    texts: dict[str, str]
     logger: Logger
-    tokens: TokenPlainSchema | None = None
-    user: UserPlainSchema = field(init=False)
-    controllers: Controllers = field(init=False)
-    modules: list[ModulePlainSchema] = field(default_factory=list)
-    active_views: dict[str, BaseView] = field(default_factory=dict)
+    event_bus: EventBus
+    state_store: StateStore

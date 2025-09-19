@@ -1,7 +1,4 @@
-from .enums import TextKey
-
-
-class Texts:
+class Translation:
     __common = {
         "myerpcompanion": "MyERPCompanion",
         "loading": "Loading",
@@ -99,5 +96,7 @@ class Texts:
     @property
     def defaults(self) -> dict[str, str]:
         return {
-            TextKey.API_NOT_RESPONDING: "API is not responding.",
+            "my_erp_companion": "MyERPCompanion",
+            "api_not_responding": "API is not responding.",
+            "loading": "Loading...",
         }

@@ -10,7 +10,8 @@ class Settings(BaseSettings):
     REDIS_DB: int
     REDIS_PASSWORD: str
     API_URL: str
-    LANGUAGE: str = Field(default_factory=lambda: Settings.__get_system_language())
+    # LANGUAGE: str = Field(default_factory=lambda: Settings.__get_system_language())
+    LANGUAGE: str = "en"
     THEME: str = "system"
 
     model_config = {"env_file": ".env"}
