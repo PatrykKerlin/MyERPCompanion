@@ -93,10 +93,16 @@ class Translation:
     #         raise ValueError(f"Duplicate translation keys found: {duplicates}")
     #     return result
 
-    @property
-    def defaults(self) -> dict[str, str]:
-        return {
+    def __init__(self, items: dict[str, str] | None = None) -> None:
+        self.__items = {
             "my_erp_companion": "MyERPCompanion",
             "api_not_responding": "API is not responding.",
             "loading": "Loading...",
         }
+        if items:
+            self.__items.update(items)
+
+    def get(self, key: str, default: str | None = None) -> str:
+        if default is None:
+            default = ""
+        return self.__items.get(key, default)

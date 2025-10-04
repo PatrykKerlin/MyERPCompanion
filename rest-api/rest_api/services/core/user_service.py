@@ -34,7 +34,7 @@ class UserService(
     def set_auth(self, auth: Auth) -> None:
         self.__auth = auth
 
-    async def get_by_name(self, session: AsyncSession, username: str) -> UserPlainSchema | None:
+    async def get_one_by_username(self, session: AsyncSession, username: str) -> UserPlainSchema | None:
         model = await self._repository_cls.get_one_by_username(session, username)
         if not model:
             return None

@@ -17,7 +17,8 @@ class Module(BaseModel):
 
     key: Mapped[str] = Fields.key()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
-    order: Mapped[int] = Fields.integer(unique=True)
+    in_side_menu: Mapped[bool] = Fields.boolean(default=True)
+    order: Mapped[int] = Fields.integer()
 
     views: Mapped[list[View]] = Fields.relationship(
         argument="View", back_populates="module", foreign_keys="View.module_id"

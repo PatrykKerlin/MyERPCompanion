@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from controllers.base import BaseViewController
+from config.context import Context
+from controllers.base.base_view_controller import BaseViewController
 from schemas.core import GroupPlainSchema, GroupStrictSchema
-from services.core import GroupService
-from config.enums import ViewMode
-from views.core import GroupView
+from services.core.group_service import GroupService
+from utils.enums import ViewMode
+from views.core.group_view import GroupView
+from events.view_events import GroupViewRequested, ViewReady
 
 
 class GroupController(BaseViewController[GroupService, GroupView, GroupPlainSchema, GroupStrictSchema]):
@@ -14,6 +16,11 @@ class GroupController(BaseViewController[GroupService, GroupView, GroupPlainSche
     _output_schema_cls = GroupStrictSchema
     _service_cls = GroupService
 
-    def get_new_view(self, data_row: dict[str, Any] | None = None, mode: ViewMode = ViewMode.SEARCH) -> GroupView:
-        self._view = GroupView(self, self._context.texts, 1, data_row, mode)
-        return self._view
+    def __init__(self, context: Context) -> None:
+        super().__init__(context)
+        self._subscribe_event_handlers({GroupViewRequested: self._view_requested_handler})
+
+    async def _view_requested_handler(self, event: GroupViewRequested) -> None:
+        translation_service = self._state_store.app_state.translation
+        self._view = GroupView(self, translation_service.items)
+        await self._event_bus.publish(ViewReady(key=event.key, view=self._view))

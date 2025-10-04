@@ -7,13 +7,23 @@ from typing import TYPE_CHECKING
 
 from config.context import Context
 from config.settings import Settings
+from controllers.core.group_controller import GroupController
+from utils.translation import Translation
 from events.event_bus import EventBus
 from states.state_store import StateStore
 
 from controllers.core.app_controller import AppController
 from controllers.core.translation_controller import TranslationController
-from events.types import AppStarted
-from states.states import AppState, TranslationState, TokenState
+from controllers.components.auth_dialog_controller import AuthDialogController
+from controllers.components.menu_bar_controller import MenuBarController
+from controllers.components.side_menu_controller import SideMenuController
+from controllers.components.tabs_bar_controller import TabsBarController
+from controllers.components.toolbar_controller import ToolbarController
+from controllers.components.footer_controller import FooterController
+
+from events.events import AppStarted
+from events.view_events import GroupViewRequested
+from states.states import AppState, TabsState, TranslationState, TokensState, UserState, ModulesState, ComponentsState
 
 if TYPE_CHECKING:
     from controllers.base.base_controller import BaseController
@@ -29,23 +39,39 @@ class App:
         self.__logger = logging.getLogger("app")
         self.__event_bus = EventBus()
         initial_state = AppState(
-            translation=TranslationState.with_defaults(self.__settings.LANGUAGE), token=TokenState()
+            translation=TranslationState(language=self.__settings.LANGUAGE, items=Translation()),
+            tokens=TokensState(),
+            user=UserState(),
+            modules=ModulesState(items=[]),
+            components=ComponentsState(),
+            tabs=TabsState(current="", items={}),
         )
         self.__state_store = StateStore(initial_state)
         self.__context: Context | None = None
         self.__controllers: tuple[BaseController, ...] = ()
 
     async def run(self, page: ft.Page) -> None:
-
+        view_event_map = {"groups": GroupViewRequested}
         self.__context = Context(
             page=page,
             settings=self.__settings,
             logger=self.__logger,
             event_bus=self.__event_bus,
             state_store=self.__state_store,
+            view_event_map=view_event_map,
         )
         self.__event_bus.start()
-        self.__controllers = (AppController(self.__context), TranslationController(self.__context))
+        self.__controllers = (
+            AppController(self.__context),
+            TranslationController(self.__context),
+            AuthDialogController(self.__context),
+            MenuBarController(self.__context),
+            SideMenuController(self.__context),
+            TabsBarController(self.__context),
+            ToolbarController(self.__context),
+            FooterController(self.__context),
+            GroupController(self.__context),
+        )
         await self.__event_bus.publish(AppStarted())
 
     async def dispose(self) -> None:
@@ -62,4 +88,4 @@ async def main(page: ft.Page) -> None:
 
 if __name__ == "__main__":
     app = App()
-    asyncio.run(ft.app_async(target=main))
+    ft.app(target=main)

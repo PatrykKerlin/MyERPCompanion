@@ -25,7 +25,7 @@ class Auth:
         self.__user_service.set_auth(self)
 
     async def authenticate(self, session: AsyncSession, username: str, password: str) -> dict[str, str] | None:
-        user_schema = await self.__user_service.get_by_name(session, username)
+        user_schema = await self.__user_service.get_one_by_username(session, username)
         if not user_schema or not self.__verify_password(password, cast(str, user_schema.password)):
             return None
         access_token = self.create_access_token(user_schema.id)
@@ -64,18 +64,18 @@ class Auth:
     def restrict_access(self, permissions: list[Permission], controller: str) -> Callable[..., Awaitable[None]]:
         async def dependency(request: Request) -> None:
             user_schema = getattr(request.state, "user", None)
+            if not user_schema:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
             if user_schema and user_schema.is_superuser:
                 return
             view_schema = getattr(request.state, "view", None)
-            if not user_schema or not view_schema:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-            if controller not in set(view_schema.controllers):
+            if not view_schema:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-
+            if not view_schema or controller not in set(view_schema.controllers):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
             async with self.__get_session() as session:
                 module_service = ModuleService()
                 module_schema = await module_service.get_one_by_id(session, view_schema.module_id)
-
                 if not module_schema:
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 

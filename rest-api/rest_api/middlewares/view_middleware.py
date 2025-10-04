@@ -18,12 +18,11 @@ class ViewMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         request.state.view = None
 
-        view_id_str = request.headers.get(self.__header)
-        if view_id_str and view_id_str.isdigit():
-            view_id = int(view_id_str)
+        view_key = request.headers.get(self.__header)
+        if view_key:
+            view_service = ViewService()
             async with self.__get_session() as session:
-                view_service = ViewService()
-                view_schema = await view_service.get_one_by_id(session, view_id)
+                view_schema = await view_service.get_one_by_key(session, view_key)
                 request.state.view = view_schema
 
         return await call_next(request)

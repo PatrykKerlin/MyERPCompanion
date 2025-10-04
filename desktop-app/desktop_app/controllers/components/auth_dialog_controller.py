@@ -2,44 +2,51 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from controllers.base import BaseComponentController
-from services.core import AuthService
-from views.components import AuthDialogComponent
+from controllers.base.base_component_controller import BaseComponentController
+from services.core.auth_service import AuthService
+from views.components.auth_dialog_component import AuthDialogComponent
+from events.events import AuthDialogRequested
+from utils.enums import View
+from events.events import UserAuthenticated
 
 if TYPE_CHECKING:
     from config.context import Context
 
 
-class AuthDialogController(BaseComponentController[AuthService, AuthDialogComponent]):
+class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDialogRequested]):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        self.__auth_dialog: AuthDialogComponent | None = None
-        self.__service = AuthService(context)
+        self.__service = AuthService(self._settings)
+        self._subscribe_event_handlers({AuthDialogRequested: self._component_requested_handler})
 
-    def get_new_component(self) -> AuthDialogComponent:
-        self.__auth_dialog = AuthDialogComponent(self, texts=self._context.texts)
-        return self.__auth_dialog
+    async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
+        translation_state = self._state_store.app_state.translation
+        self._component = AuthDialogComponent(controller=self, translation=translation_state.items)
+        self._open_dialog(self._component)
 
     def on_cancel_click(self) -> None:
-        self._context.page.window.destroy()
+        self._page.window.destroy()
 
     def on_login_click(self, username: str, password: str) -> None:
-        self._context.page.run_task(self.__handle_login, "admin", "admin123")
+        self._page.run_task(self.__handle_login, "user1", "test1234")
 
     async def __handle_login(self, username: str, password: str) -> None:
-        loading_dialog = self._show_loading_dialog()
         try:
             tokens = await self.__service.fetch_tokens(username, password)
-            self._context.tokens = tokens
-            user = await self.__service.fetch_current_user()
-            self._context.user = user
-            if self.__auth_dialog:
-                self._close_dialog(self.__auth_dialog)
-            self._close_dialog(loading_dialog)
-            app_controller = self._context.controllers.get("app")
-            app_controller.after_login()
+            self._state_store.update(tokens={"access": tokens.access, "refresh": tokens.refresh})
+            modules = await self._call_with_refresh(
+                service=self.__service, func=self.__service.fetch_modules, view_key=View.SIDE_MENU
+            )
+            self._state_store.update(modules={"items": modules})
+            user = await self._call_with_refresh(
+                service=self.__service, func=self.__service.fetch_current_user, view_key=View.CURRENT_USER
+            )
+            self._state_store.update(user={"current": user})
+            if self._component:
+                self._close_dialog(self._component)
+            await self._event_bus.publish(UserAuthenticated())
         except Exception as error:
-            self._close_dialog(loading_dialog)
-            if self.__auth_dialog:
-                self._close_dialog(self.__auth_dialog)
-            self._show_error_dialog(message=str(error))
+            self._logger.error(error)
+            if self._component:
+                self._close_dialog(self._component)
+            # self._show_error_dialog(message=str(error))

@@ -1,22 +1,23 @@
-from typing import Union
+from __future__ import annotations
+from typing import Union, TYPE_CHECKING
 
 from fastapi import HTTPException, Request, status
 from pydantic import ValidationError
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 
-from config import Context
+
 from controllers.base import BaseController
 from schemas.core import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
 from services.core import UserService
-from utils.auth import Auth
+
+
+if TYPE_CHECKING:
+    from config import Context
+    from utils.auth import Auth
 
 
 class UserController(
-    BaseController[
-        UserService,
-        Union[UserStrictCreateSchema, UserStrictUpdateSchema],
-        UserPlainSchema,
-    ]
+    BaseController[UserService, Union[UserStrictCreateSchema, UserStrictUpdateSchema], UserPlainSchema]
 ):
     _input_schema_cls = UserStrictCreateSchema
     _service_cls = UserService

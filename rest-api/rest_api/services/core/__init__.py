@@ -1,5 +1,5 @@
 from models.core import Group, Language, Theme, View
-from repositories.core import GroupRepository, LanguageRepository, ThemeRepository, ViewRepository
+from repositories.core import GroupRepository, LanguageRepository, ThemeRepository
 from schemas.core import (
     GroupPlainSchema,
     GroupStrictSchema,
@@ -7,21 +7,15 @@ from schemas.core import (
     LanguageStrictSchema,
     ThemePlainSchema,
     ThemeStrictSchema,
-    ViewPlainSchema,
-    ViewStrictSchema,
 )
 from utils.factories import ServiceFactory
 
 from .module_service import ModuleService
 from .translation_service import TranslationService
 from .user_service import UserService
+from .view_service import ViewService
 
-ViewService = ServiceFactory.create(
-    model_cls=View,
-    repository_cls=ViewRepository,
-    input_schema_cls=ViewStrictSchema,
-    output_schema_cls=ViewPlainSchema,
-)
+
 GroupService = ServiceFactory.create(
     model_cls=Group,
     repository_cls=GroupRepository,

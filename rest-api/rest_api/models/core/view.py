@@ -21,7 +21,6 @@ class View(BaseModel):
 
     key: Mapped[str] = Fields.key()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
-    in_menu: Mapped[bool] = Fields.boolean(default=False)
     order: Mapped[int] = Fields.integer()
     controllers: Mapped[list[str]] = Fields.string_list()
 

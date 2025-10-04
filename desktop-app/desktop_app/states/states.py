@@ -1,26 +1,55 @@
-from __future__ import annotations
+from pydantic import Field
 
-from config.translation import Translation
-
+from schemas.core.group_schema import GroupPlainSchema
+from schemas.core.language_schema import LanguagePlainSchema
+from schemas.core.module_schema import ModulePlainSchema
+from schemas.core.theme_schema import ThemePlainSchema
+from schemas.core.user_schema import UserPlainSchema
 from states.base.base_state import BaseState
+from views.base.base_view import BaseView
+from views.components.side_menu_component import SideMenuComponent
+from views.components.toolbar_component import ToolbarComponent
+from views.components.tabs_bar_component import TabsBarComponent
+from views.components.footer_component import FooterComponent
+from views.components.menu_bar_component import MenuBarComponent
+from utils.translation import Translation
+
+
+class ComponentsState(BaseState):
+    menu_bar: MenuBarComponent | None = None
+    side_menu: SideMenuComponent | None = None
+    toolbar: ToolbarComponent | None = None
+    tabs_bar: TabsBarComponent | None = None
+    footer: FooterComponent | None = None
 
 
 class TranslationState(BaseState):
     language: str
-    items: dict[str, str]
-    success: bool
-
-    @classmethod
-    def with_defaults(cls, language: str) -> TranslationState:
-        defaults = Translation().defaults
-        return cls(language=language, items=defaults, success=True)
+    items: Translation
 
 
-class TokenState(BaseState):
+class TokensState(BaseState):
     access: str | None = None
     refresh: str | None = None
 
 
+class UserState(BaseState):
+    current: UserPlainSchema | None = None
+
+
+class ModulesState(BaseState):
+    items: list[ModulePlainSchema]
+
+
+class TabsState(BaseState):
+    current: str
+    items: dict[str, BaseView]
+
+
 class AppState(BaseState):
     translation: TranslationState
-    token: TokenState
+    tokens: TokensState
+    user: UserState
+    modules: ModulesState
+    components: ComponentsState
+    tabs: TabsState

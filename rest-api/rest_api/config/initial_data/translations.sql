@@ -19,4 +19,16 @@ VALUES
 ('ok', 'OK', 1, TRUE, NOW(), :superuser_id),
 ('ok', 'OK', 2, TRUE, NOW(), :superuser_id),
 ('api_not_responding', 'API is not responding.', 1, TRUE, NOW(), :superuser_id),
-('api_not_responding', 'API nie odpowiada.',    2, TRUE, NOW(), :superuser_id);
+('api_not_responding', 'API nie odpowiada.', 2, TRUE, NOW(), :superuser_id),
+('connection_status', 'Connection status', 1, TRUE, NOW(), 1),
+('connection_status', 'Status połączenia', 2, TRUE, NOW(), 1),
+('connected', 'Connected', 1, TRUE, NOW(), 1),
+('connected', 'Połączono', 2, TRUE, NOW(), 1),
+('not_connected', 'Not connected', 1, TRUE, NOW(), 1),
+('not_connected', 'Brak połączenia', 2, TRUE, NOW(), 1),
+('administration', 'Administration', 1, TRUE, NOW(), 1),
+('administration', 'Administracja', 2, TRUE, NOW(), 1),
+('groups', 'Groups', 1, TRUE, NOW(), 1),
+('groups', 'Grupy', 2, TRUE, NOW(), 1),
+('users', 'Users', 1, TRUE, NOW(), 1),
+('users', 'Użytkownicy', 2, TRUE, NOW(), 1);

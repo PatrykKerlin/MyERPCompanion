@@ -1,12 +1,15 @@
-from typing import TYPE_CHECKING, Generic, TypeVar
+from __future__ import annotations
+
+from typing import Generic, TypeVar, TYPE_CHECKING
+from controllers.base.base_controller import BaseController
 
 if TYPE_CHECKING:
-    from controllers.base.base_controller import BaseController
+    from utils.translation import Translation
 
-TController = TypeVar("TController", bound="BaseController")
+TController = TypeVar("TController", bound=BaseController)
 
 
 class BaseComponent(Generic[TController]):
-    def __init__(self, controller: TController, texts: dict[str, str]) -> None:
+    def __init__(self, controller: TController, translation: Translation) -> None:
         self._controller = controller
-        self._texts = texts
+        self._translation = translation

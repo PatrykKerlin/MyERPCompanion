@@ -1,5 +1,5 @@
 from schemas.core import GroupPlainSchema
-from services.base import BaseViewService
+from services.base.base_view_service import BaseViewService
 
 
 class GroupService(BaseViewService[GroupPlainSchema]):

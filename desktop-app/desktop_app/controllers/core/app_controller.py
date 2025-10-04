@@ -1,136 +1,135 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 
 from controllers.base.base_controller import BaseController
-from events.types import AppStarted, ApiReady, ApiNotResponding, TranslationLoaded, TranslationFailed, TranslationReady
+from events.base.base_event import BaseEvent
+from events.events import (
+    ApiStatusChecked,
+    ApiStatusRequested,
+    AppStarted,
+    MenuBarRequested,
+    TranslationFailed,
+    TranslationReady,
+    TranslationRequested,
+    AuthDialogRequested,
+    UserAuthenticated,
+    SideMenuRequested,
+    FooterRequested,
+    FooterMounted,
+    TabsBarRequested,
+    ToolbarRequested,
+)
 from services.core.app_service import AppService
+from states.states import TabsState
 from views.core.app_view import AppView
 
 if TYPE_CHECKING:
     from config.context import Context
+    from states.states import ComponentsState, TranslationState
     from views.components.loading_dialog_component import LoadingDialogComponent
+    from views.components.footer_component import FooterComponent
+    from views.components.menu_bar_component import MenuBarComponent
+    from views.components.side_menu_component import SideMenuComponent
+    from views.components.tabs_bar_component import TabsBarComponent
+    from views.components.toolbar_component import ToolbarComponent
 
 
 class AppController(BaseController):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        self._service = AppService(context.settings, context.logger)
-        initial_texts = self._context.state_store.get().translation.items
-        self._view = AppView(context.page, initial_texts)
+        translation_state = self._state_store.app_state.translation
+        self.__service = AppService(self._settings)
+        self.__view = AppView(self._page, translation_state.items, self._settings.THEME)
         self.__loading_dialog: LoadingDialogComponent | None = None
 
-        event_handlers = {
-            AppStarted: self.__on_app_started,
-            TranslationLoaded: self.__on_translation_loaded,
-            TranslationReady: self.__on_translation_ready,
-        }
-        for event, handler in event_handlers.items():
-            unsubscriber = self._context.event_bus.subscribe(event.event_type(), handler)
-            self.add_unsubscriber(unsubscriber)
+        self._subscribe_event_handlers(
+            {
+                AppStarted: self.__app_started_handler,
+                TranslationReady: self.__translation_ready_handler,
+                TranslationFailed: self.__api_not_responding_handler,
+                UserAuthenticated: self.__user_authenticated_handler,
+                ApiStatusRequested: self.__api_status_handler,
+            }
+        )
+        self._subscribe_state_listeners(
+            {
+                "translation": self.__translation_updated_listener,
+                "components": self.__components_changed_listener,
+                "tabs": self.__tabs_updated_listener,
+            }
+        )
 
-    async def __on_app_started(self, _: AppStarted) -> None:
+    def __translation_updated_listener(self, state: TranslationState) -> None:
+        self.__view.update_translation(state.items)
+
+    def __components_changed_listener(self, state: ComponentsState) -> None:
+        def on_dialog_closed(_: Any) -> None:
+            if state.menu_bar and state.side_menu and state.tabs_bar and state.toolbar and state.footer:
+                self.__rebuild_view(state.menu_bar, state.side_menu, state.toolbar, state.tabs_bar, state.footer)
+                if self.__loading_dialog:
+                    self.__loading_dialog.on_dismiss = None
+
+        if self.__loading_dialog and self.__loading_dialog.open:
+            self.__loading_dialog.on_dismiss = on_dialog_closed
+        elif state.menu_bar and state.side_menu and state.tabs_bar and state.toolbar and state.footer:
+            self.__rebuild_view(state.menu_bar, state.side_menu, state.toolbar, state.tabs_bar, state.footer)
+
+    def __tabs_updated_listener(self, state: TabsState) -> None:
+        self.__view.set_view_content(state.items[state.current])
+
+    async def __app_started_handler(self, _: AppStarted) -> None:
         self.__loading_dialog = self._show_loading_dialog()
-        api_ok = await self._service.api_health_check()
-        if api_ok:
-            await self._context.event_bus.publish(ApiReady())
-            self._view.set_ready()
+        api_status = await self.__service.api_health_check()
+        initial_language = self._settings.LANGUAGE
+        if api_status:
+            await self._event_bus.publish(TranslationRequested(initial_language, False))
         else:
-            self._context.logger.error("API health check failed")
+            self._logger.error("API health check failed")
 
-    async def __on_translation_loaded(self, event: TranslationLoaded) -> None:
-        items = getattr(event, "items", {})
-        self._view.update_translation(items)
+    async def __api_status_handler(self, _: ApiStatusRequested) -> None:
+        api_status = await self.__service.api_health_check()
+        await self._event_bus.publish(ApiStatusChecked(status=api_status))
 
-    async def __on_translation_ready(self, _: TranslationReady) -> None:
+    async def __translation_ready_handler(self, event: TranslationReady) -> None:
         if self.__loading_dialog:
             await self._close_dialog_with_delay(self.__loading_dialog)
+        if not event.user_authenticated:
+            await self._event_bus.publish(AuthDialogRequested())
 
+    async def __api_not_responding_handler(self, _: BaseEvent):
+        if self.__loading_dialog:
+            await self._close_dialog_with_delay(self.__loading_dialog)
+        self._show_error_dialog("api_not_responding")
 
-# class AppController(BaseController):
-#     def __init__(self, context: Context) -> None:
-#         super().__init__(context)
-#         self.__service = AppService(context)
-#         self.__view = AppView(page=context.page, texts=context.texts, theme=context.settings.THEME)
-#         self.__view.set_controller(self)
+    async def __user_authenticated_handler(self, _: UserAuthenticated) -> None:
+        user = self._state_store.app_state.user.current
+        translation = self._state_store.app_state.translation
+        if not user:
+            self._logger.error("User error")
+            return
+        if user.language.symbol != translation.language:
+            self.__loading_dialog = self._show_loading_dialog()
+            await self._event_bus.publish(TranslationRequested(user.language.symbol, True))
+        await self._event_bus.publish(MenuBarRequested())
+        await self._event_bus.publish(SideMenuRequested())
+        await self._event_bus.publish(ToolbarRequested())
+        await self._event_bus.publish(TabsBarRequested())
+        await self._event_bus.publish(FooterRequested())
 
-#     @property
-#     def view_stack(self) -> ft.Stack:
-#         return self.__view.view_stack
+    def __rebuild_view(
+        self,
+        menu_bar: MenuBarComponent,
+        side_menu: SideMenuComponent,
+        toolbar: ToolbarComponent,
+        tabs_bar: TabsBarComponent,
+        footer: FooterComponent,
+    ) -> None:
+        self.__view.rebuild(menu_bar, side_menu, toolbar, tabs_bar, footer)
+        self._page.run_task(self._event_bus.publish, FooterMounted())
 
-#     def show(self) -> None:
-#         future = self._context.page.run_task(self.__run_startup_sequence)
-#         future.add_done_callback(lambda _: self._context.page.run_thread(self.__show_auth_dialog))
-
-#     def render_view(self, control: ft.Control) -> None:
-#         self.__view.set_view_content(control)
-
-#     def after_login(self) -> None:
-#         self._run_with_delay(
-#             condition=lambda: not self._context.page.overlay,
-#             callback=self.__handle_post_login,
-#         )
-
-#     async def __handle_post_login(self) -> None:
-#         user = self._context.user
-#         if not user:
-#             return
-
-#         lang_changed = user.language.key != self._context.settings.LANGUAGE
-#         self._context.settings.LANGUAGE = user.language.key
-#         self._context.settings.THEME = user.theme.key
-
-#         if lang_changed:
-#             texts = await self.__service.fetch_texts()
-#             self._context.texts.update(texts)
-
-#         # await self.__service.save_settings_to_redis()
-#         modules = await self.__service.fetch_modules()
-#         self._context.modules.extend(modules)
-#         self.__view.set_user(user)
-#         endpoints, side_menu_content = self.__prepare_endpoints()
-#         self._context.controllers.initialize_view_controllers(endpoints)
-#         self._context.controllers.get("side_menu").set_content(side_menu_content)
-
-#         self._context.page.run_thread(
-#             self.__view.rebuild,
-#             self._context.texts,
-#             self._context.controllers.get("side_menu").get_new_component(),
-#             self._context.controllers.get("toolbar").get_new_component(),
-#             self._context.controllers.get("tabs_bar").get_new_component(),
-#             self._context.controllers.get("footer").get_new_component(),
-#         )
-
-#         self._context.controllers.get("footer").start_clock()
-
-#     async def __run_startup_sequence(self) -> None:
-#         loading_dialog = self._show_loading_dialog()
-#         try:
-#             # await self.__service.check_redis_ready()
-#             # await self.__service.load_settings_from_redis()
-#             await self.__service.api_health_check()
-#             texts = await self.__service.fetch_texts()
-#             self._context.texts.update(texts)
-#             self._close_dialog(loading_dialog)
-#         except TimeoutError:
-#             self._close_dialog(loading_dialog)
-#             self._show_error_dialog(message_key="api_not_responding")
 
 #     def __show_auth_dialog(self) -> None:
 #         auth_dialog = self._context.controllers.get("auth_dialog").get_new_component()
 #         self._open_dialog(auth_dialog)
-
-#     def __prepare_endpoints(self) -> tuple[dict[str, ViewPlainSchema], dict[str, list[str]]]:
-#         side_menu_content: dict[str, list[str]] = {}
-#         endpoints: dict[str, ViewPlainSchema] = {}
-#         user_groups = {group.id for group in self._context.user.groups}
-#         for module in sorted(self._context.modules, key=lambda m: m.order):
-#             module_groups = {group.id for group in module.groups}
-#             if user_groups.intersection(module_groups):
-#                 sorted_endpoints = sorted(
-#                     [endpoint for endpoint in module.endpoints if endpoint.in_menu], key=lambda e: e.order
-#                 )
-#                 endpoints.update({endpoint.key: endpoint for endpoint in sorted_endpoints})
-#                 side_menu_content[module.key] = [endpoint.key for endpoint in sorted_endpoints]
-#         return endpoints, side_menu_content

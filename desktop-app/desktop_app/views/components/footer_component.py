@@ -4,21 +4,22 @@ from typing import TYPE_CHECKING
 
 import flet as ft
 
-from views.base import BaseComponent
+from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
+    from utils.translation import Translation
     from controllers.components.footer_controller import FooterController
 
 
 class FooterComponent(BaseComponent, ft.Container):
-    def __init__(self, controller: FooterController, texts: dict[str, str]) -> None:
-        BaseComponent.__init__(self, controller, texts)
+    def __init__(self, controller: FooterController, translation: Translation) -> None:
+        BaseComponent.__init__(self, controller, translation)
         self.__timestamp = ft.Text()
         self.__status_message = ft.Text()
         self.__status_icon = ft.Icon()
         self.__status_row = ft.Row(
             controls=[
-                ft.Text(value=f"{texts["connection_status"]}:"),
+                ft.Text(value=f"{self._translation.get("connection_status")}:"),
                 self.__status_message,
                 self.__status_icon,
             ]
@@ -50,10 +51,10 @@ class FooterComponent(BaseComponent, ft.Container):
 
     def set_status(self, success: bool) -> None:
         if success:
-            self.__status_message.value = self._texts["connected"]
+            self.__status_message.value = self._translation.get("connected")
             self.__status_icon.name = ft.Icons.CHECK_OUTLINED
         else:
-            self.__status_message.value = self._texts["not_connected"]
+            self.__status_message.value = self._translation.get("not_connected")
             self.__status_icon.name = ft.Icons.ERROR_OUTLINE
         self.__status_message.update()
         self.__status_icon.update()

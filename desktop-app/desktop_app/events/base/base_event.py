@@ -1,7 +1,6 @@
-class BaseEvent:
-    def type(self) -> str:
-        return self.__class__.__name__
+from dataclasses import dataclass
 
-    @classmethod
-    def event_type(cls) -> str:
-        return cls.__name__
+
+@dataclass(frozen=True)
+class BaseEvent:
+    pass

@@ -11,5 +11,13 @@ class ViewMode(StrEnum):
 
 class Endpoint(StrEnum):
     HEALTH_CHECK = "health-check"
-    REFRESH = "refresh"
     TRANSLATIONS_BY_LANGUAGE = "translations/by-language"
+    TOKEN = "auth/token"
+    REFRESH = "auth/refresh"
+    CURRENT_USER = "current-user"
+    MODULES = "modules"
+
+
+class View(StrEnum):
+    SIDE_MENU = "side_menu"
+    CURRENT_USER = "current_user"

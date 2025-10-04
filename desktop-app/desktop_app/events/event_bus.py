@@ -2,27 +2,29 @@ from __future__ import annotations
 
 
 import asyncio
-from typing import Awaitable, Callable
+from typing import Awaitable, Callable, TypeVar, Any
 
 
-from events.types import BaseEvent
+from events.events import BaseEvent
+
+TEvent = TypeVar("TEvent", bound=BaseEvent)
 
 
 class EventBus:
     def __init__(self) -> None:
-        self.__subscriptions: dict[str, list[Callable[[BaseEvent], Awaitable[None]]]] = {}
+        self.__subscriptions: dict[type[BaseEvent], list[Callable[[Any], Awaitable[None]]]] = {}
         self.__queue: asyncio.Queue[BaseEvent] = asyncio.Queue()
         self.__task: asyncio.Task[None] | None = None
 
-    def subscribe(self, event_type: str, handler: Callable[[BaseEvent], Awaitable[None]]) -> Callable[[], None]:
+    def subscribe(self, event: type[BaseEvent], handler: Callable[[TEvent], Awaitable[None]]) -> Callable[[], None]:
         def unsubscribe() -> None:
-            handlers = self.__subscriptions.get(event_type, [])
+            handlers = self.__subscriptions.get(event, [])
             if handler in handlers:
                 handlers.remove(handler)
-            if not handlers and event_type in self.__subscriptions:
-                del self.__subscriptions[event_type]
+            if not handlers and event in self.__subscriptions:
+                del self.__subscriptions[event]
 
-        self.__subscriptions.setdefault(event_type, []).append(handler)
+        self.__subscriptions.setdefault(event, []).append(handler)
 
         return unsubscribe
 
@@ -53,7 +55,7 @@ class EventBus:
         while True:
             event = await self.__queue.get()
             try:
-                handlers = list(self.__subscriptions.get(event.type(), []))
+                handlers = list(self.__subscriptions.get(type(event), []))
                 for handler in handlers:
                     await handler(event)
             finally:

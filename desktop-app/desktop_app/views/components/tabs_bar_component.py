@@ -4,15 +4,18 @@ from typing import TYPE_CHECKING, cast
 
 import flet as ft
 
-from views.base import BaseComponent
+from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
+    from utils.translation import Translation
     from controllers.components.tabs_bar_controller import TabsBarController
 
 
 class TabsBarComponent(BaseComponent, ft.Container):
-    def __init__(self, controller: TabsBarController, texts: dict[str, str], tabs: list[str], active_tab: str) -> None:
-        BaseComponent.__init__(self, controller, texts)
+    def __init__(
+        self, controller: TabsBarController, translation: Translation, tabs: list[str], active_tab: str
+    ) -> None:
+        BaseComponent.__init__(self, controller, translation)
         ft.Container.__init__(self)
         self.__tabs = tabs
         self.__active_tab = active_tab
@@ -45,12 +48,13 @@ class TabsBarComponent(BaseComponent, ft.Container):
             ft.Row(
                 controls=[
                     ft.TextButton(
-                        text=self._texts[key],
-                        on_click=lambda _, key=key: self._controller.on_tab_open(key),
+                        text=key,
+                        # text=self._translation.get(key),
+                        # on_click=lambda _, key=key: self._controller.on_tab_open(key),
                     ),
                     ft.IconButton(
                         icon=ft.Icons.CLOSE,
-                        on_click=lambda _, key=key: self._controller.on_tab_close(key),
+                        # on_click=lambda _, key=key: self._controller.on_tab_close(key),
                         expand=True,
                     ),
                 ]

@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 from functools import partial
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import flet as ft
 
-from config.enums import ViewMode
+from utils.enums import ViewMode
 from views.base.base_component import BaseComponent
-from views.components.search_results_component import SearchResultsComponent
+
+# from views.components.search_results_component import SearchResultsComponent
 
 if TYPE_CHECKING:
+    from utils.translation import Translation
     from controllers.base.base_view_controller import BaseViewController
     from schemas.base.base_schema import BaseStrictSchema, BasePlainSchema
     from services.base.base_view_service import BaseViewService
@@ -21,38 +25,38 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
     def __init__(
         self,
         controller: TController,
-        texts: dict[str, str],
-        columns: int,
-        data_row: dict[str, Any] | None,
-        mode: ViewMode,
-        controller_key: str,
+        translation: Translation,
+        # columns: int,
+        # data_row: dict[str, Any] | None,
+        # mode: ViewMode,
+        # controller_key: str,
     ) -> None:
-        BaseComponent.__init__(self, controller, texts)
-        self._mode = mode
-        self._data_row = data_row
-        self._controller_key = controller_key
-        self._columns: list[ft.Column] = [ft.Column(expand=True) for _ in range(columns)]
-        self._inputs: list[dict[str, ft.TextField | ft.Dropdown | ft.Checkbox]] = [
-            {"id": ft.TextField(value=data_row["id"] if data_row else None, expand=1)}
-        ]
-        self._markers: list[dict[str, ft.Checkbox]] = []
-        self._master_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
-        self._scrollable_wrapper = ft.ListView(controls=[self._master_column], expand=True)
-        self._cancel_button = ft.Button(
-            text=self._texts["cancel"],
-            on_click=lambda _: self._controller.on_cancel_click(),
-        )
-        self._save_button = ft.ElevatedButton(
-            text=self._texts["save"],
-            on_click=lambda _: self._controller.on_save_click(),
-            disabled=True,
-        )
-        self._search_button = ft.ElevatedButton(
-            text=self._texts["search"],
-            on_click=lambda _: self._controller.on_search_click(),
-        )
+        BaseComponent.__init__(self, controller, translation)
+        # self._mode = mode
+        # self._data_row = data_row
+        # self._controller_key = controller_key
+        # self._columns: list[ft.Column] = [ft.Column(expand=True) for _ in range(columns)]
+        # self._inputs: list[dict[str, ft.TextField | ft.Dropdown | ft.Checkbox]] = [
+        #     {"id": ft.TextField(value=data_row["id"] if data_row else None, expand=1)}
+        # ]
+        # self._markers: list[dict[str, ft.Checkbox]] = []
+        # self._master_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
+        # self._scrollable_wrapper = ft.ListView(controls=[self._master_column], expand=True)
+        # self._cancel_button = ft.Button(
+        #     text=self._texts["cancel"],
+        #     on_click=lambda _: self._controller.on_cancel_click(),
+        # )
+        # self._save_button = ft.ElevatedButton(
+        #     text=self._texts["save"],
+        #     on_click=lambda _: self._controller.on_save_click(),
+        #     disabled=True,
+        # )
+        # self._search_button = ft.ElevatedButton(
+        #     text=self._texts["search"],
+        #     on_click=lambda _: self._controller.on_search_click(),
+        # )
         # self.__set_buttons()
-        self.__default_checkbox_width = 0
+        # self.__default_checkbox_width = 0
 
     # @property
     # def mode(self) -> str:

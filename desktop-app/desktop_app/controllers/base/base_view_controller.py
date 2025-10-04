@@ -1,4 +1,4 @@
-# from __future__ import annotations
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from concurrent.futures import Future
@@ -11,12 +11,12 @@ from pydantic import ValidationError
 from controllers.base.base_controller import BaseController
 from schemas.base import BaseStrictSchema, BasePlainSchema
 from services.base.base_view_service import BaseViewService
-from config.enums import ViewMode
+from utils.enums import ViewMode
 from views.base.base_view import BaseView
 
 if TYPE_CHECKING:
     from config.context import Context
-    from config.enums import Endpoint
+    from utils.enums import Endpoint
 
 TService = TypeVar("TService", bound=BaseViewService)
 TView = TypeVar("TView", bound=BaseView)
@@ -29,24 +29,28 @@ class BaseViewController(BaseController, Generic[TService, TView, TInputSchema, 
     _output_schema_cls: type[TOutputSchema]
     _service_cls: type[TService]
 
-    def __init__(self, context: Context, postfix: str) -> None:
+    def __init__(
+        self,
+        context: Context,
+        # postfix: str,
+    ) -> None:
         super().__init__(context)
-        self.has_validation_errors = True
+        # self.has_validation_errors = True
         # self._view_schema = view_schema
-        self._postfix = postfix
-        self._service = self._service_cls(context)
+        # self._postfix = postfix
+        self._service = self._service_cls(self._settings)
         self._view: TView | None = None
-        self._input_values: dict[str, Any] = {}
-        self._active_view_keys: list[str] = []
-        self._filters: set[str] = set()
-        self._sort_by = "id"
-        self._order = "asc"
-        self._page = 1
-        self._page_size = 10
-        self._has_next = False
-        self._has_prev = False
-        self._total = 0
-        self._page_sizes = [10, 25, 50, 100]
+        # self._input_values: dict[str, Any] = {}
+        # self._active_view_keys: list[str] = []
+        # self._filters: set[str] = set()
+        # self._sort_by = "id"
+        # self._order = "asc"
+        # self._page = 1
+        # self._page_size = 10
+        # self._has_next = False
+        # self._has_prev = False
+        # self._total = 0
+        # self._page_sizes = [10, 25, 50, 100]
 
     # @abstractmethod
     # def get_new_view(self, data_row: dict[str, Any] | None = None, mode: ViewMode = ViewMode.SEARCH) -> TView:

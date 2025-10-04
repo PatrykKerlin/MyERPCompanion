@@ -29,7 +29,8 @@ class App:
 
         core_endpoints = [
             {"router": cc.HealthCheckController().router},
-            {"router": cc.AuthController(self.__context.get_session, self.__auth).router},
+            {"router": cc.CurrentUserController(self.__context, self.__auth).router},
+            {"router": cc.AuthController(self.__context.get_session, self.__auth).router, "prefix": "/auth"},
             {"router": cc.TranslationController(self.__context, self.__auth).router, "prefix": "/translations"},
             {"router": cc.ModuleController(self.__context, self.__auth).router, "prefix": "/modules"},
             {"router": cc.ViewController(self.__context, self.__auth).router, "prefix": "/views"},

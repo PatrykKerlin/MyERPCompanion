@@ -14,6 +14,7 @@ class Theme(BaseModel):
     __tablename__ = "themes"
 
     key: Mapped[str] = Fields.key()
+    value: Mapped[str] = Fields.string_20(unique=True)
 
     users: Mapped[list[User]] = Fields.relationship(
         argument="User", back_populates="theme", foreign_keys="User.theme_id"

@@ -15,6 +15,7 @@ from services.core import GroupService, LanguageService, ModuleService, ThemeSer
 from utils.factories import ControllerFactory
 
 from .auth_controller import AuthController
+from .current_user_controller import CurrentUserController
 from .health_check_controller import HealthCheckController
 from .translation_controller import TranslationController
 from .user_controller import UserController
@@ -53,6 +54,7 @@ ViewController = ControllerFactory.create(
 
 __all__ = [
     "AuthController",
+    "CurrentUserController",
     "GroupController",
     "HealthCheckController",
     "LanguageController",

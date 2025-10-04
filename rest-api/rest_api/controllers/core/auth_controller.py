@@ -16,7 +16,7 @@ class AuthController:
         self.__get_session = get_session
         self.__auth = auth
         self.router = APIRouter()
-        self.router.add_api_route("/auth", self.auth, methods=["POST"])
+        self.router.add_api_route("/token", self.auth, methods=["POST"])
         self.router.add_api_route("/refresh", self.refresh, methods=["POST"])
 
     async def auth(self, data: AuthStrictSchema) -> JSONResponse:
