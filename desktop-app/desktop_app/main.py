@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from config.context import Context
 from config.settings import Settings
-from controllers.core.group_controller import GroupController
+from controllers.business.hr.department_controller import DepartmentController
 from utils.translation import Translation
 from events.event_bus import EventBus
 from states.state_store import StateStore
@@ -22,7 +22,7 @@ from controllers.components.toolbar_controller import ToolbarController
 from controllers.components.footer_controller import FooterController
 
 from events.events import AppStarted
-from events.view_events import GroupViewRequested
+from events.view_events import DepartmentViewRequested
 from states.states import AppState, TabsState, TranslationState, TokensState, UserState, ModulesState, ComponentsState
 
 if TYPE_CHECKING:
@@ -51,7 +51,7 @@ class App:
         self.__controllers: tuple[BaseController, ...] = ()
 
     async def run(self, page: ft.Page) -> None:
-        view_event_map = {"groups": GroupViewRequested}
+        view_event_map = {"departments": DepartmentViewRequested}
         self.__context = Context(
             page=page,
             settings=self.__settings,
@@ -62,6 +62,7 @@ class App:
         )
         self.__event_bus.start()
         self.__controllers = (
+            # core
             AppController(self.__context),
             TranslationController(self.__context),
             AuthDialogController(self.__context),
@@ -70,7 +71,8 @@ class App:
             TabsBarController(self.__context),
             ToolbarController(self.__context),
             FooterController(self.__context),
-            GroupController(self.__context),
+            # business
+            DepartmentController(self.__context),
         )
         await self.__event_bus.publish(AppStarted())
 

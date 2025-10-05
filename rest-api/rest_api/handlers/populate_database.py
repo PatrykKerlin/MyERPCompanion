@@ -51,11 +51,15 @@ class PopulateDatabase:
             "translations",
             "themes",
             "groups",
-            "users",
             "modules",
             "views",
-            "assoc_user_groups",
             "assoc_module_groups",
+            "currencies",
+            "departments",
+            "positions",
+            "employees",
+            "users",
+            "assoc_user_groups",
             "assoc_user_views",
         ]
         for file_name in sql_files:

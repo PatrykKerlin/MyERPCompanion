@@ -8,11 +8,11 @@ if TYPE_CHECKING:
 
 
 class CategoryStrictSchema(BaseStrictSchema):
-    key: Constraints.Key
+    name: Constraints.Name
     description: Constraints.String1000Optional
 
 
 class CategoryPlainSchema(BasePlainSchema):
-    key: str
+    name: str
     description: str | None
     discounts: list[DiscountPlainSchema]

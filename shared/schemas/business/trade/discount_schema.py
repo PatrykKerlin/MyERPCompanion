@@ -9,7 +9,7 @@ from schemas.validation import Constraints
 
 
 class DiscountStrictSchema(BaseStrictSchema):
-    key: Constraints.Key
+    name: Constraints.Name
     index: Constraints.String10
     description: Constraints.String1000Optional
 
@@ -44,7 +44,7 @@ class DiscountStrictSchema(BaseStrictSchema):
 
 
 class DiscountPlainSchema(BasePlainSchema):
-    key: str
+    name: str
     index: str
     description: str | None
 

@@ -102,7 +102,5 @@ class Translation:
         if items:
             self.__items.update(items)
 
-    def get(self, key: str, default: str | None = None) -> str:
-        if default is None:
-            default = ""
-        return self.__items.get(key, default)
+    def get(self, key: str) -> str:
+        return self.__items.get(key, key)

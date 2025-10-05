@@ -1,0 +1,3 @@
+INSERT INTO employees (first_name, middle_name, last_name, pesel, birth_date, birth_place, passport_number, passport_expiry, id_card_number, id_card_expiry, email, phone_number, hire_date, termination_date, salary, street, house_number, apartment_number, postal_code, city, country, bank_account, bank_swift, bank_name, manager_id, position_id, department_id, is_active, created_at, created_by)
+VALUES
+('Jan', 'Tomasz', 'Kowalski', '90051712345', '1990-05-17', 'Warszawa', 'XA1234567', '2030-01-01', 'ABC123456', '2029-12-31', 'jan.kowalski@example.com', '+48123123123', '2020-01-15', NULL, 9500, 'Marszałkowska', '10A', NULL, '00-001', 'Warszawa', 'Polska', '00105000997603123456789123', 'INGBPLPW', 'ING Bank Śląski', NULL, 1, 1, TRUE, NOW(), :superuser_id);

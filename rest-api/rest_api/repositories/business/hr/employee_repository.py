@@ -23,8 +23,8 @@ class EmployeeRepository(BaseRepository[Employee]):
             selectinload(cls._model_cls.position),
             selectinload(cls._model_cls.user),
             selectinload(cls._model_cls.manager),
+            selectinload(cls._model_cls.subordinates),
             with_loader_criteria(Department, cls._expr(Department.is_active.is_(True))),
             with_loader_criteria(Position, cls._expr(Position.is_active.is_(True))),
             with_loader_criteria(User, cls._expr(User.is_active.is_(True))),
-            with_loader_criteria(Employee, cls._expr(Employee.is_active.is_(True))),
         )

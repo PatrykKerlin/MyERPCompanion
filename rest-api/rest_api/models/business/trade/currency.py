@@ -7,11 +7,12 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
-    from ..logistic.carrier import Carrier
-    from ..logistic.item import Item
-    from .exchange_rate import ExchangeRate
-    from .invoice import Invoice
-    from .order import Order
+    from models.business.hr.position import Position
+    from models.business.logistic.carrier import Carrier
+    from models.business.logistic.item import Item
+    from models.business.trade.exchange_rate import ExchangeRate
+    from models.business.trade.invoice import Invoice
+    from models.business.trade.order import Order
 
 
 class Currency(BaseModel):
@@ -38,4 +39,7 @@ class Currency(BaseModel):
     )
     items: Mapped[list[Item]] = Fields.relationship(
         argument="Item", back_populates="currency", foreign_keys="Item.currency_id"
+    )
+    positions: Mapped[list[Position]] = Fields.relationship(
+        argument="Position", back_populates="currency", foreign_keys="Position.currency_id"
     )

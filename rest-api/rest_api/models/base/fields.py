@@ -45,6 +45,10 @@ class Fields:
         return mapped_column(String(25), nullable=False, unique=True)
 
     @staticmethod
+    def name() -> Mapped[str]:
+        return mapped_column(String(25), nullable=False, unique=True)
+
+    @staticmethod
     def boolean(default: bool) -> Mapped[bool]:
         return mapped_column(Boolean, nullable=False, default=default)
 

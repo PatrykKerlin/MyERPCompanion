@@ -68,9 +68,9 @@ class EmployeeStrictSchema(BaseStrictSchema):
         if self.id_card_expiry and self.id_card_expiry < today:
             raise ValueError("id_card_expiry must be today or later")
 
-        rng = info.context.get("position_salary_range") if info.context else None
-        if rng is not None:
-            min_salary, max_salary = rng
+        salary_range = info.context.get("salary_range") if info.context else None
+        if salary_range is not None:
+            min_salary, max_salary = salary_range
             if self.salary < min_salary or self.salary > max_salary:
                 raise ValueError(f"salary must be between {min_salary} and {max_salary} for the given position")
 

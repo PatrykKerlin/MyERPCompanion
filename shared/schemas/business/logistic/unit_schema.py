@@ -3,12 +3,12 @@ from schemas.validation import Constraints
 
 
 class UnitStrictSchema(BaseStrictSchema):
-    key: Constraints.Key
+    name: Constraints.Name
     symbol: Constraints.Symbol
     description: Constraints.String1000Optional
 
 
 class UnitPlainSchema(BasePlainSchema):
-    key: str
+    name: str
     symbol: str
     description: str

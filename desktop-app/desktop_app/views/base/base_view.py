@@ -29,19 +29,16 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         # columns: int,
         # data_row: dict[str, Any] | None,
         # mode: ViewMode,
-        # controller_key: str,
     ) -> None:
         BaseComponent.__init__(self, controller, translation)
         # self._mode = mode
         # self._data_row = data_row
-        # self._controller_key = controller_key
-        # self._columns: list[ft.Column] = [ft.Column(expand=True) for _ in range(columns)]
         # self._inputs: list[dict[str, ft.TextField | ft.Dropdown | ft.Checkbox]] = [
         #     {"id": ft.TextField(value=data_row["id"] if data_row else None, expand=1)}
         # ]
         # self._markers: list[dict[str, ft.Checkbox]] = []
-        # self._master_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
-        # self._scrollable_wrapper = ft.ListView(controls=[self._master_column], expand=True)
+        self._master_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
+        self._scrollable_wrapper = ft.ListView(controls=[self._master_column], expand=True)
         # self._cancel_button = ft.Button(
         #     text=self._texts["cancel"],
         #     on_click=lambda _: self._controller.on_cancel_click(),
@@ -57,6 +54,39 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         # )
         # self.__set_buttons()
         # self.__default_checkbox_width = 0
+
+    def _get_field_marker(self, key: str) -> ft.Checkbox:
+        return ft.Checkbox(
+            on_change=lambda event, key=key: self._controller.on_marker_clicked(event, key),
+            tooltip=self._translation.get("check_to_search"),
+            animate_size=300,
+            value=False,
+        )
+
+    def _build_grid(self, fields: dict[str, dict[str, dict[str, Any]]]) -> ft.ResponsiveRow:
+        controls: list[ft.Control] = []
+        for key, field in fields.items():
+            controls.extend(
+                [
+                    ft.Container(
+                        content=field["label"]["content"],
+                        col={"sm": float(field["label"]["col"])},
+                        alignment=field["label"]["alignment"],
+                    ),
+                    ft.Container(
+                        content=field["input"]["content"],
+                        col={"sm": float(field["input"]["col"])},
+                        alignment=field["input"]["alignment"],
+                    ),
+                    ft.Container(
+                        content=field["marker"]["content"],
+                        col={"sm": float(field["marker"]["col"])},
+                        alignment=field["marker"]["alignment"],
+                    ),
+                ]
+            )
+            self._controller.inputs[key] = field["input"]["content"]
+        return ft.ResponsiveRow(columns=12, controls=controls, vertical_alignment=ft.CrossAxisAlignment.START)
 
     # @property
     # def mode(self) -> str:

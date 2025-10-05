@@ -1,6 +1,7 @@
 flet[all]
 pydantic
 pydantic-settings
+pydantic[email]
 httpx
 redis
 black

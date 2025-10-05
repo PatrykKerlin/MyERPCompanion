@@ -1,4 +1,4 @@
-from models.core import Group, Language, Theme, View
+from models.core import Group, Language, Theme
 from repositories.core import GroupRepository, LanguageRepository, ThemeRepository
 from schemas.core import (
     GroupPlainSchema,

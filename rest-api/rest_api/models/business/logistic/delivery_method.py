@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class DeliveryMethod(BaseModel):
     __tablename__ = "delivery_methods"
 
-    key: Mapped[str] = Fields.key()
+    name: Mapped[str] = Fields.name()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     price_per_unit: Mapped[float] = Fields.numeric_10_2()

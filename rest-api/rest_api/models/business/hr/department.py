@@ -14,8 +14,11 @@ if TYPE_CHECKING:
 class Department(BaseModel):
     __tablename__ = "departments"
 
-    key: Mapped[str] = Fields.key()
+    name: Mapped[str] = Fields.name()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
+    code: Mapped[str] = Fields.symbol()
+    email: Mapped[str | None] = Fields.string_100(unique=True)
+    phone_number: Mapped[str | None] = Fields.string_20()
 
     positions: Mapped[list[Position]] = Fields.relationship(
         argument="Position", back_populates="department", foreign_keys="Position.department_id"

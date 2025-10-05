@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class Discount(BaseModel):
     __tablename__ = "discounts"
 
-    key: Mapped[str] = Fields.key()
+    name: Mapped[str] = Fields.name()
     index: Mapped[str] = Fields.string_10(unique=True)
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 

@@ -9,5 +9,5 @@ class ViewReady(BaseViewReadyEvent):
 
 
 @dataclass(frozen=True)
-class GroupViewRequested(BaseViewRequestedEvent):
+class DepartmentViewRequested(BaseViewRequestedEvent):
     pass

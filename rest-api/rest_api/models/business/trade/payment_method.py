@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class PaymentMethod(BaseModel):
     __tablename__ = "payment_methods"
 
-    key: Mapped[str] = Fields.key()
+    name: Mapped[str] = Fields.name()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     provider: Mapped[str] = Fields.string_50()

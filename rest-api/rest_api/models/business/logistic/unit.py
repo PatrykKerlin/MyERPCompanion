@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class Unit(BaseModel):
     __tablename__ = "units"
 
-    key: Mapped[str] = Fields.key()
+    name: Mapped[str] = Fields.name()
     symbol: Mapped[str] = Fields.symbol()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 

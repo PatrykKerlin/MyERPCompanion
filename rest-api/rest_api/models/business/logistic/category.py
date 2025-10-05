@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class Category(BaseModel):
     __tablename__ = "categories"
 
-    key: Mapped[str] = Fields.key()
+    name: Mapped[str] = Fields.name()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     items: Mapped[list[Item]] = Fields.relationship(

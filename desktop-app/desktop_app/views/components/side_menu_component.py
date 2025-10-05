@@ -53,4 +53,4 @@ class SideMenuComponent(BaseComponent, ft.Container):
 
     def __calculate_width(self) -> int:
         max_length = max((len(label) for label in self.__labels), default=20)
-        return max_length * 10 + 40
+        return max_length * 12 + 40

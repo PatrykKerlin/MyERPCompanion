@@ -7,18 +7,24 @@ from sqlalchemy.orm import Mapped
 from models.base import BaseModel, Fields
 
 if TYPE_CHECKING:
-    from .department import Department
-    from .employee import Employee
+    from models.business.hr.department import Department
+    from models.business.hr.employee import Employee
+    from models.business.trade.currency import Currency
 
 
 class Position(BaseModel):
     __tablename__ = "positions"
 
-    key: Mapped[str] = Fields.key()
+    name: Mapped[str] = Fields.name()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
     level: Mapped[int] = Fields.integer()
     min_salary: Mapped[int] = Fields.integer()
     max_salary: Mapped[int] = Fields.integer()
+
+    currency_id: Mapped[int] = Fields.foreign_key(column="currencies.id")
+    currency: Mapped[Currency] = Fields.relationship(
+        argument="Currency", back_populates="positions", foreign_keys=[currency_id]
+    )
 
     department_id: Mapped[int] = Fields.foreign_key(column="departments.id")
     department: Mapped[Department] = Fields.relationship(

@@ -40,6 +40,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TInputSchema, 
         # self._postfix = postfix
         self._service = self._service_cls(self._settings)
         self._view: TView | None = None
+        self._inputs: dict[str, ft.Control] = {}
         # self._input_values: dict[str, Any] = {}
         # self._active_view_keys: list[str] = []
         # self._filters: set[str] = set()
@@ -51,6 +52,27 @@ class BaseViewController(BaseController, Generic[TService, TView, TInputSchema, 
         # self._has_prev = False
         # self._total = 0
         # self._page_sizes = [10, 25, 50, 100]
+
+    @property
+    def inputs(self) -> dict[str, ft.Control]:
+        return self._inputs
+
+    def on_marker_clicked(self, event: ft.ControlEvent, key: str) -> None:
+        if not self._view:
+            return
+        enabled = event.control.value
+        print(key)
+        # self._view.set_input_enabled(key, enabled, inputs)
+        # if enabled:
+        #     self._filters.add(key)
+        #     self._input_values[key] = inputs[key].value or ""
+        #     error = self.__validate_field(key)
+        #     if self._view:
+        #         self._view.set_field_error(key, error)
+        # else:
+        #     self._filters.discard(key)
+        #     if self._view:
+        #         self._view.set_field_error(key, None)
 
     # @abstractmethod
     # def get_new_view(self, data_row: dict[str, Any] | None = None, mode: ViewMode = ViewMode.SEARCH) -> TView:

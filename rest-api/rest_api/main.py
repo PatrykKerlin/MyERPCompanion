@@ -5,7 +5,7 @@ from typing import Any, AsyncGenerator
 from fastapi import APIRouter, FastAPI
 
 from config import Context, CustomFastAPI, Database, Settings
-from controllers import core as cc
+from controllers import business as bc, core as cc
 from handlers import CheckDatabaseState, PopulateDatabase
 from middlewares import AuthMiddleware, ViewMiddleware
 from utils.auth import Auth
@@ -39,8 +39,14 @@ class App:
             {"router": cc.LanguageController(self.__context, self.__auth).router, "prefix": "/languages"},
             {"router": cc.ThemeController(self.__context, self.__auth).router, "prefix": "/themes"},
         ]
+        business_endpoints = [
+            {"router": bc.DepartmentController(self.__context, self.__auth).router, "prefix": "/departments"},
+            {"router": bc.EmployeeController(self.__context, self.__auth).router, "prefix": "/employees"},
+            {"router": bc.PositionController(self.__context, self.__auth).router, "prefix": "/positions"},
+        ]
 
         endpoints.extend(core_endpoints)
+        endpoints.extend(business_endpoints)
 
         for endpoint in endpoints:
             api_router.include_router(**endpoint)

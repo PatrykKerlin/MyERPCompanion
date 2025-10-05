@@ -6,7 +6,8 @@ from pydantic import EmailStr, Field, HttpUrl
 class Constraints:
     __digits_only_regex = r"^\d+$"
 
-    Key = Annotated[str, Field(min_length=1, max_length=25)]
+    Key = Annotated[str, Field(min_length=1, max_length=25, pattern=r"^[a-z_]+$")]
+    Name = Annotated[str, Field(min_length=1, max_length=25)]
 
     BooleanFalse = Annotated[bool, Field(default=False)]
     BooleanTrue = Annotated[bool, Field(default=True)]

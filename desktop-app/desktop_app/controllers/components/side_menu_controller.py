@@ -49,7 +49,8 @@ class SideMenuController(BaseComponentController[SideMenuComponent, SideMenuRequ
         modules_state = self._state_store.app_state.modules
         content: dict[str, list[str]] = {}
         if modules_state.items:
-            for module in modules_state.items:
+            sorted_modules = sorted(modules_state.items, key=lambda module: module.order)
+            for module in sorted_modules:
                 if module.key == "core":
                     continue
                 content[module.key] = [view.key for view in module.views]

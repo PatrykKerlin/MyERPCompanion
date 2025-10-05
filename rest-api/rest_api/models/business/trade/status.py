@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class Status(BaseModel):
     __tablename__ = "statuses"
 
-    key: Mapped[str] = Fields.key()
+    name: Mapped[str] = Fields.name()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
     step_number: Mapped[int] = Fields.integer(unique=True)
 
