@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from pydantic import model_validator
 from schemas.base import BasePlainSchema, BaseStrictSchema
 from schemas.validation import Constraints
 
@@ -10,6 +13,12 @@ class PositionStrictSchema(BaseStrictSchema):
     max_salary: Constraints.PositiveInteger
     currency_id: Constraints.PositiveInteger
     department_id: Constraints.PositiveInteger
+
+    @model_validator(mode="after")
+    def _validate_data(self) -> PositionStrictSchema:
+        if self.min_salary > self.max_salary:
+            raise ValueError("max_salary must be greater than or equal to min_salary")
+        return self
 
 
 class PositionPlainSchema(BasePlainSchema):

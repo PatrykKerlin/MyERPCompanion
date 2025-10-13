@@ -4,10 +4,14 @@ from services.base.base_service import BaseService
 
 
 class AppService(BaseService):
-    async def api_health_check(self) -> bool:
+    async def api_health_check(self) -> None:
+        last_error: Exception | None = None
         for _ in range(5):
-            response = await self._get(Endpoint.HEALTH_CHECK)
-            if response:
-                return True
-            await asyncio.sleep(1)
-        return False
+            try:
+                await self._get(Endpoint.HEALTH_CHECK)
+                return
+            except Exception as err:
+                last_error = err
+                await asyncio.sleep(1)
+        if last_error:
+            raise last_error

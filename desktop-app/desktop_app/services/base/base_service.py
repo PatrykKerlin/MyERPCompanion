@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING, Any
 
 import httpx
@@ -21,6 +22,7 @@ class BaseService:
             response = await client.post(Endpoint.REFRESH, json=payload)
             response.raise_for_status()
             new_access = response.json()["access"]
+            await asyncio.sleep(0.1)
             return TokenPlainSchema(access=new_access, refresh=token.refresh)
 
     async def _get(
@@ -34,6 +36,7 @@ class BaseService:
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
             response = await client.get(url=endpoint, params=query_params)
             response.raise_for_status()
+            await asyncio.sleep(0.1)
             return response
 
     async def _post(
@@ -47,6 +50,7 @@ class BaseService:
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
             response = await client.post(url=endpoint, json=body_params)
             response.raise_for_status()
+            await asyncio.sleep(0.1)
             return response
 
     async def _put(
@@ -60,6 +64,7 @@ class BaseService:
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
             response = await client.put(url=endpoint, json=body_params)
             response.raise_for_status()
+            await asyncio.sleep(0.1)
             return response
 
     async def _delete(
@@ -73,6 +78,7 @@ class BaseService:
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
             response = await client.delete(url=endpoint)
             response.raise_for_status()
+            await asyncio.sleep(0.1)
             return response
 
     def __prepare_headers(self, token: TokenPlainSchema | None = None, view_key: str | None = None) -> dict[str, str]:

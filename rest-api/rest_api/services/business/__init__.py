@@ -1,5 +1,5 @@
-from models.business import Department, Position, Employee
-from repositories.business import DepartmentRepository, PositionRepository, EmployeeRepository
+from models.business import Department, Position, Employee, Currency
+from repositories.business import DepartmentRepository, PositionRepository, EmployeeRepository, CurrencyRepository
 from schemas.business import (
     DepartmentPlainSchema,
     DepartmentStrictSchema,
@@ -7,6 +7,8 @@ from schemas.business import (
     EmployeeStrictSchema,
     PositionPlainSchema,
     PositionStrictSchema,
+    CurrencyPlainSchema,
+    CurrencyStrictSchema,
 )
 from utils.factories import ServiceFactory
 
@@ -29,10 +31,17 @@ EmployeeService = ServiceFactory.create(
     input_schema_cls=EmployeeStrictSchema,
     output_schema_cls=EmployeePlainSchema,
 )
+CurrencyService = ServiceFactory.create(
+    model_cls=Currency,
+    repository_cls=CurrencyRepository,
+    input_schema_cls=CurrencyStrictSchema,
+    output_schema_cls=CurrencyPlainSchema,
+)
 
 
 __all__ = [
     "DepartmentService",
     "EmployeeService",
     "PositionService",
+    "CurrencyService",
 ]

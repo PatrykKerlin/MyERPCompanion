@@ -1,0 +1,15 @@
+from dataclasses import dataclass, field
+from typing import Any
+
+
+@dataclass
+class RequestData:
+    sort_by: str = "id"
+    order: str = "asc"
+    page: int = 1
+    page_size: int = 10
+    has_next: bool = False
+    has_prev: bool = False
+    total: int = 0
+    selected_inputs: set[str] = field(default_factory=set)
+    input_values: dict[str, Any] = field(default_factory=dict)

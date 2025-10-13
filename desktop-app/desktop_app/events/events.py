@@ -1,6 +1,11 @@
+from __future__ import annotations
+
+from typing import Any
+
 from dataclasses import dataclass
 
 from events.base.base_event import BaseEvent
+from views.base.base_view import BaseView
 
 
 @dataclass(frozen=True)
@@ -77,3 +82,41 @@ class FooterMounted(BaseEvent):
 @dataclass(frozen=True)
 class MenuBarRequested(BaseEvent):
     pass
+
+
+@dataclass(frozen=True)
+class ViewRequested(BaseEvent):
+    key: str
+    postfix: int | None = None
+    data: dict[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class ViewReady(BaseEvent):
+    key: str
+    view: BaseView
+    postfix: int | None = None
+
+
+@dataclass(frozen=True)
+class TabRequested(BaseEvent):
+    key: str
+    postfix: int | None = None
+    data: dict[str, Any] | None = None
+    replace: bool = False
+
+
+@dataclass(frozen=True)
+class TabCloseRequested(BaseEvent):
+    title: str
+
+
+@dataclass(frozen=True)
+class TabClosed(BaseEvent):
+    key: str
+
+
+@dataclass(frozen=True)
+class RecordDeleteRequested(BaseEvent):
+    key: str
+    id: int

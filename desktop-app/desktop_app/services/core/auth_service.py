@@ -14,7 +14,7 @@ class AuthService(BaseService):
 
     async def fetch_modules(
         self,
-        path_param: str | None = None,
+        _: int | None = None,
         query_params: dict[str, Any] | None = None,
         token: TokenPlainSchema | None = None,
         view_key: str | None = None,
@@ -23,8 +23,6 @@ class AuthService(BaseService):
         modules: list[ModulePlainSchema] = []
         endpoint = Endpoint.MODULES
         params = {"page": page}
-        if path_param:
-            endpoint += f"/{path_param}"
         if query_params:
             params.update(query_params)
 
@@ -40,7 +38,7 @@ class AuthService(BaseService):
 
     async def fetch_current_user(
         self,
-        path_param: str | None = None,
+        path_param: int | None = None,
         _: dict[str, Any] | None = None,
         token: TokenPlainSchema | None = None,
         view_key: str | None = None,

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import flet as ft
 
+from views.base.base_view import BaseView
 from views.components.footer_component import FooterComponent
 from views.components.menu_bar_component import MenuBarComponent
 from views.components.side_menu_component import SideMenuComponent
@@ -19,16 +20,12 @@ class AppView:
         self.__page = page
         self.__translation = translation
         self.__theme = theme
-        self.__page.window.width = 1024
-        self.__page.window.height = 768
-        self.__page.window.min_width = 800
-        self.__page.window.min_height = 600
+        self.__page.window.width = 1600
+        self.__page.window.height = 900
+        self.__page.window.min_width = 1024
+        self.__page.window.min_height = 768
         self.__view_stack = ft.Stack(expand=True)
         self.__build()
-
-    @property
-    def view_stack(self) -> ft.Stack:
-        return self.__view_stack
 
     def update_translation(self, translation: Translation) -> None:
         self.__translation = translation
@@ -58,7 +55,6 @@ class AppView:
         vertical_divider = ft.VerticalDivider(width=1, thickness=1, color=ft.Colors.OUTLINE)
 
         self.__page.clean()
-        self.__page.overlay.clear()
         self.__page.add(
             ft.Column(
                 controls=[
@@ -91,11 +87,27 @@ class AppView:
         self.__build()
         self.__page.update()
 
-    def set_view_content(self, content: ft.Control) -> None:
-        if not self.__view_stack:
+    def set_view_content(self, current: str, views: dict[str, BaseView]) -> None:
+        desired_views: list[BaseView] = list(views.values())
+        if not desired_views:
+            self.__view_stack.controls.clear()
+            self.__page.update()
             return
-        if content not in self.__view_stack.controls:
-            self.__view_stack.controls.append(content)
+
+        desired_ids: set[int] = {id(view) for view in desired_views}
+        for existing_view in list(self.__view_stack.controls)[::-1]:
+            if id(existing_view) not in desired_ids:
+                self.__view_stack.controls.remove(existing_view)
+
+        existing_ids: set[int] = {id(view) for view in self.__view_stack.controls}
+        for view in desired_views:
+            if id(view) not in existing_ids:
+                self.__view_stack.controls.append(view)
+
+        self.__view_stack.controls[:] = desired_views
+
+        current_view: BaseView | None = views.get(current) if current else None
         for view in self.__view_stack.controls:
-            view.visible = view == content
+            view.visible = (view is current_view) if current_view else False
+
         self.__page.update()

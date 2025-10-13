@@ -35,10 +35,10 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
         try:
             tokens = await self.__service.fetch_tokens(username, password)
             self._state_store.update(tokens={"access": tokens.access, "refresh": tokens.refresh})
-            all_modules = await self._call_with_refresh(
+            all_modules = await self._call_api_with_token_refresh(
                 service=self.__service, func=self.__service.fetch_modules, view_key=View.SIDE_MENU
             )
-            user = await self._call_with_refresh(
+            user = await self._call_api_with_token_refresh(
                 service=self.__service, func=self.__service.fetch_current_user, view_key=View.CURRENT_USER
             )
             user_groups_set = {group.id for group in user.groups}
@@ -56,4 +56,4 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
             self._logger.error(error)
             if self._component:
                 self._close_dialog(self._component)
-            # self._show_error_dialog(message=str(error))
+            self._open_error_dialog(message_key="invalid_credentials")

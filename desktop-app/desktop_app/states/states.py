@@ -6,6 +6,7 @@ from schemas.core.module_schema import ModulePlainSchema
 from schemas.core.theme_schema import ThemePlainSchema
 from schemas.core.user_schema import UserPlainSchema
 from states.base.base_state import BaseState
+from utils.enums import ViewMode
 from views.base.base_view import BaseView
 from views.components.side_menu_component import SideMenuComponent
 from views.components.toolbar_component import ToolbarComponent
@@ -43,6 +44,7 @@ class ModulesState(BaseState):
 
 class TabsState(BaseState):
     current: str
+    mode: ViewMode
     items: dict[str, BaseView]
 
 

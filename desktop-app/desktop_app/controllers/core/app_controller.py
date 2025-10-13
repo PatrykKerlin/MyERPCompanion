@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-
+from typing import TYPE_CHECKING
 from controllers.base.base_controller import BaseController
 from events.base.base_event import BaseEvent
 from events.events import (
@@ -28,7 +26,6 @@ from views.core.app_view import AppView
 if TYPE_CHECKING:
     from config.context import Context
     from states.states import ComponentsState, TranslationState
-    from views.components.loading_dialog_component import LoadingDialogComponent
     from views.components.footer_component import FooterComponent
     from views.components.menu_bar_component import MenuBarComponent
     from views.components.side_menu_component import SideMenuComponent
@@ -42,7 +39,6 @@ class AppController(BaseController):
         translation_state = self._state_store.app_state.translation
         self.__service = AppService(self._settings)
         self.__view = AppView(self._page, translation_state.items, self._settings.THEME)
-        self.__loading_dialog: LoadingDialogComponent | None = None
 
         self._subscribe_event_handlers(
             {
@@ -65,60 +61,60 @@ class AppController(BaseController):
         self.__view.update_translation(state.items)
 
     def __components_changed_listener(self, state: ComponentsState) -> None:
-        def on_dialog_closed(_: Any) -> None:
-            if state.menu_bar and state.side_menu and state.tabs_bar and state.toolbar and state.footer:
-                self.__rebuild_view(state.menu_bar, state.side_menu, state.toolbar, state.tabs_bar, state.footer)
-                if self.__loading_dialog:
-                    self.__loading_dialog.on_dismiss = None
-
-        if self.__loading_dialog and self.__loading_dialog.open:
-            self.__loading_dialog.on_dismiss = on_dialog_closed
-        elif state.menu_bar and state.side_menu and state.tabs_bar and state.toolbar and state.footer:
-            self.__rebuild_view(state.menu_bar, state.side_menu, state.toolbar, state.tabs_bar, state.footer)
+        if state.menu_bar and state.side_menu and state.tabs_bar and state.toolbar and state.footer:
+            self._page.run_task(
+                self.__rebuild_view, state.menu_bar, state.side_menu, state.toolbar, state.tabs_bar, state.footer
+            )
 
     def __tabs_updated_listener(self, state: TabsState) -> None:
-        self.__view.set_view_content(state.items[state.current])
+        self.__view.set_view_content(state.current, state.items)
+        if not state.items or not state.current or state.current not in state.items:
+            return
+        print(f"{state.current} -> {state.mode}")
+        if state.items[state.current].page:
+            self._page.run_task(self._run_with_delay, lambda: state.items[state.current].set_mode(state.mode))
 
     async def __app_started_handler(self, _: AppStarted) -> None:
-        self.__loading_dialog = self._show_loading_dialog()
-        api_status = await self.__service.api_health_check()
-        initial_language = self._settings.LANGUAGE
-        if api_status:
+        self._open_loading_dialog()
+        try:
+            await self.__service.api_health_check()
+            initial_language = self._settings.LANGUAGE
             await self._event_bus.publish(TranslationRequested(initial_language, False))
-        else:
-            self._logger.error("API health check failed")
+        except Exception as err:
+            self._logger.error(str(err))
+            self._open_error_dialog(message_key="api_not_responding")
 
     async def __api_status_handler(self, _: ApiStatusRequested) -> None:
-        api_status = await self.__service.api_health_check()
-        await self._event_bus.publish(ApiStatusChecked(status=api_status))
+        try:
+            await self.__service.api_health_check()
+            await self._event_bus.publish(ApiStatusChecked(status=True))
+        except Exception as err:
+            self._logger.error(str(err))
+            await self._event_bus.publish(ApiStatusChecked(status=False))
 
     async def __translation_ready_handler(self, event: TranslationReady) -> None:
-        if self.__loading_dialog:
-            await self._close_dialog_with_delay(self.__loading_dialog)
+        self._close_loading_dialog()
         if not event.user_authenticated:
             await self._event_bus.publish(AuthDialogRequested())
 
     async def __api_not_responding_handler(self, _: BaseEvent):
-        if self.__loading_dialog:
-            await self._close_dialog_with_delay(self.__loading_dialog)
-        self._show_error_dialog("api_not_responding")
+        self._close_loading_dialog()
+        self._open_error_dialog(message_key="api_not_responding")
 
     async def __user_authenticated_handler(self, _: UserAuthenticated) -> None:
         user = self._state_store.app_state.user.current
-        translation = self._state_store.app_state.translation
-        if not user:
-            self._logger.error("User error")
-            return
-        if user.language.symbol != translation.language:
-            self.__loading_dialog = self._show_loading_dialog()
-            await self._event_bus.publish(TranslationRequested(user.language.symbol, True))
-        await self._event_bus.publish(MenuBarRequested())
-        await self._event_bus.publish(SideMenuRequested())
-        await self._event_bus.publish(ToolbarRequested())
-        await self._event_bus.publish(TabsBarRequested())
-        await self._event_bus.publish(FooterRequested())
+        if user:
+            translation = self._state_store.app_state.translation
+            if user.language.symbol != translation.language:
+                self._open_loading_dialog()
+                await self._event_bus.publish(TranslationRequested(user.language.symbol, True))
+            await self._event_bus.publish(MenuBarRequested())
+            await self._event_bus.publish(SideMenuRequested())
+            await self._event_bus.publish(ToolbarRequested())
+            await self._event_bus.publish(TabsBarRequested())
+            await self._event_bus.publish(FooterRequested())
 
-    def __rebuild_view(
+    async def __rebuild_view(
         self,
         menu_bar: MenuBarComponent,
         side_menu: SideMenuComponent,
@@ -126,10 +122,6 @@ class AppController(BaseController):
         tabs_bar: TabsBarComponent,
         footer: FooterComponent,
     ) -> None:
-        self.__view.rebuild(menu_bar, side_menu, toolbar, tabs_bar, footer)
-        self._page.run_task(self._event_bus.publish, FooterMounted())
-
-
-#     def __show_auth_dialog(self) -> None:
-#         auth_dialog = self._context.controllers.get("auth_dialog").get_new_component()
-#         self._open_dialog(auth_dialog)
+        self._close_loading_dialog()
+        await self._run_with_delay(lambda: self.__view.rebuild(menu_bar, side_menu, toolbar, tabs_bar, footer))
+        await self._event_bus.publish(FooterMounted())

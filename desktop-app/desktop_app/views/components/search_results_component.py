@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
-from views.base import BaseComponent
+from utils.translation import Translation
+from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
     from controllers.base.base_view_controller import BaseViewController
@@ -14,21 +15,12 @@ if TYPE_CHECKING:
 
 class SearchResultsComponent(BaseComponent, ft.Column):
     def __init__(
-        self,
-        controller: BaseViewController,
-        texts: dict[str, str],
-        columns: list[str],
-        data: list[dict[str, Any]],
-        on_back_click: Callable[[], None],
-        on_row_click: Callable[[dict[str, Any]], None],
-        on_page_change: Callable[[str], None],
+        self, controller: BaseViewController, translation: Translation, columns: list[str], data: list[dict[str, Any]]
     ) -> None:
-        BaseComponent.__init__(self, controller, texts)
+        BaseComponent.__init__(self, controller, translation)
         self.__data = data
         self.__columns = columns
-        self.__on_back_click = on_back_click
-        self.__on_row_click = on_row_click
-        self.__on_page_change = on_page_change
+
         data_table = ft.Row(
             controls=[self.__build_table()],
             alignment=ft.MainAxisAlignment.CENTER,
@@ -52,7 +44,7 @@ class SearchResultsComponent(BaseComponent, ft.Column):
                         content=ft.Row(
                             controls=[
                                 ft.Text(
-                                    self._texts[key],
+                                    self._translation.get(key),
                                     weight=ft.FontWeight.BOLD,
                                     overflow=ft.TextOverflow.ELLIPSIS,
                                     max_lines=1,
@@ -60,11 +52,11 @@ class SearchResultsComponent(BaseComponent, ft.Column):
                                 ),
                                 ft.Icon(
                                     name=self.__get_sort_icon(key),
-                                    visible=self._controller.sort_by == key,
+                                    visible=self._controller.search_params.sort_by == key,
                                 ),
                             ]
                         ),
-                        on_click=lambda _, key=key: self._controller.on_sort_click(key),
+                        on_click=lambda _, key=key: self._controller.on_sort_clicked(key),
                     ),
                     expand=True,
                 )
@@ -82,7 +74,7 @@ class SearchResultsComponent(BaseComponent, ft.Column):
     def __build_row(self, row: dict[str, Any]) -> ft.Container:
         cells = [
             ft.Container(
-                content=ft.Text(str(row[key]), overflow=ft.TextOverflow.ELLIPSIS, max_lines=1),
+                content=ft.Text(str(row[key] if row[key] else ""), overflow=ft.TextOverflow.ELLIPSIS, max_lines=1),
                 expand=True,
             )
             for key in self.__columns
@@ -90,7 +82,7 @@ class SearchResultsComponent(BaseComponent, ft.Column):
         row_content = ft.Row(controls=cells, expand=True)
         container = ft.Container(
             content=row_content,
-            on_click=lambda _: self.__on_row_click(row["id"]),
+            on_click=lambda _: self._controller.on_row_clicked(row["id"]),
             on_hover=self.__on_hover,
         )
         return container
@@ -98,24 +90,27 @@ class SearchResultsComponent(BaseComponent, ft.Column):
     def __build_buttons(self) -> ft.Row:
         prev_button = ft.IconButton(
             icon=ft.Icons.ARROW_LEFT,
-            on_click=lambda _: self.__on_page_change("prev"),
-            disabled=not self._controller.has_prev,
+            on_click=lambda _: self._controller.on_page_clicked("prev"),
+            disabled=not self._controller.search_params.has_prev,
         )
         next_button = ft.IconButton(
             icon=ft.Icons.ARROW_RIGHT,
-            on_click=lambda _: self.__on_page_change("next"),
-            disabled=not self._controller.has_next,
+            on_click=lambda _: self._controller.on_page_clicked("next"),
+            disabled=not self._controller.search_params.has_next,
         )
         total_pages = 1
-        if self._controller.page_size:
-            total_pages = ceil(self._controller.total / self._controller.page_size)
-        counter_text = ft.Text(value=f"{self._controller.page}/{total_pages}")
+        if self._controller.search_params.page_size:
+            total_pages = ceil(self._controller.search_params.total / self._controller.search_params.page_size)
+        counter_text = ft.Text(value=f"{self._controller.search_params.page}/{total_pages}")
         page_size_dropdown = ft.Dropdown(
-            value=str(self._controller.page_size),
-            options=[ft.dropdown.Option(str(val)) for val in self._controller.page_sizes],
-            on_change=lambda event: self._controller.on_page_size_change(int(event.control.value)),
+            value=str(self._controller.search_params.page_size),
+            options=[ft.DropdownOption(str(val)) for val in self._controller.page_size_list],
+            on_change=lambda event: self._controller.on_page_size_selected(int(event.control.value)),
         )
-        back_button = ft.ElevatedButton(text=self._texts["back"], on_click=lambda _: self.__on_back_click())
+        back_button = ft.ElevatedButton(
+            text=self._translation.get("back"),
+            on_click=lambda _: self._controller.on_back_clicked(),
+        )
         return ft.Row(
             controls=[
                 back_button,
@@ -133,6 +128,6 @@ class SearchResultsComponent(BaseComponent, ft.Column):
         e.control.update()
 
     def __get_sort_icon(self, key: str) -> str | None:
-        if self._controller.sort_by == key:
-            return ft.Icons.ARROW_DROP_UP if self._controller.order == "asc" else ft.Icons.ARROW_DROP_DOWN
+        if self._controller.search_params.sort_by == key:
+            return ft.Icons.ARROW_DROP_UP if self._controller.search_params.order == "asc" else ft.Icons.ARROW_DROP_DOWN
         return None

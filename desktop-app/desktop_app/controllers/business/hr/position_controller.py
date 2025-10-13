@@ -2,21 +2,21 @@ from __future__ import annotations
 
 from config.context import Context
 from controllers.base.base_view_controller import BaseViewController
-from schemas.business import DepartmentPlainSchema, DepartmentStrictSchema
+from schemas.business import PositionPlainSchema, PositionStrictSchema
+from schemas.business.hr.department_schema import DepartmentPlainSchema
+from schemas.business.trade.currency_schema import CurrencyPlainSchema
 from schemas.core.param_schema import PaginatedResponseSchema
-from services.business.hr.department_service import DepartmentService
+from services.business.hr.position_service import PositionService
 from utils.enums import View, ViewMode
-from views.business.hr.department_view import DepartmentView
+from views.business.hr.position_view import PositionView
 from events.events import ViewRequested, ViewReady
 
 
-class DepartmentController(
-    BaseViewController[DepartmentService, DepartmentView, DepartmentPlainSchema, DepartmentStrictSchema]
-):
-    _input_schema_cls = DepartmentPlainSchema
-    _output_schema_cls = DepartmentStrictSchema
-    _service_cls = DepartmentService
-    _view_cls = DepartmentView
+class PositionController(BaseViewController[PositionService, PositionView, PositionPlainSchema, PositionStrictSchema]):
+    _input_schema_cls = PositionPlainSchema
+    _output_schema_cls = PositionStrictSchema
+    _service_cls = PositionService
+    _view_cls = PositionView
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
@@ -27,7 +27,8 @@ class DepartmentController(
         )
 
     async def _view_requested_handler(self, event: ViewRequested) -> None:
-        if event.key == View.DEPARTMENTS:
+        self._open_loading_dialog()
+        if event.key == View.POSITIONS:
             translation_service = self._state_store.app_state.translation
             self._key = event.key
             if event.data:
@@ -35,10 +36,15 @@ class DepartmentController(
                 self._request_data.input_values = event.data
             else:
                 mode = ViewMode.SEARCH
-            self._view = DepartmentView(self, translation_service.items, mode, event.key, event.data)
+            currencies = await self.__get_all_currencies()
+            departments = await self.__get_all_departments()
+            self._view = PositionView(
+                self, translation_service.items, mode, event.key, event.data, currencies, departments
+            )
             await self._event_bus.publish(ViewReady(key=event.key, postfix=event.postfix, view=self._view))
+            self._close_loading_dialog()
 
-    async def _perform_get_all(self) -> PaginatedResponseSchema[DepartmentPlainSchema]:
+    async def _perform_get_all(self) -> PaginatedResponseSchema[PositionPlainSchema]:
         filters: dict[str, str] = {}
         for field in self._request_data.selected_inputs:
             filters[field] = self._request_data.input_values.get(field, "").strip()
@@ -56,7 +62,7 @@ class DepartmentController(
             view_key=self._key,
         )
 
-    async def _perform_get_one(self, id: int) -> DepartmentPlainSchema:
+    async def _perform_get_one(self, id: int) -> PositionPlainSchema:
         return await self._call_api_with_token_refresh(
             service=self._service,
             func=self._service.get_one,
@@ -64,8 +70,8 @@ class DepartmentController(
             view_key=self._key,
         )
 
-    async def _perform_create(self) -> DepartmentPlainSchema:
-        data = DepartmentStrictSchema(**self._request_data.input_values)
+    async def _perform_create(self) -> PositionPlainSchema:
+        data = PositionStrictSchema(**self._request_data.input_values)
         return await self._call_api_with_token_refresh(
             service=self._service,
             func=self._service.create,
@@ -73,8 +79,8 @@ class DepartmentController(
             view_key=self._key,
         )
 
-    async def _perform_update(self, id: int) -> DepartmentPlainSchema:
-        data = DepartmentStrictSchema(**self._request_data.input_values)
+    async def _perform_update(self, id: int) -> PositionPlainSchema:
+        data = PositionStrictSchema(**self._request_data.input_values)
         return await self._call_api_with_token_refresh(
             service=self._service,
             func=self._service.update,
@@ -88,5 +94,19 @@ class DepartmentController(
             service=self._service,
             func=self._service.delete,
             path_param=id,
+            view_key=self._key,
+        )
+
+    async def __get_all_currencies(self) -> dict[str, int]:
+        return await self._call_api_with_token_refresh(
+            service=self._service,
+            func=self._service.get_all_currencies,
+            view_key=self._key,
+        )
+
+    async def __get_all_departments(self) -> dict[str, int]:
+        return await self._call_api_with_token_refresh(
+            service=self._service,
+            func=self._service.get_all_departments,
             view_key=self._key,
         )

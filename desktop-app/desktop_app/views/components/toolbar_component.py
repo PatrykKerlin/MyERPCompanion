@@ -18,19 +18,19 @@ class ToolbarComponent(BaseComponent, ft.MenuBar):
         self.__toggle_menu_button = ft.IconButton(
             icon=ft.Icons.MENU,
             tooltip=translation.get("hide_menu"),
-            on_click=lambda _: controller.on_toggle_menu_clicked(),
+            on_click=lambda _: self._controller.on_toggle_menu_clicked(),
         )
         self.__lock_view_button = ft.IconButton(
             icon=ft.Icons.LOCK,
             tooltip=translation.get("unlock_form"),
             disabled=True,
-            on_click=lambda _: controller.on_lock_view_clicked(),
+            on_click=lambda _: self._controller.on_lock_view_clicked(),
         )
         self.__delete_record_button = ft.IconButton(
             icon=ft.Icons.DELETE,
             tooltip=translation.get("delete_record"),
             disabled=True,
-            on_click=lambda _: controller.on_delete_record_clicked(),
+            on_click=lambda _: self._controller.on_delete_clicked(),
         )
         ft.MenuBar.__init__(
             self,
@@ -47,14 +47,14 @@ class ToolbarComponent(BaseComponent, ft.MenuBar):
             self.__lock_view_button.icon = locked_icon
         self.__lock_view_button.update()
 
-    def set_lock_view_button_disabled(self, disabled: bool) -> None:
+    def set_lock_view_button_state(self, disabled: bool) -> None:
         if disabled and not self.__lock_view_button.disabled:
             self.__lock_view_button.disabled = True
         elif not disabled and self.__lock_view_button.disabled:
             self.__lock_view_button.disabled = False
         self.__lock_view_button.update()
 
-    def set_delete_record_button_disabled(self, disabled: bool) -> None:
+    def set_delete_button_state(self, disabled: bool) -> None:
         if disabled and not self.__delete_record_button.disabled:
             self.__delete_record_button.disabled = True
         elif not disabled and self.__delete_record_button.disabled:

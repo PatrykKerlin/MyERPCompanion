@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from controllers.base.base_component_controller import BaseComponentController
+from views.base.base_view import BaseView
 from views.components.side_menu_component import SideMenuComponent
-from events.events import SideMenuRequested, SideMenuToggleRequested
-from events.view_events import ViewReady
+from events.events import SideMenuRequested, SideMenuToggleRequested, TabRequested, ViewReady
 
 if TYPE_CHECKING:
     from config.context import Context
@@ -16,33 +16,15 @@ class SideMenuController(BaseComponentController[SideMenuComponent, SideMenuRequ
         super().__init__(context)
         self.__is_component_visible = True
         self.__component_width: float | None = None
-        # self.__content: dict[str, list[str]] = {}
         self._subscribe_event_handlers(
             {
                 SideMenuRequested: self._component_requested_handler,
                 SideMenuToggleRequested: self.__toggle_handler,
-                ViewReady: self.__view_ready_handler,
             }
         )
 
     def on_item_clicked(self, key: str) -> None:
-        tabs_state = self._state_store.app_state.tabs
-        if key not in tabs_state.items.keys():
-            event_cls = self._view_event_map[key]
-            self._page.run_task(self._event_bus.publish, event_cls(key=key))
-        else:
-            self._state_store.update(tabs={"current": key})
-        #     view = controller.get_new_view()
-        #     self._context.active_views[key] = view
-        # view = self._context.active_views[key]
-        # self._context.controllers.get("tabs_bar").add_tab(key)
-        # self._context.controllers.get("app").render_view(view)
-        # self._context.controllers.get("toolbar").refresh()
-
-    async def __view_ready_handler(self, event: ViewReady) -> None:
-        current_items = self._state_store.app_state.tabs.items
-        updated_items = {**current_items, event.key: event.view}
-        self._state_store.update(tabs={"current": event.key, "items": updated_items})
+        self._page.run_task(self._event_bus.publish, TabRequested(key=key))
 
     async def _component_requested_handler(self, _: SideMenuRequested) -> None:
         translation_state = self._state_store.app_state.translation

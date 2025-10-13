@@ -43,6 +43,7 @@ class App:
             {"router": bc.DepartmentController(self.__context, self.__auth).router, "prefix": "/departments"},
             {"router": bc.EmployeeController(self.__context, self.__auth).router, "prefix": "/employees"},
             {"router": bc.PositionController(self.__context, self.__auth).router, "prefix": "/positions"},
+            {"router": bc.CurrencyController(self.__context, self.__auth).router, "prefix": "/currencies"},
         ]
 
         endpoints.extend(core_endpoints)

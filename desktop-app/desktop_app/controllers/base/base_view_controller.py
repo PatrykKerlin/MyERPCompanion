@@ -1,171 +1,264 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from concurrent.futures import Future
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 import flet as ft
-from httpx import HTTPStatusError
 from pydantic import ValidationError
 
 from controllers.base.base_controller import BaseController
+from events.events import RecordDeleteRequested, TabClosed, TabRequested, TabCloseRequested, ViewRequested
 from schemas.base import BaseStrictSchema, BasePlainSchema
-from services.base.base_view_service import BaseViewService
+from schemas.core.param_schema import PaginatedResponseSchema
+from services.base.base_service import BaseService
+from states.states import TabsState
 from utils.enums import ViewMode
+from utils.request_data import RequestData
 from views.base.base_view import BaseView
 
 if TYPE_CHECKING:
     from config.context import Context
-    from utils.enums import Endpoint
 
-TService = TypeVar("TService", bound=BaseViewService)
+TService = TypeVar("TService", bound=BaseService)
 TView = TypeVar("TView", bound=BaseView)
-TInputSchema = TypeVar("TInputSchema", bound=BasePlainSchema)
-TOutputSchema = TypeVar("TOutputSchema", bound=BaseStrictSchema)
+TPlainSchema = TypeVar("TPlainSchema", bound=BasePlainSchema)
+TStrictSchema = TypeVar("TStrictSchema", bound=BaseStrictSchema)
 
 
-class BaseViewController(BaseController, Generic[TService, TView, TInputSchema, TOutputSchema], ABC):
-    _input_schema_cls: type[TInputSchema]
-    _output_schema_cls: type[TOutputSchema]
+class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, TStrictSchema], ABC):
+    _input_schema_cls: type[TPlainSchema]
+    _output_schema_cls: type[TStrictSchema]
     _service_cls: type[TService]
+    _view_cls: type[TView]
 
-    def __init__(
-        self,
-        context: Context,
-        # postfix: str,
-    ) -> None:
+    def __init__(self, context: Context) -> None:
         super().__init__(context)
-        # self.has_validation_errors = True
-        # self._view_schema = view_schema
-        # self._postfix = postfix
+        self._key = ""
         self._service = self._service_cls(self._settings)
         self._view: TView | None = None
-        self._inputs: dict[str, ft.Control] = {}
-        # self._input_values: dict[str, Any] = {}
-        # self._active_view_keys: list[str] = []
-        # self._filters: set[str] = set()
-        # self._sort_by = "id"
-        # self._order = "asc"
-        # self._page = 1
-        # self._page_size = 10
-        # self._has_next = False
-        # self._has_prev = False
-        # self._total = 0
-        # self._page_sizes = [10, 25, 50, 100]
+        self._request_data = RequestData()
+        self._page_size_list = [5, 10, 25, 50, 100]
+        self._subscribe_event_handlers(
+            {
+                TabClosed: self.__tab_closed_handler,
+                RecordDeleteRequested: self.__record_delete_requested_handler,
+            }
+        )
+        self._subscribe_state_listeners(
+            {
+                "tabs": self.__tabs_updated_listener,
+            }
+        )
 
     @property
-    def inputs(self) -> dict[str, ft.Control]:
-        return self._inputs
+    def search_params(self) -> RequestData:
+        return self._request_data
+
+    @property
+    def page_size_list(self) -> list[int]:
+        return self._page_size_list
+
+    @abstractmethod
+    async def _view_requested_handler(self, event: ViewRequested) -> None:
+        pass
+
+    @abstractmethod
+    async def _perform_get_all(self) -> PaginatedResponseSchema[TPlainSchema]:
+        pass
+
+    @abstractmethod
+    async def _perform_get_one(self, id: int) -> TPlainSchema:
+        pass
+
+    @abstractmethod
+    async def _perform_create(self) -> TPlainSchema:
+        pass
+
+    @abstractmethod
+    async def _perform_update(self, id: int) -> TPlainSchema:
+        pass
+
+    @abstractmethod
+    async def _perform_delete(self, id: int) -> bool:
+        pass
 
     def on_marker_clicked(self, event: ft.ControlEvent, key: str) -> None:
         if not self._view:
             return
-        enabled = event.control.value
-        print(key)
-        # self._view.set_input_enabled(key, enabled, inputs)
-        # if enabled:
-        #     self._filters.add(key)
-        #     self._input_values[key] = inputs[key].value or ""
-        #     error = self.__validate_field(key)
-        #     if self._view:
-        #         self._view.set_field_error(key, error)
-        # else:
-        #     self._filters.discard(key)
-        #     if self._view:
-        #         self._view.set_field_error(key, None)
+        control_value = event.control.value
+        field = self._view.inputs[key]
+        self._view.set_input_state(field.input.control, control_value)
+        if control_value:
+            self._request_data.selected_inputs.add(key)
+        else:
+            self._request_data.selected_inputs.discard(key)
 
-    # @abstractmethod
-    # def get_new_view(self, data_row: dict[str, Any] | None = None, mode: ViewMode = ViewMode.SEARCH) -> TView:
-    #     pass
+    def on_text_changed(self, event: ft.ControlEvent, key: str) -> None:
+        if not self._view:
+            return
+        self._request_data.input_values[key] = event.control.value or ""
+        error = self.__validate_field(key)
+        self._view.set_field_error(key, error)
 
-    # @property
-    # def sort_by(self) -> str:
-    #     return self._sort_by
+    def on_search_clicked(self) -> None:
+        self._page.run_task(self.__execute_search_clicked)
 
-    # @property
-    # def order(self) -> str:
-    #     return self._order
+    def on_row_clicked(self, result_id: int) -> None:
+        self._page.run_task(self.__execute_row_clicked, result_id)
 
-    # @property
-    # def page(self) -> int:
-    #     return self._page
+    def on_back_clicked(self) -> None:
+        if not self._view:
+            return
+        self._view.toggle_search_results()
+        tabs_state = self._state_store.app_state.tabs
+        self._state_store.update(tabs={"mode": tabs_state.items[tabs_state.current].mode})
 
-    # @property
-    # def page_size(self) -> int:
-    #     return self._page_size
+    def on_save_clicked(self) -> None:
+        self._page.run_task(self.__execute_save_clicked)
 
-    # @property
-    # def has_next(self) -> bool:
-    #     return self._has_next
+    def on_cancel_clicked(self) -> None:
+        if not self._view:
+            return
+        if self._view.mode == ViewMode.CREATE:
+            self._state_store.update(tabs={"mode": ViewMode.SEARCH})
+        elif self._view.mode == ViewMode.EDIT:
+            self._state_store.update(tabs={"mode": ViewMode.READ})
 
-    # @property
-    # def has_prev(self) -> bool:
-    #     return self._has_prev
+    def on_sort_clicked(self, key: str) -> None:
+        if self._request_data.sort_by == key:
+            self._request_data.order = "desc" if self._request_data.order == "asc" else "asc"
+        else:
+            self._request_data.sort_by = key
+            self._request_data.order = "asc"
+        self.on_search_clicked()
 
-    # @property
-    # def page_sizes(self) -> list[int]:
-    #     return self._page_sizes
+    def on_page_clicked(self, direction: str) -> None:
+        if direction == "next" and self._request_data.has_next:
+            self._request_data.page += 1
+        elif direction == "prev" and self._request_data.page > 1:
+            self._request_data.page -= 1
+        self.on_search_clicked()
 
-    # @property
-    # def total(self) -> int:
-    #     return self._total
+    def on_page_size_selected(self, new_size: int) -> None:
+        self._request_data.page_size = new_size
+        self._request_data.page = 1
+        self.on_search_clicked()
 
-    # def on_search_click(self) -> None:
-    #     future = self._context.page.run_task(self.__open_search_results_on_button_click)
-    #     future.add_done_callback(lambda _: self._context.controllers.get("toolbar").refresh())
+    def set_field_value(self, key: str, value: str) -> None:
+        if not self._view:
+            return
+        self._request_data.input_values[key] = value
+        error = self.__validate_field(key)
+        self._view.set_field_error(key, error)
 
-    # def on_save_click(self) -> None:
-    #     if not self._view:
-    #         return
-    #     future: Future[None] | None = None
-    #     if self._view.mode == ViewMode.EDIT:
-    #         future = self._context.page.run_task(self.__update_and_refresh_tab_on_button_click)
-    #     elif self._view.mode == ViewMode.CREATE:
-    #         future = self._context.page.run_task(self.__create_and_open_new_tab_on_button_click)
-    #     if future:
-    #         future.add_done_callback(lambda _: self._context.controllers.get("toolbar").refresh())
+    def __tabs_updated_listener(self, state: TabsState) -> None:
+        if not state.current or state.current not in state.items:
+            return
+        if isinstance(state.items[state.current], self._view_cls):
+            self._view = cast(TView, state.items[state.current])
 
-    # def on_cancel_click(self) -> None:
-    #     if not self._view:
-    #         return
-    #     if self._view.mode == ViewMode.EDIT:
-    #         self.reset_view()
-    #         self._view.restore_input_data()
-    #         self._view.set_read_mode()
-    #     elif self._view.mode == ViewMode.CREATE:
-    #         self.reset_view()
-    #         self._view.set_search_mode()
-    #     self._context.controllers.get("toolbar").refresh()
+    async def __execute_search_clicked(self) -> None:
+        if not self._view:
+            return
+        self._open_loading_dialog()
+        try:
+            response = await self._perform_get_all()
+            self._request_data.total = response.total
+            self._request_data.page = response.page
+            self._request_data.page_size = response.page_size
+            self._request_data.has_next = response.has_next
+            self._request_data.has_prev = response.has_prev
+            results = [result.model_dump() for result in response.items]
+            self._view.toggle_search_results(results)
+            tabs_state = self._state_store.app_state.tabs
+            self._state_store.update(tabs={"mode": tabs_state.items[tabs_state.current].mode})
+            self._close_loading_dialog()
+        except Exception as err:
+            self._close_loading_dialog()
+            self._logger.error(str(err))
+            self._open_error_dialog(message_key="api_not_responding")
 
-    # def on_row_click(self, result_id: int) -> None:
-    #     future = self._context.page.run_task(self.__open_new_tab_on_row_click, result_id)
-    #     future.add_done_callback(lambda _: self._context.controllers.get("toolbar").refresh())
+    async def __execute_row_clicked(self, result_id: int) -> None:
+        self._open_loading_dialog()
+        try:
+            response = await self._perform_get_one(result_id)
+            await self._event_bus.publish(TabRequested(key=self._key, postfix=response.id, data=response.model_dump()))
+            self._close_loading_dialog()
+        except Exception as err:
+            self._close_loading_dialog()
+            self._logger.error(str(err))
+            self._open_error_dialog(message_key="data_fetch_fail")
 
-    # def on_back_click(self) -> None:
-    #     if not self._view:
-    #         return
-    #     self._view.replace_content()
-    #     self._context.controllers.get("toolbar").refresh()
+    async def __execute_save_clicked(self) -> None:
+        if not self._view:
+            return
+        self._open_loading_dialog()
+        try:
+            response: TPlainSchema | None = None
+            replace = False
+            if self._view.mode == ViewMode.CREATE:
+                response = await self._perform_create()
+            elif self._view.mode == ViewMode.EDIT:
+                print(self._request_data.input_values)
+                response = await self._perform_update(self._request_data.input_values["id"])
+                replace = True
+            self._close_loading_dialog()
+            self._open_message_dialog("record_save_success")
+            if not response:
+                return
+            await self._event_bus.publish(
+                TabRequested(key=self._key, postfix=response.id, data=response.model_dump(), replace=replace)
+            )
 
-    # def on_sort_click(self, key: str) -> None:
-    #     if self._sort_by == key:
-    #         self._order = "desc" if self._order == "asc" else "asc"
-    #     else:
-    #         self._sort_by = key
-    #         self._order = "asc"
-    #     self.on_search_click()
+        except ValidationError as validation_error:
+            translate_state = self._state_store.app_state.translation
+            error_message = [translate_state.items.get("validation_errors")]
+            for error in validation_error.errors():
+                key = error["loc"][0]
+                message = error["msg"]
+                error_message.append(f"{translate_state.items.get(str(key))}: {message}")
+            final_message = "\n".join(error_message)
+            self._close_loading_dialog()
+            self._open_error_dialog(message=final_message)
+        except Exception as err:
+            self._close_loading_dialog()
+            self._logger.error(str(err))
+            self._open_error_dialog(message_key="record_save_fail")
 
-    # def on_page_change(self, direction: str) -> None:
-    #     if direction == "next" and self._has_next:
-    #         self._page += 1
-    #     elif direction == "prev" and self._page > 1:
-    #         self._page -= 1
-    #     self.on_search_click()
+    def __validate_field(self, key: str) -> str | None:
+        if not self._view or self._view.mode not in {ViewMode.CREATE, ViewMode.EDIT}:
+            return
+        if self._view.mode == ViewMode.CREATE:
+            self._request_data.input_values["id"] = 1
+        try:
+            self._output_schema_cls(**self._request_data.input_values)
+            self._view.set_save_button_state(True)
+        except ValidationError as validation_error:
+            self._view.set_save_button_state(False)
+            for error in validation_error.errors():
+                if error["loc"] == (key,):
+                    return error["msg"]
+        return
 
-    # def on_page_size_change(self, new_size: int) -> None:
-    #     self._page_size = new_size
-    #     self._page = 1
-    #     self.on_search_click()
+    async def __tab_closed_handler(self, event: TabClosed) -> None:
+        if event.key != self._key:
+            return
+        self._request_data = RequestData()
+
+    async def __record_delete_requested_handler(self, event: RecordDeleteRequested) -> None:
+        if event.key != self._key:
+            return
+        self._open_loading_dialog()
+        try:
+            await self._perform_delete(event.id)
+            tab_title = self._get_tab_title(event.key, event.id)
+            await self._event_bus.publish(TabCloseRequested(tab_title))
+            self._open_message_dialog("record_delete_success")
+            self._close_loading_dialog()
+        except Exception as err:
+            self._close_loading_dialog()
+            self._logger.error(str(err))
+            self._open_error_dialog(message_key="record_delete_fail")
 
     # def on_record_delete(self) -> None:
     #     if not self._view or self._view.mode != ViewMode.READ:
@@ -201,15 +294,6 @@ class BaseViewController(BaseController, Generic[TService, TView, TInputSchema, 
     #         if self._view:
     #             self._view.set_field_error(key, None)
 
-    # def set_field_value(self, key: str, value: str) -> None:
-    #     if not self._view:
-    #         return
-    #     self._input_values[key] = value
-    #     if key in self._filters or self._view.mode in (ViewMode.CREATE, ViewMode.EDIT):
-    #         error = self.__validate_field(key)
-    #         if self._view:
-    #             self._view.set_field_error(key, error)
-
     # def reset_view(self) -> None:
     #     self._input_values.clear()
     #     self._filters.clear()
@@ -217,151 +301,3 @@ class BaseViewController(BaseController, Generic[TService, TView, TInputSchema, 
     #         self._view.set_search_mode()
     #         self._view.clear_inputs()
     #         self._view.clear_search_markers()
-
-    # def __validate_field(self, key: str) -> str | None:
-    #     if self._view and self._view.mode == ViewMode.CREATE:
-    #         self._input_values["id"] = self._input_values.get("id", 1)
-    #     try:
-    #         self._output_schema_cls(**self._input_values)
-    #         self.has_validation_errors = False
-    #     except ValidationError as validation_error:
-    #         self.has_validation_errors = True
-    #         for error in validation_error.errors():
-    #             if error["loc"] == (key,):
-    #                 return error["msg"]
-    #     return None
-
-    # async def __perform_get_all(self, endpoint: Endpoint) -> list[TInputSchema]:
-    #     filters: dict[str, str] = {}
-    #     for field in self._filters:
-    #         filters[field] = self._input_values.get(field, "").strip()
-    #     result = await self._service.get_all(
-    #         endpoint=endpoint,
-    #         filters=filters,
-    #         sort_by=self._sort_by,
-    #         order=self._order,
-    #         page=self._page,
-    #         page_size=self._page_size,
-    #     )
-    #     self._has_next = result.has_next
-    #     self._has_prev = result.has_prev
-    #     self._total = result.total
-    #     self._page = result.page
-    #     self._page_size = result.page_size
-    #     return result.items
-
-    # async def __perform_get_one(self, endpoint: Endpoint, result_id: int) -> TInputSchema:
-    #     # schema = await self._service.get_one(endpoint, result_id)
-    #     # result = schema.model_dump()
-    #     return await self._service.get_one(endpoint, result_id)
-
-    # async def __perform_create(self, endpoint: Endpoint) -> dict[str, Any]:
-    #     output_schema = self._output_schema_cls(**self._input_values)
-    #     input_schema = await self._service.create(endpoint, output_schema)
-    #     return input_schema.model_dump()
-
-    # async def __perform_update(self, endpoint: Endpoint) -> dict[str, Any]:
-    #     output_schema = self._output_schema_cls(**self._input_values)
-    #     input_schema = await self._service.update(endpoint, output_schema)
-    #     return input_schema.model_dump()
-
-    # async def __perform_delete(self, endpoint: Endpoint) -> None:
-    #     output_schema = self._output_schema_cls(**self._input_values)
-    #     await self._service.delete(endpoint, output_schema.id)
-
-    # async def __open_search_results_on_button_click(self) -> None:
-    #     loading_dialog = self._show_loading_dialog()
-    #     try:
-    #         results = await self.__perform_get_all()
-    #         if self._view:
-    #             self._view.replace_content(results)
-    #             await self._close_dialog_with_delay(loading_dialog)
-    #     except Exception as err:
-    #         self._context.logger.error(err)
-    #         await self._close_dialog_with_delay(loading_dialog)
-    #         self._show_message_dialog("no_records_found")
-
-    # async def __open_new_tab_on_row_click(self, result_id: int) -> None:
-    #     loading_dialog = self._show_loading_dialog()
-    #     try:
-    #         result = await self.__perform_get_one(result_id)
-    #         self.__open_new_read_tab(result)
-    #         await self._close_dialog_with_delay(loading_dialog)
-    #     except Exception as err:
-    #         self._context.logger.error(err)
-    #         await self._close_dialog_with_delay(loading_dialog)
-    #         self._show_message_dialog("record_fetch_fail")
-    #         return None
-
-    # async def __create_and_open_new_tab_on_button_click(self) -> None:
-    #     loading_dialog = self._show_loading_dialog()
-    #     try:
-    #         result = await self.__perform_create()
-    #         await self._close_dialog_with_delay(loading_dialog)
-    #         self._show_message_dialog("record_created_success")
-    #         self.reset_view()
-    #         self.__open_new_read_tab(result)
-    #     except ValidationError as validation_error:
-    #         error_messages = [self._context.texts["validation_errors"]]
-    #         for error in validation_error.errors():
-    #             key = error["loc"][0]
-    #             message = error["msg"]
-    #             error_messages.append(f"{self._context.texts[str(key)]}: {message}")
-    #         final_message = "\n".join(error_messages)
-    #         await self._close_dialog_with_delay(loading_dialog)
-    #         self._show_error_dialog(message=final_message)
-    #     except HTTPStatusError as status_error:
-    #         self._context.logger.error(status_error)
-    #         await self._close_dialog_with_delay(loading_dialog)
-    #         self._show_error_dialog(message_key="record_create_fail")
-
-    # async def __update_and_refresh_tab_on_button_click(self) -> None:
-    #     loading_dialog = self._show_loading_dialog()
-    #     try:
-    #         result = await self.__perform_update()
-    #         await self._close_dialog_with_delay(loading_dialog)
-    #         self._show_message_dialog("record_updated_success")
-    #         if self._view:
-    #             self._view.set_read_mode()
-    #             self._input_values = result
-    #             self._view.update_inputs(result)
-    #     except ValidationError as validation_error:
-    #         error_messages = [self._context.texts["validation_errors"]]
-    #         for error in validation_error.errors():
-    #             key = error["loc"][0]
-    #             message = error["msg"]
-    #             error_messages.append(f"{self._context.texts[str(key)]}: {message}")
-    #         final_message = "\n".join(error_messages)
-    #         await self._close_dialog_with_delay(loading_dialog)
-    #         self._show_error_dialog(message=final_message)
-    #     except HTTPStatusError as status_error:
-    #         self._context.logger.error(status_error)
-    #         await self._close_dialog_with_delay(loading_dialog)
-    #         self._show_error_dialog(message_key="record_create_fail")
-
-    # async def __delete_and_close_tab_on_button_click(self) -> None:
-    #     confirmation = await self._show_confirm_dialog("confirm_delete")
-    #     if not confirmation:
-    #         return
-    #     loading_dialog = self._show_loading_dialog()
-    #     try:
-    #         await self.__perform_delete()
-    #         await self._close_dialog_with_delay(loading_dialog)
-    #         self._show_message_dialog("record_deleted_success")
-    #         self._context.controllers.get("tabs_bar").on_tab_close()
-    #     except Exception as err:
-    #         self._context.logger.error(err)
-    #         await self._close_dialog_with_delay(loading_dialog)
-    #         self._show_error_dialog(message_key="record_delete_fail")
-
-    # def __open_new_read_tab(self, result: dict[str, Any]) -> None:
-    #     new_key = f"{self._endpoint.key}_{result["id"]}"
-    #     self._context.texts[new_key] = f"{self._context.texts[self._endpoint.key]}: {result[self._postfix]}"
-    #     if new_key not in self._context.active_views.keys():
-    #         controller = self._context.controllers.get_view_controller(self._endpoint.key)
-    #         view = controller.get_new_view(data_row=result, mode=ViewMode.READ)
-    #         self._context.active_views[new_key] = view
-    #     view = self._context.active_views[new_key]
-    #     self._context.controllers.get("tabs_bar").add_tab(new_key)
-    #     self._context.controllers.get("app").render_view(view)
-    #     view.set_read_mode()

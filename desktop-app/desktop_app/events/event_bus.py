@@ -56,7 +56,7 @@ class EventBus:
             event = await self.__queue.get()
             try:
                 handlers = list(self.__subscriptions.get(type(event), []))
-                for handler in handlers:
-                    await handler(event)
+                if handlers:
+                    await asyncio.gather(*(handler(event) for handler in handlers))
             finally:
                 self.__queue.task_done()

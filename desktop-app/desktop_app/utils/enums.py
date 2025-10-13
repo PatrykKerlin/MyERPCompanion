@@ -9,6 +9,13 @@ class ViewMode(StrEnum):
     LIST = "list"
 
 
+class View(StrEnum):
+    SIDE_MENU = "side_menu"
+    CURRENT_USER = "current_user"
+    DEPARTMENTS = "departments"
+    POSITIONS = "positions"
+
+
 class Endpoint(StrEnum):
     HEALTH_CHECK = "health-check"
     TRANSLATIONS_BY_LANGUAGE = "translations/by-language"
@@ -16,8 +23,7 @@ class Endpoint(StrEnum):
     REFRESH = "auth/refresh"
     CURRENT_USER = "current-user"
     MODULES = "modules"
-
-
-class View(StrEnum):
-    SIDE_MENU = "side_menu"
-    CURRENT_USER = "current_user"
+    USERS = "users"
+    DEPARTMENTS = "departments"
+    POSITIONS = "positions"
+    CURRENCIES = "currencies"

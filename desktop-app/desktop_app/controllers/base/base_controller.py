@@ -1,15 +1,17 @@
 from __future__ import annotations
 
-import asyncio
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, TypeVar
 
+import asyncio
 import flet as ft
 import httpx
 
 from schemas.base.base_schema import BasePlainSchema
+from schemas.core.param_schema import PaginatedResponseSchema
 from schemas.core.token_schema import TokenPlainSchema
 from views.components.error_dialog_component import ErrorDialogComponent
 from views.components.loading_dialog_component import LoadingDialogComponent
+from views.components.message_dialog_component import MessageDialogComponent
 
 if TYPE_CHECKING:
     from config.context import Context
@@ -25,7 +27,7 @@ class BaseController:
         self._logger = context.logger
         self._event_bus = context.event_bus
         self._state_store = context.state_store
-        self._view_event_map = context.view_event_map
+        self._loading_dialog: LoadingDialogComponent | None = None
         self.__unsubscribers: list[Callable[[], None]] = []
         self.__disposed: bool = False
 
@@ -47,13 +49,17 @@ class BaseController:
             unsubscriber = self._state_store.subscribe(state, listener)
             self.__add_unsubscriber(unsubscriber)
 
-    def _show_loading_dialog(self) -> LoadingDialogComponent:
+    def _open_loading_dialog(self) -> None:
         translation_state = self._state_store.app_state.translation
-        loading_dialog = LoadingDialogComponent(translation_state.items)
-        self._open_dialog(loading_dialog)
-        return loading_dialog
+        self._loading_dialog = LoadingDialogComponent(translation_state.items)
+        self._open_dialog(self._loading_dialog)
 
-    def _show_error_dialog(self, message_key: str | None = None, message: str | None = None) -> None:
+    def _close_loading_dialog(self) -> None:
+        if self._loading_dialog:
+            self._close_dialog(self._loading_dialog)
+        self._loading_dialog = None
+
+    def _open_error_dialog(self, message_key: str | None = None, message: str | None = None) -> None:
         translation = self._state_store.app_state.translation.items
         error_dialog = ErrorDialogComponent(
             translation=translation,
@@ -63,26 +69,28 @@ class BaseController:
         )
         self._open_dialog(error_dialog)
 
+    def _open_message_dialog(self, message_key: str) -> None:
+        translation_state = self._state_store.app_state.translation
+        message_dialog = MessageDialogComponent(
+            translation=translation_state.items,
+            message_key=message_key,
+            on_ok_clicked=lambda: self._close_dialog(message_dialog),
+        )
+        self._open_dialog(message_dialog)
+
     def _open_dialog(self, dialog: ft.AlertDialog) -> None:
-        self._page.overlay.append(dialog)
-        dialog.open = True
+        self._page.open(dialog)
         self._page.update()
 
     def _close_dialog(self, dialog: ft.AlertDialog) -> None:
-        self.__close_and_remove_dialog(dialog)
+        self._page.close(dialog)
+        self._page.update()
 
-    async def _close_dialog_with_delay(self, dialog: ft.AlertDialog, delay: float = 0.5) -> None:
-        await asyncio.sleep(delay)
-        self.__close_and_remove_dialog(dialog)
-
-    async def _call_with_refresh(
+    async def _call_api_with_token_refresh(
         self,
         service: BaseService,
-        func: Callable[
-            [str | None, dict[str, Any] | None, TokenPlainSchema | None, str | None],
-            Awaitable[TPlainSchema | list[TPlainSchema]],
-        ],
-        path_param: str | None = None,
+        func: Callable[[int | None, dict[str, Any] | None, TokenPlainSchema | None, str | None], Any],
+        path_param: int | None = None,
         query_or_body_params: dict[str, Any] | None = None,
         view_key: str | None = None,
     ) -> Any:
@@ -103,48 +111,19 @@ class BaseController:
                     raise
             raise
 
-    def __close_and_remove_dialog(self, dialog: ft.AlertDialog) -> None:
-        dialog.open = False
-        self._page.update()
-        self._page.overlay.remove(dialog)
+    async def _run_with_delay(self, func: Callable[[], None], delay: float = 0.1) -> None:
+        await asyncio.sleep(delay)
+        func()
+
+    def _get_tab_title(self, key: str, postfix: int | None) -> str:
+        translation_state = self._state_store.app_state.translation
+        title = translation_state.items.get(key)
+        if postfix:
+            return f"{title}: {postfix}"
+        return title
 
     def __add_unsubscriber(self, func: Callable[[], None]) -> None:
         self.__unsubscribers.append(func)
-
-    # from __future__ import annotations
-
-    # import asyncio
-    # from collections.abc import Awaitable, Callable
-    # from typing import TYPE_CHECKING
-
-    # import flet as ft
-
-    # from views.components import (
-    #     ConfirmDialogComponent,
-    #     ErrorDialogComponent,
-    #     LoadingDialogComponent,
-    #     MessageDialogComponent,
-    # )
-
-    # if TYPE_CHECKING:
-    #     from config.context import Context
-
-    # class BaseController:
-    #     def __init__(self, context: Context) -> None:
-    #         self._context = context
-
-    #     def _show_loading_dialog(self) -> LoadingDialogComponent:
-    #         loading_dialog = LoadingDialogComponent(self._context.texts)
-    #         self._open_dialog(loading_dialog)
-    #         return loading_dialog
-
-    #     def _show_message_dialog(self, message_key: str) -> None:
-    #         message_dialog = MessageDialogComponent(
-    #             texts=self._context.texts,
-    #             message_key=message_key,
-    #             on_click=lambda: self._close_dialog(message_dialog),
-    #         )
-    #         self._open_dialog(message_dialog)
 
     #     async def _show_confirm_dialog(self, message_key: str) -> bool:
     #         confirm_dialog = ConfirmDialogComponent(

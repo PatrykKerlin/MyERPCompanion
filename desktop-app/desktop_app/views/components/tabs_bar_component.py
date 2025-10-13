@@ -48,18 +48,17 @@ class TabsBarComponent(BaseComponent, ft.Container):
             ft.Row(
                 controls=[
                     ft.TextButton(
-                        text=key,
-                        # text=self._translation.get(key),
-                        # on_click=lambda _, key=key: self._controller.on_tab_open(key),
+                        text=title,
+                        on_click=lambda _, title=title: self._controller.on_tab_clicked(title),
                     ),
                     ft.IconButton(
                         icon=ft.Icons.CLOSE,
-                        # on_click=lambda _, key=key: self._controller.on_tab_close(key),
+                        on_click=lambda _, title=title: self._controller.on_close_clicked(title),
                         expand=True,
                     ),
                 ]
             )
-            for key in self.__tabs
+            for title in self.__tabs
         ]
         cast(ft.Row, self.content).controls = controls
 

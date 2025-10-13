@@ -17,7 +17,8 @@ from .hr.position_schema import PositionPlainSchema, PositionStrictSchema
 #     AssocOrderItemStrictSchema,
 #     AssocOrderStatusStrictSchema,
 # )
-# from .trade.currency_schema import CurrencyPlainSchema, CurrencyStrictSchema
+from .trade.currency_schema import CurrencyPlainSchema, CurrencyStrictSchema
+
 # from .trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
 # from .trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
 # from .trade.exchange_rate_schema import ExchangeRatePlainSchema, ExchangeRateStrictSchema
@@ -54,8 +55,8 @@ __all__ = [
     # "AssocItemDiscountStrictSchema",
     # "AssocOrderItemStrictSchema",
     # "AssocOrderStatusStrictSchema",
-    # "CurrencyPlainSchema",
-    # "CurrencyStrictSchema",
+    "CurrencyPlainSchema",
+    "CurrencyStrictSchema",
     # "CustomerPlainSchema",
     # "CustomerStrictSchema",
     # "DiscountPlainSchema",
