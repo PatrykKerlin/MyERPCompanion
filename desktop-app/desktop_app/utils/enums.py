@@ -14,6 +14,7 @@ class View(StrEnum):
     CURRENT_USER = "current_user"
     DEPARTMENTS = "departments"
     POSITIONS = "positions"
+    EMPLOYEES = "employees"
 
 
 class Endpoint(StrEnum):
@@ -27,3 +28,4 @@ class Endpoint(StrEnum):
     DEPARTMENTS = "departments"
     POSITIONS = "positions"
     CURRENCIES = "currencies"
+    EMPLOYEES = "employees"

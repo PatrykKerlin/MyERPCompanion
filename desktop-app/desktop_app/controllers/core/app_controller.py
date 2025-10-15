@@ -37,7 +37,7 @@ class AppController(BaseController):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         translation_state = self._state_store.app_state.translation
-        self.__service = AppService(self._settings)
+        self.__service = AppService(self._settings, self._logger, self._tokens_accessor)
         self.__view = AppView(self._page, translation_state.items, self._settings.THEME)
 
         self._subscribe_event_handlers(

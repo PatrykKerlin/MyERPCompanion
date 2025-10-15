@@ -6,9 +6,10 @@ import asyncio
 import flet as ft
 import httpx
 
-from schemas.base.base_schema import BasePlainSchema
-from schemas.core.param_schema import PaginatedResponseSchema
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.core.token_schema import TokenPlainSchema
+from utils.enums import Endpoint
+from utils.tokens_accessor import TokensAccessor
 from views.components.error_dialog_component import ErrorDialogComponent
 from views.components.loading_dialog_component import LoadingDialogComponent
 from views.components.message_dialog_component import MessageDialogComponent
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
     from config.context import Context
     from services.base.base_service import BaseService
 
-TPlainSchema = TypeVar("TPlainSchema", bound=BasePlainSchema)
+TStrictSchema = TypeVar("TStrictSchema", bound=BaseStrictSchema)
 
 
 class BaseController:
@@ -27,6 +28,7 @@ class BaseController:
         self._logger = context.logger
         self._event_bus = context.event_bus
         self._state_store = context.state_store
+        self._tokens_accessor = TokensAccessor(self._state_store)
         self._loading_dialog: LoadingDialogComponent | None = None
         self.__unsubscribers: list[Callable[[], None]] = []
         self.__disposed: bool = False
@@ -85,31 +87,6 @@ class BaseController:
     def _close_dialog(self, dialog: ft.AlertDialog) -> None:
         self._page.close(dialog)
         self._page.update()
-
-    async def _call_api_with_token_refresh(
-        self,
-        service: BaseService,
-        func: Callable[[int | None, dict[str, Any] | None, TokenPlainSchema | None, str | None], Any],
-        path_param: int | None = None,
-        query_or_body_params: dict[str, Any] | None = None,
-        view_key: str | None = None,
-    ) -> Any:
-        if not self._state_store.app_state.tokens:
-            raise
-        token = TokenPlainSchema(**self._state_store.app_state.tokens.model_dump())
-        try:
-            return await func(path_param, query_or_body_params, token, view_key)
-        except httpx.HTTPStatusError as first_error:
-            self._logger.error(str(first_error))
-            if first_error.response.status_code == httpx.codes.UNAUTHORIZED:
-                try:
-                    new_token = await service.refresh_token(token)
-                    self._state_store.update(token={**new_token.model_dump()})
-                    return await func(path_param, query_or_body_params, new_token, view_key)
-                except Exception as refresh_error:
-                    self._logger.error(str(refresh_error))
-                    raise
-            raise
 
     async def _run_with_delay(self, func: Callable[[], None], delay: float = 0.1) -> None:
         await asyncio.sleep(delay)

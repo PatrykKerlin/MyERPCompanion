@@ -26,16 +26,16 @@ class EmployeeStrictSchema(BaseStrictSchema):
     email: Constraints.EmailOptional
     phone_number: Constraints.PhoneNumber
 
-    hire_date: date
-    termination_date: date | None
-    salary: Constraints.PositiveInteger
-
     street: Constraints.String50Optional
     house_number: Constraints.String10
     apartment_number: Constraints.String10Optional
     postal_code: Constraints.PostalCode
     city: Constraints.String50
     country: Constraints.String50
+
+    hire_date: date
+    termination_date: date | None
+    salary: Constraints.PositiveInteger
 
     bank_account: Constraints.BankAccount
     bank_swift: Constraints.BankSwift

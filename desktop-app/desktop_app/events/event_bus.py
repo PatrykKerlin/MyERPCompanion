@@ -2,6 +2,7 @@ from __future__ import annotations
 
 
 import asyncio
+from logging import Logger
 from typing import Awaitable, Callable, TypeVar, Any
 
 
@@ -11,7 +12,8 @@ TEvent = TypeVar("TEvent", bound=BaseEvent)
 
 
 class EventBus:
-    def __init__(self) -> None:
+    def __init__(self, logger: Logger) -> None:
+        self.__logger = logger
         self.__subscriptions: dict[type[BaseEvent], list[Callable[[Any], Awaitable[None]]]] = {}
         self.__queue: asyncio.Queue[BaseEvent] = asyncio.Queue()
         self.__task: asyncio.Task[None] | None = None
@@ -57,6 +59,9 @@ class EventBus:
             try:
                 handlers = list(self.__subscriptions.get(type(event), []))
                 if handlers:
-                    await asyncio.gather(*(handler(event) for handler in handlers))
+                    results = await asyncio.gather(*(handler(event) for handler in handlers), return_exceptions=True)
+                    for result in results:
+                        if isinstance(result, Exception):
+                            self.__logger.error(f"Error while handling {type(event).__name__}: {result}", exc_info=True)
             finally:
                 self.__queue.task_done()

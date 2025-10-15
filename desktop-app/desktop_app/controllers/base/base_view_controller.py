@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 import flet as ft
 from pydantic import ValidationError
@@ -14,7 +14,9 @@ from services.base.base_service import BaseService
 from states.states import TabsState
 from utils.enums import ViewMode
 from utils.request_data import RequestData
+from utils.tokens_accessor import TokensAccessor
 from views.base.base_view import BaseView
+from views.controls.numeric_field_control import NumericField
 
 if TYPE_CHECKING:
     from config.context import Context
@@ -34,7 +36,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self._key = ""
-        self._service = self._service_cls(self._settings)
+        self._service = self._service_cls(self._settings, self._logger, self._tokens_accessor)
         self._view: TView | None = None
         self._request_data = RequestData()
         self._page_size_list = [5, 10, 25, 50, 100]
@@ -63,7 +65,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         pass
 
     @abstractmethod
-    async def _perform_get_all(self) -> PaginatedResponseSchema[TPlainSchema]:
+    async def _perform_get_page(self) -> PaginatedResponseSchema[TPlainSchema]:
         pass
 
     @abstractmethod
@@ -87,16 +89,28 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             return
         control_value = event.control.value
         field = self._view.inputs[key]
-        self._view.set_input_state(field.input.control, control_value)
+        input = field.input.content
+        if input:
+            self._view.set_input_state(input, control_value)
         if control_value:
             self._request_data.selected_inputs.add(key)
         else:
             self._request_data.selected_inputs.discard(key)
 
-    def on_text_changed(self, event: ft.ControlEvent, key: str) -> None:
+    def on_value_changed(self, event: ft.ControlEvent, key: str) -> None:
         if not self._view:
             return
-        self._request_data.input_values[key] = event.control.value or ""
+        control = event.control
+        if isinstance(control, ft.Checkbox):
+            value = getattr(control, "value", False)
+        elif isinstance(control, NumericField):
+            value = int(control.value)
+        elif isinstance(control, ft.Dropdown):
+            value = int(control.value) if control.value and control.value.isdecimal() else None
+        else:
+            value = getattr(control, "value", "")
+        self._request_data.input_values[key] = value
+        print(self._request_data.input_values)
         error = self.__validate_field(key)
         self._view.set_field_error(key, error)
 
@@ -162,21 +176,25 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             return
         self._open_loading_dialog()
         try:
-            response = await self._perform_get_all()
+            response = await self._perform_get_page()
             self._request_data.total = response.total
             self._request_data.page = response.page
             self._request_data.page_size = response.page_size
             self._request_data.has_next = response.has_next
             self._request_data.has_prev = response.has_prev
             results = [result.model_dump() for result in response.items]
-            self._view.toggle_search_results(results)
-            tabs_state = self._state_store.app_state.tabs
-            self._state_store.update(tabs={"mode": tabs_state.items[tabs_state.current].mode})
-            self._close_loading_dialog()
+            if results:
+                self._view.toggle_search_results(results)
+                tabs_state = self._state_store.app_state.tabs
+                self._state_store.update(tabs={"mode": tabs_state.items[tabs_state.current].mode})
+                self._close_loading_dialog()
+            else:
+                self._close_loading_dialog()
+                self._open_message_dialog("no_records_found")
         except Exception as err:
             self._close_loading_dialog()
             self._logger.error(str(err))
-            self._open_error_dialog(message_key="api_not_responding")
+            self._open_message_dialog("no_records_found")
 
     async def __execute_row_clicked(self, result_id: int) -> None:
         self._open_loading_dialog()
@@ -259,15 +277,6 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             self._close_loading_dialog()
             self._logger.error(str(err))
             self._open_error_dialog(message_key="record_delete_fail")
-
-    # def on_record_delete(self) -> None:
-    #     if not self._view or self._view.mode != ViewMode.READ:
-    #         return
-    #     future = self._context.page.run_task(self.__delete_and_close_tab_on_button_click)
-    #     future.add_done_callback(lambda _: self._context.controllers.get("toolbar").refresh())
-
-    # def set_view(self, view: TView | None) -> None:
-    #     self._view = view
 
     # def get_constraint(self, field: str, constraint: str) -> Any:
     #     metadata = self._output_schema_cls.model_fields[field].metadata

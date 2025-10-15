@@ -3,5 +3,5 @@ VALUES
 (2, 1, TRUE, FALSE, TRUE, NOW(), :superuser_id),
 (2, 2, TRUE, FALSE, TRUE, NOW(), :superuser_id),
 (2, 3, TRUE, TRUE, TRUE, NOW(), :superuser_id),
-(2, 4, TRUE, FALSE, TRUE, NOW(), :superuser_id),
+(2, 4, TRUE, TRUE, TRUE, NOW(), :superuser_id),
 (2, 5, TRUE, TRUE, TRUE, NOW(), :superuser_id);

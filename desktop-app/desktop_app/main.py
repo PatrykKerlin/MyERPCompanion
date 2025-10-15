@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from config.context import Context
 from config.settings import Settings
 from controllers.business.hr.department_controller import DepartmentController
+from controllers.business.hr.employee_controller import EmployeeController
 from controllers.business.hr.position_controller import PositionController
 from utils.enums import ViewMode
 from utils.translation import Translation
@@ -37,7 +38,7 @@ class App:
         )
         self.__settings = Settings()  # type: ignore
         self.__logger = logging.getLogger("app")
-        self.__event_bus = EventBus()
+        self.__event_bus = EventBus(self.__logger)
         initial_state = AppState(
             translation=TranslationState(language=self.__settings.LANGUAGE, items=Translation()),
             tokens=TokensState(),
@@ -72,6 +73,7 @@ class App:
             # business
             DepartmentController(self.__context),
             PositionController(self.__context),
+            EmployeeController(self.__context),
         )
         await self.__event_bus.publish(AppStarted())
 

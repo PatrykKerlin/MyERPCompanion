@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class TranslationController(BaseController):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        self._service = TranslationService(self._settings)
+        self._service = TranslationService(self._settings, self._logger, self._tokens_accessor)
 
         self._subscribe_event_handlers({TranslationRequested: self.__translations_requested_handler})
 

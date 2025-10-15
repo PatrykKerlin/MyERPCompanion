@@ -4,13 +4,11 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
-from schemas.business.hr.department_schema import DepartmentPlainSchema
-from schemas.business.trade.currency_schema import CurrencyPlainSchema
 from utils.enums import ViewMode
 
-from utils.view_fields import FieldGroup, LabelPart, InputPart, MarkerPart
+from utils.view_fields import FieldGroup
 from views.base.base_view import BaseView
-from views.components.integer_field_component import IntegerField
+from views.controls.numeric_field_control import NumericField
 
 if TYPE_CHECKING:
     from controllers.business.hr.position_controller import PositionController
@@ -25,65 +23,45 @@ class PositionView(BaseView):
         mode: ViewMode,
         key: str,
         data_row: dict[str, Any] | None,
-        currencies: dict[str, int],
-        departments: dict[str, int],
+        currencies: list[tuple[int, str]],
+        departments: list[tuple[int, str]],
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row)
         main_fields = {
             "name": FieldGroup(
-                label=LabelPart(ft.Text(value=f"{translation.get('name')}:"), 2),
-                input=InputPart(self._get_text_input("name"), 9),
-                marker=MarkerPart(self._get_field_marker("name"), 1),
+                label=self._get_label("name", 5),
+                input=self._get_text_input("name", 6),
+                marker=self._get_marker("name", 1),
             ),
             "description": FieldGroup(
-                label=LabelPart(ft.Text(value=f"{translation.get('description')}:"), 2),
-                input=InputPart(self._get_text_input("description", lines=3), 9),
-                marker=MarkerPart(self._get_field_marker("description"), 1),
+                label=self._get_label("description", 5),
+                input=self._get_text_input("description", lines=3, size=6),
+                marker=self._get_marker("description", 1),
             ),
             "level": FieldGroup(
-                label=LabelPart(ft.Text(value=f"{translation.get('level')}:"), 2),
-                input=InputPart(
-                    IntegerField(on_change=lambda event: self._controller.on_text_changed(event, "level")), 3
-                ),
-                marker=MarkerPart(self._get_field_marker("level"), 7),
+                label=self._get_label("level", 5),
+                input=self._get_int_input("level", 3),
+                marker=self._get_marker("level", 4),
             ),
             "min_salary": FieldGroup(
-                label=LabelPart(ft.Text(value=f"{translation.get('min_salary')}:"), 2),
-                input=InputPart(
-                    IntegerField(on_change=lambda event: self._controller.on_text_changed(event, "min_salary")), 5
-                ),
-                marker=MarkerPart(self._get_field_marker("min_salary"), 5),
+                label=self._get_label("min_salary", 5),
+                input=self._get_int_input("min_salary", 5),
+                marker=self._get_marker("min_salary", 2),
             ),
             "max_salary": FieldGroup(
-                label=LabelPart(ft.Text(value=f"{translation.get('max_salary')}:"), 2),
-                input=InputPart(
-                    IntegerField(on_change=lambda event: self._controller.on_text_changed(event, "max_salary")), 5
-                ),
-                marker=MarkerPart(self._get_field_marker("max_salary"), 5),
+                label=self._get_label("max_salary", 5),
+                input=self._get_int_input("max_salary", 5),
+                marker=self._get_marker("max_salary", 2),
             ),
             "currency_id": FieldGroup(
-                label=LabelPart(ft.Text(value=f"{translation.get('currency')}:"), 2),
-                input=InputPart(
-                    ft.Dropdown(
-                        options=[ft.DropdownOption(code) for code in currencies.keys()],
-                        on_change=lambda event: self._controller.on_text_changed(event, "currency_id"),
-                        expand=True,
-                    ),
-                    3,
-                ),
-                marker=MarkerPart(self._get_field_marker("currency_id"), 7),
+                label=self._get_label("currency", 5),
+                input=self._get_dropdown("currency_id", options=currencies, size=3),
+                marker=self._get_marker("currency_id", 4),
             ),
             "department_id": FieldGroup(
-                label=LabelPart(ft.Text(value=f"{translation.get('department')}:"), 2),
-                input=InputPart(
-                    ft.Dropdown(
-                        options=[ft.DropdownOption(code) for code in departments.keys()],
-                        on_change=lambda event: self._controller.on_text_changed(event, "department_id"),
-                        expand=True,
-                    ),
-                    3,
-                ),
-                marker=MarkerPart(self._get_field_marker("department_id"), 7),
+                label=self._get_label("department", 5),
+                input=self._get_dropdown("department_id", options=departments, size=3),
+                marker=self._get_marker("department_id", 4),
             ),
         }
 

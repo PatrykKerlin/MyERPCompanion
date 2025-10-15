@@ -6,7 +6,7 @@ from controllers.base.base_component_controller import BaseComponentController
 from services.core.auth_service import AuthService
 from views.components.auth_dialog_component import AuthDialogComponent
 from events.events import AuthDialogRequested
-from utils.enums import View
+from utils.enums import Endpoint, View
 from events.events import UserAuthenticated
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDialogRequested]):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        self.__service = AuthService(self._settings)
+        self.__service = AuthService(self._settings, self._logger, self._tokens_accessor)
         self._subscribe_event_handlers({AuthDialogRequested: self._component_requested_handler})
 
     async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
@@ -35,11 +35,15 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
         try:
             tokens = await self.__service.fetch_tokens(username, password)
             self._state_store.update(tokens={"access": tokens.access, "refresh": tokens.refresh})
-            all_modules = await self._call_api_with_token_refresh(
-                service=self.__service, func=self.__service.fetch_modules, view_key=View.SIDE_MENU
+            all_modules = await self.__service.call_api_with_token_refresh(
+                func=self.__service.get_all_modules,
+                endpoint=Endpoint.MODULES,
+                view_key=View.SIDE_MENU,
             )
-            user = await self._call_api_with_token_refresh(
-                service=self.__service, func=self.__service.fetch_current_user, view_key=View.CURRENT_USER
+            user = await self.__service.call_api_with_token_refresh(
+                func=self.__service.get_current_user,
+                endpoint=Endpoint.CURRENT_USER,
+                view_key=View.CURRENT_USER,
             )
             user_groups_set = {group.id for group in user.groups}
             user_modules: list[ModulePlainSchema] = []
