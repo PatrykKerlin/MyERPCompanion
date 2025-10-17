@@ -1,7 +1,7 @@
 from datetime import date
 
-from schemas.base import BasePlainSchema, BaseStrictSchema
-from schemas.validation import Constraints
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.validation.constraints import Constraints
 
 
 class InvoiceStrictSchema(BaseStrictSchema):

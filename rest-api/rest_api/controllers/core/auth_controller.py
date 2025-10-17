@@ -7,7 +7,7 @@ from jose.exceptions import JWTError
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from schemas.core import AuthStrictSchema
+from schemas.core.auth_schema import AuthStrictSchema
 from utils.auth import Auth
 
 

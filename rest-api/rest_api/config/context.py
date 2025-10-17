@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config import Settings
+from config.settings import Settings
 
 
 @dataclass

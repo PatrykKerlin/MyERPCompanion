@@ -5,8 +5,9 @@ from typing import Any
 
 from pydantic import field_validator, model_validator
 
-from schemas.base import BasePlainSchema, BaseStrictSchema
-from schemas.validation import Constraints, Normalizers
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.validation.constraints import Constraints
+from schemas.validation.normalizers import Normalizers
 
 
 class OrderStrictSchema(BaseStrictSchema):

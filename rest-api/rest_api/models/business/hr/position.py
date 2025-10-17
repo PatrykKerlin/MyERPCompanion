@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 
 if TYPE_CHECKING:
     from models.business.hr.department import Department
@@ -17,6 +18,7 @@ class Position(BaseModel):
 
     name: Mapped[str] = Fields.name()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
+    code: Mapped[str] = Fields.symbol()
     level: Mapped[int] = Fields.integer()
     min_salary: Mapped[int] = Fields.integer()
     max_salary: Mapped[int] = Fields.integer()

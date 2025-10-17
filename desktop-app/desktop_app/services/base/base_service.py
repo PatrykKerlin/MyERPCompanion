@@ -66,17 +66,17 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         token: TokenPlainSchema | None = None,
         view_key: str | None = None,
     ) -> list[TPlainSchema]:
-        page = 1
+        params: dict[str, Any] = {"page": 1}
+        if query_params:
+            params.update(query_params)
         items: list[TPlainSchema] = []
-        params = {"page": page}
-
         while True:
             response = await self._get(endpoint=endpoint, query_params=params, token=token, view_key=view_key)
             data = response.json()
             items.extend([self._plain_schema_cls(**currency) for currency in data.get("items", [])])
             if not data.get("has_next", False):
                 break
-            page += 1
+            params["page"] += 1
 
         return items
 

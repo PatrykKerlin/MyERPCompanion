@@ -9,11 +9,11 @@ from sqlalchemy import exists, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config import Context
-from utils.enums import Permission
+from config.context import Context
 from models.core import AssocUserView
-from schemas.core import UserPlainSchema
+from schemas.core.user_schema import UserPlainSchema
 from services.core import ModuleService, UserService
+from utils.enums import Permission
 
 
 class Auth:

@@ -71,7 +71,7 @@ class AppController(BaseController):
         if not state.items or not state.current or state.current not in state.items:
             return
         print(f"{state.current} -> {state.mode}")
-        if state.items[state.current].page:
+        if state.items[state.current].mode != state.mode and state.items[state.current].page:
             self._page.run_task(self._run_with_delay, lambda: state.items[state.current].set_mode(state.mode))
 
     async def __app_started_handler(self, _: AppStarted) -> None:

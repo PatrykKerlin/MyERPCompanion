@@ -5,8 +5,9 @@ from typing import Any
 
 from pydantic import ValidationInfo, field_validator, model_validator
 
-from schemas.base import BasePlainSchema, BaseStrictSchema
-from schemas.validation import Constraints, Normalizers
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.validation.constraints import Constraints
+from schemas.validation.normalizers import Normalizers
 
 
 class EmployeeStrictSchema(BaseStrictSchema):
@@ -36,6 +37,7 @@ class EmployeeStrictSchema(BaseStrictSchema):
     hire_date: date
     termination_date: date | None
     salary: Constraints.PositiveInteger
+    is_remote: Constraints.BooleanFalse
 
     bank_account: Constraints.BankAccount
     bank_swift: Constraints.BankSwift
@@ -97,6 +99,7 @@ class EmployeePlainSchema(BasePlainSchema):
     hire_date: date
     termination_date: date | None
     salary: int
+    is_remote: bool
 
     street: str | None
     house_number: str

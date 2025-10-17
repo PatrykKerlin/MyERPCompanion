@@ -3,7 +3,7 @@ from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
 from models.core import AssocModuleGroup, Group, Module, View
-from repositories.base import BaseRepository
+from repositories.base.base_repository import BaseRepository
 
 
 class ModuleRepository(BaseRepository[Module]):

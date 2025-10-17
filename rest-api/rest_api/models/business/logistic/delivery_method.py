@@ -4,12 +4,13 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 
 if TYPE_CHECKING:
-    from ..trade.order import Order
-    from .carrier import Carrier
-    from .unit import Unit
+    from models.business.logistic.carrier import Carrier
+    from models.business.logistic.unit import Unit
+    from models.business.trade.order import Order
 
 
 class DeliveryMethod(BaseModel):

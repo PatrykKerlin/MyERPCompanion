@@ -1,5 +1,5 @@
-from schemas.base import BaseStrictSchema
-from schemas.validation import Constraints
+from schemas.base.base_schema import BaseStrictSchema
+from schemas.validation.constraints import Constraints
 
 
 class AssocModuleGroupStrictSchema(BaseStrictSchema):

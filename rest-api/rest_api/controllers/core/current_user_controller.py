@@ -1,17 +1,13 @@
-from __future__ import annotations
-from typing import Union, TYPE_CHECKING
+from typing import Union
 
-from fastapi import APIRouter, Request, status, HTTPException
+from fastapi import HTTPException, Request, status
 
-from schemas.core import UserPlainSchema
-from controllers.base import BaseController
-from utils.enums import Permission
+from config.context import Context
+from controllers.base.base_controller import BaseController
+from schemas.core.user_schema import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
 from services.core import UserService
-from schemas.core import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
-
-if TYPE_CHECKING:
-    from config import Context
-    from utils.auth import Auth
+from utils.auth import Auth
+from utils.enums import Permission
 
 
 class CurrentUserController(

@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.core import View
-from repositories.base import BaseRepository
+from repositories.base.base_repository import BaseRepository
 
 
 class ViewRepository(BaseRepository[View]):

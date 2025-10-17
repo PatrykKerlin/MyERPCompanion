@@ -5,18 +5,19 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 
 if TYPE_CHECKING:
-    from ..logistic.delivery_method import DeliveryMethod
-    from ..logistic.item import Item
-    from .assoc_order_item import AssocOrderItem
-    from .assoc_order_status import AssocOrderStatus
-    from .currency import Currency
-    from .customer import Customer
-    from .invoice import Invoice
-    from .status import Status
-    from .supplier import Supplier
+    from models.business.logistic.delivery_method import DeliveryMethod
+    from models.business.logistic.item import Item
+    from models.business.trade.assoc_order_item import AssocOrderItem
+    from models.business.trade.assoc_order_status import AssocOrderStatus
+    from models.business.trade.currency import Currency
+    from models.business.trade.customer import Customer
+    from models.business.trade.invoice import Invoice
+    from models.business.trade.status import Status
+    from models.business.trade.supplier import Supplier
 
 
 class Order(BaseModel):

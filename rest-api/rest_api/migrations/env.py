@@ -8,9 +8,12 @@ from sqlalchemy import Column, ForeignKeyConstraint, pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
-import models.business  # noqa: F401
+import models.business.hr  # noqa: F401
+import models.business.logistic  # noqa: F401
+import models.business.trade  # noqa: F401
 import models.core  # noqa: F401
-from config import Database, Settings
+from config.database import Database
+from config.settings import Settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

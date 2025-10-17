@@ -2,7 +2,7 @@ from typing import Annotated, Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
-from schemas.base import BasePlainSchema
+from schemas.base.base_schema import BasePlainSchema
 
 TResponseSchema = TypeVar("TResponseSchema", bound=BasePlainSchema)
 

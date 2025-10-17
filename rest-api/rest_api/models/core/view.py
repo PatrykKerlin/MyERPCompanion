@@ -5,11 +5,12 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Index, UniqueConstraint
 from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 
 if TYPE_CHECKING:
-    from .assoc_user_view import AssocUserView
-    from .module import Module
+    from models.core.assoc_user_view import AssocUserView
+    from models.core.module import Module
 
 
 class View(BaseModel):

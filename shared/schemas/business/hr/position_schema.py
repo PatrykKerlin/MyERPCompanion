@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from pydantic import model_validator
-from schemas.base import BasePlainSchema, BaseStrictSchema
-from schemas.validation import Constraints
+
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.validation.constraints import Constraints
 
 
 class PositionStrictSchema(BaseStrictSchema):
     name: Constraints.Name
     description: Constraints.String1000Optional
+    code: Constraints.Symbol
     level: Constraints.PositiveInteger
     min_salary: Constraints.PositiveInteger
     max_salary: Constraints.PositiveInteger
@@ -24,6 +26,7 @@ class PositionStrictSchema(BaseStrictSchema):
 class PositionPlainSchema(BasePlainSchema):
     name: str
     description: str
+    code: str
     level: int
     min_salary: int
     max_salary: int

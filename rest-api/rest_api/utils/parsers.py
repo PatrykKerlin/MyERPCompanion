@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import Request
 
-from schemas.core import FilterParamsSchema
+from schemas.core.param_schema import FilterParamsSchema
 
 
 class FilterParamsParser:

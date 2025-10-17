@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from schemas.base import BasePlainSchema, BaseStrictSchema
-from schemas.validation import Constraints
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.validation.constraints import Constraints
 
 if TYPE_CHECKING:
-    from .delivery_method_schema import DeliveryMethodPlainSchema
+    from schemas.business.logistic.delivery_method_schema import DeliveryMethodPlainSchema
 
 
 class CarrierStrictSchema(BaseStrictSchema):

@@ -4,11 +4,12 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 
 if TYPE_CHECKING:
-    from .employee import Employee
-    from .position import Position
+    from models.business.hr.employee import Employee
+    from models.business.hr.position import Position
 
 
 class Department(BaseModel):

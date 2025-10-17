@@ -38,6 +38,11 @@ class PositionView(BaseView):
                 input=self._get_text_input("description", lines=3, size=6),
                 marker=self._get_marker("description", 1),
             ),
+            "code": FieldGroup(
+                label=self._get_label("code", 5),
+                input=self._get_text_input("code", 2),
+                marker=self._get_marker("code", 5),
+            ),
             "level": FieldGroup(
                 label=self._get_label("level", 5),
                 input=self._get_int_input("level", 3),

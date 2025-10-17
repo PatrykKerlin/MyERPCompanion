@@ -46,7 +46,7 @@ class Fields:
 
     @staticmethod
     def name() -> Mapped[str]:
-        return mapped_column(String(25), nullable=False, unique=True)
+        return mapped_column(String(50), nullable=False, unique=True)
 
     @staticmethod
     def boolean(default: bool) -> Mapped[bool]:
@@ -106,7 +106,7 @@ class Fields:
 
     @staticmethod
     def bank_account() -> Mapped[str]:
-        return mapped_column(String(26), nullable=False)
+        return mapped_column(String(28), nullable=False)
 
     @staticmethod
     def bank_swift() -> Mapped[str]:

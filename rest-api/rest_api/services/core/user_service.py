@@ -3,15 +3,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Union
 
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.core import AssocUserGroup, User
 from repositories.core import AssocUserGroupRepository, GroupRepository, UserRepository
-from schemas.core import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
-from services.base import BaseService
+from schemas.core.user_schema import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
+from services.base.base_service import BaseService
 
 if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
-
     from utils.auth import Auth
 
 

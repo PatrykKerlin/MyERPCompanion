@@ -1,18 +1,13 @@
-from __future__ import annotations
-
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Generic, TypeVar, cast
+from typing import Generic, TypeVar, cast
 
 from sqlalchemy import asc, desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
-from sqlalchemy.sql.elements import ColumnElement
+from sqlalchemy.sql.elements import ClauseElement, ColumnElement
 from sqlalchemy.sql.schema import Column
 
-from models.base import BaseModel
-
-if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
-    from sqlalchemy.sql.elements import ClauseElement
+from models.base.base_model import BaseModel
 
 TModel = TypeVar("TModel", bound=BaseModel)
 

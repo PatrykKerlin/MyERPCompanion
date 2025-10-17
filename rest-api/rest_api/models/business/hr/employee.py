@@ -6,12 +6,13 @@ from typing import TYPE_CHECKING
 from sqlalchemy import literal_column, select
 from sqlalchemy.orm import Mapped, column_property
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 from models.core import User
 
 if TYPE_CHECKING:
-    from .department import Department
-    from .position import Position
+    from models.business.hr.department import Department
+    from models.business.hr.position import Position
 
 
 class Employee(BaseModel):
@@ -36,6 +37,7 @@ class Employee(BaseModel):
     hire_date: Mapped[date] = Fields.date()
     termination_date: Mapped[date | None] = Fields.date(nullable=True)
     salary: Mapped[int] = Fields.integer()
+    is_remote: Mapped[bool] = Fields.boolean(default=False)
 
     street: Mapped[str | None] = Fields.string_50(nullable=True)
     house_number: Mapped[str] = Fields.string_10()

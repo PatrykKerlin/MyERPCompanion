@@ -1,19 +1,12 @@
-from __future__ import annotations
-from typing import Union, TYPE_CHECKING
-
 from fastapi import HTTPException, Request, status
 from pydantic import ValidationError
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 
-
-from controllers.base import BaseController
-from schemas.business import EmployeePlainSchema, EmployeeStrictSchema
-from services.business import EmployeeService, PositionService
-
-
-if TYPE_CHECKING:
-    from config import Context
-    from utils.auth import Auth
+from config.context import Context
+from controllers.base.base_controller import BaseController
+from schemas.business.hr.employee_schema import EmployeePlainSchema, EmployeeStrictSchema
+from services.business.hr import EmployeeService, PositionService
+from utils.auth import Auth
 
 
 class EmployeeController(BaseController[EmployeeService, EmployeeStrictSchema, EmployeePlainSchema]):

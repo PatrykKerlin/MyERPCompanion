@@ -4,11 +4,12 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 
 if TYPE_CHECKING:
-    from ..trade.currency import Currency
-    from .delivery_method import DeliveryMethod
+    from models.business.logistic.delivery_method import DeliveryMethod
+    from models.business.trade.currency import Currency
 
 
 class Carrier(BaseModel):

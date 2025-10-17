@@ -4,11 +4,12 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 
 if TYPE_CHECKING:
-    from .customer import Customer
-    from .discount import Discount
+    from models.business.trade.customer import Customer
+    from models.business.trade.discount import Discount
 
 
 class AssocCustomerDiscount(BaseModel):

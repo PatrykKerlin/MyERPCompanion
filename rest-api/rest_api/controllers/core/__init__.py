@@ -1,24 +1,22 @@
-from models.core import Group, Language, Module, Theme, View
-from schemas.core import (
-    GroupPlainSchema,
-    GroupStrictSchema,
-    LanguagePlainSchema,
-    LanguageStrictSchema,
-    ModulePlainSchema,
-    ModuleStrictSchema,
-    ThemePlainSchema,
-    ThemeStrictSchema,
-    ViewPlainSchema,
-    ViewStrictSchema,
-)
-from services.core import GroupService, LanguageService, ModuleService, ThemeService, ViewService
-from utils.factories import ControllerFactory
-
-from .auth_controller import AuthController
-from .current_user_controller import CurrentUserController
-from .health_check_controller import HealthCheckController
-from .translation_controller import TranslationController
-from .user_controller import UserController
+from controllers.core.auth_controller import AuthController
+from controllers.core.current_user_controller import CurrentUserController
+from controllers.core.health_check_controller import HealthCheckController
+from controllers.core.translation_controller import TranslationController
+from controllers.core.user_controller import UserController
+from models.core.group import Group
+from models.core.language import Language
+from models.core.module import Module
+from models.core.theme import Theme
+from models.core.view import View
+from schemas.core.group_schema import GroupPlainSchema, GroupStrictSchema
+from schemas.core.language_schema import LanguagePlainSchema, LanguageStrictSchema
+from schemas.core.module_schema import ModulePlainSchema, ModuleStrictSchema
+from schemas.core.theme_schema import ThemePlainSchema, ThemeStrictSchema
+from schemas.core.view_schema import ViewPlainSchema, ViewStrictSchema
+from services.core import GroupService, LanguageService, ThemeService
+from services.core.module_service import ModuleService
+from services.core.view_service import ViewService
+from utils.controller_factory import ControllerFactory
 
 GroupController = ControllerFactory.create(
     model_cls=Group,

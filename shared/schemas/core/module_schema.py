@@ -1,6 +1,13 @@
-from schemas.base import BasePlainSchema, BaseStrictSchema
-from schemas.core import GroupPlainSchema, ViewPlainSchema
-from schemas.validation import Constraints
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.validation.constraints import Constraints
+
+if TYPE_CHECKING:
+    from schemas.core.group_schema import GroupPlainSchema
+    from schemas.core.view_schema import ViewPlainSchema
 
 
 class ModuleStrictSchema(BaseStrictSchema):

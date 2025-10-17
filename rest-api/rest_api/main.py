@@ -1,13 +1,18 @@
-from contextlib import asynccontextmanager
 import importlib
+from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 
 from fastapi import APIRouter, FastAPI
 
-from config import Context, CustomFastAPI, Database, Settings
-from controllers import business as bc, core as cc
-from handlers import CheckDatabaseState, PopulateDatabase
-from middlewares import AuthMiddleware, ViewMiddleware
+from config.context import Context
+from config.database import Database
+from config.settings import Settings
+from controllers import core
+from controllers.business import hr, trade
+from handlers.check_database_state import CheckDatabaseState
+from handlers.populate_database import PopulateDatabase
+from middlewares.auth_middleware import AuthMiddleware
+from middlewares.view_middleware import ViewMiddleware
 from utils.auth import Auth
 
 
@@ -16,7 +21,7 @@ class App:
         self.__context = context
         self.__database = database
         self.__auth = auth
-        self.__app = CustomFastAPI(
+        self.__app = FastAPI(
             title="MyERPCompanion API",
             redoc_url=None,
             lifespan=lifespan,
@@ -28,26 +33,29 @@ class App:
         endpoints: list[dict[str, Any]] = []
 
         core_endpoints = [
-            {"router": cc.HealthCheckController().router},
-            {"router": cc.CurrentUserController(self.__context, self.__auth).router},
-            {"router": cc.AuthController(self.__context.get_session, self.__auth).router, "prefix": "/auth"},
-            {"router": cc.TranslationController(self.__context, self.__auth).router, "prefix": "/translations"},
-            {"router": cc.ModuleController(self.__context, self.__auth).router, "prefix": "/modules"},
-            {"router": cc.ViewController(self.__context, self.__auth).router, "prefix": "/views"},
-            {"router": cc.UserController(self.__context, self.__auth).router, "prefix": "/users"},
-            {"router": cc.GroupController(self.__context, self.__auth).router, "prefix": "/groups"},
-            {"router": cc.LanguageController(self.__context, self.__auth).router, "prefix": "/languages"},
-            {"router": cc.ThemeController(self.__context, self.__auth).router, "prefix": "/themes"},
+            {"router": core.HealthCheckController().router},
+            {"router": core.CurrentUserController(self.__context, self.__auth).router},
+            {"router": core.AuthController(self.__context.get_session, self.__auth).router, "prefix": "/auth"},
+            {"router": core.TranslationController(self.__context, self.__auth).router, "prefix": "/translations"},
+            {"router": core.ModuleController(self.__context, self.__auth).router, "prefix": "/modules"},
+            {"router": core.ViewController(self.__context, self.__auth).router, "prefix": "/views"},
+            {"router": core.UserController(self.__context, self.__auth).router, "prefix": "/users"},
+            {"router": core.GroupController(self.__context, self.__auth).router, "prefix": "/groups"},
+            {"router": core.LanguageController(self.__context, self.__auth).router, "prefix": "/languages"},
+            {"router": core.ThemeController(self.__context, self.__auth).router, "prefix": "/themes"},
         ]
-        business_endpoints = [
-            {"router": bc.DepartmentController(self.__context, self.__auth).router, "prefix": "/departments"},
-            {"router": bc.EmployeeController(self.__context, self.__auth).router, "prefix": "/employees"},
-            {"router": bc.PositionController(self.__context, self.__auth).router, "prefix": "/positions"},
-            {"router": bc.CurrencyController(self.__context, self.__auth).router, "prefix": "/currencies"},
+        business_hr_endpoints = [
+            {"router": hr.DepartmentController(self.__context, self.__auth).router, "prefix": "/departments"},
+            {"router": hr.EmployeeController(self.__context, self.__auth).router, "prefix": "/employees"},
+            {"router": hr.PositionController(self.__context, self.__auth).router, "prefix": "/positions"},
+        ]
+        business_trade_endpoints = [
+            {"router": trade.CurrencyController(self.__context, self.__auth).router, "prefix": "/currencies"},
         ]
 
         endpoints.extend(core_endpoints)
-        endpoints.extend(business_endpoints)
+        endpoints.extend(business_hr_endpoints)
+        endpoints.extend(business_trade_endpoints)
 
         for endpoint in endpoints:
             api_router.include_router(**endpoint)
@@ -69,7 +77,7 @@ def create_app() -> FastAPI:
     auth = Auth(context)
 
     def load_all_models() -> None:
-        for models in ("models.base", "models.business", "models.core"):
+        for models in ("models.business.hr", "models.business.logistic", "models.business.trade", "models.core"):
             importlib.import_module(models)
 
     @asynccontextmanager

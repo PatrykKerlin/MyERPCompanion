@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 from pydantic import model_validator
 
-from schemas.base import BasePlainSchema, BaseStrictSchema
-from schemas.validation import Constraints
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.validation.constraints import Constraints
 
 if TYPE_CHECKING:
-    from .discount_schema import DiscountPlainSchema
+    from schemas.business.trade.discount_schema import DiscountPlainSchema
 
 
 class CustomerStrictSchema(BaseStrictSchema):

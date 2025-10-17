@@ -2,8 +2,9 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.business import Carrier, Currency
-from repositories.base import BaseRepository
+from models.business.logistic import Carrier
+from models.business.trade import Currency
+from repositories.base.base_repository import BaseRepository
 
 
 class CarrierRepository(BaseRepository[Carrier]):

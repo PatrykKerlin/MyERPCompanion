@@ -5,9 +5,9 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.base import BaseModel
-from repositories.base import BaseRepository
-from schemas.base import BasePlainSchema, BaseStrictSchema
+from models.base.base_model import BaseModel
+from repositories.base.base_repository import BaseRepository
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 
 TModel = TypeVar("TModel", bound=BaseModel)
 TRepository = TypeVar("TRepository", bound=BaseRepository)

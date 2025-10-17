@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
 
 import flet as ft
 
@@ -201,13 +201,19 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             size,
         )
 
-    def _get_dropdown(self, key: str, size: int, options: list[tuple[int, str]]) -> tuple[ft.Container, int]:
+    def _get_dropdown(
+        self,
+        key: str,
+        size: int,
+        options: list[tuple[int, str]],
+        callbacks: list[Callable[..., None]] | None = None,
+    ) -> tuple[ft.Container, int]:
         return (
             ft.Container(
                 content=ft.Dropdown(
                     options=[ft.dropdown.Option(key="placeholder", text=self._translation.get("select"))]
                     + [ft.dropdown.Option(key=str(option[0]), text=option[1]) for option in options],
-                    on_change=lambda event: self._controller.on_value_changed(event, key),
+                    on_change=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
                     expand=True,
                     value="placeholder",
                 ),
@@ -226,6 +232,33 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 ),
                 col={"sm": float(size)},
                 alignment=self._base_alignment,
+            ),
+            size,
+        )
+
+    def _get_radio_group(
+        self,
+        key: str,
+        size: int,
+        options: list[tuple[str, str]],
+        default: str | None = None,
+    ) -> tuple[ft.Container, int]:
+        return (
+            ft.Container(
+                content=ft.RadioGroup(
+                    content=ft.Row(
+                        controls=[ft.Radio(value=value, label=label) for value, label in options],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        expand=True,
+                        spacing=0,
+                    ),
+                    value=default,
+                    on_change=lambda event, key=key: self._controller.on_value_changed(event, key),
+                ),
+                col={"sm": float(size)},
+                alignment=self._base_alignment,
+                expand=True,
             ),
             size,
         )

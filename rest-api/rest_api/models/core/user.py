@@ -4,15 +4,16 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 
 if TYPE_CHECKING:
-    from ..business.hr.employee import Employee
-    from .assoc_user_group import AssocUserGroup
-    from .assoc_user_view import AssocUserView
-    from .group import Group
-    from .language import Language
-    from .theme import Theme
+    from models.business.hr.employee import Employee
+    from models.core.assoc_user_group import AssocUserGroup
+    from models.core.assoc_user_view import AssocUserView
+    from models.core.group import Group
+    from models.core.language import Language
+    from models.core.theme import Theme
 
 
 class User(BaseModel):

@@ -5,20 +5,21 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 
 if TYPE_CHECKING:
-    from ...core.image import Image
-    from ..trade.assoc_item_discount import AssocItemDiscount
-    from ..trade.assoc_order_item import AssocOrderItem
-    from ..trade.currency import Currency
-    from ..trade.discount import Discount
-    from ..trade.order import Order
-    from ..trade.supplier import Supplier
-    from .assoc_bin_item import AssocBinItem
-    from .bin import Bin
-    from .category import Category
-    from .unit import Unit
+    from models.business.logistic.assoc_bin_item import AssocBinItem
+    from models.business.logistic.bin import Bin
+    from models.business.logistic.category import Category
+    from models.business.logistic.unit import Unit
+    from models.business.trade.assoc_item_discount import AssocItemDiscount
+    from models.business.trade.assoc_order_item import AssocOrderItem
+    from models.business.trade.currency import Currency
+    from models.business.trade.discount import Discount
+    from models.business.trade.order import Order
+    from models.business.trade.supplier import Supplier
+    from models.core.image import Image
 
 
 class Item(BaseModel):

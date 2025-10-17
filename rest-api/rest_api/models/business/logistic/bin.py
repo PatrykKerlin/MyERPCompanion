@@ -4,12 +4,13 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 
 if TYPE_CHECKING:
-    from .assoc_bin_item import AssocBinItem
-    from .item import Item
-    from .warehouse import Warehouse
+    from models.business.logistic.assoc_bin_item import AssocBinItem
+    from models.business.logistic.item import Item
+    from models.business.logistic.warehouse import Warehouse
 
 
 class Bin(BaseModel):

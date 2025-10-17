@@ -23,9 +23,9 @@ class EmployeeView(BaseView):
         mode: ViewMode,
         key: str,
         data_row: dict[str, Any] | None,
-        currencies: list[tuple[int, str]],
         departments: list[tuple[int, str]],
-        employees: list[tuple[int, str]],
+        positions: list[tuple[int, str]],
+        managers: list[tuple[int, str]],
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row)
         personal_fields = {
@@ -87,7 +87,7 @@ class EmployeeView(BaseView):
                 marker=self._get_marker("email", size=1),
             ),
             "phone_number": FieldGroup(
-                label=self._get_label("phone_number", size=4),
+                label=self._get_label("phone", size=4),
                 input=self._get_text_input("phone_number", size=7),
                 marker=self._get_marker("phone_number", size=1),
             ),
@@ -141,25 +141,36 @@ class EmployeeView(BaseView):
                 input=self._get_date_picker("termination_date", size=3),
                 marker=self._get_marker("termination_date", size=5),
             ),
-            "manager_id": FieldGroup(
-                label=self._get_label("manager", size=4),
-                input=self._get_dropdown("manager_id", options=[], size=5),
-                marker=self._get_marker("manager_id", 3),
-            ),
             "department_id": FieldGroup(
                 label=self._get_label("department", size=4),
-                input=self._get_dropdown("department_id", options=[], size=5),
-                marker=self._get_marker("department_id", 3),
+                input=self._get_dropdown(
+                    "department_id", options=departments, callbacks=[self._controller.on_department_changed], size=5
+                ),
+                marker=self._get_marker("department_id", size=3),
             ),
             "position_id": FieldGroup(
                 label=self._get_label("position", size=4),
-                input=self._get_dropdown("position_id", options=[], size=5),
+                input=self._get_dropdown(
+                    "position_id", options=positions, callbacks=[self._controller.on_position_changed], size=5
+                ),
                 marker=self._get_marker("position_id", 3),
+            ),
+            "manager_id": FieldGroup(
+                label=self._get_label("manager", size=4),
+                input=self._get_dropdown("manager_id", options=managers, size=5),
+                marker=self._get_marker("manager_id", size=3),
+            ),
+            "is_remote": FieldGroup(
+                label=self._get_label("is_remote", size=4),
+                input=self._get_radio_group(
+                    "is_remote", options=[("false", "on_site"), ("true", "remote")], default="false", size=4
+                ),
+                marker=self._get_marker("is_remote", size=4),
             ),
             "salary": FieldGroup(
                 label=self._get_label("salary", size=4),
-                input=self._get_int_input("salary", 5),
-                marker=self._get_marker("salary", 2),
+                input=self._get_int_input("salary", size=5),
+                marker=self._get_marker("salary", size=2),
             ),
         }
         bank_fields = {
@@ -207,7 +218,7 @@ class EmployeeView(BaseView):
             ),
             self._spacing_column,
             ft.Column(
-                controls=meta_grid + (self._spacing_row * 2) + employment_grid + bank_grid,
+                controls=meta_grid + self._spacing_row + employment_grid + bank_grid,
                 expand=True,
             ),
         ]
@@ -226,3 +237,10 @@ class EmployeeView(BaseView):
         ]
         self._master_column.controls.extend(rows)
         ft.Card.__init__(self, content=self._scrollable_wrapper, expand=True)
+
+    def set_dropdown_options(self, key: str, options: list[tuple[int, str]]) -> None:
+        field = self._inputs[key]
+        dropdown = field.input.content
+        if isinstance(dropdown, ft.Dropdown):
+            dropdown.options = [ft.dropdown.Option(text=label, key=str(value)) for value, label in options]
+            dropdown.update()

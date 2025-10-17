@@ -29,21 +29,20 @@ class PositionController(BaseViewController[PositionService, PositionView, Posit
         )
 
     async def _view_requested_handler(self, event: ViewRequested) -> None:
+        if event.key != View.POSITIONS:
+            return
         self._open_loading_dialog()
-        if event.key == View.POSITIONS:
-            translation_service = self._state_store.app_state.translation
-            self._key = event.key
-            if event.data:
-                mode = ViewMode.READ
-                self._request_data.input_values = event.data
-            else:
-                mode = ViewMode.SEARCH
-            currencies = await self.__get_all_currencies()
-            departments = await self.__get_all_departments()
-            self._view = PositionView(
-                self, translation_service.items, mode, event.key, event.data, currencies, departments
-            )
-            await self._event_bus.publish(ViewReady(key=event.key, postfix=event.postfix, view=self._view))
+        translation_service = self._state_store.app_state.translation
+        self._key = event.key
+        if event.data:
+            mode = ViewMode.READ
+            self._request_data.input_values = event.data
+        else:
+            mode = ViewMode.SEARCH
+        currencies = await self.__get_all_currencies()
+        departments = await self.__get_all_departments()
+        self._view = PositionView(self, translation_service.items, mode, event.key, event.data, currencies, departments)
+        await self._event_bus.publish(ViewReady(key=event.key, postfix=event.postfix, view=self._view))
         self._close_loading_dialog()
 
     async def _perform_get_page(self) -> PaginatedResponseSchema[PositionPlainSchema]:

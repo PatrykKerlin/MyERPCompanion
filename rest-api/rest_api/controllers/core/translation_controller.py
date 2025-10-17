@@ -3,11 +3,10 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.exc import SQLAlchemyError
 
-from config import Context
-from controllers.base import BaseController
-from schemas.core import (
-    PaginatedResponseSchema,
-    PaginationParamsSchema,
+from config.context import Context
+from controllers.base.base_controller import BaseController
+from schemas.core.param_schema import PaginatedResponseSchema, PaginationParamsSchema
+from schemas.core.translation_schema import (
     TranslationByLanguagePlainSchema,
     TranslationPlainSchema,
     TranslationStrictSchema,

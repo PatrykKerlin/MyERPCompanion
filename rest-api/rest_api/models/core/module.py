@@ -4,12 +4,13 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 
 if TYPE_CHECKING:
-    from .assoc_module_group import AssocModuleGroup
-    from .group import Group
-    from .view import View
+    from models.core.assoc_module_group import AssocModuleGroup
+    from models.core.group import Group
+    from models.core.view import View
 
 
 class Module(BaseModel):

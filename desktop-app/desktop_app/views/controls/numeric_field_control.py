@@ -37,6 +37,7 @@ class NumericField(ft.Row):
             self.__max_value = int(max_value) if max_value is not None else sys.maxsize
             self.__value = int(value)
             self.__step = int(step)
+        self.__last_valid_value = self.__value
 
         self.__text_field = ft.TextField(
             value=self.__format_value(self.__value),
@@ -86,11 +87,10 @@ class NumericField(ft.Row):
     def __format_value(self, value: int | float) -> str:
         return f"{value:.{self.__precision}f}" if self.__is_float else str(int(value))
 
-    def __force_min(self) -> None:
-        self.__value = self.__min_value
-        self.__text_field.value = self.__format_value(self.__value)
+    def __revert_to_last(self) -> None:
+        self.__text_field.value = self.__format_value(self.__last_valid_value)
         self.__text_field.update()
-        self.__emit_value(self.__value)
+        self.__emit_value(self.__last_valid_value)
 
     def __parse_value(self, value: int | float | str) -> int | float | None:
         if isinstance(value, (int, float)):
@@ -108,6 +108,7 @@ class NumericField(ft.Row):
         else:
             bounded = max(self.__min_value, min(self.__max_value, parsed_new_value))
         self.__value = bounded
+        self.__last_valid_value = bounded
         self.__text_field.value = self.__format_value(bounded)
         self.__text_field.update()
 
@@ -125,7 +126,7 @@ class NumericField(ft.Row):
         raw = getattr(event.control, "value", "")
         parsed = self.__parse_value(raw if raw is not None else "")
         if parsed is None:
-            self.__force_min()
+            self.__revert_to_last()
             return
         self.__set_value(parsed)
         self.__emit_value(self.__value)

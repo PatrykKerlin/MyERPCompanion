@@ -5,12 +5,13 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import model_validator
 
-from schemas.base import BasePlainSchema, BaseStrictSchema
-from schemas.validation import Constraints, Normalizers
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.validation.constraints import Constraints
+from schemas.validation.normalizers import Normalizers
 
 if TYPE_CHECKING:
-    from ...core.image_schema import ImagePlainSchema
-    from ..trade.discount_schema import DiscountPlainSchema
+    from schemas.business.trade.discount_schema import DiscountPlainSchema
+    from schemas.core.image_schema import ImagePlainSchema
 
 
 class ItemStrictSchema(BaseStrictSchema):

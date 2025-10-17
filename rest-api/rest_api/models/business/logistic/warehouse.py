@@ -4,10 +4,11 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 
 if TYPE_CHECKING:
-    from .bin import Bin
+    from models.business.logistic.bin import Bin
 
 
 class Warehouse(BaseModel):

@@ -1,16 +1,10 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.core import AssocModuleGroup, Module
 from repositories.core import AssocModuleGroupRepository, GroupRepository, ModuleRepository
-from schemas.core import ModulePlainSchema, ModuleStrictSchema
-from services.base import BaseService
-
-if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
+from schemas.core.module_schema import ModulePlainSchema, ModuleStrictSchema
+from services.base.base_service import BaseService
 
 
 class ModuleService(BaseService[Module, ModuleRepository, ModuleStrictSchema, ModulePlainSchema]):

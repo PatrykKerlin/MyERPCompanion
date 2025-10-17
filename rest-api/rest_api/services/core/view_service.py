@@ -1,18 +1,9 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Union
-
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.core import View
 from repositories.core import ViewRepository
-from schemas.core import ViewPlainSchema, ViewStrictSchema
-from services.base import BaseService
-
-if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
-
-    from utils.auth import Auth
+from schemas.core.view_schema import ViewPlainSchema, ViewStrictSchema
+from services.base.base_service import BaseService
 
 
 class ViewService(BaseService[View, ViewRepository, ViewStrictSchema, ViewPlainSchema]):

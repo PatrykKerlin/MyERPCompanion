@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Callable, Generic, TypeVar, cast
 
 import flet as ft
 from pydantic import ValidationError
@@ -14,7 +14,6 @@ from services.base.base_service import BaseService
 from states.states import TabsState
 from utils.enums import ViewMode
 from utils.request_data import RequestData
-from utils.tokens_accessor import TokensAccessor
 from views.base.base_view import BaseView
 from views.controls.numeric_field_control import NumericField
 
@@ -87,32 +86,29 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
     def on_marker_clicked(self, event: ft.ControlEvent, key: str) -> None:
         if not self._view:
             return
-        control_value = event.control.value
+        marker_state = event.control.value
         field = self._view.inputs[key]
         input = field.input.content
         if input:
-            self._view.set_input_state(input, control_value)
-        if control_value:
+            value_parsed: str | None = None
+            if hasattr(event.control, "value"):
+                value = getattr(event.control, "value", None)
+                value_parsed = str(value) if value is not None else None
+            self.set_field_value(key, value_parsed)
+            self._view.set_input_state(input, marker_state)
+        if marker_state:
             self._request_data.selected_inputs.add(key)
         else:
             self._request_data.selected_inputs.discard(key)
 
-    def on_value_changed(self, event: ft.ControlEvent, key: str) -> None:
+    def on_value_changed(self, event: ft.ControlEvent, key: str, *after_change: Callable[[], None]) -> None:
         if not self._view:
             return
-        control = event.control
-        if isinstance(control, ft.Checkbox):
-            value = getattr(control, "value", False)
-        elif isinstance(control, NumericField):
-            value = int(control.value)
-        elif isinstance(control, ft.Dropdown):
-            value = int(control.value) if control.value and control.value.isdecimal() else None
-        else:
-            value = getattr(control, "value", "")
-        self._request_data.input_values[key] = value
-        print(self._request_data.input_values)
-        error = self.__validate_field(key)
-        self._view.set_field_error(key, error)
+        if hasattr(event.control, "value"):
+            value = getattr(event.control, "value", None)
+            self.set_field_value(key, value)
+        for callback in after_change:
+            callback()
 
     def on_search_clicked(self) -> None:
         self._page.run_task(self.__execute_search_clicked)
@@ -158,12 +154,31 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         self._request_data.page = 1
         self.on_search_clicked()
 
-    def set_field_value(self, key: str, value: str) -> None:
+    def set_field_value(self, key: str, value: str | int | float | bool | None) -> None:
         if not self._view:
             return
-        self._request_data.input_values[key] = value
+        parsed_value = self.__parse_value(value)
+        self._request_data.input_values[key] = parsed_value
         error = self.__validate_field(key)
         self._view.set_field_error(key, error)
+
+    def __parse_value(self, value: str | int | float | bool | None) -> str | int | float | bool | None:
+        if value is None:
+            return None
+        if isinstance(value, (bool, int, float)):
+            return value
+        value_stripped = value.strip()
+        if value_stripped == "":
+            return None
+        lower = value_stripped.lower()
+        if lower in {"true", "false"}:
+            return lower == "true"
+        if value_stripped.isdecimal() or (value_stripped.startswith("-") and value_stripped[1:].isdecimal()):
+            return int(value_stripped)
+        try:
+            return float(value_stripped)
+        except ValueError:
+            return value_stripped
 
     def __tabs_updated_listener(self, state: TabsState) -> None:
         if not state.current or state.current not in state.items:

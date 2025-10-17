@@ -2,9 +2,9 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.business import Department, Employee, Position
+from models.business.hr import Department, Employee, Position
 from models.core import User
-from repositories.base import BaseRepository
+from repositories.base.base_repository import BaseRepository
 
 
 class EmployeeRepository(BaseRepository[Employee]):

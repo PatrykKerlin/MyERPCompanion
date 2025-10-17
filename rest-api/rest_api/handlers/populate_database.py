@@ -8,7 +8,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import core as mc
-from models.base import BaseModel
+from models.base.base_model import BaseModel
 from utils.auth import Auth
 
 
@@ -66,11 +66,13 @@ class PopulateDatabase:
             file_path = self.__base_path / f"{file_name}.sql"
             async with self.__get_session() as session:
                 async with open(file_path, mode="r", encoding="utf-8") as file:
-                    query = await file.read()
+                    content = await file.read()
+                queries = [query.strip() for query in content.split(";") if query.strip()]
                 params: dict[str, int | str] = {"superuser_id": self.__superuser.id}
                 if file_name == "users":
                     params["password"] = self.__auth.get_password_hash("test1234")
-                await session.execute(text(query), params)
+                for query in queries:
+                    await session.execute(text(query), params)
                 await session.commit()
 
     async def __update_superuser(self) -> None:

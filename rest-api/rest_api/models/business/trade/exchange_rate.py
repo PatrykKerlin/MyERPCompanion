@@ -6,10 +6,11 @@ from typing import TYPE_CHECKING
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped
 
-from models.base import BaseModel, Fields
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 
 if TYPE_CHECKING:
-    from .currency import Currency
+    from models.business.trade.currency import Currency
 
 
 class ExchangeRate(BaseModel):
