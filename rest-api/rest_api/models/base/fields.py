@@ -41,12 +41,12 @@ class Fields:
         )
 
     @staticmethod
-    def key() -> Mapped[str]:
-        return mapped_column(String(25), nullable=False, unique=True)
+    def key(unique: bool = True) -> Mapped[str]:
+        return mapped_column(String(25), nullable=False, unique=unique)
 
     @staticmethod
-    def name() -> Mapped[str]:
-        return mapped_column(String(50), nullable=False, unique=True)
+    def name(unique: bool = True) -> Mapped[str]:
+        return mapped_column(String(50), nullable=False, unique=unique)
 
     @staticmethod
     def boolean(default: bool) -> Mapped[bool]:

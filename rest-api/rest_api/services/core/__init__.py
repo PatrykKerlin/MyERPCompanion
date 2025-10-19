@@ -1,14 +1,15 @@
 from models.core.group import Group
 from models.core.language import Language
 from models.core.theme import Theme
-from repositories.core import GroupRepository, LanguageRepository, ThemeRepository
+from models.core.view import View
+from repositories.core import GroupRepository, LanguageRepository, ThemeRepository, ViewRepository
 from schemas.core.group_schema import GroupPlainSchema, GroupStrictSchema
 from schemas.core.language_schema import LanguagePlainSchema, LanguageStrictSchema
 from schemas.core.theme_schema import ThemePlainSchema, ThemeStrictSchema
+from schemas.core.view_schema import ViewPlainSchema, ViewStrictSchema
 from services.core.module_service import ModuleService
 from services.core.translation_service import TranslationService
 from services.core.user_service import UserService
-from services.core.view_service import ViewService
 from utils.service_factory import ServiceFactory
 
 GroupService = ServiceFactory.create(
@@ -28,6 +29,12 @@ ThemeService = ServiceFactory.create(
     repository_cls=ThemeRepository,
     input_schema_cls=ThemeStrictSchema,
     output_schema_cls=ThemePlainSchema,
+)
+ViewService = ServiceFactory.create(
+    model_cls=View,
+    repository_cls=ViewRepository,
+    input_schema_cls=ViewStrictSchema,
+    output_schema_cls=ViewPlainSchema,
 )
 
 

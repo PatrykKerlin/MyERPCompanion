@@ -11,8 +11,8 @@ from controllers import core
 from controllers.business import hr, logistic, trade
 from handlers.check_database_state import CheckDatabaseState
 from handlers.populate_database import PopulateDatabase
-from middlewares.auth_middleware import AuthMiddleware
-from middlewares.view_middleware import ViewMiddleware
+from middlewares.module_middleware import ModuleMiddleware
+from middlewares.user_middleware import UserMiddleware
 from utils.auth import Auth
 
 
@@ -95,8 +95,8 @@ def create_app() -> FastAPI:
         yield
 
     app_instance = App(context=context, database=database, auth=auth, lifespan=lifespan)
-    app_instance.get_app().add_middleware(AuthMiddleware, get_session=context.get_session, auth=auth)  # type: ignore
-    app_instance.get_app().add_middleware(ViewMiddleware, context=context)  # type: ignore
+    app_instance.get_app().add_middleware(UserMiddleware, get_session=context.get_session, auth=auth)  # type: ignore
+    app_instance.get_app().add_middleware(ModuleMiddleware, context=context)  # type: ignore
 
     return app_instance.get_app()
 

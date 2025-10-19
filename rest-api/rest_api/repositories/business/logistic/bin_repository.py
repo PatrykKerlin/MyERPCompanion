@@ -2,7 +2,7 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.business.logistic import AssocBinItem, Bin, Item, Warehouse
+from models.business.logistic import AssocBinItem, Bin, Item
 from repositories.base.base_repository import BaseRepository
 
 

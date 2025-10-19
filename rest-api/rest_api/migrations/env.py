@@ -1,6 +1,6 @@
 import asyncio
 from logging.config import fileConfig
-from typing import Any
+from typing import Any, Iterable
 
 from alembic import context
 from alembic.operations.ops import CreateForeignKeyOp, CreateTableOp, MigrateOperation
@@ -44,67 +44,163 @@ def foreign_key_split_hook(directives: list[Any]) -> None:
     script = directives[0]
     upgrade_ops = script.upgrade_ops
 
-    new_ops: list[MigrateOperation] = []
-    fk_ops: list[CreateForeignKeyOp] = []
+    new_operations: list[MigrateOperation] = []
+    foreign_key_operations: list[CreateForeignKeyOp] = []
+    seen_constraints: set[tuple[str, str, tuple[str, ...], str, tuple[str, ...]]] = set()
 
-    for op in upgrade_ops.ops:
-        if not isinstance(op, CreateTableOp):
-            new_ops.append(op)
+    for operation in upgrade_ops.ops:
+        if not isinstance(operation, CreateTableOp):
+            new_operations.append(operation)
             continue
 
-        table_fks, new_cols = extract_foreign_keys(op)
-        composite_fks = extract_composite_constraints(op)
+        table_fks, cleaned_columns = extract_foreign_keys(operation, seen_constraints)
+        composite_fks = extract_composite_constraints(operation, seen_constraints)
 
-        op.columns = new_cols
-        new_ops.append(op)
-        fk_ops.extend(table_fks + composite_fks)
+        operation.columns = cleaned_columns
+        new_operations.append(operation)
+        foreign_key_operations.extend(table_fks + composite_fks)
 
-    upgrade_ops.ops = new_ops + fk_ops
+    upgrade_ops.ops = new_operations + foreign_key_operations
+
+
+def normalize_constraint_name(constraint_name: Any) -> str | None:
+    if constraint_name is None:
+        return None
+    name_str = str(constraint_name)
+    return name_str if name_str and name_str.lower() != "none" else None
+
+
+def build_constraint_fingerprint(
+    constraint_name: Any,
+    source_table: str,
+    local_columns: Iterable[str],
+    target_table: str,
+    target_columns: Iterable[str],
+) -> tuple[str, str, tuple[str, ...], str, tuple[str, ...]]:
+    normalized_name = normalize_constraint_name(constraint_name)
+    if normalized_name is None:
+        normalized_name = (
+            f"{source_table}__{target_table}__{'__'.join(local_columns)}__{'__'.join(target_columns)}"
+        )
+    return (
+        normalized_name,
+        source_table,
+        tuple(local_columns),
+        target_table,
+        tuple(target_columns),
+    )
 
 
 def extract_foreign_keys(
-    op: CreateTableOp,
-) -> tuple[list[CreateForeignKeyOp], list[Column]]:
-    fks: list[CreateForeignKeyOp] = []
-    new_cols: list[Column] = []
+    create_table_op: CreateTableOp,
+    seen_constraints: set[tuple[str, str, tuple[str, ...], str, tuple[str, ...]]],
+) -> tuple[list[CreateForeignKeyOp], list[Any]]:
+    foreign_key_ops: list[CreateForeignKeyOp] = []
+    cleaned_columns: list[Any] = []
 
-    for col in op.columns:
-        if not isinstance(col, Column):
-            continue
-        for fk in list(col.foreign_keys):
-            fks.append(
+    for element in create_table_op.columns:
+        if isinstance(element, Column):
+            column = element
+            if getattr(column, "foreign_keys", None):
+                for foreign_key in list(column.foreign_keys):
+                    constraint_name = getattr(foreign_key.constraint, "name", None)
+                    fingerprint = build_constraint_fingerprint(
+                        constraint_name,
+                        create_table_op.table_name,
+                        [column.name],
+                        foreign_key.column.table.name,
+                        [foreign_key.column.name],
+                    )
+                    if fingerprint in seen_constraints:
+                        column.foreign_keys.remove(foreign_key)
+                        continue
+
+                    seen_constraints.add(fingerprint)
+                    foreign_key_ops.append(
+                        CreateForeignKeyOp(
+                            constraint_name=normalize_constraint_name(constraint_name)
+                            or f"fk_{create_table_op.table_name}_{column.name}_{foreign_key.column.table.name}",
+                            source_table=create_table_op.table_name,
+                            referent_table=foreign_key.column.table.name,
+                            local_cols=[column.name],
+                            remote_cols=[foreign_key.column.name],
+                        )
+                    )
+                    column.foreign_keys.remove(foreign_key)
+
+            cleaned_columns.append(column)
+
+        elif isinstance(element, ForeignKeyConstraint):
+            constraint_name = element.name
+            local_columns = list(element.columns.keys())
+            target_columns = [col_ref.column.name for col_ref in element.elements]
+            fingerprint = build_constraint_fingerprint(
+                constraint_name,
+                create_table_op.table_name,
+                local_columns,
+                element.referred_table.name,
+                target_columns,
+            )
+            if fingerprint in seen_constraints:
+                continue
+
+            seen_constraints.add(fingerprint)
+            foreign_key_ops.append(
                 CreateForeignKeyOp(
-                    constraint_name=f"fk_{op.table_name}_{col.name}_{fk.column.table.name}",
-                    source_table=op.table_name,
-                    referent_table=fk.column.table.name,
-                    local_cols=[col.name],
-                    remote_cols=[fk.column.name],
+                    constraint_name=normalize_constraint_name(constraint_name)
+                    or f"fk_{create_table_op.table_name}_composite_inline",
+                    source_table=create_table_op.table_name,
+                    referent_table=element.referred_table.name,
+                    local_cols=local_columns,
+                    remote_cols=target_columns,
                 )
             )
-            col.foreign_keys.remove(fk)
-        new_cols.append(col)
 
-    return fks, new_cols
+        else:
+            cleaned_columns.append(element)
+
+    return foreign_key_ops, cleaned_columns
 
 
-def extract_composite_constraints(op: CreateTableOp) -> list[CreateForeignKeyOp]:
-    fks: list[CreateForeignKeyOp] = []
-    constraints = op.kw.get("constraints", [])
+def extract_composite_constraints(
+    create_table_op: CreateTableOp,
+    seen_constraints: set[tuple[str, str, tuple[str, ...], str, tuple[str, ...]]],
+) -> list[CreateForeignKeyOp]:
+    foreign_key_ops: list[CreateForeignKeyOp] = []
+    table_constraints = create_table_op.kw.get("constraints", [])
 
-    for constraint in list(constraints):
+    for constraint in list(table_constraints):
         if isinstance(constraint, ForeignKeyConstraint):
-            constraints.remove(constraint)
-            fks.append(
+            constraint_name = constraint.name
+            local_columns = list(constraint.columns.keys())
+            target_columns = [col_ref.column.name for col_ref in constraint.elements]
+
+            fingerprint = build_constraint_fingerprint(
+                constraint_name,
+                create_table_op.table_name,
+                local_columns,
+                constraint.referred_table.name,
+                target_columns,
+            )
+
+            if fingerprint in seen_constraints:
+                table_constraints.remove(constraint)
+                continue
+
+            seen_constraints.add(fingerprint)
+            table_constraints.remove(constraint)
+            foreign_key_ops.append(
                 CreateForeignKeyOp(
-                    constraint_name=constraint.name or f"fk_{op.table_name}_composite",
-                    source_table=op.table_name,
+                    constraint_name=normalize_constraint_name(constraint_name)
+                    or f"fk_{create_table_op.table_name}_composite",
+                    source_table=create_table_op.table_name,
                     referent_table=constraint.referred_table.name,
-                    local_cols=constraint.columns.keys(),
-                    remote_cols=[e.column.name for e in constraint.elements],
+                    local_cols=local_columns,
+                    remote_cols=target_columns,
                 )
             )
 
-    return fks
+    return foreign_key_ops
 
 
 def run_migrations_offline() -> None:

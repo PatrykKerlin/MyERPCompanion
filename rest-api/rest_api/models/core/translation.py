@@ -16,7 +16,7 @@ class Translation(BaseModel):
     __tablename__ = "translations"
     __table_args__ = (UniqueConstraint("key", "language_id", name="uq_translations_key_language"),)
 
-    key: Mapped[str] = Fields.key()
+    key: Mapped[str] = Fields.key(unique=False)
     value: Mapped[str] = Fields.string_1000()
 
     language_id: Mapped[int] = Fields.foreign_key(column="languages.id")

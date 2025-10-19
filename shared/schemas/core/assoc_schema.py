@@ -1,22 +1,25 @@
+from __future__ import annotations
+
 from schemas.base.base_schema import BaseStrictSchema
 from schemas.validation.constraints import Constraints
+from pydantic import model_validator
 
 
 class AssocModuleGroupStrictSchema(BaseStrictSchema):
+    can_read: Constraints.BooleanTrue
+    can_modify: Constraints.BooleanFalse
     group_id: Constraints.PositiveInteger
     module_id: Constraints.PositiveInteger
+
+    @model_validator(mode="after")
+    def validate_data(self) -> AssocModuleGroupStrictSchema:
+        if self.can_modify and not self.can_read:
+            raise ValueError("can_read is required for can_modify")
+        if not self.can_read and not self.can_modify:
+            raise ValueError("at least one permission must be granted")
+        return self
 
 
 class AssocUserGroupStrictSchema(BaseStrictSchema):
     user_id: Constraints.PositiveInteger
     group_id: Constraints.PositiveInteger
-
-
-class AssocUserViewStrictSchema(BaseStrictSchema):
-    user_id: Constraints.PositiveInteger
-    view_id: Constraints.PositiveInteger
-    can_list: Constraints.BooleanTrue
-    can_read: Constraints.BooleanFalse
-    can_create: Constraints.BooleanFalse
-    can_update: Constraints.BooleanFalse
-    can_delete: Constraints.BooleanFalse

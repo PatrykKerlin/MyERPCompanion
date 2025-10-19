@@ -15,7 +15,7 @@ from schemas.core.theme_schema import ThemePlainSchema, ThemeStrictSchema
 from schemas.core.view_schema import ViewPlainSchema, ViewStrictSchema
 from services.core import GroupService, LanguageService, ThemeService
 from services.core.module_service import ModuleService
-from services.core.view_service import ViewService
+from services.core import ViewService
 from utils.controller_factory import ControllerFactory
 
 GroupController = ControllerFactory.create(

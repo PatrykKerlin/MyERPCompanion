@@ -15,6 +15,9 @@ if TYPE_CHECKING:
 class AssocModuleGroup(BaseModel):
     __tablename__ = "module_groups"
 
+    can_read: Mapped[bool] = Fields.boolean(default=True)
+    can_modify: Mapped[bool] = Fields.boolean(default=False)
+
     group_id: Mapped[int] = Fields.foreign_key(column="groups.id", primary_key=True)
     group: Mapped[Group] = Fields.relationship(
         argument="Group", back_populates="group_modules", foreign_keys=[group_id], cascade_soft_delete=False

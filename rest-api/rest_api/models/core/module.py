@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Index
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -15,11 +16,13 @@ if TYPE_CHECKING:
 
 class Module(BaseModel):
     __tablename__ = "modules"
+    __table_args__ = (Index("ix_module_controllers_gin", "controllers", postgresql_using="gin"),)
 
     key: Mapped[str] = Fields.key()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
     in_side_menu: Mapped[bool] = Fields.boolean(default=True)
     order: Mapped[int] = Fields.integer()
+    controllers: Mapped[list[str]] = Fields.string_list()
 
     views: Mapped[list[View]] = Fields.relationship(
         argument="View", back_populates="module", foreign_keys="View.module_id"

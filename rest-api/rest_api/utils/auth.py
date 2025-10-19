@@ -10,7 +10,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.context import Context
-from models.core import AssocUserView
+from models.core.assoc_module_group import AssocModuleGroup
 from schemas.core.user_schema import UserPlainSchema
 from services.core import ModuleService, UserService
 from utils.enums import Permission
@@ -23,6 +23,7 @@ class Auth:
         self.__pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
         self.__user_service = UserService()
         self.__user_service.set_auth(self)
+        self.__module_service = ModuleService()
 
     async def authenticate(self, session: AsyncSession, username: str, password: str) -> dict[str, str] | None:
         user_schema = await self.__user_service.get_one_by_username(session, username)
@@ -68,31 +69,31 @@ class Auth:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
             if user_schema and user_schema.is_superuser:
                 return
-            view_schema = getattr(request.state, "view", None)
-            if not view_schema:
+            module_schema = getattr(request.state, "module", None)
+            if not module_schema:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-            if not view_schema or controller not in set(view_schema.controllers):
+            if not module_schema or controller not in set(module_schema.controllers):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
             async with self.__get_session() as session:
-                module_service = ModuleService()
-                module_schema = await module_service.get_one_by_id(session, view_schema.module_id)
+                module_schema = await self.__module_service.get_one_by_id(session, module_schema.id)
                 if not module_schema:
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-                allowed_groups = {group.key for group in module_schema.groups}
-                user_groups = {group.key for group in user_schema.groups}
+                allowed_groups = {group.id for group in module_schema.groups}
+                user_groups = {group.id for group in user_schema.groups}
+                common_groups = user_groups.intersection(allowed_groups)
 
-                if not user_groups.intersection(allowed_groups):
+                if not common_groups:
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-                permission_columns = [getattr(AssocUserView, permission) for permission in permissions]
+                permission_columns = [getattr(AssocModuleGroup, permission) for permission in permissions]
 
                 has_permission = await session.scalar(
                     select(
                         exists().where(
-                            AssocUserView.is_active.is_(True),
-                            AssocUserView.user_id == user_schema.id,
-                            AssocUserView.view_id == view_schema.id,
+                            AssocModuleGroup.is_active.is_(True),
+                            AssocModuleGroup.group_id.in_(common_groups),
+                            AssocModuleGroup.module_id == module_schema.id,
                             *[column.is_(True) for column in permission_columns],
                         )
                     )

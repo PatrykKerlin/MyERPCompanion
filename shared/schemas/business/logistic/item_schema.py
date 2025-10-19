@@ -6,11 +6,10 @@ from typing import Any
 from pydantic import model_validator
 
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
-from schemas.validation.constraints import Constraints
-from schemas.validation.normalizers import Normalizers
-
 from schemas.business.trade.discount_schema import DiscountPlainSchema
 from schemas.core.image_schema import ImagePlainSchema
+from schemas.validation.constraints import Constraints
+from schemas.validation.normalizers import Normalizers
 
 
 class ItemStrictSchema(BaseStrictSchema):

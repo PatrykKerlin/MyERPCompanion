@@ -11,7 +11,7 @@ from services.core import UserService
 from utils.auth import Auth
 
 
-class AuthMiddleware(BaseHTTPMiddleware):
+class UserMiddleware(BaseHTTPMiddleware):
     def __init__(
         self, app: ASGIApp, get_session: Callable[..., AbstractAsyncContextManager[AsyncSession]], auth: Auth
     ) -> None:

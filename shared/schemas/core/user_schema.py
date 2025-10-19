@@ -3,11 +3,10 @@ from typing import Annotated
 from pydantic import BaseModel, Field
 
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
-from schemas.validation.constraints import Constraints
-
 from schemas.core.group_schema import GroupPlainSchema
 from schemas.core.language_schema import LanguagePlainSchema
 from schemas.core.theme_schema import ThemePlainSchema
+from schemas.validation.constraints import Constraints
 
 
 class UserStrictBaseSchema(BaseModel):

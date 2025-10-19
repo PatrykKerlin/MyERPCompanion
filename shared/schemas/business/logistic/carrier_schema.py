@@ -1,7 +1,6 @@
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
-from schemas.validation.constraints import Constraints
-
 from schemas.business.logistic.delivery_method_schema import DeliveryMethodPlainSchema
+from schemas.validation.constraints import Constraints
 
 
 class CarrierStrictSchema(BaseStrictSchema):
