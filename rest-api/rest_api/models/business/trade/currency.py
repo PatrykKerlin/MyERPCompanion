@@ -20,7 +20,7 @@ class Currency(BaseModel):
     __tablename__ = "currencies"
 
     code: Mapped[str] = Fields.symbol()
-    name: Mapped[str] = Fields.string_20()
+    name: Mapped[str] = Fields.name()
     sign: Mapped[str] = Fields.symbol()
 
     base_rates: Mapped[list[ExchangeRate]] = Fields.relationship(

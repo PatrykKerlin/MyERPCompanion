@@ -22,5 +22,4 @@ class BinRepository(BaseRepository[Bin]):
             selectinload(cls._model_cls.warehouse),
             with_loader_criteria(AssocBinItem, cls._expr(AssocBinItem.is_active.is_(True))),
             with_loader_criteria(Item, cls._expr(Item.is_active.is_(True))),
-            with_loader_criteria(Warehouse, cls._expr(Warehouse.is_active.is_(True))),
         )

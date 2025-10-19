@@ -8,7 +8,7 @@ from config.context import Context
 from config.database import Database
 from config.settings import Settings
 from controllers import core
-from controllers.business import hr, trade
+from controllers.business import hr, logistic, trade
 from handlers.check_database_state import CheckDatabaseState
 from handlers.populate_database import PopulateDatabase
 from middlewares.auth_middleware import AuthMiddleware
@@ -49,12 +49,17 @@ class App:
             {"router": hr.EmployeeController(self.__context, self.__auth).router, "prefix": "/employees"},
             {"router": hr.PositionController(self.__context, self.__auth).router, "prefix": "/positions"},
         ]
+        business_logistic_endpoints = [
+            {"router": logistic.BinController(self.__context, self.__auth).router, "prefix": "/bins"},
+            {"router": logistic.WarehouseController(self.__context, self.__auth).router, "prefix": "/warehouses"},
+        ]
         business_trade_endpoints = [
             {"router": trade.CurrencyController(self.__context, self.__auth).router, "prefix": "/currencies"},
         ]
 
         endpoints.extend(core_endpoints)
         endpoints.extend(business_hr_endpoints)
+        endpoints.extend(business_logistic_endpoints)
         endpoints.extend(business_trade_endpoints)
 
         for endpoint in endpoints:

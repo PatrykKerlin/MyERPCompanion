@@ -3,7 +3,7 @@ from schemas.validation.constraints import Constraints
 
 
 class WarehouseStrictSchema(BaseStrictSchema):
-    name: Constraints.String100
+    name: Constraints.Name
     email: Constraints.Email
     phone_number: Constraints.PhoneNumber
 
@@ -22,7 +22,7 @@ class WarehousePlainSchema(BasePlainSchema):
 
     street: str
     house_number: str
-    apartment_number: str
+    apartment_number: str | None
     postal_code: str
     city: str
     country: str

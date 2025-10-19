@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Callable, Generic, TypeVar, cast
+from typing import Callable, Generic, TypeVar, cast
 
 import flet as ft
 from pydantic import ValidationError
@@ -12,13 +10,10 @@ from schemas.base import BaseStrictSchema, BasePlainSchema
 from schemas.core.param_schema import PaginatedResponseSchema
 from services.base.base_service import BaseService
 from states.states import TabsState
-from utils.enums import ViewMode
+from utils.enums import Endpoint, ViewMode
 from utils.request_data import RequestData
 from views.base.base_view import BaseView
-from views.controls.numeric_field_control import NumericField
-
-if TYPE_CHECKING:
-    from config.context import Context
+from config.context import Context
 
 TService = TypeVar("TService", bound=BaseService)
 TView = TypeVar("TView", bound=BaseView)
@@ -27,10 +22,11 @@ TStrictSchema = TypeVar("TStrictSchema", bound=BaseStrictSchema)
 
 
 class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, TStrictSchema], ABC):
-    _input_schema_cls: type[TPlainSchema]
-    _output_schema_cls: type[TStrictSchema]
+    _plain_schema_cls: type[TPlainSchema]
+    _strict_schema_cls: type[TStrictSchema]
     _service_cls: type[TService]
     _view_cls: type[TView]
+    _endpoint: Endpoint
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
@@ -63,25 +59,58 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
     async def _view_requested_handler(self, event: ViewRequested) -> None:
         pass
 
-    @abstractmethod
     async def _perform_get_page(self) -> PaginatedResponseSchema[TPlainSchema]:
-        pass
+        filters: dict[str, str] = {}
+        for field in self._request_data.selected_inputs:
+            filters[field] = self._request_data.input_values.get(field, "")
+        params = {
+            "page": self._request_data.page,
+            "page_size": self._request_data.page_size,
+            "sort_by": self._request_data.sort_by,
+            "order": self._request_data.order,
+            **filters,
+        }
+        return await self._service.call_api_with_token_refresh(
+            func=self._service.get_page,
+            endpoint=self._endpoint,
+            query_params=params,
+            view_key=self._key,
+        )
 
-    @abstractmethod
     async def _perform_get_one(self, id: int) -> TPlainSchema:
-        pass
+        return await self._service.call_api_with_token_refresh(
+            func=self._service.get_one,
+            endpoint=self._endpoint,
+            path_param=id,
+            view_key=self._key,
+        )
 
-    @abstractmethod
     async def _perform_create(self) -> TPlainSchema:
-        pass
+        data = self._strict_schema_cls(**self._request_data.input_values)
+        return await self._service.call_api_with_token_refresh(
+            func=self._service.create,
+            endpoint=self._endpoint,
+            body_params=data,
+            view_key=self._key,
+        )
 
-    @abstractmethod
     async def _perform_update(self, id: int) -> TPlainSchema:
-        pass
+        data = self._strict_schema_cls(**self._request_data.input_values)
+        return await self._service.call_api_with_token_refresh(
+            func=self._service.update,
+            endpoint=self._endpoint,
+            path_param=id,
+            body_params=data,
+            view_key=self._key,
+        )
 
-    @abstractmethod
     async def _perform_delete(self, id: int) -> bool:
-        pass
+        return await self._service.call_api_with_token_refresh(
+            func=self._service.delete,
+            endpoint=self._endpoint,
+            path_param=id,
+            view_key=self._key,
+        )
 
     def on_marker_clicked(self, event: ft.ControlEvent, key: str) -> None:
         if not self._view:
@@ -264,7 +293,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         if self._view.mode == ViewMode.CREATE:
             self._request_data.input_values["id"] = 1
         try:
-            self._output_schema_cls(**self._request_data.input_values)
+            self._strict_schema_cls(**self._request_data.input_values)
             self._view.set_save_button_state(True)
         except ValidationError as validation_error:
             self._view.set_save_button_state(False)

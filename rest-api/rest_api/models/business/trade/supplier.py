@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class Supplier(BaseModel):
     __tablename__ = "suppliers"
 
-    name: Mapped[str] = Fields.string_100(unique=True)
+    name: Mapped[str] = Fields.name()
 
     company_email: Mapped[str | None] = Fields.string_50(nullable=True)
     company_phone: Mapped[str | None] = Fields.string_20(nullable=True)

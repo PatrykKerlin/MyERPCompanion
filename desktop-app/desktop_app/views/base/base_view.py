@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
 import flet as ft
 
 from utils.enums import ViewMode
-from utils.view_fields import FieldGroup
+from utils.field_group import FieldGroup
 from views.base.base_component import BaseComponent
 from views.controls.date_field_control import DateField
 from views.controls.numeric_field_control import NumericField
@@ -40,7 +40,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self._master_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
         self._scrollable_wrapper = ft.ListView(controls=[self._master_column], expand=True)
         self._spacing_column = ft.Column(width=25)
-        self._spacing_row = [
+        self._spacing_row = ft.Row(height=25)
+        self._spacing_responsive_row = [
             ft.ResponsiveRow(controls=[ft.Container(content=ft.TextField(disabled=True), opacity=0.0, col={"sm": 1})])
         ]
         self._cancel_button = ft.Button(
@@ -56,33 +57,54 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             text=self._translation.get("search"),
             on_click=lambda _: self._controller.on_search_clicked(),
         )
-        self._meta_fields = {
+        self._columns_row = ft.Row(
+            alignment=ft.MainAxisAlignment.START,
+            vertical_alignment=ft.CrossAxisAlignment.START,
+        )
+        self._buttons_row = ft.Row(
+            controls=[self._search_button, self._cancel_button, self._save_button],
+            alignment=ft.MainAxisAlignment.END,
+            vertical_alignment=ft.CrossAxisAlignment.START,
+        )
+        self._rows = [self._columns_row, self._spacing_row, self._buttons_row]
+        self.__meta_fields = {"id", "created_by", "created_at", "modified_by", "modified_at"}
+
+    def _get_meta_grid(
+        self, label_size: int, id_size: int, datetime_size: int, columns: int = 12
+    ) -> list[ft.ResponsiveRow]:
+        free_columns = columns - label_size
+        id_marker_size = free_columns - id_size
+        datetime_marker_size = free_columns - datetime_size
+        meta_fields = {
             "id": FieldGroup(
-                label=self._get_label("id", 5),
-                input=self._get_text_input("id", 2),
-                marker=self._get_marker("id", 5),
+                label=self._get_label("id", label_size),
+                input=self._get_text_input("id", id_size),
+                marker=self._get_marker("id", id_marker_size),
             ),
             "created_by": FieldGroup(
-                label=self._get_label("created_by", 5),
-                input=self._get_text_input("created_by", 2),
-                marker=self._get_marker("created_by", 5),
+                label=self._get_label("created_by", label_size),
+                input=self._get_text_input("created_by", id_size),
+                marker=self._get_marker("created_by", id_marker_size),
             ),
             "created_at": FieldGroup(
-                label=self._get_label("created_at", 5),
-                input=self._get_text_input("created_at", 6),
-                marker=self._get_marker("created_at", 1),
+                label=self._get_label("created_at", label_size),
+                input=self._get_text_input("created_at", datetime_size),
+                marker=self._get_marker("created_at", datetime_marker_size),
             ),
             "modified_by": FieldGroup(
-                label=self._get_label("modified_by", 5),
-                input=self._get_text_input("modified_by", 2),
-                marker=self._get_marker("modified_by", 5),
+                label=self._get_label("modified_by", label_size),
+                input=self._get_text_input("modified_by", id_size),
+                marker=self._get_marker("modified_by", id_marker_size),
             ),
             "modified_at": FieldGroup(
-                label=self._get_label("modified_at", 5),
-                input=self._get_text_input("modified_at", 6),
-                marker=self._get_marker("modified_at", 1),
+                label=self._get_label("modified_at", label_size),
+                input=self._get_text_input("modified_at", datetime_size),
+                marker=self._get_marker("modified_at", datetime_marker_size),
             ),
         }
+        self._inputs.update(meta_fields)
+
+        return self._build_grid(meta_fields)
 
     @property
     def view_key(self) -> str:
@@ -263,6 +285,21 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             size,
         )
 
+    def _get_checkbox(self, key: str, size: int, value: bool | None = None) -> tuple[ft.Container, int]:
+        return (
+            ft.Container(
+                content=ft.Checkbox(
+                    on_change=lambda event, key=key: self._controller.on_value_changed(event, key),
+                    animate_size=300,
+                    value=value,
+                    shape=ft.CircleBorder(),
+                ),
+                col={"sm": float(size)},
+                alignment=self._base_alignment,
+            ),
+            size,
+        )
+
     def _get_marker(self, key: str, size: int) -> tuple[ft.Container, int]:
         return (
             ft.Container(
@@ -302,6 +339,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             for group in fields.values()
         ]
 
+    def _add_to_inputs(self, *fields: dict[str, FieldGroup]) -> None:
+        for field in fields:
+            self._inputs.update(field)
+
     def __set_search_mode(self) -> None:
         for key, field in self._inputs.items():
             input = field.input.content
@@ -326,7 +367,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             input = field.input.content
             marker = field.marker.content
             if hasattr(input, "disabled"):
-                if key in self._meta_fields.keys():
+                if key in self.__meta_fields:
                     setattr(input, "disabled", True)
                 else:
                     setattr(input, "disabled", False)
@@ -367,7 +408,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         for key, field in self._inputs.items():
             input = field.input.content
             if hasattr(input, "disabled"):
-                if key in self._meta_fields.keys():
+                if key in self.__meta_fields:
                     setattr(input, "disabled", True)
                 else:
                     setattr(input, "disabled", False)
@@ -410,14 +451,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             if input:
                 input.update()
 
-
-# @property
-# def mode(self) -> str:
-#     return self._mode
-
-# @property
-# def data_row(self) -> dict[str, Any] | None:
-#     return self._data_row
 
 # @property
 # def controller_key(self) -> str:

@@ -1,16 +1,11 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
 
-if TYPE_CHECKING:
-    from schemas.business.logistic.delivery_method_schema import DeliveryMethodPlainSchema
+from schemas.business.logistic.delivery_method_schema import DeliveryMethodPlainSchema
 
 
 class CarrierStrictSchema(BaseStrictSchema):
-    name: Constraints.String100
+    name: Constraints.Name
 
     company_email: Constraints.EmailOptional
     company_phone: Constraints.PhoneNumberOptional

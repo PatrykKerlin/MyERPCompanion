@@ -4,7 +4,7 @@ from schemas.validation.constraints import Constraints
 
 class CurrencyStrictSchema(BaseStrictSchema):
     code: Constraints.Symbol
-    name: Constraints.String20
+    name: Constraints.Name
     sign: Constraints.Symbol
 
 

@@ -1,4 +1,3 @@
-from typing import Any
 from schemas.core.token_schema import TokenPlainSchema
 from states.state_store import StateStore
 

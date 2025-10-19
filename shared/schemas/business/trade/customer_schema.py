@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
 from pydantic import model_validator
 
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
 
-if TYPE_CHECKING:
-    from schemas.business.trade.discount_schema import DiscountPlainSchema
+from schemas.business.trade.discount_schema import DiscountPlainSchema
 
 
 class CustomerStrictSchema(BaseStrictSchema):
@@ -17,7 +15,7 @@ class CustomerStrictSchema(BaseStrictSchema):
     last_name: Constraints.String50
 
     is_company: Constraints.BooleanFalse
-    company_name: Constraints.String100Optional
+    company_name: Constraints.String50Optional
 
     payment_term: Constraints.PaymentTerm
 

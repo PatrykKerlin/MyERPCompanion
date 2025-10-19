@@ -6,7 +6,7 @@ import flet as ft
 
 from utils.enums import ViewMode
 
-from utils.view_fields import FieldGroup
+from utils.field_group import FieldGroup
 from views.base.base_view import BaseView
 from views.controls.numeric_field_control import NumericField
 
@@ -191,16 +191,16 @@ class EmployeeView(BaseView):
             ),
         }
 
-        self._inputs.update(personal_fields)
-        self._inputs.update(contact_fields)
-        self._inputs.update(street_field)
-        self._inputs.update(house_fields)
-        self._inputs.update(city_fields)
-        self._inputs.update(country_field)
-        self._inputs.update(employment_fields)
-        self._inputs.update(bank_fields)
-
-        self._inputs.update(self._meta_fields)
+        self._add_to_inputs(
+            personal_fields,
+            contact_fields,
+            street_field,
+            house_fields,
+            city_fields,
+            country_field,
+            employment_fields,
+            bank_fields,
+        )
         personal_grid = self._build_grid(personal_fields)
         contact_grid = self._build_grid(contact_fields)
         street_grid = self._build_grid(street_field)
@@ -210,32 +210,20 @@ class EmployeeView(BaseView):
         employment_grid = self._build_grid(employment_fields)
         bank_grid = self._build_grid(bank_fields)
 
-        meta_grid = self._build_grid(self._meta_fields)
+        meta_grid = self._get_meta_grid(label_size=4, id_size=2, datetime_size=7)
         columns = [
             ft.Column(
                 controls=personal_grid + contact_grid + street_grid + house_grid + city_grid + country_grid,
-                expand=True,
+                expand=3,
             ),
             self._spacing_column,
             ft.Column(
-                controls=meta_grid + self._spacing_row + employment_grid + bank_grid,
-                expand=True,
+                controls=meta_grid + self._spacing_responsive_row + employment_grid + bank_grid,
+                expand=2,
             ),
         ]
-        rows = [
-            ft.Row(
-                controls=columns,
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.START,
-            ),
-            ft.Row(height=25),
-            ft.Row(
-                controls=[self._search_button, self._cancel_button, self._save_button],
-                alignment=ft.MainAxisAlignment.END,
-                vertical_alignment=ft.CrossAxisAlignment.START,
-            ),
-        ]
-        self._master_column.controls.extend(rows)
+        self._columns_row.controls.extend(columns)
+        self._master_column.controls.extend(self._rows)
         ft.Card.__init__(self, content=self._scrollable_wrapper, expand=True)
 
     def set_dropdown_options(self, key: str, options: list[tuple[int, str]]) -> None:

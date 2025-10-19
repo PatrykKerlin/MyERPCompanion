@@ -3,7 +3,7 @@ from schemas.validation.constraints import Constraints
 
 
 class SupplierStrictSchema(BaseStrictSchema):
-    name: Constraints.String100
+    name: Constraints.Name
 
     company_email: Constraints.EmailOptional
     company_phone: Constraints.PhoneNumberOptional

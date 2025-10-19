@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class Warehouse(BaseModel):
     __tablename__ = "warehouses"
 
-    name: Mapped[str] = Fields.string_100(unique=True)
+    name: Mapped[str] = Fields.name()
     email: Mapped[str] = Fields.string_100(unique=True)
     phone_number: Mapped[str] = Fields.string_20(unique=True)
 

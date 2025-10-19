@@ -1,22 +1,15 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, TypeVar
+from typing import Any, Awaitable, Callable, TypeVar
 
 import asyncio
 import flet as ft
-import httpx
 
-from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
-from schemas.core.token_schema import TokenPlainSchema
-from utils.enums import Endpoint
+from schemas.base.base_schema import BaseStrictSchema
 from utils.tokens_accessor import TokensAccessor
 from views.components.error_dialog_component import ErrorDialogComponent
 from views.components.loading_dialog_component import LoadingDialogComponent
 from views.components.message_dialog_component import MessageDialogComponent
 
-if TYPE_CHECKING:
-    from config.context import Context
-    from services.base.base_service import BaseService
+from config.context import Context
 
 TStrictSchema = TypeVar("TStrictSchema", bound=BaseStrictSchema)
 
@@ -119,21 +112,3 @@ class BaseController:
     #             if isinstance(controls, list) and child in controls:
     #                 controls.remove(child)
     #                 self._context.page.update()
-
-    # def _run_with_delay(
-    #     self,
-    #     condition: Callable[[], bool],
-    #     callback: Callable[[], Awaitable[None]],
-    #     max_retries: int = 100,
-    #     delay: float = 0.01,
-    # ) -> None:
-    #     async def delayed_execution() -> None:
-    #         for _ in range(max_retries):
-    #             if condition():
-    #                 break
-    #             await asyncio.sleep(delay)
-    #         else:
-    #             return
-    #         await callback()
-
-    #     self._page.run_task(delayed_execution)

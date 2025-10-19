@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import field_validator, model_validator
+from pydantic import field_validator, model_validator, Field
 
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
@@ -31,9 +31,9 @@ class BinPlainSchema(BasePlainSchema):
     max_volume: float
     max_weight: int
     warehouse_id: int
-    items: list[int]
+    item_ids: list[int] = Field(alias="items")
 
-    @field_validator("items", mode="before")
+    @field_validator("item_ids", mode="before")
     @classmethod
     def _normalize_items(cls, values: list[Any]) -> list[int]:
         return Normalizers.normalize_related_ids(values)

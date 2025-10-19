@@ -4,7 +4,11 @@ from pydantic import BaseModel
 
 
 class BaseSchema(BaseModel):
-    model_config = {"from_attributes": True, "arbitrary_types_allowed": True}
+    model_config = {
+        "from_attributes": True,
+        "arbitrary_types_allowed": True,
+        "populate_by_name": True,
+    }
 
 
 class BaseStrictSchema(BaseSchema):

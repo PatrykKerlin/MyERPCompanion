@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from pydantic import model_validator
 
@@ -9,14 +9,13 @@ from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
 from schemas.validation.normalizers import Normalizers
 
-if TYPE_CHECKING:
-    from schemas.business.trade.discount_schema import DiscountPlainSchema
-    from schemas.core.image_schema import ImagePlainSchema
+from schemas.business.trade.discount_schema import DiscountPlainSchema
+from schemas.core.image_schema import ImagePlainSchema
 
 
 class ItemStrictSchema(BaseStrictSchema):
     index: Constraints.String10
-    name: Constraints.String100
+    name: Constraints.Name
     description: Constraints.String1000Optional
 
     ean: Constraints.Ean

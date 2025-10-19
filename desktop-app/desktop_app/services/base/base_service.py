@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 from logging import Logger
 import asyncio
-from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
+from typing import Any, Callable, Generic, TypeVar
 from fastapi import HTTPException, status
 
 import httpx
@@ -12,9 +10,7 @@ from schemas.core.param_schema import PaginatedResponseSchema
 from utils.enums import Endpoint
 from schemas.core.token_schema import TokenPlainSchema
 from utils.tokens_accessor import TokensAccessor
-
-if TYPE_CHECKING:
-    from config.settings import Settings
+from config.settings import Settings
 
 TPlainSchema = TypeVar("TPlainSchema", bound=BasePlainSchema)
 TStrictSchema = TypeVar("TStrictSchema", bound=BaseStrictSchema)
@@ -73,7 +69,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         while True:
             response = await self._get(endpoint=endpoint, query_params=params, token=token, view_key=view_key)
             data = response.json()
-            items.extend([self._plain_schema_cls(**currency) for currency in data.get("items", [])])
+            items.extend([self._plain_schema_cls(**item) for item in data.get("items", [])])
             if not data.get("has_next", False):
                 break
             params["page"] += 1

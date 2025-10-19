@@ -26,7 +26,7 @@ class Item(BaseModel):
     __tablename__ = "items"
 
     index: Mapped[str] = Fields.string_10(unique=True, nullable=False)
-    name: Mapped[str] = Fields.string_100()
+    name: Mapped[str] = Fields.name()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     ean: Mapped[str] = Fields.ean()

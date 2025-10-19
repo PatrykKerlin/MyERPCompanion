@@ -1,9 +1,6 @@
 from pydantic import Field
 
-from schemas.core.group_schema import GroupPlainSchema
-from schemas.core.language_schema import LanguagePlainSchema
 from schemas.core.module_schema import ModulePlainSchema
-from schemas.core.theme_schema import ThemePlainSchema
 from schemas.core.user_schema import UserPlainSchema
 from states.base.base_state import BaseState
 from utils.enums import ViewMode

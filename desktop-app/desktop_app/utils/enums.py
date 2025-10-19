@@ -15,6 +15,8 @@ class View(StrEnum):
     DEPARTMENTS = "departments"
     POSITIONS = "positions"
     EMPLOYEES = "employees"
+    WAREHOUSES = "warehouses"
+    BINS = "bins"
 
 
 class Endpoint(StrEnum):
@@ -29,3 +31,5 @@ class Endpoint(StrEnum):
     POSITIONS = "positions"
     CURRENCIES = "currencies"
     EMPLOYEES = "employees"
+    WAREHOUSES = "warehouses"
+    BINS = "bins"

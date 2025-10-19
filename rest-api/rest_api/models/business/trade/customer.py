@@ -21,7 +21,7 @@ class Customer(BaseModel):
     last_name: Mapped[str] = Fields.string_50()
 
     is_company: Mapped[bool] = Fields.boolean(default=False)
-    company_name: Mapped[str | None] = Fields.string_100(nullable=True)
+    company_name: Mapped[str | None] = Fields.string_50(nullable=True)
 
     payment_term: Mapped[int] = Fields.integer()
 

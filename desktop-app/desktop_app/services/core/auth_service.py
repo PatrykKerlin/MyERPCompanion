@@ -3,7 +3,7 @@ from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.core.user_schema import UserPlainSchema
 from schemas.core.token_schema import TokenPlainSchema
 from services.base.base_service import BaseService
-from schemas.core.module_schema import ModulePlainSchema, ModuleStrictSchema
+from schemas.core.module_schema import ModulePlainSchema
 from utils.enums import Endpoint
 
 
