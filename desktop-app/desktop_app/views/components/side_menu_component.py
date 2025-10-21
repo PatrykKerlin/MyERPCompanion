@@ -12,7 +12,9 @@ if TYPE_CHECKING:
 
 
 class SideMenuComponent(BaseComponent, ft.Container):
-    def __init__(self, controller: SideMenuController, translation: Translation, content: dict[str, list[str]]) -> None:
+    def __init__(
+        self, controller: SideMenuController, translation: Translation, content: dict[str, list[tuple[int, str]]]
+    ) -> None:
         BaseComponent.__init__(self, controller, translation)
         self.__content = content
         self.__labels: list[str] = []
@@ -35,11 +37,11 @@ class SideMenuComponent(BaseComponent, ft.Container):
         )
 
     def __build_controls(self) -> None:
-        for module_key, view_keys in self.__content.items():
+        for module_key, view_params in self.__content.items():
             module_label = self._translation.get(module_key)
             self.__labels.append(module_label)
             self.__controls.append(ft.Text(value=module_label))
-            for view_key in view_keys:
+            for module_id, view_key in view_params:
                 view_label = self._translation.get(view_key)
                 self.__labels.append(view_label)
                 self.__controls.append(
@@ -47,7 +49,7 @@ class SideMenuComponent(BaseComponent, ft.Container):
                         title=ft.Text(view_label),
                         leading=ft.Icon(name=ft.Icons.VIEW_LIST),
                         dense=True,
-                        on_click=lambda _, key=view_key: self._controller.on_item_clicked(key),
+                        on_click=lambda _, id=module_id, key=view_key: self._controller.on_item_clicked(id, key),
                     )
                 )
 

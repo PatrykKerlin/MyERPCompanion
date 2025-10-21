@@ -5,16 +5,18 @@ from schemas.business.hr.department_schema import DepartmentPlainSchema
 from schemas.business.hr.position_schema import PositionPlainSchema
 from services.business.hr import DepartmentService, EmployeeService, PositionService
 from utils.enums import Endpoint, View, ViewMode
+from utils.translation import Translation
 from views.business.hr.employee_view import EmployeeView
-from events.events import ViewRequested, ViewReady
+from events.events import ViewRequested
 
 
 class EmployeeController(BaseViewController[EmployeeService, EmployeeView, EmployeePlainSchema, EmployeeStrictSchema]):
-    _input_schema_cls = EmployeePlainSchema
-    _output_schema_cls = EmployeeStrictSchema
+    _plain_schema_cls = EmployeePlainSchema
+    _strict_schema_cls = EmployeeStrictSchema
     _service_cls = EmployeeService
     _view_cls = EmployeeView
     _endpoint = Endpoint.EMPLOYEES
+    _view_key = View.EMPLOYEES
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
@@ -24,11 +26,6 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
         self.__all_positions: list[PositionPlainSchema] = []
         self.__all_employees: list[EmployeePlainSchema] = []
         self.__positions_by_id: dict[int, PositionPlainSchema] = {}
-        self._subscribe_event_handlers(
-            {
-                ViewRequested: self._view_requested_handler,
-            }
-        )
 
     def on_department_changed(self) -> None:
         if not self._view:
@@ -50,67 +47,58 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
         )
 
     async def _view_requested_handler(self, event: ViewRequested) -> None:
-        if event.key != View.EMPLOYEES:
-            return
-        self._open_loading_dialog()
-        translation_service = self._state_store.app_state.translation
-        self._key = event.key
+        await self._handle_view_requested(event)
+
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> EmployeeView:
         self.__all_departments = await self.__get_all_departments()
         self.__all_positions = await self.__perform_get_all_positions()
-        self.__positions_by_id = {position.id: position for position in self.__all_positions}
+        self.__positions_by_id = {p.id: p for p in self.__all_positions}
         self.__all_employees = await self.__perform_get_all_employees()
-        if event.data:
-            mode = ViewMode.READ
-            self._request_data.input_values = event.data
-        else:
-            mode = ViewMode.SEARCH
 
         selected_department_id = self._request_data.input_values.get("department_id")
         selected_position_id = self._request_data.input_values.get("position_id")
 
         if mode == ViewMode.SEARCH:
-            departments_opts = [(department.id, department.name) for department in self.__all_departments]
+            departments_opts = [(d.id, d.name) for d in self.__all_departments]
             positions_opts = [(p.id, p.name) for p in self.__all_positions]
             managers_opts = [(e.id, f"{e.first_name} {e.last_name}") for e in self.__all_employees]
         else:
             dept_positions = self.__filter_positions_by_department(selected_department_id)
-            departments_opts = [(department.id, department.name) for department in self.__all_departments]
-            positions_opts = [(position.id, position.name) for position in dept_positions]
+            departments_opts = [(d.id, d.name) for d in self.__all_departments]
+            positions_opts = [(p.id, p.name) for p in dept_positions]
             managers = self.__filter_managers_by_position(selected_position_id)
-            managers_opts = [(employee.id, f"{employee.first_name} {employee.last_name}") for employee in managers]
+            managers_opts = [(e.id, f"{e.first_name} {e.last_name}") for e in managers]
 
-        self._view = EmployeeView(
+        return EmployeeView(
             self,
-            translation_service.items,
+            translation,
             mode,
-            event.key,
+            event.view_key,
             event.data,
             departments_opts,
             positions_opts,
             managers_opts,
         )
-        await self._event_bus.publish(ViewReady(key=event.key, postfix=event.postfix, view=self._view))
-        self._close_loading_dialog()
 
     async def __perform_get_all_employees(self) -> list[EmployeePlainSchema]:
         return await self._service.call_api_with_token_refresh(
             func=self._service.get_all,
             endpoint=self._endpoint,
-            view_key=self._key,
+            module_id=self._module_id,
         )
 
     async def __perform_get_all_positions(self) -> list[PositionPlainSchema]:
         return await self.__position_service.call_api_with_token_refresh(
             func=self.__position_service.get_all,
             endpoint=Endpoint.POSITIONS,
-            view_key=self._key,
+            module_id=self._module_id,
         )
 
     async def __get_all_departments(self) -> list[DepartmentPlainSchema]:
         return await self.__department_service.call_api_with_token_refresh(
             func=self.__department_service.get_all,
             endpoint=Endpoint.DEPARTMENTS,
-            view_key=self._key,
+            module_id=self._module_id,
         )
 
     def __filter_positions_by_department(self, department_id: int | None) -> list[PositionPlainSchema]:

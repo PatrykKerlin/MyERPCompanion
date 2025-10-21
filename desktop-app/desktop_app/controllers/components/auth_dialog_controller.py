@@ -6,7 +6,7 @@ from controllers.base.base_component_controller import BaseComponentController
 from services.core.auth_service import AuthService
 from views.components.auth_dialog_component import AuthDialogComponent
 from events.events import AuthDialogRequested
-from utils.enums import Endpoint, View
+from utils.enums import Endpoint
 from events.events import UserAuthenticated
 
 if TYPE_CHECKING:
@@ -38,12 +38,12 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
             all_modules = await self.__service.call_api_with_token_refresh(
                 func=self.__service.get_all_modules,
                 endpoint=Endpoint.MODULES,
-                view_key=View.SIDE_MENU,
+                module_id=self._module_id,
             )
             user = await self.__service.call_api_with_token_refresh(
                 func=self.__service.get_current_user,
                 endpoint=Endpoint.CURRENT_USER,
-                view_key=View.CURRENT_USER,
+                module_id=self._module_id,
             )
             user_groups_set = {group.id for group in user.groups}
             user_modules: list[ModulePlainSchema] = []

@@ -10,12 +10,13 @@ from views.base.base_component import BaseComponent
 from views.controls.date_field_control import DateField
 from views.controls.numeric_field_control import NumericField
 from views.components.search_results_component import SearchResultsComponent
+from utils.translation import Translation
+from schemas.base.base_schema import BaseStrictSchema, BasePlainSchema
+from services.base.base_service import BaseService
 
 if TYPE_CHECKING:
-    from utils.translation import Translation
     from controllers.base.base_view_controller import BaseViewController
-    from schemas.base.base_schema import BaseStrictSchema, BasePlainSchema
-    from services.base.base_service import BaseService
+
 
 TController = TypeVar(
     "TController", bound="BaseViewController[BaseService, BaseView, BasePlainSchema, BaseStrictSchema]"

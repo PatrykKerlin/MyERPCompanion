@@ -12,8 +12,8 @@ from events.events import ViewRequested, ViewReady
 
 
 class GroupController(BaseViewController[GroupService, GroupView, GroupPlainSchema, GroupStrictSchema]):
-    _input_schema_cls = GroupPlainSchema
-    _output_schema_cls = GroupStrictSchema
+    _plain_schema_cls = GroupPlainSchema
+    _strict_schema_cls = GroupStrictSchema
     _service_cls = GroupService
 
     def __init__(self, context: Context) -> None:

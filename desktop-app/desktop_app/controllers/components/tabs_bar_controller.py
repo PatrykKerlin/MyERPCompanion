@@ -49,7 +49,7 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
 
     async def __execute_close_clicked(self, title: str) -> None:
         tabs_state = self._state_store.app_state.tabs
-        key = tabs_state.items[title].view_key
+        view_key = tabs_state.items[title].view_key
         mode = tabs_state.items[title].mode
         updated_tabs = {key: val for key, val in tabs_state.items.items() if key != title}
         last_tab_title = next(reversed(updated_tabs), "")
@@ -62,22 +62,25 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
                 }
             )
         )
-        if key and mode in {ViewMode.SEARCH, ViewMode.LIST}:
-            await self._event_bus.publish(TabClosed(key=key))
+        if view_key and mode in {ViewMode.SEARCH, ViewMode.LIST}:
+            await self._event_bus.publish(TabClosed(view_key=view_key))
 
     async def __tab_requested_handler(self, event: TabRequested) -> None:
         tabs_state = self._state_store.app_state.tabs
-        tab_title = self._get_tab_title(event.key, event.postfix)
+        tab_title = self._get_tab_title(event.view_key, event.postfix)
         if tab_title not in tabs_state.items.keys() or event.replace:
             self._page.run_task(
-                self._event_bus.publish, ViewRequested(key=event.key, postfix=event.postfix, data=event.data)
+                self._event_bus.publish,
+                ViewRequested(
+                    module_id=event.module_id, view_key=event.view_key, postfix=event.postfix, data=event.data
+                ),
             )
         else:
             self._state_store.update(tabs={"current": tab_title, "mode": tabs_state.items[tab_title].mode})
 
     async def __view_ready_handler(self, event: ViewReady) -> None:
         tabs_state = self._state_store.app_state.tabs
-        tab_title = self._get_tab_title(event.key, event.postfix)
+        tab_title = self._get_tab_title(event.view_key, event.postfix)
         if tab_title not in tabs_state.items.keys():
             self._state_store.update(
                 tabs={

@@ -22,14 +22,14 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
         query_params: dict[str, Any] | None = None,
         body_params: BaseStrictSchema | None = None,
         token: TokenPlainSchema | None = None,
-        view_key: str | None = None,
+        module_id: int | None = None,
     ) -> list[ModulePlainSchema]:
         page = 1
         modules: list[ModulePlainSchema] = []
         params = {"page": page}
 
         while True:
-            response = await self._get(endpoint=endpoint, query_params=params, token=token, view_key=view_key)
+            response = await self._get(endpoint=endpoint, query_params=params, token=token, module_id=module_id)
             data = response.json()
             modules.extend(ModulePlainSchema(**module) for module in data.get("items", []))
             if not data.get("has_next", False):
@@ -45,8 +45,8 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
         query_params: dict[str, Any] | None = None,
         body_params: BaseStrictSchema | None = None,
         token: TokenPlainSchema | None = None,
-        view_key: str | None = None,
+        module_id: int | None = None,
     ) -> UserPlainSchema:
-        response = await self._get(endpoint=endpoint, token=token, view_key=view_key)
+        response = await self._get(endpoint=endpoint, token=token, module_id=module_id)
 
         return UserPlainSchema(**response.json(), is_superuser=False, password="")

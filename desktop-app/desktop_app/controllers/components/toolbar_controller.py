@@ -56,7 +56,7 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         row_id = data_row["id"]
         self._page.run_task(
             self._event_bus.publish,
-            RecordDeleteRequested(key=tabs_state.items[tabs_state.current].view_key, id=row_id),
+            RecordDeleteRequested(view_key=tabs_state.items[tabs_state.current].view_key, id=row_id),
         )
 
     def __tabs_updated_listener(self, state: TabsState) -> None:

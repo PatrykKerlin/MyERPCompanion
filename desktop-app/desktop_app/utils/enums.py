@@ -1,4 +1,4 @@
-from enum import StrEnum
+from enum import StrEnum, IntEnum
 
 
 class ViewMode(StrEnum):
@@ -9,6 +9,10 @@ class ViewMode(StrEnum):
     LIST = "list"
 
 
+class Module(IntEnum):
+    CORE = 1
+
+
 class View(StrEnum):
     SIDE_MENU = "side_menu"
     CURRENT_USER = "current_user"
@@ -17,6 +21,7 @@ class View(StrEnum):
     EMPLOYEES = "employees"
     WAREHOUSES = "warehouses"
     BINS = "bins"
+    CARRIERS = "carriers"
 
 
 class Endpoint(StrEnum):
@@ -33,3 +38,4 @@ class Endpoint(StrEnum):
     EMPLOYEES = "employees"
     WAREHOUSES = "warehouses"
     BINS = "bins"
+    CARRIERS = "carriers"

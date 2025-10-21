@@ -27,27 +27,27 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
     async def call_api_with_token_refresh(
         self,
         func: Callable[
-            [Endpoint, int | None, dict[str, Any] | None, TStrictSchema | None, TokenPlainSchema | None, str | None],
+            [Endpoint, int | None, dict[str, Any] | None, TStrictSchema | None, TokenPlainSchema | None, int | None],
             Any,
         ],
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
         body_params: TStrictSchema | None = None,
-        view_key: str | None = None,
+        module_id: int | None = None,
     ) -> Any:
         tokens = self._tokens_accessor.read()
         if not tokens:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
         try:
-            return await func(endpoint, path_param, query_params, body_params, tokens, view_key)
+            return await func(endpoint, path_param, query_params, body_params, tokens, module_id)
         except httpx.HTTPStatusError as first_error:
             self._logger.error(str(first_error))
             if first_error.response.status_code == httpx.codes.UNAUTHORIZED:
                 try:
                     new_tokens = await self.refresh_tokens(tokens)
                     self._tokens_accessor.write(new_tokens)
-                    return await func(endpoint, path_param, query_params, body_params, new_tokens, view_key)
+                    return await func(endpoint, path_param, query_params, body_params, new_tokens, module_id)
                 except Exception as refresh_error:
                     self._logger.error(str(refresh_error))
                     raise
@@ -60,14 +60,14 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         query_params: dict[str, Any] | None = None,
         body_params: TStrictSchema | None = None,
         token: TokenPlainSchema | None = None,
-        view_key: str | None = None,
+        module_id: int | None = None,
     ) -> list[TPlainSchema]:
         params: dict[str, Any] = {"page": 1}
         if query_params:
             params.update(query_params)
         items: list[TPlainSchema] = []
         while True:
-            response = await self._get(endpoint=endpoint, query_params=params, token=token, view_key=view_key)
+            response = await self._get(endpoint=endpoint, query_params=params, token=token, module_id=module_id)
             data = response.json()
             items.extend([self._plain_schema_cls(**item) for item in data.get("items", [])])
             if not data.get("has_next", False):
@@ -83,9 +83,9 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         query_params: dict[str, Any] | None = None,
         body_params: TStrictSchema | None = None,
         token: TokenPlainSchema | None = None,
-        view_key: str | None = None,
+        module_id: int | None = None,
     ) -> PaginatedResponseSchema[TPlainSchema]:
-        response = await self._get(endpoint=endpoint, query_params=query_params, token=token, view_key=view_key)
+        response = await self._get(endpoint=endpoint, query_params=query_params, token=token, module_id=module_id)
         data = response.json()
         return PaginatedResponseSchema[TPlainSchema](
             items=[self._plain_schema_cls(**item) for item in data.get("items", [])],
@@ -103,10 +103,10 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         query_params: dict[str, Any] | None = None,
         body_params: TStrictSchema | None = None,
         token: TokenPlainSchema | None = None,
-        view_key: str | None = None,
+        module_id: int | None = None,
     ) -> TPlainSchema:
         resolved_endpoint = f"{endpoint}/{path_param}"
-        response = await self._get(endpoint=resolved_endpoint, token=token, view_key=view_key)
+        response = await self._get(endpoint=resolved_endpoint, token=token, module_id=module_id)
         data = response.json()
         return self._plain_schema_cls(**data)
 
@@ -117,10 +117,12 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         query_params: dict[str, Any] | None = None,
         body_params: TStrictSchema | None = None,
         token: TokenPlainSchema | None = None,
-        view_key: str | None = None,
+        module_id: int | None = None,
     ) -> TPlainSchema:
         resolved_body_params = body_params.model_dump() if body_params else {}
-        response = await self._post(endpoint=endpoint, body_params=resolved_body_params, token=token, view_key=view_key)
+        response = await self._post(
+            endpoint=endpoint, body_params=resolved_body_params, token=token, module_id=module_id
+        )
         data = response.json()
         return self._plain_schema_cls(**data)
 
@@ -131,12 +133,12 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         query_params: dict[str, Any] | None = None,
         body_params: TStrictSchema | None = None,
         token: TokenPlainSchema | None = None,
-        view_key: str | None = None,
+        module_id: int | None = None,
     ) -> TPlainSchema:
         resolved_endpoint = f"{endpoint}/{path_param}"
         resolved_body_params = body_params.model_dump() if body_params else {}
         response = await self._put(
-            endpoint=resolved_endpoint, body_params=resolved_body_params, token=token, view_key=view_key
+            endpoint=resolved_endpoint, body_params=resolved_body_params, token=token, module_id=module_id
         )
         data = response.json()
         return self._plain_schema_cls(**data)
@@ -148,10 +150,10 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         query_params: dict[str, Any] | None = None,
         body_params: TStrictSchema | None = None,
         token: TokenPlainSchema | None = None,
-        view_key: str | None = None,
+        module_id: int | None = None,
     ) -> bool:
         resolved_endpoint = f"{endpoint}/{path_param}"
-        await self._delete(endpoint=resolved_endpoint, token=token, view_key=view_key)
+        await self._delete(endpoint=resolved_endpoint, token=token, module_id=module_id)
         return True
 
     async def refresh_tokens(self, token: TokenPlainSchema) -> TokenPlainSchema:
@@ -168,9 +170,9 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         endpoint: str,
         query_params: dict[str, Any] | None = None,
         token: TokenPlainSchema | None = None,
-        view_key: str | None = None,
+        module_id: int | None = None,
     ) -> httpx.Response:
-        headers = self.__prepare_headers(token, view_key)
+        headers = self.__prepare_headers(token, module_id)
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
             response = await client.get(url=endpoint, params=query_params)
             response.raise_for_status()
@@ -182,9 +184,9 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         endpoint: str,
         body_params: dict[str, Any] | None = None,
         token: TokenPlainSchema | None = None,
-        view_key: str | None = None,
+        module_id: int | None = None,
     ) -> httpx.Response:
-        headers = self.__prepare_headers(token, view_key)
+        headers = self.__prepare_headers(token, module_id)
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
             response = await client.post(url=endpoint, json=body_params)
             response.raise_for_status()
@@ -196,9 +198,9 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         endpoint: str,
         body_params: dict[str, Any] | None = None,
         token: TokenPlainSchema | None = None,
-        view_key: str | None = None,
+        module_id: int | None = None,
     ) -> httpx.Response:
-        headers = self.__prepare_headers(token, view_key)
+        headers = self.__prepare_headers(token, module_id)
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
             response = await client.put(url=endpoint, json=body_params)
             response.raise_for_status()
@@ -210,19 +212,19 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         endpoint: str,
         _: dict[str, Any] | None = None,
         token: TokenPlainSchema | None = None,
-        view_key: str | None = None,
+        module_id: int | None = None,
     ) -> httpx.Response:
-        headers = self.__prepare_headers(token, view_key)
+        headers = self.__prepare_headers(token, module_id)
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
             response = await client.delete(url=endpoint)
             response.raise_for_status()
             await asyncio.sleep(0.1)
             return response
 
-    def __prepare_headers(self, token: TokenPlainSchema | None = None, view_key: str | None = None) -> dict[str, str]:
+    def __prepare_headers(self, token: TokenPlainSchema | None = None, module_id: int | None = None) -> dict[str, str]:
         headers: dict[str, str] = {}
         if token and token.access:
             headers["Authorization"] = f"Bearer {token.access}"
-        if view_key:
-            headers["X-View-Key"] = view_key
+        if module_id:
+            headers["X-View-Module"] = str(module_id)
         return headers

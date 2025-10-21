@@ -86,21 +86,23 @@ class MenuBarRequested(BaseEvent):
 
 @dataclass(frozen=True)
 class ViewRequested(BaseEvent):
-    key: str
+    module_id: int
+    view_key: str
     postfix: int | None = None
     data: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
 class ViewReady(BaseEvent):
-    key: str
+    view_key: str
     view: BaseView
     postfix: int | None = None
 
 
 @dataclass(frozen=True)
 class TabRequested(BaseEvent):
-    key: str
+    module_id: int
+    view_key: str
     postfix: int | None = None
     data: dict[str, Any] | None = None
     replace: bool = False
@@ -113,10 +115,10 @@ class TabCloseRequested(BaseEvent):
 
 @dataclass(frozen=True)
 class TabClosed(BaseEvent):
-    key: str
+    view_key: str
 
 
 @dataclass(frozen=True)
 class RecordDeleteRequested(BaseEvent):
-    key: str
+    view_key: str
     id: int

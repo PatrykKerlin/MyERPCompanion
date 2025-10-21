@@ -69,11 +69,13 @@ class Auth:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
             if user_schema and user_schema.is_superuser:
                 return
+            
             module_schema = getattr(request.state, "module", None)
             if not module_schema:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
             if not module_schema or controller not in set(module_schema.controllers):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+            
             async with self.__get_session() as session:
                 module_schema = await self.__module_service.get_one_by_id(session, module_schema.id)
                 if not module_schema:

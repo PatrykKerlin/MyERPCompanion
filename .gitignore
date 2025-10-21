@@ -166,6 +166,7 @@ cython_debug/
 
 # VSCode
 .vscode
+.codex
 
 # Ruff cache
 .ruff_cache

@@ -23,19 +23,19 @@ class SideMenuController(BaseComponentController[SideMenuComponent, SideMenuRequ
             }
         )
 
-    def on_item_clicked(self, key: str) -> None:
-        self._page.run_task(self._event_bus.publish, TabRequested(key=key))
+    def on_item_clicked(self, module_id: int, view_key: str) -> None:
+        self._page.run_task(self._event_bus.publish, TabRequested(module_id=module_id, view_key=view_key))
 
     async def _component_requested_handler(self, _: SideMenuRequested) -> None:
         translation_state = self._state_store.app_state.translation
         modules_state = self._state_store.app_state.modules
-        content: dict[str, list[str]] = {}
+        content: dict[str, list[tuple[int, str]]] = {}
         if modules_state.items:
             sorted_modules = sorted(modules_state.items, key=lambda module: module.order)
             for module in sorted_modules:
-                if module.key == "core":
+                if not module.in_side_menu:
                     continue
-                content[module.key] = [view.key for view in module.views]
+                content[module.key] = [(module.id, view.key) for view in module.views]
         self._component = SideMenuComponent(controller=self, translation=translation_state.items, content=content)
         self._state_store.update(components={"side_menu": self._component})
         self.__is_component_visible = True

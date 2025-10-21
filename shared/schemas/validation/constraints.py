@@ -5,6 +5,8 @@ from pydantic import EmailStr, Field, HttpUrl
 
 class Constraints:
     __digits_only_regex = r"^\d+$"
+    __phone_number_regex = r"^\+?\d[\d\s]*$"
+    __postal_code_regex = r"^\d{2}-\d{3}$"
 
     Key = Annotated[str, Field(min_length=1, max_length=25, pattern=r"^[a-z_]+$")]
     Name = Annotated[str, Field(min_length=1, max_length=50)]
@@ -46,10 +48,10 @@ class Constraints:
     PercentFloat = Annotated[float, Field(ge=0, le=1)]
     PercentFloatOptional = Annotated[float | None, Field(ge=0, le=1)]
     PeselOptional = Annotated[str | None, Field(min_length=11, max_length=11, pattern=__digits_only_regex)]
-    PhoneNumber = Annotated[str, Field(min_length=9, max_length=20, pattern=r"^[0-9\s+]+$")]
-    PhoneNumberOptional = Annotated[str | None, Field(min_length=9, max_length=20, pattern=r"^[0-9\s+]+$")]
-    PostalCode = Annotated[str, Field(min_length=6, max_length=6, pattern=r"^\d{2}-\d{3}$")]
-    PostalCodeOptional = Annotated[str | None, Field(min_length=6, max_length=6, pattern=r"^\d{2}-\d{3}$")]
+    PhoneNumber = Annotated[str, Field(min_length=9, max_length=20, pattern=__phone_number_regex)]
+    PhoneNumberOptional = Annotated[str | None, Field(min_length=9, max_length=20, pattern=__phone_number_regex)]
+    PostalCode = Annotated[str, Field(min_length=6, max_length=6, pattern=__postal_code_regex)]
+    PostalCodeOptional = Annotated[str | None, Field(min_length=6, max_length=6, pattern=__postal_code_regex)]
     Quantity = Annotated[int, Field(ge=0)]
     Symbol = Annotated[str, Field(min_length=1, max_length=3)]
     TaxId = Annotated[str, Field(min_length=10, max_length=10, pattern=__digits_only_regex)]

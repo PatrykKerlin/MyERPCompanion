@@ -1,17 +1,19 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Generic, TypeVar, cast
+from typing import Awaitable, Callable, Generic, TypeVar, cast
 
 import flet as ft
+from httpx import HTTPStatusError
 from pydantic import ValidationError
 
 from controllers.base.base_controller import BaseController
-from events.events import RecordDeleteRequested, TabClosed, TabRequested, TabCloseRequested, ViewRequested
+from events.events import RecordDeleteRequested, TabClosed, TabRequested, TabCloseRequested, ViewReady, ViewRequested
 from schemas.base import BaseStrictSchema, BasePlainSchema
 from schemas.core.param_schema import PaginatedResponseSchema
 from services.base.base_service import BaseService
 from states.states import TabsState
-from utils.enums import Endpoint, ViewMode
+from utils.enums import Endpoint, View, ViewMode
 from utils.request_data import RequestData
+from utils.translation import Translation
 from views.base.base_view import BaseView
 from config.context import Context
 
@@ -27,10 +29,11 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
     _service_cls: type[TService]
     _view_cls: type[TView]
     _endpoint: Endpoint
+    _view_key: View
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        self._key = ""
+        self._module_id = 0
         self._service = self._service_cls(self._settings, self._logger, self._tokens_accessor)
         self._view: TView | None = None
         self._request_data = RequestData()
@@ -39,6 +42,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             {
                 TabClosed: self.__tab_closed_handler,
                 RecordDeleteRequested: self.__record_delete_requested_handler,
+                ViewRequested: self._view_requested_handler,
             }
         )
         self._subscribe_state_listeners(
@@ -56,61 +60,10 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         return self._page_size_list
 
     @abstractmethod
-    async def _view_requested_handler(self, event: ViewRequested) -> None:
-        pass
+    async def _view_requested_handler(self, event: ViewRequested) -> None: ...
 
-    async def _perform_get_page(self) -> PaginatedResponseSchema[TPlainSchema]:
-        filters: dict[str, str] = {}
-        for field in self._request_data.selected_inputs:
-            filters[field] = self._request_data.input_values.get(field, "")
-        params = {
-            "page": self._request_data.page,
-            "page_size": self._request_data.page_size,
-            "sort_by": self._request_data.sort_by,
-            "order": self._request_data.order,
-            **filters,
-        }
-        return await self._service.call_api_with_token_refresh(
-            func=self._service.get_page,
-            endpoint=self._endpoint,
-            query_params=params,
-            view_key=self._key,
-        )
-
-    async def _perform_get_one(self, id: int) -> TPlainSchema:
-        return await self._service.call_api_with_token_refresh(
-            func=self._service.get_one,
-            endpoint=self._endpoint,
-            path_param=id,
-            view_key=self._key,
-        )
-
-    async def _perform_create(self) -> TPlainSchema:
-        data = self._strict_schema_cls(**self._request_data.input_values)
-        return await self._service.call_api_with_token_refresh(
-            func=self._service.create,
-            endpoint=self._endpoint,
-            body_params=data,
-            view_key=self._key,
-        )
-
-    async def _perform_update(self, id: int) -> TPlainSchema:
-        data = self._strict_schema_cls(**self._request_data.input_values)
-        return await self._service.call_api_with_token_refresh(
-            func=self._service.update,
-            endpoint=self._endpoint,
-            path_param=id,
-            body_params=data,
-            view_key=self._key,
-        )
-
-    async def _perform_delete(self, id: int) -> bool:
-        return await self._service.call_api_with_token_refresh(
-            func=self._service.delete,
-            endpoint=self._endpoint,
-            path_param=id,
-            view_key=self._key,
-        )
+    @abstractmethod
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> TView: ...
 
     def on_marker_clicked(self, event: ft.ControlEvent, key: str) -> None:
         if not self._view:
@@ -138,6 +91,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             self.set_field_value(key, value)
         for callback in after_change:
             callback()
+        print(self._request_data.input_values)
 
     def on_search_clicked(self) -> None:
         self._page.run_task(self.__execute_search_clicked)
@@ -191,6 +145,73 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         error = self.__validate_field(key)
         self._view.set_field_error(key, error)
 
+    async def _handle_view_requested(self, event: ViewRequested) -> None:
+        if event.view_key != self._view_key:
+            return
+        self._open_loading_dialog()
+        translation_state = self._state_store.app_state.translation
+        translation_items = translation_state.items
+        self._module_id = event.module_id
+        mode = ViewMode.READ if event.data else ViewMode.SEARCH
+        if event.data:
+            self._request_data.input_values = event.data
+        self._view = await self._build_view(translation_items, mode, event)
+        await self._event_bus.publish(ViewReady(view_key=event.view_key, postfix=event.postfix, view=self._view))
+        self._close_loading_dialog()
+
+    async def _perform_get_page(self) -> PaginatedResponseSchema[TPlainSchema]:
+        filters: dict[str, str] = {}
+        for field in self._request_data.selected_inputs:
+            filters[field] = self._request_data.input_values.get(field, "")
+        params = {
+            "page": self._request_data.page,
+            "page_size": self._request_data.page_size,
+            "sort_by": self._request_data.sort_by,
+            "order": self._request_data.order,
+            **filters,
+        }
+        return await self._service.call_api_with_token_refresh(
+            func=self._service.get_page,
+            endpoint=self._endpoint,
+            query_params=params,
+            module_id=self._module_id,
+        )
+
+    async def _perform_get_one(self, id: int) -> TPlainSchema:
+        return await self._service.call_api_with_token_refresh(
+            func=self._service.get_one,
+            endpoint=self._endpoint,
+            path_param=id,
+            module_id=self._module_id,
+        )
+
+    async def _perform_create(self) -> TPlainSchema:
+        data = self._strict_schema_cls(**self._request_data.input_values)
+        return await self._service.call_api_with_token_refresh(
+            func=self._service.create,
+            endpoint=self._endpoint,
+            body_params=data,
+            module_id=self._module_id,
+        )
+
+    async def _perform_update(self, id: int) -> TPlainSchema:
+        data = self._strict_schema_cls(**self._request_data.input_values)
+        return await self._service.call_api_with_token_refresh(
+            func=self._service.update,
+            endpoint=self._endpoint,
+            path_param=id,
+            body_params=data,
+            module_id=self._module_id,
+        )
+
+    async def _perform_delete(self, id: int) -> bool:
+        return await self._service.call_api_with_token_refresh(
+            func=self._service.delete,
+            endpoint=self._endpoint,
+            path_param=id,
+            module_id=self._module_id,
+        )
+
     def __parse_value(self, value: str | int | float | bool | None) -> str | int | float | bool | None:
         if value is None:
             return None
@@ -202,12 +223,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         lower = value_stripped.lower()
         if lower in {"true", "false"}:
             return lower == "true"
-        if value_stripped.isdecimal() or (value_stripped.startswith("-") and value_stripped[1:].isdecimal()):
-            return int(value_stripped)
-        try:
-            return float(value_stripped)
-        except ValueError:
-            return value_stripped
+        return value_stripped
 
     def __tabs_updated_listener(self, state: TabsState) -> None:
         if not state.current or state.current not in state.items:
@@ -244,7 +260,11 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         self._open_loading_dialog()
         try:
             response = await self._perform_get_one(result_id)
-            await self._event_bus.publish(TabRequested(key=self._key, postfix=response.id, data=response.model_dump()))
+            await self._event_bus.publish(
+                TabRequested(
+                    module_id=self._module_id, view_key=self._view_key, postfix=response.id, data=response.model_dump()
+                )
+            )
             self._close_loading_dialog()
         except Exception as err:
             self._close_loading_dialog()
@@ -269,9 +289,14 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             if not response:
                 return
             await self._event_bus.publish(
-                TabRequested(key=self._key, postfix=response.id, data=response.model_dump(), replace=replace)
+                TabRequested(
+                    module_id=self._module_id,
+                    view_key=self._view_key,
+                    postfix=response.id,
+                    data=response.model_dump(),
+                    replace=replace,
+                )
             )
-
         except ValidationError as validation_error:
             translate_state = self._state_store.app_state.translation
             error_message = [translate_state.items.get("validation_errors")]
@@ -282,6 +307,13 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             final_message = "\n".join(error_message)
             self._close_loading_dialog()
             self._open_error_dialog(message=final_message)
+        except HTTPStatusError as http_error:
+            self._close_loading_dialog()
+            if http_error.response.status_code == 403:
+                self._open_error_dialog(message_key="no_permissions")
+            else:
+                self._logger.error(str(http_error))
+                self._open_error_dialog(message_key="record_save_fail")
         except Exception as err:
             self._close_loading_dialog()
             self._logger.error(str(err))
@@ -303,20 +335,27 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         return
 
     async def __tab_closed_handler(self, event: TabClosed) -> None:
-        if event.key != self._key:
+        if event.view_key != self._view_key:
             return
         self._request_data = RequestData()
 
     async def __record_delete_requested_handler(self, event: RecordDeleteRequested) -> None:
-        if event.key != self._key:
+        if event.view_key != self._view_key:
             return
         self._open_loading_dialog()
         try:
             await self._perform_delete(event.id)
-            tab_title = self._get_tab_title(event.key, event.id)
+            tab_title = self._get_tab_title(event.view_key, event.id)
             await self._event_bus.publish(TabCloseRequested(tab_title))
             self._open_message_dialog("record_delete_success")
             self._close_loading_dialog()
+        except HTTPStatusError as http_error:
+            self._close_loading_dialog()
+            if http_error.response.status_code == 403:
+                self._open_error_dialog(message_key="no_permissions")
+            else:
+                self._logger.error(str(http_error))
+                self._open_error_dialog(message_key="record_save_fail")
         except Exception as err:
             self._close_loading_dialog()
             self._logger.error(str(err))
