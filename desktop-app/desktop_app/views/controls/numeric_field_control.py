@@ -15,6 +15,7 @@ class NumericField(ft.Row):
         is_float: bool = False,
         width: float | None = None,
         expand: int | bool | None = None,
+        read_only: bool | None = None,
         on_change: Callable[[ft.ControlEvent], None] | None = None,
     ) -> None:
         super().__init__(
@@ -27,6 +28,7 @@ class NumericField(ft.Row):
         self.__precision = precision
         self.__on_change = on_change
         self.__is_float = is_float
+        self.__read_only = read_only
         if is_float:
             self.__min_value = float(min_value) if min_value is not None else 0
             self.__max_value = float(max_value) if max_value is not None else sys.float_info.max
@@ -44,10 +46,13 @@ class NumericField(ft.Row):
             text_align=ft.TextAlign.CENTER,
             expand=True,
             on_change=self.__handle_text_change,
+            read_only=self.__read_only,
         )
 
-        self.__decrement_button = ft.IconButton(icon=ft.Icons.REMOVE, on_click=self.__decrement)
-        self.__increment_button = ft.IconButton(icon=ft.Icons.ADD, on_click=self.__increment)
+        self.__decrement_button = ft.IconButton(
+            icon=ft.Icons.REMOVE, on_click=self.__decrement, disabled=self.__read_only
+        )
+        self.__increment_button = ft.IconButton(icon=ft.Icons.ADD, on_click=self.__increment, disabled=self.__read_only)
 
         self.controls = [
             ft.Container(content=self.__decrement_button, alignment=ft.alignment.top_center),
@@ -71,6 +76,20 @@ class NumericField(ft.Row):
     def error_text(self, message: str | None) -> None:
         self.__text_field.error_text = message
         self.__text_field.update()
+
+    @property
+    def read_only(self) -> bool | None:
+        return self.__read_only
+
+    @read_only.setter
+    def read_only(self, new_value: bool | None) -> None:
+        self.__read_only = new_value
+        self.__text_field.read_only = self.__read_only
+        self.__decrement_button.disabled = self.__read_only
+        self.__increment_button.disabled = self.__read_only
+        self.__text_field.update()
+        self.__decrement_button.update()
+        self.__increment_button.update()
 
     def __emit_value(self, value: int | float | None) -> None:
         if not self.__on_change:

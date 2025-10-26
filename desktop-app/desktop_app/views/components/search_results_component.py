@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from math import ceil
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
+from views.controls.table_control import TableControl
 from utils.translation import Translation
 from views.base.base_component import BaseComponent
 
@@ -15,77 +15,32 @@ if TYPE_CHECKING:
 
 class SearchResultsComponent(BaseComponent, ft.Column):
     def __init__(
-        self, controller: BaseViewController, translation: Translation, columns: list[str], data: list[dict[str, Any]]
+        self,
+        controller: BaseViewController,
+        translation: Translation,
+        columns: list[str],
+        data: list[dict[str, Any]],
     ) -> None:
         BaseComponent.__init__(self, controller, translation)
         self.__data = data
         self.__columns = columns
-
+        table = TableControl(
+            translation=self._translation,
+            columns=self.__columns,
+            data=self.__data,
+            sort_by=self._controller.search_params.sort_by,
+            order=self._controller.search_params.order,
+            on_sort_clicked=self._controller.on_sort_clicked,
+            on_row_clicked=lambda row_id: self._controller.on_row_clicked(row_id),
+        )
         data_table = ft.Row(
-            controls=[self.__build_table()],
+            controls=[table],
             alignment=ft.MainAxisAlignment.CENTER,
             vertical_alignment=ft.CrossAxisAlignment.START,
             expand=True,
         )
         buttons = self.__build_buttons()
-        ft.Column.__init__(
-            self,
-            controls=[buttons, data_table],
-            expand=True,
-        )
-
-    def __build_table(self) -> ft.Column:
-        if not self.__data:
-            return ft.Column(controls=[], expand=True)
-        header_row = ft.Row(
-            controls=[
-                ft.Container(
-                    content=ft.TextButton(
-                        content=ft.Row(
-                            controls=[
-                                ft.Text(
-                                    self._translation.get(key),
-                                    weight=ft.FontWeight.BOLD,
-                                    overflow=ft.TextOverflow.ELLIPSIS,
-                                    max_lines=1,
-                                    expand=True,
-                                ),
-                                ft.Icon(
-                                    name=self.__get_sort_icon(key),
-                                    visible=self._controller.search_params.sort_by == key,
-                                ),
-                            ]
-                        ),
-                        on_click=lambda _, key=key: self._controller.on_sort_clicked(key),
-                    ),
-                    expand=True,
-                )
-                for key in self.__columns
-            ],
-            expand=True,
-        )
-        data_rows = [self.__build_row(row) for row in self.__data]
-        return ft.Column(
-            controls=[header_row, *data_rows],
-            scroll=ft.ScrollMode.AUTO,
-            expand=True,
-        )
-
-    def __build_row(self, row: dict[str, Any]) -> ft.Container:
-        cells = [
-            ft.Container(
-                content=ft.Text(str(row[key] if row[key] else ""), overflow=ft.TextOverflow.ELLIPSIS, max_lines=1),
-                expand=True,
-            )
-            for key in self.__columns
-        ]
-        row_content = ft.Row(controls=cells, expand=True)
-        container = ft.Container(
-            content=row_content,
-            on_click=lambda _: self._controller.on_row_clicked(row["id"]),
-            on_hover=self.__on_hover,
-        )
-        return container
+        ft.Column.__init__(self, controls=[buttons, data_table], expand=True)
 
     def __build_buttons(self) -> ft.Row:
         prev_button = ft.IconButton(
@@ -104,7 +59,7 @@ class SearchResultsComponent(BaseComponent, ft.Column):
         counter_text = ft.Text(value=f"{self._controller.search_params.page}/{total_pages}")
         page_size_dropdown = ft.Dropdown(
             value=str(self._controller.search_params.page_size),
-            options=[ft.DropdownOption(str(val)) for val in self._controller.page_size_list],
+            options=[ft.dropdown.Option(str(val)) for val in self._controller.page_size_list],
             on_change=lambda event: self._controller.on_page_size_selected(int(event.control.value)),
         )
         back_button = ft.ElevatedButton(
@@ -122,12 +77,3 @@ class SearchResultsComponent(BaseComponent, ft.Column):
                 next_button,
             ]
         )
-
-    def __on_hover(self, e: ft.ControlEvent) -> None:
-        e.control.bgcolor = ft.Colors.ON_SECONDARY if e.data == "true" else ft.Colors.TRANSPARENT
-        e.control.update()
-
-    def __get_sort_icon(self, key: str) -> str | None:
-        if self._controller.search_params.sort_by == key:
-            return ft.Icons.ARROW_DROP_UP if self._controller.search_params.order == "asc" else ft.Icons.ARROW_DROP_DOWN
-        return None

@@ -162,7 +162,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
 
     def toggle_search_results(self, data: list[dict[str, Any]] | None = None) -> None:
         if data:
-            columns = ["id"] + [key for key in self._inputs.keys() if key != "id"]
+            available = ["id"] + [key for key in self._inputs.keys() if key != "id"]
+            columns = self._controller.get_search_result_columns(available)
             search_results = SearchResultsComponent(
                 controller=self._controller, translation=self._translation, columns=columns, data=data
             )
@@ -349,7 +350,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             input = field.input.content
             marker = field.marker.content
             if hasattr(input, "read_only"):
-                setattr(input, "read_only", False)
+                setattr(input, "read_only", True)
             if hasattr(input, "disabled"):
                 setattr(input, "disabled", True)
             if hasattr(marker, "disabled"):
@@ -393,7 +394,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             if hasattr(input, "read_only"):
                 setattr(input, "read_only", True)
             if hasattr(input, "disabled"):
-                setattr(input, "disabled", False)
+                if isinstance(input, (ft.TextField, NumericField, DateField)):
+                    setattr(input, "disabled", False)
+                else:
+                    setattr(input, "disabled", True)
             if hasattr(marker, "disabled"):
                 setattr(marker, "disabled", True)
             if hasattr(marker, "width"):

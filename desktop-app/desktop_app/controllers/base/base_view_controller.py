@@ -145,6 +145,9 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         error = self.__validate_field(key)
         self._view.set_field_error(key, error)
 
+    def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
+        return available_fields
+
     async def _handle_view_requested(self, event: ViewRequested) -> None:
         if event.view_key != self._view_key:
             return

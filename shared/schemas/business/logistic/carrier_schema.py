@@ -1,6 +1,8 @@
+from typing import Any
+from pydantic import Field, field_validator
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
-from schemas.business.logistic.delivery_method_schema import DeliveryMethodPlainSchema
 from schemas.validation.constraints import Constraints
+from schemas.validation.normalizers import Normalizers
 
 
 class CarrierStrictSchema(BaseStrictSchema):
@@ -60,4 +62,9 @@ class CarrierPlainSchema(BasePlainSchema):
 
     currency_id: int
 
-    delivery_methods: list[DeliveryMethodPlainSchema]
+    delivery_method_ids: list[int] = Field(alias="delivery_methods")
+
+    @field_validator("delivery_method_ids", mode="before")
+    @classmethod
+    def _normalize_delivery_methods(cls, values: list[Any]) -> list[int]:
+        return Normalizers.normalize_related_ids(values)

@@ -2,8 +2,8 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.business.logistic import Carrier
-from models.business.trade import Currency
+from models.business.logistic.carrier import Carrier
+from models.business.logistic.delivery_method import DeliveryMethod
 from repositories.base.base_repository import BaseRepository
 
 
@@ -19,6 +19,6 @@ class CarrierRepository(BaseRepository[Carrier]):
     ) -> Select:
         query = super()._build_query(additional_filters, sort_by, sort_order)
         return query.options(
-            selectinload(cls._model_cls.currency),
-            with_loader_criteria(Currency, cls._expr(Currency.is_active.is_(True))),
+            selectinload(cls._model_cls.delivery_methods),
+            with_loader_criteria(DeliveryMethod, cls._expr(DeliveryMethod.is_active.is_(True))),
         )

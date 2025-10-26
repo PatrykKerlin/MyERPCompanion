@@ -43,6 +43,7 @@ class App:
             {"router": core.GroupController(self.__context, self.__auth).router, "prefix": "/groups"},
             {"router": core.LanguageController(self.__context, self.__auth).router, "prefix": "/languages"},
             {"router": core.ThemeController(self.__context, self.__auth).router, "prefix": "/themes"},
+            {"router": core.ImageController(self.__context, self.__auth).router, "prefix": "/images"},
         ]
         business_hr_endpoints = [
             {"router": hr.DepartmentController(self.__context, self.__auth).router, "prefix": "/departments"},
@@ -51,10 +52,19 @@ class App:
         ]
         business_logistic_endpoints = [
             {"router": logistic.BinController(self.__context, self.__auth).router, "prefix": "/bins"},
+            {"router": logistic.CarrierController(self.__context, self.__auth).router, "prefix": "/carriers"},
+            {"router": logistic.CategoryController(self.__context, self.__auth).router, "prefix": "/categories"},
+            {
+                "router": logistic.DeliveryMethodController(self.__context, self.__auth).router,
+                "prefix": "/delivery-methods",
+            },
+            {"router": logistic.ItemController(self.__context, self.__auth).router, "prefix": "/items"},
+            {"router": logistic.UnitController(self.__context, self.__auth).router, "prefix": "/units"},
             {"router": logistic.WarehouseController(self.__context, self.__auth).router, "prefix": "/warehouses"},
         ]
         business_trade_endpoints = [
             {"router": trade.CurrencyController(self.__context, self.__auth).router, "prefix": "/currencies"},
+            {"router": trade.SupplierController(self.__context, self.__auth).router, "prefix": "/suppliers"},
         ]
 
         endpoints.extend(core_endpoints)

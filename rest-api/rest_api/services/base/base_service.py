@@ -75,42 +75,42 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         setattr(model, "modified_by", modified_by)
         await self._repository_cls.delete(session, model)
 
-    async def _handle_assoc_table(
-        self,
-        session: AsyncSession,
-        owner_model: TModel,
-        assoc_repo_cls: type[BaseRepository],
-        model_cls: type[BaseModel],
-        owner_field: str,
-        related_field: str,
-        owner_id: int,
-        related_ids: list[int],
-        related_repo_cls: type[BaseRepository],
-        created_by: int | None = None,
-        modified_by: int | None = None,
-    ) -> None:
-        existing_assoc_models = await assoc_repo_cls.get_all(
-            session, filters=[assoc_repo_cls._expr(getattr(model_cls, owner_field) == owner_id)]
-        )
-        existing_related_ids = {getattr(assoc, related_field) for assoc in existing_assoc_models}
-        new_related_ids = set(related_ids)
-        ids_to_add = new_related_ids - existing_related_ids
-        ids_to_drop = existing_related_ids - new_related_ids
+    # async def _handle_assoc_table(
+    #     self,
+    #     session: AsyncSession,
+    #     owner_model: TModel,
+    #     assoc_repo_cls: type[BaseRepository],
+    #     model_cls: type[BaseModel],
+    #     owner_field: str,
+    #     related_field: str,
+    #     owner_id: int,
+    #     related_ids: list[int],
+    #     related_repo_cls: type[BaseRepository],
+    #     created_by: int | None = None,
+    #     modified_by: int | None = None,
+    # ) -> None:
+    #     existing_assoc_models = await assoc_repo_cls.get_all(
+    #         session, filters=[assoc_repo_cls._expr(getattr(model_cls, owner_field) == owner_id)]
+    #     )
+    #     existing_related_ids = {getattr(assoc, related_field) for assoc in existing_assoc_models}
+    #     new_related_ids = set(related_ids)
+    #     ids_to_add = new_related_ids - existing_related_ids
+    #     ids_to_drop = existing_related_ids - new_related_ids
 
-        for assoc_model in existing_assoc_models:
-            if getattr(assoc_model, related_field) in ids_to_drop:
-                if modified_by:
-                    setattr(assoc_model, "modified_by", modified_by)
-                await assoc_repo_cls.delete(session, assoc_model, False)
+    #     for assoc_model in existing_assoc_models:
+    #         if getattr(assoc_model, related_field) in ids_to_drop:
+    #             if modified_by:
+    #                 setattr(assoc_model, "modified_by", modified_by)
+    #             await assoc_repo_cls.delete(session, assoc_model, False)
 
-        for id_to_add in ids_to_add:
-            related_model = await related_repo_cls.get_one_by_id(session, id_to_add)
-            if not related_model:
-                raise NoResultFound(self._not_found_message.format(model=self._model_cls.__name__, id=id_to_add))
-            assoc_model = model_cls(
-                **{owner_field: owner_id, related_field: related_model.id, "created_by": created_by}
-            )
-            await assoc_repo_cls.save(session, assoc_model, False)
+    #     for id_to_add in ids_to_add:
+    #         related_model = await related_repo_cls.get_one_by_id(session, id_to_add)
+    #         if not related_model:
+    #             raise NoResultFound(self._not_found_message.format(model=self._model_cls.__name__, id=id_to_add))
+    #         assoc_model = model_cls(
+    #             **{owner_field: owner_id, related_field: related_model.id, "created_by": created_by}
+    #         )
+    #         await assoc_repo_cls.save(session, assoc_model, False)
 
-        await self._repository_cls.commit(session)
-        await self._repository_cls.refresh(session, owner_model)
+    #     await self._repository_cls.commit(session)
+    #     await self._repository_cls.refresh(session, owner_model)

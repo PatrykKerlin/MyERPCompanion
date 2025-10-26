@@ -1,6 +1,7 @@
 from controllers.core.auth_controller import AuthController
 from controllers.core.current_user_controller import CurrentUserController
 from controllers.core.health_check_controller import HealthCheckController
+from controllers.core.image_controller import ImageController
 from controllers.core.translation_controller import TranslationController
 from controllers.core.user_controller import UserController
 from models.core.group import Group
@@ -55,6 +56,7 @@ __all__ = [
     "CurrentUserController",
     "GroupController",
     "HealthCheckController",
+    "ImageController",
     "LanguageController",
     "ModuleController",
     "ThemeController",

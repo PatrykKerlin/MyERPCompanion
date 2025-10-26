@@ -17,7 +17,7 @@ class DeliveryMethodStrictSchema(BaseStrictSchema):
 class DeliveryMethodPlainSchema(BasePlainSchema):
     name: str
     description: str | None
-    price_per_unit: Constraints.PositiveNumeric102
+    price_per_unit: float
     max_width: float
     max_height: float
     max_length: float

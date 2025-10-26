@@ -2,12 +2,13 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.business.logistic import Carrier, DeliveryMethod, Unit
+from models.business.logistic.item import Item
+from models.core.image import Image
 from repositories.base.base_repository import BaseRepository
 
 
-class DeliveryMethodRepository(BaseRepository[DeliveryMethod]):
-    _model_cls = DeliveryMethod
+class ItemRepository(BaseRepository[Item]):
+    _model_cls = Item
 
     @classmethod
     def _build_query(
@@ -18,8 +19,6 @@ class DeliveryMethodRepository(BaseRepository[DeliveryMethod]):
     ) -> Select:
         query = super()._build_query(additional_filters, sort_by, sort_order)
         return query.options(
-            selectinload(cls._model_cls.carrier),
-            selectinload(cls._model_cls.unit),
-            with_loader_criteria(Carrier, cls._expr(Carrier.is_active.is_(True))),
-            with_loader_criteria(Unit, cls._expr(Unit.is_active.is_(True))),
+            selectinload(cls._model_cls.images),
+            with_loader_criteria(Image, cls._expr(Image.is_active.is_(True))),
         )

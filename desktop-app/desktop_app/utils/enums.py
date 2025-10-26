@@ -22,6 +22,8 @@ class View(StrEnum):
     WAREHOUSES = "warehouses"
     BINS = "bins"
     CARRIERS = "carriers"
+    DELIVERY_METHODS = "delivery-methods"
+    UNITS = "units"
 
 
 class Endpoint(StrEnum):
@@ -39,3 +41,5 @@ class Endpoint(StrEnum):
     WAREHOUSES = "warehouses"
     BINS = "bins"
     CARRIERS = "carriers"
+    DELIVERY_METHODS = "delivery-methods"
+    UNITS = "units"

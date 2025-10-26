@@ -16,18 +16,18 @@ class ModuleService(BaseService[Module, ModuleRepository, ModuleStrictSchema, Mo
         model = self._model_cls(**schema.model_dump(exclude={"groups"}))
         model.created_by = created_by
         saved_model = await self._repository_cls.save(session, model, False)
-        await self._handle_assoc_table(
-            session=session,
-            owner_model=saved_model,
-            assoc_repo_cls=AssocModuleGroupRepository,
-            model_cls=AssocModuleGroup,
-            owner_field="module_id",
-            related_field="group_id",
-            owner_id=saved_model.id,
-            related_ids=schema.groups,
-            related_repo_cls=GroupRepository,
-            created_by=created_by,
-        )
+        # await self._handle_assoc_table(
+        #     session=session,
+        #     owner_model=saved_model,
+        #     assoc_repo_cls=AssocModuleGroupRepository,
+        #     model_cls=AssocModuleGroup,
+        #     owner_field="module_id",
+        #     related_field="group_id",
+        #     owner_id=saved_model.id,
+        #     related_ids=schema.groups,
+        #     related_repo_cls=GroupRepository,
+        #     created_by=created_by,
+        # )
         return self._output_schema_cls.model_validate(saved_model)
 
     async def update(
@@ -40,17 +40,17 @@ class ModuleService(BaseService[Module, ModuleRepository, ModuleStrictSchema, Mo
             setattr(model, key, value)
         model.modified_by = modified_by
         updated_model = await self._repository_cls.save(session, model, False)
-        await self._handle_assoc_table(
-            session=session,
-            owner_model=updated_model,
-            assoc_repo_cls=AssocModuleGroupRepository,
-            model_cls=AssocModuleGroup,
-            owner_field="module_id",
-            related_field="group_id",
-            owner_id=updated_model.id,
-            related_ids=schema.groups,
-            related_repo_cls=GroupRepository,
-            created_by=modified_by,
-            modified_by=modified_by,
-        )
+        # await self._handle_assoc_table(
+        #     session=session,
+        #     owner_model=updated_model,
+        #     assoc_repo_cls=AssocModuleGroupRepository,
+        #     model_cls=AssocModuleGroup,
+        #     owner_field="module_id",
+        #     related_field="group_id",
+        #     owner_id=updated_model.id,
+        #     related_ids=schema.groups,
+        #     related_repo_cls=GroupRepository,
+        #     created_by=modified_by,
+        #     modified_by=modified_by,
+        # )
         return self._output_schema_cls.model_validate(updated_model)

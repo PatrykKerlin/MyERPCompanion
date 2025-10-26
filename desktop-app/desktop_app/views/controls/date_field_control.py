@@ -13,6 +13,7 @@ class DateField(ft.Row):
         date_format: str = "%Y-%m-%d",
         width: float | None = None,
         expand: int | bool | None = None,
+        read_only: bool | None = None,
         on_change: Callable[[ft.ControlEvent], None] | None = None,
     ) -> None:
         super().__init__(
@@ -27,6 +28,7 @@ class DateField(ft.Row):
         self.__value = value
         self.__min = min_date
         self.__max = max_date
+        self.__read_only = read_only
 
         self.__text_field = ft.TextField(
             value=self.__format_value(self.__value),
@@ -43,7 +45,9 @@ class DateField(ft.Row):
         if self.__value is not None:
             self.__picker.value = self.__value
 
-        self.__open_button = ft.IconButton(icon=ft.Icons.CALENDAR_MONTH, on_click=self.__open_picker)
+        self.__open_button = ft.IconButton(
+            icon=ft.Icons.CALENDAR_MONTH, on_click=self.__open_picker, disabled=self.__read_only
+        )
 
         self.controls = [
             self.__picker,
@@ -68,6 +72,16 @@ class DateField(ft.Row):
     def error_text(self, message: str | None) -> None:
         self.__text_field.error_text = message
         self.__text_field.update()
+
+    @property
+    def read_only(self) -> bool | None:
+        return self.__read_only
+
+    @read_only.setter
+    def read_only(self, new_value: bool | None) -> None:
+        self.__read_only = new_value
+        self.__open_button.disabled = self.__read_only
+        self.__open_button.update()
 
     def __emit_value(self) -> None:
         if not self.__on_change:

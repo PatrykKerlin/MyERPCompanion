@@ -17,7 +17,7 @@ class PopulateDatabase:
         self.__get_session = get_session
         self.__auth = auth
         self.__superuser: mc.User | None = None
-        self.__base_path = Path(__file__).resolve().parent.parent / "config/initial_data"
+        self.__base_path = Path(__file__).resolve().parent / "initial"
 
     async def execute(self) -> None:
         await self.__populate_superuser()
@@ -62,6 +62,12 @@ class PopulateDatabase:
             "assoc_user_groups",
             "warehouses",
             "bins",
+            "units",
+            "carriers",
+            "delivery_methods",
+            "categories",
+            "suppliers",
+            "items",
         ]
         for file_name in sql_files:
             file_path = self.__base_path / f"{file_name}.sql"

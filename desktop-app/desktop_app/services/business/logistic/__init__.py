@@ -1,6 +1,8 @@
 from schemas.business.logistic.warehouse_schema import WarehousePlainSchema, WarehouseStrictSchema
 from schemas.business.logistic.bin_schema import BinPlainSchema, BinStrictSchema
 from schemas.business.logistic.carrier_schema import CarrierPlainSchema, CarrierStrictSchema
+from schemas.business.logistic.delivery_method_schema import DeliveryMethodPlainSchema, DeliveryMethodStrictSchema
+from schemas.business.logistic.unit_schema import UnitPlainSchema, UnitStrictSchema
 from utils.service_factory import ServiceFactory
 
 BinService = ServiceFactory.create(
@@ -13,6 +15,16 @@ CarrierService = ServiceFactory.create(
     plain_schema_cls=CarrierPlainSchema,
     strict_schema_cls=CarrierStrictSchema,
 )
+DeliveryMethodService = ServiceFactory.create(
+    name_prefix="DeliveryMethod",
+    plain_schema_cls=DeliveryMethodPlainSchema,
+    strict_schema_cls=DeliveryMethodStrictSchema,
+)
+UnitService = ServiceFactory.create(
+    name_prefix="Unit",
+    plain_schema_cls=UnitPlainSchema,
+    strict_schema_cls=UnitStrictSchema,
+)
 WarehouseService = ServiceFactory.create(
     name_prefix="Warehouse",
     plain_schema_cls=WarehousePlainSchema,
@@ -23,5 +35,7 @@ WarehouseService = ServiceFactory.create(
 __all__ = [
     "BinService",
     "CarrierService",
+    "DeliveryMethodService",
+    "UnitService",
     "WarehouseService",
 ]

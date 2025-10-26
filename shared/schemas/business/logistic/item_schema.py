@@ -3,10 +3,9 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
-from pydantic import model_validator
+from pydantic import Field, field_validator, model_validator
 
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
-from schemas.business.trade.discount_schema import DiscountPlainSchema
 from schemas.core.image_schema import ImagePlainSchema
 from schemas.validation.constraints import Constraints
 from schemas.validation.normalizers import Normalizers
@@ -44,8 +43,6 @@ class ItemStrictSchema(BaseStrictSchema):
     category_id: Constraints.PositiveInteger
     unit_id: Constraints.PositiveInteger
     supplier_id: Constraints.PositiveInteger
-
-    images: Constraints.PositiveIntegerListOptional
 
     @model_validator(mode="after")
     def _validate_data(self) -> ItemStrictSchema:
@@ -93,14 +90,17 @@ class ItemPlainSchema(BasePlainSchema):
     unit_id: int
     supplier_id: int
 
-    discounts: list[DiscountPlainSchema]
     images: list[ImagePlainSchema]
 
-    bin_ids: list[int]
+    bin_ids: list[int] = Field(alias="bins")
+    discount_ids: list[int] = Field(alias="discounts")
 
-    @model_validator(mode="before")
+    @field_validator("bin_ids", mode="before")
     @classmethod
-    def _extract_bin_ids(cls, data: Any) -> Any:
-        if isinstance(data, dict) and "bins" in data and "bin_ids" not in data:
-            data["bin_ids"] = Normalizers.normalize_related_ids(data["bins"])
-        return data
+    def _normalize_bins(cls, values: list[Any]) -> list[int]:
+        return Normalizers.normalize_related_ids(values)
+
+    @field_validator("discount_ids", mode="before")
+    @classmethod
+    def _normalize_discounts(cls, values: list[Any]) -> list[int]:
+        return Normalizers.normalize_related_ids(values)

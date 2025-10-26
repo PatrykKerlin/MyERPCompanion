@@ -13,3 +13,4 @@ pyright
 ruff
 isort
 aiofiles
+python-multipart

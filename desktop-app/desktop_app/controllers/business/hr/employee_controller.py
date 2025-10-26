@@ -46,6 +46,19 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
             "manager_id", [(manager.id, f"{manager.first_name} {manager.last_name}") for manager in managers]
         )
 
+    def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
+        return [
+            "id",
+            "first_name",
+            "middle_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "hire_date",
+            "termination_date",
+            "is_remote",
+        ]
+
     async def _view_requested_handler(self, event: ViewRequested) -> None:
         await self._handle_view_requested(event)
 

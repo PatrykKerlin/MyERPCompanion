@@ -11,6 +11,7 @@ class Constraints:
     Key = Annotated[str, Field(min_length=1, max_length=25, pattern=r"^[a-z_]+$")]
     Name = Annotated[str, Field(min_length=1, max_length=50)]
 
+    Bytes = bytes
     BooleanFalse = Annotated[bool, Field(default=False)]
     BooleanTrue = Annotated[bool, Field(default=True)]
     PositiveFloat = Annotated[int, Field(gt=0)]

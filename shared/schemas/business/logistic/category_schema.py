@@ -1,5 +1,4 @@
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
-from schemas.business.trade.discount_schema import DiscountPlainSchema
 from schemas.validation.constraints import Constraints
 
 
@@ -11,4 +10,3 @@ class CategoryStrictSchema(BaseStrictSchema):
 class CategoryPlainSchema(BasePlainSchema):
     name: str
     description: str | None
-    discounts: list[DiscountPlainSchema]

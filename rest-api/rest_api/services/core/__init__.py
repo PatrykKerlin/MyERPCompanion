@@ -7,6 +7,7 @@ from schemas.core.group_schema import GroupPlainSchema, GroupStrictSchema
 from schemas.core.language_schema import LanguagePlainSchema, LanguageStrictSchema
 from schemas.core.theme_schema import ThemePlainSchema, ThemeStrictSchema
 from schemas.core.view_schema import ViewPlainSchema, ViewStrictSchema
+from services.core.image_service import ImageService
 from services.core.module_service import ModuleService
 from services.core.translation_service import TranslationService
 from services.core.user_service import UserService
@@ -40,6 +41,7 @@ ViewService = ServiceFactory.create(
 
 __all__ = [
     "GroupService",
+    "ImageService",
     "LanguageService",
     "ModuleService",
     "ThemeService",
