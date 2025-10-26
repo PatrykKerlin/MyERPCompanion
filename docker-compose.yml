@@ -29,18 +29,23 @@ services:
       - ./shared/schemas/core:/rest_api/schemas/core
       - ./shared/schemas/validation:/rest_api/schemas/validation
       - ./rest-api/rest_api/schemas/base:/rest_api/schemas/base
+      - media-data:/media
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:changeme@postgres/MyERPCompanion
       - SECRET_KEY=secret
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=15
       - REFRESH_TOKEN_EXPIRE_DAYS=7
+      - MODULE_HEADER=X-View-Module
+      - MEDIA_DIR=/media/images
+      - MEDIA_URL=http://localhost:8000/media
       - SUPERUSER_USERNAME=admin
       - SUPERUSER_PASSWORD=admin123
     depends_on:
       - postgres
     command:
-      sh -c "uvicorn main:start_app --host 0.0.0.0 --port 8000 --reload --lifespan=on"
+      sh -lc "mkdir -p /media/images &&
+      exec /project/bin/uvicorn main:start_app --host 0.0.0.0 --port 8000 --reload --lifespan=on"
 
   desktop-app:
     build:
@@ -65,6 +70,7 @@ services:
 
 volumes:
   postgres-data:
+  media-data:
 
 networks:
   project_net:

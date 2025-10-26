@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 
 from fastapi import APIRouter, FastAPI
+from starlette.staticfiles import StaticFiles
 
 from config.context import Context
 from config.database import Database
@@ -26,6 +27,7 @@ class App:
             redoc_url=None,
             lifespan=lifespan,
         )
+        self.__app.mount("/media", StaticFiles(directory="/media", check_dir=False), name="media")
         self.__include_routers()
 
     def __include_routers(self) -> None:

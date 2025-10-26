@@ -21,6 +21,7 @@ class ImageController(
 
     def __init__(self, context: Context, auth: Auth) -> None:
         super().__init__(context, auth)
+        self._service.set_storage(self._settings.MEDIA_DIR, self._settings.MEDIA_URL)
         self._register_routes(ImagePlainSchema)
 
     async def create(self, request: Request) -> ImagePlainSchema:

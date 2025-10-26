@@ -29,8 +29,10 @@ RUN python -m venv $VIRTUAL_ENV && \
 WORKDIR /rest_api
 
 RUN useradd -m -d /rest_api -s /bin/bash rest-api && \
-    chown -R rest-api:rest-api /rest_api && \
-    chmod -R 755 /rest_api
+    mkdir -p /media && \
+    touch /media/.keep && \
+    chown -R rest-api:rest-api /rest_api /media && \
+    chmod -R 775 /rest_api /media
 
 USER rest-api
 

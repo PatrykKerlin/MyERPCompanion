@@ -3,7 +3,6 @@ from schemas.validation.constraints import Constraints
 
 
 class ImageStrictCreateSchema(BaseStrictSchema):
-    url: Constraints.String1000Optional = None
     is_primary: Constraints.BooleanFalse
     order: Constraints.PositiveInteger
     description: Constraints.String1000Optional
@@ -14,6 +13,14 @@ class ImageStrictCreateSchema(BaseStrictSchema):
 
 class ImageStrictUpdateSchema(BaseStrictSchema):
     is_primary: Constraints.BooleanFalse
+
+
+class ImageModelSchema(BaseStrictSchema):
+    url: str
+    is_primary: bool
+    order: int
+    description: str | None
+    item_id: int
 
 
 class ImagePlainSchema(BasePlainSchema):

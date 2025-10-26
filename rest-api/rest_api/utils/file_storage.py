@@ -13,7 +13,10 @@ class FileStorage:
     def resolve_path(self, url: str) -> Path:
         prefix = self.__public_base_url.rstrip("/")
         relative_path = url[len(prefix) + 1 :]
-        return self.__root / Path(relative_path)
+        abs_path = (self.__root / Path(relative_path)).resolve()
+        root_resolved = self.__root.resolve()
+        abs_path.relative_to(root_resolved)
+        return abs_path
 
     async def save_file(self, item_id: int, content_type: str, data: bytes) -> str:
         if content_type not in self.__allowed_content.keys():
@@ -22,7 +25,7 @@ class FileStorage:
         relative_dir = Path(str(item_id))
         relative_path = relative_dir / f"{token}.{self.__allowed_content[content_type]}"
         abs_path = self.__root / relative_path
-        await asyncio.to_thread(abs_path.parent.mkdir, True, True)
+        await asyncio.to_thread(abs_path.parent.mkdir, parents=True, exist_ok=True)
         await asyncio.to_thread(abs_path.write_bytes, data)
         return f"{self.__public_base_url}/{relative_path.as_posix()}"
 
