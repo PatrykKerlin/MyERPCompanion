@@ -13,7 +13,6 @@ class NumericField(ft.Row):
         min_value: int | float | None = None,
         max_value: int | float | None = None,
         is_float: bool = False,
-        width: float | None = None,
         expand: int | bool | None = None,
         read_only: bool | None = None,
         on_change: Callable[[ft.ControlEvent], None] | None = None,
@@ -21,7 +20,6 @@ class NumericField(ft.Row):
         super().__init__(
             alignment=ft.MainAxisAlignment.START,
             vertical_alignment=ft.CrossAxisAlignment.START,
-            width=width,
             expand=expand,
             spacing=4,
         )

@@ -206,8 +206,17 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             size,
         )
 
-    def _get_int_input(
-        self, key: str, size: int, value: int = 0, step: int = 1, min_value: int = 0, max_value: int = 1000000
+    def _get_numeric_input(
+        self,
+        key: str,
+        size: int,
+        value: int | float = 0,
+        step: int | float = 1,
+        precision: int = 2,
+        min_value: int | float | None = 0,
+        max_value: int | float | None = None,
+        is_float: bool = False,
+        expand: int | bool | None = True,
     ) -> tuple[ft.Container, int]:
         return (
             ft.Container(
@@ -216,8 +225,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                     step=step,
                     min_value=min_value,
                     max_value=max_value,
+                    precision=precision,
+                    is_float=is_float,
                     on_change=lambda event: self._controller.on_value_changed(event, key),
-                    expand=True,
+                    expand=expand,
                 ),
                 col={"sm": float(size)},
                 alignment=self._base_alignment,

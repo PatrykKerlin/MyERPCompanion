@@ -14,9 +14,8 @@ from schemas.validation.normalizers import Normalizers
 class ItemStrictSchema(BaseStrictSchema):
     index: Constraints.String10
     name: Constraints.Name
-    description: Constraints.String1000Optional
-
     ean: Constraints.Ean
+    description: Constraints.String1000Optional
 
     purchase_price: Constraints.PositiveNumeric102
     vat_rate: Constraints.PercentFloat
@@ -27,12 +26,11 @@ class ItemStrictSchema(BaseStrictSchema):
     is_package: Constraints.BooleanFalse
     is_returnable: Constraints.BooleanFalse
 
-    expiration_date: date | None
-
     width: Constraints.PositiveNumeric63
     height: Constraints.PositiveNumeric63
     length: Constraints.PositiveNumeric63
     weight: Constraints.PositiveNumeric63
+    expiration_date: date | None
 
     stock_quantity: Constraints.Quantity
     min_stock_level: Constraints.Quantity
@@ -60,9 +58,8 @@ class ItemStrictSchema(BaseStrictSchema):
 class ItemPlainSchema(BasePlainSchema):
     index: str
     name: str
-    description: str
-
     ean: str
+    description: str
 
     purchase_price: float
     vat_rate: float
@@ -73,12 +70,11 @@ class ItemPlainSchema(BasePlainSchema):
     is_package: bool
     is_returnable: bool
 
-    expiration_date: date | None
-
     width: float
     height: float
     length: float
     weight: float
+    expiration_date: date | None
 
     stock_quantity: int
     min_stock_level: int

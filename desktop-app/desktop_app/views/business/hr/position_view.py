@@ -45,17 +45,17 @@ class PositionView(BaseView):
             ),
             "level": FieldGroup(
                 label=self._get_label("level", size=5),
-                input=self._get_int_input("level", size=3),
+                input=self._get_numeric_input("level", size=3),
                 marker=self._get_marker("level", size=4),
             ),
             "min_salary": FieldGroup(
                 label=self._get_label("min_salary", size=5),
-                input=self._get_int_input("min_salary", size=5),
+                input=self._get_numeric_input("min_salary", size=5),
                 marker=self._get_marker("min_salary", 2),
             ),
             "max_salary": FieldGroup(
                 label=self._get_label("max_salary", size=5),
-                input=self._get_int_input("max_salary", size=5),
+                input=self._get_numeric_input("max_salary", size=5),
                 marker=self._get_marker("max_salary", size=2),
             ),
             "currency_id": FieldGroup(

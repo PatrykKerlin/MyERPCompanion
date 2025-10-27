@@ -169,7 +169,7 @@ class EmployeeView(BaseView):
             ),
             "salary": FieldGroup(
                 label=self._get_label("salary", size=4),
-                input=self._get_int_input("salary", size=5),
+                input=self._get_numeric_input("salary", size=5),
                 marker=self._get_marker("salary", size=2),
             ),
         }

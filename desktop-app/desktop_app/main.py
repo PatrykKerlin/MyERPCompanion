@@ -64,6 +64,7 @@ class App:
             # logistic
             logistic.BinController(self.__context),
             logistic.CarrierController(self.__context),
+            logistic.ItemController(self.__context),
             logistic.WarehouseController(self.__context),
         )
         await self.__event_bus.publish(AppStarted())
