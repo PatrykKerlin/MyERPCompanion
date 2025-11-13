@@ -63,6 +63,7 @@ class App:
             hr.EmployeeController(self.__context),
             # logistic
             logistic.BinController(self.__context),
+            logistic.BinTransferController(self.__context),
             logistic.CarrierController(self.__context),
             logistic.ItemController(self.__context),
             logistic.WarehouseController(self.__context),

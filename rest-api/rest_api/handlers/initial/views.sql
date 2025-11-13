@@ -11,4 +11,5 @@ VALUES
 ('delivery_methods', 'Delivery methods view', 4, 4, TRUE, NOW(), :superuser_id),
 ('units', 'Units view', 5, 4, TRUE, NOW(), :superuser_id),
 ('categories', 'Categories view', 6, 4, TRUE, NOW(), :superuser_id),
-('items', 'Items view', 7, 4, TRUE, NOW(), :superuser_id);
+('items', 'Items view', 7, 4, TRUE, NOW(), :superuser_id),
+('bin_transfer', 'Bin transfer view', 8, 4, TRUE, NOW(), :superuser_id);

@@ -7,6 +7,7 @@ class ViewMode(StrEnum):
     READ = "read"
     EDIT = "edit"
     LIST = "list"
+    STATIC = "static"
 
 
 class Module(IntEnum):
@@ -25,6 +26,7 @@ class View(StrEnum):
     DELIVERY_METHODS = "delivery-methods"
     UNITS = "units"
     ITEMS = "items"
+    BIN_TRANSFER = "bin_transfer"
 
 
 class Endpoint(StrEnum):
@@ -45,3 +47,4 @@ class Endpoint(StrEnum):
     DELIVERY_METHODS = "delivery-methods"
     UNITS = "units"
     ITEMS = "items"
+    BIN_ITEMS = "bin-items"

@@ -162,7 +162,9 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         await self._event_bus.publish(ViewReady(view_key=event.view_key, postfix=event.postfix, view=self._view))
         self._close_loading_dialog()
 
-    async def _perform_get_page(self) -> PaginatedResponseSchema[TPlainSchema]:
+    async def _perform_get_page(self, endpoint: Endpoint | None = None) -> PaginatedResponseSchema[TPlainSchema]:
+        if not endpoint:
+            endpoint = self._endpoint
         filters: dict[str, str] = {}
         for field in self._request_data.selected_inputs:
             filters[field] = self._request_data.input_values.get(field, "")
@@ -175,42 +177,50 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         }
         return await self._service.call_api_with_token_refresh(
             func=self._service.get_page,
-            endpoint=self._endpoint,
+            endpoint=endpoint,
             query_params=params,
             module_id=self._module_id,
         )
 
-    async def _perform_get_one(self, id: int) -> TPlainSchema:
+    async def _perform_get_one(self, id: int, endpoint: Endpoint | None = None) -> TPlainSchema:
+        if not endpoint:
+            endpoint = self._endpoint
         return await self._service.call_api_with_token_refresh(
             func=self._service.get_one,
-            endpoint=self._endpoint,
+            endpoint=endpoint,
             path_param=id,
             module_id=self._module_id,
         )
 
-    async def _perform_create(self) -> TPlainSchema:
+    async def _perform_create(self, endpoint: Endpoint | None = None) -> TPlainSchema:
+        if not endpoint:
+            endpoint = self._endpoint
         data = self._strict_schema_cls(**self._request_data.input_values)
         return await self._service.call_api_with_token_refresh(
             func=self._service.create,
-            endpoint=self._endpoint,
+            endpoint=endpoint,
             body_params=data,
             module_id=self._module_id,
         )
 
-    async def _perform_update(self, id: int) -> TPlainSchema:
+    async def _perform_update(self, id: int, endpoint: Endpoint | None = None) -> TPlainSchema:
+        if not endpoint:
+            endpoint = self._endpoint
         data = self._strict_schema_cls(**self._request_data.input_values)
         return await self._service.call_api_with_token_refresh(
             func=self._service.update,
-            endpoint=self._endpoint,
+            endpoint=endpoint,
             path_param=id,
             body_params=data,
             module_id=self._module_id,
         )
 
-    async def _perform_delete(self, id: int) -> bool:
+    async def _perform_delete(self, id: int, endpoint: Endpoint | None = None) -> bool:
+        if not endpoint:
+            endpoint = self._endpoint
         return await self._service.call_api_with_token_refresh(
             func=self._service.delete,
-            endpoint=self._endpoint,
+            endpoint=endpoint,
             path_param=id,
             module_id=self._module_id,
         )

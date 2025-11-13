@@ -19,6 +19,7 @@ from services.core.module_service import ModuleService
 from services.core import ViewService
 from utils.controller_factory import ControllerFactory
 
+
 GroupController = ControllerFactory.create(
     model_cls=Group,
     service_cls=GroupService,

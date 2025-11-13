@@ -9,6 +9,7 @@ from utils.enums import ViewMode
 from utils.field_group import FieldGroup
 from views.base.base_view import BaseView
 from utils.translation import Translation
+from views.controls.image_gallery_control import ImageGallery
 
 if TYPE_CHECKING:
     from controllers.business.logistic.item_controller import ItemController
@@ -154,20 +155,28 @@ class ItemView(BaseView):
                 marker=self._get_marker("max_stock_level", size=1),
             ),
         }
-        images_field = {
-            "images": FieldGroup(
-                label=self._get_label("images", size=4),
-                input=self._get_text_input("images", size=7),
-                marker=self._get_marker("images", size=1),
-            ),
-        }
-        self._add_to_inputs(main_fields, financial_fields, param_fields, dimensions_fields, stock_fields, images_field)
+        # images_field = {
+        #     "images": FieldGroup(
+        #         label=self._get_label("images", size=4),
+        #         input=self._get_text_input("images", size=7),
+        #         marker=self._get_marker("images", size=1),
+        #     ),
+        # }
+        images: list[str] = []
+        if data_row:
+            for image in data_row.get("images") or []:
+                url = image.get("url") if isinstance(image, dict) else getattr(image, "url", None)
+                if url:
+                    images.append(url)
+        gallery = ImageGallery(image_urls=images, expand=True)
+
+        self._add_to_inputs(main_fields, financial_fields, param_fields, dimensions_fields, stock_fields)
         main_grid = self._build_grid(main_fields)
         financial_grid = self._build_grid(financial_fields)
         param_grid = self._build_grid(param_fields)
         dimensions_grid = self._build_grid(dimensions_fields)
         stock_grid = self._build_grid(stock_fields)
-        images_grid = self._build_grid(images_field)
+        # images_grid = self._build_grid(images_field)
         meta_grid = self._get_meta_grid(label_size=4, id_size=2, datetime_size=7)
         columns = [
             ft.Column(
@@ -175,7 +184,7 @@ class ItemView(BaseView):
                 expand=3,
             ),
             self._spacing_column,
-            ft.Column(controls=meta_grid + self._spacing_responsive_row + images_grid + param_grid, expand=2),
+            ft.Column(controls=meta_grid + self._spacing_responsive_row + [gallery] + param_grid, expand=2),
         ]
         self._columns_row.controls.extend(columns)
         self._master_column.controls.extend(self._rows)

@@ -53,6 +53,7 @@ class App:
             {"router": hr.PositionController(self.__context, self.__auth).router, "prefix": "/positions"},
         ]
         business_logistic_endpoints = [
+            {"router": logistic.AssocBinItemController(self.__context, self.__auth).router, "prefix": "/bin-items"},
             {"router": logistic.BinController(self.__context, self.__auth).router, "prefix": "/bins"},
             {"router": logistic.CarrierController(self.__context, self.__auth).router, "prefix": "/carriers"},
             {"router": logistic.CategoryController(self.__context, self.__auth).router, "prefix": "/categories"},

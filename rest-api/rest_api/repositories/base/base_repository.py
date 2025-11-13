@@ -59,6 +59,15 @@ class BaseRepository(Generic[TModel]):
         return result.scalars().first()
 
     @classmethod
+    async def get_many_by_ids(cls, session: AsyncSession, model_ids: list[int]) -> Sequence[TModel]:
+        if len(model_ids) == 0:
+            return []
+        filters = [cls._expr(cls._model_cls.id.in_(list(set(model_ids))))]
+        query = cls._build_query(additional_filters=filters, sort_by="id", sort_order="asc")
+        result = await session.execute(query)
+        return result.scalars().all()
+
+    @classmethod
     async def save(cls, session: AsyncSession, model: TModel, commit: bool = True) -> TModel:
         session.add(model)
         if commit:

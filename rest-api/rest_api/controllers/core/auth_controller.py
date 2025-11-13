@@ -17,7 +17,7 @@ class AuthController:
         self.__auth = auth
         self.router = APIRouter()
         self.router.add_api_route("/token", self.auth, methods=["POST"])
-        self.router.add_api_route("/refresh", self.refresh, methods=["POST"])
+        self.router.add_api_route("/refresh", self.refresh, methods=["GET"])
 
     async def auth(self, data: AuthStrictSchema) -> JSONResponse:
         try:
@@ -34,6 +34,7 @@ class AuthController:
             auth_header = request.headers.get("Authorization")
             if not auth_header:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+            print(auth_header)
             refresh_token = auth_header.split(" ")[1]
             async with self.__get_session() as session:
                 schema = await self.__auth.validate_refresh_token(session, refresh_token)

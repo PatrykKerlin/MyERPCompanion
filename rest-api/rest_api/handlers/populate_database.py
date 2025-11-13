@@ -68,6 +68,7 @@ class PopulateDatabase:
             "categories",
             "suppliers",
             "items",
+            "assoc_bin_items",
         ]
         for file_name in sql_files:
             file_path = self.__base_path / f"{file_name}.sql"

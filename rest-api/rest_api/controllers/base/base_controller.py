@@ -16,6 +16,7 @@ from schemas.core.param_schema import (
     PaginatedResponseSchema,
     PaginationParamsSchema,
     SortingParamsSchema,
+    IdsPayloadSchema,
 )
 from services.base.base_service import BaseService
 from utils.auth import Auth
@@ -38,7 +39,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         self._service = self._service_cls()
         self._auth = auth
         self._404_message = "{model} with ID {id} not found."
-        self.__default_actions = {
+        self._default_actions = {
             Action.GET_ALL: True,
             Action.GET_ONE: True,
             Action.CREATE: True,
@@ -99,6 +100,19 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
             )
+        except SQLAlchemyError as err:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+
+    async def get_many(self, request: Request) -> list[TOutputSchema]:
+        try:
+            body = await request.json()
+            payload = IdsPayloadSchema(**body)
+            async with self._get_session() as session:
+                return await self._service.get_many_by_ids(session, payload.ids)
+        except HTTPException:
+            raise
+        except ValidationError as err:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
@@ -163,7 +177,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         path: str = "",
     ) -> None:
         id_param = "/{model_id}"
-        mapping = self.__default_actions if include is None else include
+        mapping = self._default_actions if include is None else include
         if Action.GET_ALL in mapping:
             self.router.add_api_route(
                 path=path,
@@ -181,6 +195,15 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 response_model=output_schema,
                 status_code=status.HTTP_200_OK,
                 dependencies=self._restrict_access(permissions=[Permission.CAN_READ], secured=mapping[Action.GET_ONE]),
+            )
+        if Action.GET_MANY in mapping:
+            self.router.add_api_route(
+                path=path + "/many",
+                endpoint=self.get_many,
+                methods=["POST"],
+                response_model=list[output_schema],
+                status_code=status.HTTP_200_OK,
+                dependencies=self._restrict_access(permissions=[Permission.CAN_READ], secured=mapping[Action.GET_MANY]),
             )
         if Action.CREATE in mapping:
             self.router.add_api_route(

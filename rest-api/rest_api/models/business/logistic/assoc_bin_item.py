@@ -17,12 +17,12 @@ class AssocBinItem(BaseModel):
 
     quantity: Mapped[int] = Fields.integer()
 
-    item_id: Mapped[int] = Fields.foreign_key(column="items.id", primary_key=True)
-    item: Mapped[Item] = Fields.relationship(
-        argument="Item", back_populates="item_bins", foreign_keys=[item_id], cascade_soft_delete=False
-    )
-
     bin_id: Mapped[int] = Fields.foreign_key(column="bins.id", primary_key=True)
     bin: Mapped[Bin] = Fields.relationship(
         argument="Bin", back_populates="bin_items", foreign_keys=[bin_id], cascade_soft_delete=False
+    )
+
+    item_id: Mapped[int] = Fields.foreign_key(column="items.id", primary_key=True)
+    item: Mapped[Item] = Fields.relationship(
+        argument="Item", back_populates="item_bins", foreign_keys=[item_id], cascade_soft_delete=False
     )

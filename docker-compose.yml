@@ -37,8 +37,8 @@ services:
       - ACCESS_TOKEN_EXPIRE_MINUTES=15
       - REFRESH_TOKEN_EXPIRE_DAYS=7
       - MODULE_HEADER=X-View-Module
-      - MEDIA_DIR=/media/images
-      - MEDIA_URL=http://localhost:8000/media
+      - MEDIA_DIR=/media
+      - MEDIA_URL=http://rest-api:8000/media
       - SUPERUSER_USERNAME=admin
       - SUPERUSER_PASSWORD=admin123
     depends_on:
