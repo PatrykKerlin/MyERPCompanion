@@ -1,8 +1,8 @@
 from config.context import Context
 from controllers.base.base_view_controller import BaseViewController
+from controllers.controls.dual_assign_controller import DualAssignController
 from schemas.business.logistic.assoc_bin_item_schema import AssocBinItemPlainSchema, AssocBinItemStrictSchema
 from schemas.business.logistic.bin_schema import BinPlainSchema
-from schemas.core.param_schema import IdsPayloadSchema
 from services.business.logistic import AssocBinItemService, BinService, ItemService
 from utils.enums import Endpoint, View, ViewMode
 from utils.translation import Translation
@@ -24,6 +24,7 @@ class BinTransferController(
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
+        self.__dual_assign_controller = DualAssignController()
         self.__bin_item_service = self._service
         self.__bin_service = BinService(self._settings, self._logger, self._tokens_accessor)
         self.__item_service = ItemService(self._settings, self._logger, self._tokens_accessor)
@@ -40,9 +41,9 @@ class BinTransferController(
             translation,
             mode,
             event.view_key,
+            self.__dual_assign_controller,
             self.on_source_bin_submit,
             self.on_target_bin_submit,
-            self.on_move_clicked,
         )
 
     def on_source_bin_submit(self, event: ft.ControlEvent) -> None:
@@ -64,20 +65,6 @@ class BinTransferController(
             return
         self._view.set_target_error(None)
         self._page.run_task(self.__validate_enable_and_load_target, location)
-
-    def on_move_clicked(self) -> None:
-        if not self._view:
-            return
-        selected_ids = self._view.get_selected_source_ids()
-        if not selected_ids:
-            return
-        id_to_label: dict[int, str] = {}
-        for item_id, label in getattr(self._view, "_BinTransferView__dual_assign")._DualAssign__source_items:  # type: ignore[attr-defined]
-            if item_id in selected_ids:
-                id_to_label[item_id] = label
-        items_to_add = [(i, id_to_label[i]) for i in selected_ids if i in id_to_label]
-        self._view.prepend_target_items(items_to_add, highlight=True)
-        self._view.remove_source_items(selected_ids)
 
     async def __validate_enable_and_load_source(self, location: str) -> None:
         if not self._view:

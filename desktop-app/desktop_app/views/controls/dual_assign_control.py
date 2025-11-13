@@ -9,7 +9,8 @@ class DualAssign(ft.Container):
         target_label: str,
         on_source_submitted: Callable[[ft.ControlEvent], None],
         on_target_submitted: Callable[[ft.ControlEvent], None],
-        on_row_clicked: Callable[[], None],
+        on_move_clicked: Callable[[ft.ControlEvent], None] | None = None,
+        on_delete_clicked: Callable[[ft.ControlEvent], None] | None = None,
     ) -> None:
         super().__init__(expand=True)
         self.__source_enabled = False
@@ -20,7 +21,8 @@ class DualAssign(ft.Container):
         self.__selected_source_ids = set()
         self.__source_ids_to_move: set[int] = set()
 
-        self.__on_row_clicked = on_row_clicked
+        self.__on_move_clicked = on_move_clicked
+        self.__on_delete_clicked = on_delete_clicked
 
         self.__source_input = ft.TextField(label=source_label, on_submit=on_source_submitted)
         self.__target_input = ft.TextField(label=target_label, on_submit=on_target_submitted)
@@ -29,9 +31,11 @@ class DualAssign(ft.Container):
         self.__target_list = ft.ListView(expand=True, spacing=2, auto_scroll=False, disabled=True)
 
         self.__button_move = ft.IconButton(
-            icon=ft.Icons.ARROW_FORWARD, disabled=True, on_click=self.__handle_row_clicked
+            icon=ft.Icons.ARROW_FORWARD, disabled=True, on_click=self.__handle_move_clicked
         )
-        self.__button_delete = ft.IconButton(icon=ft.Icons.DELETE, disabled=True)
+        self.__button_delete = ft.IconButton(
+            icon=ft.Icons.DELETE, disabled=True, on_click=self.__handle_delete_clicked
+        )
         self.__button_save = ft.IconButton(icon=ft.Icons.SAVE, disabled=True)
 
         source_header = ft.Row(
@@ -131,6 +135,10 @@ class DualAssign(ft.Container):
     def get_selected_source_ids(self) -> list[int]:
         return list(self.__selected_source_ids)
 
+    def get_source_items_by_ids(self, ids: list[int]) -> list[tuple[int, str]]:
+        ids_set = set(ids)
+        return [(item_id, label) for item_id, label in self.__source_items if item_id in ids_set]
+
     def set_source_error(self, message: str | None) -> None:
         self.__source_input.error_text = message
         self.update()
@@ -174,6 +182,10 @@ class DualAssign(ft.Container):
             self.__selected_source_ids.add(item_id)
         self.__render_source_list()
 
-    def __handle_row_clicked(self, _: ft.ControlEvent) -> None:
-        if self.__on_row_clicked:
-            self.__on_row_clicked()
+    def __handle_move_clicked(self, event: ft.ControlEvent) -> None:
+        if self.__on_move_clicked:
+            self.__on_move_clicked(event)
+
+    def __handle_delete_clicked(self, event: ft.ControlEvent) -> None:
+        if self.__on_delete_clicked:
+            self.__on_delete_clicked(event)

@@ -8,6 +8,7 @@ from utils.enums import ViewMode
 
 from views.base.base_view import BaseView
 from utils.translation import Translation
+from controllers.controls.dual_assign_controller import DualAssignController
 from views.controls.dual_assign_control import DualAssign
 
 if TYPE_CHECKING:
@@ -21,9 +22,9 @@ class BinTransferView(BaseView):
         translation: Translation,
         mode: ViewMode,
         key: str,
+        dual_assign_controller: DualAssignController,
         on_source_submitted: Callable[[ft.ControlEvent], None],
         on_target_submitted: Callable[[ft.ControlEvent], None],
-        on_row_clicked: Callable[[], None],
     ) -> None:
         super().__init__(controller, translation, mode, key, None)
         self._master_column.scroll = None
@@ -32,8 +33,10 @@ class BinTransferView(BaseView):
             target_label=self._translation.get("target_bin"),
             on_source_submitted=on_source_submitted,
             on_target_submitted=on_target_submitted,
-            on_row_clicked=on_row_clicked,
+            on_move_clicked=dual_assign_controller.on_move_clicked,
+            on_delete_clicked=dual_assign_controller.on_delete_clicked,
         )
+        dual_assign_controller.attach_control(self.__dual_assign)
         self._master_column.controls = [self.__dual_assign]
         ft.Card.__init__(self, content=self._master_column, expand=True)
 
