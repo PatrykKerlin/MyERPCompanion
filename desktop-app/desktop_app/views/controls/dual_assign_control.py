@@ -16,9 +16,11 @@ class DualAssign(ft.Container):
         self.__source_enabled = False
         self.__target_enabled = False
 
-        self.__source_items = []
-        self.__target_items = []
-        self.__selected_source_ids = set()
+        self.__source_items: list[tuple[int, str]] = []
+        self.__target_items: list[tuple[int, str]] = []
+        self.__target_item_ids: set[int] = set()
+        self.__selected_source_ids: set[int] = set()
+        self.__selected_target_ids: set[int] = set()
         self.__source_ids_to_move: set[int] = set()
 
         self.__on_move_clicked = on_move_clicked
@@ -118,12 +120,23 @@ class DualAssign(ft.Container):
 
     def set_target_items(self, items: list[tuple[int, str]]) -> None:
         self.__target_items = items
+        self.__target_item_ids = {item_id for item_id, _ in items}
+        self.__selected_target_ids.clear()
         self.__render_target_list()
 
     def prepend_target_items(self, items: list[tuple[int, str]], highlight: bool) -> None:
-        self.__target_items = items + self.__target_items
+        if not items:
+            return
+        new_items = [(item_id, label) for item_id, label in items if item_id not in self.__target_item_ids]
+        if not new_items:
+            return
+        self.__target_items = new_items + self.__target_items
+        self.__target_item_ids.update(item_id for item_id, _ in new_items)
         if highlight:
-            self.__source_ids_to_move.update(i for i, _ in items)
+            new_ids = [item_id for item_id, _ in new_items]
+            self.__source_ids_to_move.update(new_ids)
+            self.__selected_target_ids.difference_update(new_ids)
+            self.__render_source_list()
         self.__render_target_list()
 
     def remove_source_items(self, ids: list[int]) -> None:
@@ -132,12 +145,36 @@ class DualAssign(ft.Container):
         self.__selected_source_ids.difference_update(ids_set)
         self.__render_source_list()
 
+    def remove_target_items(self, ids: list[int]) -> None:
+        ids_set = set(ids)
+        self.__target_items = [(i, v) for i, v in self.__target_items if i not in ids_set]
+        self.__target_item_ids.difference_update(ids_set)
+        self.__selected_target_ids.difference_update(ids_set)
+        self.__source_ids_to_move.difference_update(ids_set)
+        self.__render_target_list()
+        self.__render_source_list()
+
     def get_selected_source_ids(self) -> list[int]:
         return list(self.__selected_source_ids)
+
+    def get_selected_target_ids(self) -> list[int]:
+        return list(self.__selected_target_ids)
 
     def get_source_items_by_ids(self, ids: list[int]) -> list[tuple[int, str]]:
         ids_set = set(ids)
         return [(item_id, label) for item_id, label in self.__source_items if item_id in ids_set]
+
+    def is_target_item_from_source(self, item_id: int) -> bool:
+        return item_id in self.__source_ids_to_move
+
+    def has_target_item(self, item_id: int) -> bool:
+        return item_id in self.__target_item_ids
+
+    def mark_source_items_as_moved(self, ids: list[int]) -> None:
+        if not ids:
+            return
+        self.__source_ids_to_move.update(ids)
+        self.__render_source_list()
 
     def set_source_error(self, message: str | None) -> None:
         self.__source_input.error_text = message
@@ -151,8 +188,9 @@ class DualAssign(ft.Container):
         controls: list[ft.Control] = []
         for item_id, label in self.__source_items:
             is_selected = item_id in self.__selected_source_ids
+            is_moved = item_id in self.__source_ids_to_move
             container = ft.Container(
-                content=ft.Text(label, no_wrap=True),
+                content=ft.Text(label, no_wrap=True, color=ft.Colors.ERROR if is_moved else None),
                 padding=6,
                 bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST if is_selected else None,
             )
@@ -167,11 +205,23 @@ class DualAssign(ft.Container):
     def __render_target_list(self) -> None:
         controls: list[ft.Control] = []
         for item_id, label in self.__target_items:
+            is_selected = item_id in self.__selected_target_ids
             is_highlighted = item_id in self.__source_ids_to_move
             text = ft.Text(
                 label, no_wrap=True, color=ft.Colors.ERROR if is_highlighted else None, key=f"tgt-txt-{item_id}"
             )
-            controls.append(ft.Container(content=text, key=f"tgt-row-{item_id}"))
+            container = ft.Container(
+                content=text,
+                key=f"tgt-row-{item_id}",
+                padding=6,
+                bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST if is_selected else None,
+            )
+            if is_highlighted:
+                controls.append(
+                    ft.GestureDetector(content=container, on_tap=lambda e, iid=item_id: self.__toggle_target_selection(iid))
+                )
+            else:
+                controls.append(container)
         self.__target_list.controls = controls
         self.update()
 
@@ -181,6 +231,13 @@ class DualAssign(ft.Container):
         else:
             self.__selected_source_ids.add(item_id)
         self.__render_source_list()
+
+    def __toggle_target_selection(self, item_id: int) -> None:
+        if item_id in self.__selected_target_ids:
+            self.__selected_target_ids.remove(item_id)
+        else:
+            self.__selected_target_ids.add(item_id)
+        self.__render_target_list()
 
     def __handle_move_clicked(self, event: ft.ControlEvent) -> None:
         if self.__on_move_clicked:

@@ -24,13 +24,25 @@ class DualAssignController:
         selected_ids = self.__control.get_selected_source_ids()
         if not selected_ids:
             return
-        items_to_move = self.__control.get_source_items_by_ids(selected_ids)
+        ids_to_add = [item_id for item_id in selected_ids if not self.__control.has_target_item(item_id)]
+        if not ids_to_add:
+            return
+        items_to_move = self.__control.get_source_items_by_ids(ids_to_add)
         if not items_to_move:
             return
+        actual_ids = [item_id for item_id, _ in items_to_move]
+        if not actual_ids:
+            return
+        self.__control.mark_source_items_as_moved(actual_ids)
         self.__control.prepend_target_items(items_to_move, highlight=True)
-        self.__control.remove_source_items(selected_ids)
 
     def on_delete_clicked(self, _: ft.ControlEvent | None = None) -> None:
         if not self.__control:
             return
-        return
+        selected_ids = self.__control.get_selected_target_ids()
+        if not selected_ids:
+            return
+        deletable_ids = [item_id for item_id in selected_ids if self.__control.is_target_item_from_source(item_id)]
+        if not deletable_ids:
+            return
+        self.__control.remove_target_items(deletable_ids)
