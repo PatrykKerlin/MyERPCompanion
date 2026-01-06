@@ -6,6 +6,7 @@ from models.business.logistic.delivery_method import DeliveryMethod
 from models.business.logistic.item import Item
 from models.business.logistic.unit import Unit
 from models.business.logistic.warehouse import Warehouse
+from schemas.business.logistic.assoc_bin_item_schema import AssocBinItemPlainSchema, AssocBinItemStrictSchema
 from schemas.business.logistic.bin_schema import BinPlainSchema, BinStrictSchema
 from schemas.business.logistic.carrier_schema import CarrierPlainSchema, CarrierStrictSchema
 from schemas.business.logistic.category_schema import CategoryPlainSchema, CategoryStrictSchema
@@ -30,8 +31,14 @@ from utils.enums import Action
 AssocBinItemController = ControllerFactory.create(
     model_cls=AssocBinItem,
     service_cls=AssocBinItemService,
-    input_schema_cls=BinStrictSchema,
-    output_schema_cls=BinPlainSchema,
+    input_schema_cls=AssocBinItemStrictSchema,
+    output_schema_cls=AssocBinItemPlainSchema,
+    include={
+        Action.GET_ALL: True,
+        Action.CREATE_MANY: True,
+        Action.UPDATE_MANY: True,
+        Action.DELETE_MANY: True,
+    },
 )
 BinController = ControllerFactory.create(
     model_cls=Bin,
@@ -62,14 +69,6 @@ ItemController = ControllerFactory.create(
     service_cls=ItemService,
     input_schema_cls=ItemStrictSchema,
     output_schema_cls=ItemPlainSchema,
-    include={
-        Action.GET_ALL: True,
-        Action.GET_ONE: True,
-        Action.GET_MANY: True,
-        Action.CREATE: True,
-        Action.UPDATE: True,
-        Action.DELETE: True,
-    },
 )
 UnitController = ControllerFactory.create(
     model_cls=Unit,

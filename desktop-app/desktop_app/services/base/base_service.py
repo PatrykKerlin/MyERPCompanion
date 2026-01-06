@@ -31,7 +31,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
                 Endpoint,
                 int | None,
                 dict[str, Any] | None,
-                TStrictSchema | dict[str, Any] | None,
+                TStrictSchema | list[TStrictSchema] | dict[str, Any] | None,
                 TokenPlainSchema | None,
                 int | None,
             ],
@@ -40,7 +40,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | dict[str, Any] | None = None,
+        body_params: TStrictSchema | list[TStrictSchema] | dict[str, Any] | None = None,
         module_id: int | None = None,
     ) -> Any:
         tokens = self._tokens_accessor.read()
@@ -65,7 +65,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | dict[str, Any] | None = None,
+        body_params: TStrictSchema | list[TStrictSchema] | dict[str, Any] | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> list[TPlainSchema]:
@@ -88,7 +88,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | dict[str, Any] | None = None,
+        body_params: TStrictSchema | list[TStrictSchema] | dict[str, Any] | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> PaginatedResponseSchema[TPlainSchema]:
@@ -108,7 +108,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | dict[str, Any] | None = None,
+        body_params: TStrictSchema | list[TStrictSchema] | dict[str, Any] | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> TPlainSchema:
@@ -122,7 +122,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | dict[str, Any] | None = None,
+        body_params: TStrictSchema | list[TStrictSchema] | dict[str, Any] | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> TPlainSchema:
@@ -143,7 +143,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | dict[str, Any] | None = None,
+        body_params: TStrictSchema | list[TStrictSchema] | dict[str, Any] | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> TPlainSchema:
@@ -160,12 +160,38 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         data = response.json()
         return self._plain_schema_cls(**data)
 
+    async def update_many(
+        self,
+        endpoint: Endpoint,
+        path_param: int | None = None,
+        query_params: dict[str, Any] | None = None,
+        body_params: TStrictSchema | list[TStrictSchema] | dict[str, Any] | None = None,
+        tokens: TokenPlainSchema | None = None,
+        module_id: int | None = None,
+    ) -> list[TPlainSchema]:
+        resolved_body_params: list[dict[str, Any]] = []
+        if isinstance(body_params, list):
+            for item in body_params:
+                schema_item = item
+                param = schema_item.model_dump()
+                param["id"] = schema_item.id
+                resolved_body_params.append(param)
+        resolved_endpoint = f"{endpoint}/bulk"
+        response = await self._put(
+            endpoint=resolved_endpoint,
+            body_params=resolved_body_params,
+            tokens=tokens,
+            module_id=module_id,
+        )
+        data = response.json()
+        return [self._plain_schema_cls(**item) for item in data]
+
     async def delete(
         self,
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | dict[str, Any] | None = None,
+        body_params: TStrictSchema | list[TStrictSchema] | dict[str, Any] | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> bool:
@@ -213,7 +239,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
     async def _put(
         self,
         endpoint: str,
-        body_params: dict[str, Any] | None = None,
+        body_params: dict[str, Any] | list[dict[str, Any]] | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> httpx.Response:

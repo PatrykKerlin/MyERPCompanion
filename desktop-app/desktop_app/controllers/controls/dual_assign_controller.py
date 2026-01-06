@@ -46,3 +46,8 @@ class DualAssignController:
         if not deletable_ids:
             return
         self.__control.remove_target_items(deletable_ids)
+
+    def get_pending_move_ids(self) -> list[int]:
+        if not self.__control:
+            return []
+        return self.__control.get_pending_move_ids()

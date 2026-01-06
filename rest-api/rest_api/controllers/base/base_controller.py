@@ -130,6 +130,24 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
+    async def create_many(self, request: Request) -> list[TOutputSchema]:
+        try:
+            user = request.state.user
+            body = await request.json()
+            if not isinstance(body, list):
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            schemas: list[TInputSchema] = []
+            for item in body:
+                schemas.append(self._input_schema_cls(**item))
+            async with self._get_session() as session:
+                return await self._service.create_many(session=session, created_by=user.id, schemas=schemas)
+        except HTTPException:
+            raise
+        except ValidationError as err:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
+        except SQLAlchemyError as err:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+
     async def update(self, request: Request, model_id: int) -> TOutputSchema:
         try:
             user = request.state.user
@@ -149,6 +167,32 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
+    async def update_many(self, request: Request) -> list[TOutputSchema]:
+        try:
+            user = request.state.user
+            body = await request.json()
+            if not isinstance(body, list):
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            items: list[tuple[int, TInputSchema]] = []
+            for item in body:
+                model_id = item["id"]
+                data = {key: value for key, value in item.items() if key != "id"}
+                schema = self._input_schema_cls(**data)
+                items.append((model_id, schema))
+            async with self._get_session() as session:
+                return await self._service.update_many(session=session, items=items, modified_by=user.id)
+        except HTTPException:
+            raise
+        except ValidationError as err:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
+        except NoResultFound as err:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=self._404_message.format(model=self._service._model_cls.__name__, id=str(err.args[0])),
+            )
+        except SQLAlchemyError as err:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+
     async def delete(self, request: Request, model_id: int) -> Response:
         try:
             user = request.state.user
@@ -161,6 +205,26 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
+            )
+        except SQLAlchemyError as err:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+
+    async def delete_many(self, request: Request) -> Response:
+        try:
+            user = request.state.user
+            body = await request.json()
+            payload = IdsPayloadSchema(**body)
+            async with self._get_session() as session:
+                await self._service.delete_many(session=session, model_ids=payload.ids, modified_by=user.id)
+                return Response(status_code=status.HTTP_204_NO_CONTENT)
+        except HTTPException:
+            raise
+        except ValidationError as err:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
+        except NoResultFound as err:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=self._404_message.format(model=self._service._model_cls.__name__, id=str(err.args[0])),
             )
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
@@ -216,6 +280,17 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                     permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.CREATE]
                 ),
             )
+        if Action.CREATE_MANY in mapping:
+            self.router.add_api_route(
+                path=path + "/bulk",
+                endpoint=self.create_many,
+                methods=["POST"],
+                response_model=list[output_schema],
+                status_code=status.HTTP_201_CREATED,
+                dependencies=self._restrict_access(
+                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.CREATE_MANY]
+                ),
+            )
         if Action.UPDATE in mapping:
             self.router.add_api_route(
                 path=path + id_param,
@@ -227,6 +302,17 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                     permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.UPDATE]
                 ),
             )
+        if Action.UPDATE_MANY in mapping:
+            self.router.add_api_route(
+                path=path + "/bulk",
+                endpoint=self.update_many,
+                methods=["PUT"],
+                response_model=list[output_schema],
+                status_code=status.HTTP_200_OK,
+                dependencies=self._restrict_access(
+                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.UPDATE_MANY]
+                ),
+            )
         if Action.DELETE in mapping:
             self.router.add_api_route(
                 path=path + id_param,
@@ -235,6 +321,16 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 status_code=status.HTTP_204_NO_CONTENT,
                 dependencies=self._restrict_access(
                     permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.DELETE]
+                ),
+            )
+        if Action.DELETE_MANY in mapping:
+            self.router.add_api_route(
+                path=path + "/bulk",
+                endpoint=self.delete_many,
+                methods=["DELETE"],
+                status_code=status.HTTP_204_NO_CONTENT,
+                dependencies=self._restrict_access(
+                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.DELETE_MANY]
                 ),
             )
 

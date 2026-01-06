@@ -68,30 +68,35 @@ class BaseRepository(Generic[TModel]):
         return result.scalars().all()
 
     @classmethod
-    async def save(cls, session: AsyncSession, model: TModel, commit: bool = True) -> TModel:
+    async def save(cls, session: AsyncSession, model: TModel) -> TModel:
         session.add(model)
-        if commit:
-            await session.commit()
-        else:
-            await session.flush()
+        await session.commit()
         await session.refresh(model)
         return model
 
     @classmethod
-    async def delete(cls, session: AsyncSession, model: TModel, commit: bool = True) -> None:
+    async def save_many(cls, session: AsyncSession, models: Sequence[TModel]) -> Sequence[TModel]:
+        if not models:
+            return []
+        session.add_all(list(models))
+        await session.commit()
+        for model in models:
+            await session.refresh(model)
+        return models
+
+    @classmethod
+    async def delete(cls, session: AsyncSession, model: TModel) -> None:
         setattr(model, "is_active", False)
         await cls.__cascade_soft_delete(model)
-        if commit:
-            await session.commit()
-        else:
-            await session.flush()
+        await session.commit()
 
     @classmethod
-    async def refresh(cls, session: AsyncSession, model: TModel) -> None:
-        await session.refresh(model)
-
-    @classmethod
-    async def commit(cls, session: AsyncSession) -> None:
+    async def delete_many(cls, session: AsyncSession, models: Sequence[TModel], commit: bool = True) -> None:
+        if not models:
+            return
+        for model in models:
+            setattr(model, "is_active", False)
+            await cls.__cascade_soft_delete(model)
         await session.commit()
 
     @classmethod

@@ -60,6 +60,19 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         saved_model = await self._repository_cls.save(session, model)
         return self._output_schema_cls.model_validate(saved_model)
 
+    async def create_many(
+        self, session: AsyncSession, created_by: int, schemas: list[TInputSchema]
+    ) -> list[TOutputSchema]:
+        if not schemas:
+            return []
+        models: list[TModel] = []
+        for schema in schemas:
+            model = self._model_cls(**schema.model_dump())
+            setattr(model, "created_by", created_by)
+            models.append(model)
+        saved_models = await self._repository_cls.save_many(session, models)
+        return [self._output_schema_cls.model_validate(model) for model in saved_models]
+
     async def update(
         self, session: AsyncSession, model_id: int, modified_by: int, schema: TInputSchema
     ) -> TOutputSchema:
@@ -72,9 +85,45 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         updated_model = await self._repository_cls.save(session, model)
         return self._output_schema_cls.model_validate(updated_model)
 
+    async def update_many(
+        self, session: AsyncSession, items: list[tuple[int, TInputSchema]], modified_by: int
+    ) -> list[TOutputSchema]:
+        if not items:
+            return []
+        ids = [item[0] for item in items]
+        models = list(await self._repository_cls.get_many_by_ids(session=session, model_ids=ids))
+        existing_by_id = {model.id: model for model in models}
+        missing_ids = {model_id for model_id in ids if model_id not in existing_by_id.keys()}
+        if missing_ids:
+            raise NoResultFound(
+                self._not_found_message.format(model=self._model_cls.__name__, id=str(sorted(list(missing_ids))))
+            )
+        for model_id, schema in items:
+            model = existing_by_id[model_id]
+            for key, value in schema.model_dump(exclude_unset=True).items():
+                setattr(model, key, value)
+            setattr(model, "modified_by", modified_by)
+        updated_models = await self._repository_cls.save_many(session=session, models=list(existing_by_id.values()))
+        return [self._output_schema_cls.model_validate(model) for model in updated_models]
+
     async def delete(self, session: AsyncSession, model_id: int, modified_by: int) -> None:
         model = await self._repository_cls.get_one_by_id(session, model_id)
         if not model:
             raise NoResultFound(self._not_found_message.format(model=self._model_cls.__name__, id=model_id))
         setattr(model, "modified_by", modified_by)
         await self._repository_cls.delete(session, model)
+
+    async def delete_many(self, session: AsyncSession, model_ids: list[int], modified_by: int) -> None:
+        if not model_ids:
+            return
+        ids = list(set(model_ids))
+        models = list(await self._repository_cls.get_many_by_ids(session=session, model_ids=ids))
+        existing_ids = {model.id for model in models}
+        missing_ids = [model_id for model_id in ids if model_id not in existing_ids]
+        if missing_ids:
+            raise NoResultFound(
+                self._not_found_message.format(model=self._model_cls.__name__, id=str(sorted(list(missing_ids))))
+            )
+        for model in models:
+            setattr(model, "modified_by", modified_by)
+        await self._repository_cls.delete_many(session, models)

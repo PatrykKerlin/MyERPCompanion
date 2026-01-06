@@ -11,10 +11,12 @@ class DualAssign(ft.Container):
         on_target_submitted: Callable[[ft.ControlEvent], None],
         on_move_clicked: Callable[[ft.ControlEvent], None] | None = None,
         on_delete_clicked: Callable[[ft.ControlEvent], None] | None = None,
+        on_save_clicked: Callable[[ft.ControlEvent], None] | None = None,
     ) -> None:
         super().__init__(expand=True)
         self.__source_enabled = False
         self.__target_enabled = False
+        self.__buttons_enabled = False
 
         self.__source_items: list[tuple[int, str]] = []
         self.__target_items: list[tuple[int, str]] = []
@@ -25,6 +27,7 @@ class DualAssign(ft.Container):
 
         self.__on_move_clicked = on_move_clicked
         self.__on_delete_clicked = on_delete_clicked
+        self.__on_save_clicked = on_save_clicked
 
         self.__source_input = ft.TextField(label=source_label, on_submit=on_source_submitted)
         self.__target_input = ft.TextField(label=target_label, on_submit=on_target_submitted)
@@ -38,7 +41,7 @@ class DualAssign(ft.Container):
         self.__button_delete = ft.IconButton(
             icon=ft.Icons.DELETE, disabled=True, on_click=self.__handle_delete_clicked
         )
-        self.__button_save = ft.IconButton(icon=ft.Icons.SAVE, disabled=True)
+        self.__button_save = ft.IconButton(icon=ft.Icons.SAVE, disabled=True, on_click=self.__handle_save_clicked)
 
         source_header = ft.Row(
             controls=[
@@ -100,11 +103,12 @@ class DualAssign(ft.Container):
     def set_enabled_states(self, source_enabled: bool, target_enabled: bool, buttons_enabled: bool) -> None:
         self.__source_enabled = source_enabled
         self.__target_enabled = target_enabled
+        self.__buttons_enabled = buttons_enabled
         self.__source_list.disabled = not source_enabled
         self.__target_list.disabled = not target_enabled
         self.__button_move.disabled = not buttons_enabled
         self.__button_delete.disabled = not buttons_enabled
-        self.__button_save.disabled = not buttons_enabled
+        self.__update_save_button_state()
         self.update()
 
     def set_source_enabled(self, enabled: bool) -> None:
@@ -116,13 +120,16 @@ class DualAssign(ft.Container):
     def set_source_items(self, items: list[tuple[int, str]]) -> None:
         self.__source_items = items
         self.__selected_source_ids.clear()
+        self.__source_ids_to_move.clear()
         self.__render_source_list()
+        self.__update_save_button_state()
 
     def set_target_items(self, items: list[tuple[int, str]]) -> None:
         self.__target_items = items
         self.__target_item_ids = {item_id for item_id, _ in items}
         self.__selected_target_ids.clear()
         self.__render_target_list()
+        self.__update_save_button_state()
 
     def prepend_target_items(self, items: list[tuple[int, str]], highlight: bool) -> None:
         if not items:
@@ -138,6 +145,7 @@ class DualAssign(ft.Container):
             self.__selected_target_ids.difference_update(new_ids)
             self.__render_source_list()
         self.__render_target_list()
+        self.__update_save_button_state()
 
     def remove_source_items(self, ids: list[int]) -> None:
         ids_set = set(ids)
@@ -153,6 +161,7 @@ class DualAssign(ft.Container):
         self.__source_ids_to_move.difference_update(ids_set)
         self.__render_target_list()
         self.__render_source_list()
+        self.__update_save_button_state()
 
     def get_selected_source_ids(self) -> list[int]:
         return list(self.__selected_source_ids)
@@ -175,6 +184,10 @@ class DualAssign(ft.Container):
             return
         self.__source_ids_to_move.update(ids)
         self.__render_source_list()
+        self.__update_save_button_state()
+
+    def get_pending_move_ids(self) -> list[int]:
+        return list(self.__source_ids_to_move)
 
     def set_source_error(self, message: str | None) -> None:
         self.__source_input.error_text = message
@@ -246,3 +259,11 @@ class DualAssign(ft.Container):
     def __handle_delete_clicked(self, event: ft.ControlEvent) -> None:
         if self.__on_delete_clicked:
             self.__on_delete_clicked(event)
+
+    def __handle_save_clicked(self, event: ft.ControlEvent) -> None:
+        if self.__on_save_clicked:
+            self.__on_save_clicked(event)
+
+    def __update_save_button_state(self) -> None:
+        has_pending = bool(self.__source_ids_to_move)
+        self.__button_save.disabled = not (self.__buttons_enabled and has_pending)

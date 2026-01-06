@@ -25,6 +25,7 @@ class BinTransferView(BaseView):
         dual_assign_controller: DualAssignController,
         on_source_submitted: Callable[[ft.ControlEvent], None],
         on_target_submitted: Callable[[ft.ControlEvent], None],
+        on_save_clicked: Callable[[ft.ControlEvent], None],
     ) -> None:
         super().__init__(controller, translation, mode, key, None)
         self._master_column.scroll = None
@@ -35,6 +36,7 @@ class BinTransferView(BaseView):
             on_target_submitted=on_target_submitted,
             on_move_clicked=dual_assign_controller.on_move_clicked,
             on_delete_clicked=dual_assign_controller.on_delete_clicked,
+            on_save_clicked=on_save_clicked,
         )
         dual_assign_controller.attach_control(self.__dual_assign)
         self._master_column.controls = [self.__dual_assign]
