@@ -6,9 +6,7 @@ import flet as ft
 
 from utils.enums import ViewMode
 
-from utils.field_group import FieldGroup
 from views.base.base_view import BaseView
-from views.controls.numeric_field_control import NumericField
 
 if TYPE_CHECKING:
     from controllers.business.hr.employee_controller import EmployeeController
@@ -27,169 +25,100 @@ class EmployeeView(BaseView):
         positions: list[tuple[int, str]],
         managers: list[tuple[int, str]],
     ) -> None:
-        super().__init__(controller, translation, mode, key, data_row)
-        personal_fields = {
-            "first_name": FieldGroup(
-                label=self._get_label("first_name", size=4),
-                input=self._get_text_input("first_name", size=7),
-                marker=self._get_marker("first_name", size=1),
-            ),
-            "middle_name": FieldGroup(
-                label=self._get_label("middle_name", size=4),
-                input=self._get_text_input("middle_name", size=7),
-                marker=self._get_marker("middle_name", size=1),
-            ),
-            "last_name": FieldGroup(
-                label=self._get_label("last_name", size=4),
-                input=self._get_text_input("last_name", size=7),
-                marker=self._get_marker("last_name", size=1),
-            ),
-            "pesel": FieldGroup(
-                label=self._get_label("pesel", size=4),
-                input=self._get_text_input("pesel", size=7),
-                marker=self._get_marker("pesel", size=1),
-            ),
-            "birth_date": FieldGroup(
-                label=self._get_label("birth_date", size=4),
-                input=self._get_date_picker("birth_date", size=3),
-                marker=self._get_marker("birth_date", size=5),
-            ),
-            "birth_place": FieldGroup(
-                label=self._get_label("birth_place", size=4),
-                input=self._get_text_input("birth_place", size=7),
-                marker=self._get_marker("birth_place", size=1),
-            ),
-            "passport_number": FieldGroup(
-                label=self._get_label("passport_number", size=4),
-                input=self._get_text_input("passport_number", size=7),
-                marker=self._get_marker("passport_number", size=1),
-            ),
-            "passport_expiry": FieldGroup(
-                label=self._get_label("passport_expiry", size=4),
-                input=self._get_date_picker("passport_expiry", size=3),
-                marker=self._get_marker("passport_expiry", size=5),
-            ),
-            "id_card_number": FieldGroup(
-                label=self._get_label("id_card_number", size=4),
-                input=self._get_text_input("id_card_number", size=7),
-                marker=self._get_marker("id_card_number", size=1),
-            ),
-            "id_card_expiry": FieldGroup(
-                label=self._get_label("id_card_expiry", size=4),
-                input=self._get_date_picker("id_card_expiry", size=3),
-                marker=self._get_marker("id_card_expiry", size=5),
-            ),
-        }
-        contact_fields = {
-            "email": FieldGroup(
-                label=self._get_label("email", size=4),
-                input=self._get_text_input("email", size=7),
-                marker=self._get_marker("email", size=1),
-            ),
-            "phone_number": FieldGroup(
-                label=self._get_label("phone", size=4),
-                input=self._get_text_input("phone_number", size=7),
-                marker=self._get_marker("phone_number", size=1),
-            ),
-        }
-        street_field = {
-            "street": FieldGroup(
-                label=self._get_label("street", size=4),
-                input=self._get_text_input("street", size=7),
-                marker=self._get_marker("street", size=1),
-            ),
-        }
-        house_fields = {
-            "house_number": FieldGroup(
-                label=self._get_label("house_number", size=4),
-                input=self._get_text_input("house_number", size=3),
-                marker=self._get_marker("house_number", size=1),
-            ),
-            "apartment_number": FieldGroup(
-                label=self._get_label("/", colon=False, size=1),
-                input=self._get_text_input("apartment_number", size=2),
-                marker=self._get_marker("apartment_number", size=1),
-            ),
-        }
-        city_fields = {
-            "city": FieldGroup(
-                label=self._get_label("city", size=4),
-                input=self._get_text_input("city", size=3),
-                marker=self._get_marker("city", size=1),
-            ),
-            "postal_code": FieldGroup(
-                label=self._get_label("postal_code", size=1),
-                input=self._get_text_input("postal_code", size=2),
-                marker=self._get_marker("postal_code", size=1),
-            ),
-        }
-        country_field = {
-            "country": FieldGroup(
-                label=self._get_label("country", size=4),
-                input=self._get_text_input("country", size=3),
-                marker=self._get_marker("country", size=5),
-            ),
-        }
-        employment_fields = {
-            "hire_date": FieldGroup(
-                label=self._get_label("hire_date", size=4),
-                input=self._get_date_picker("hire_date", size=3),
-                marker=self._get_marker("hire_date", size=5),
-            ),
-            "termination_date": FieldGroup(
-                label=self._get_label("termination_date", size=4),
-                input=self._get_date_picker("termination_date", size=3),
-                marker=self._get_marker("termination_date", size=5),
-            ),
-            "department_id": FieldGroup(
-                label=self._get_label("department", size=4),
-                input=self._get_dropdown(
-                    "department_id", options=departments, callbacks=[self._controller.on_department_changed], size=5
-                ),
-                marker=self._get_marker("department_id", size=3),
-            ),
-            "position_id": FieldGroup(
-                label=self._get_label("position", size=4),
-                input=self._get_dropdown(
-                    "position_id", options=positions, callbacks=[self._controller.on_position_changed], size=5
-                ),
-                marker=self._get_marker("position_id", 3),
-            ),
-            "manager_id": FieldGroup(
-                label=self._get_label("manager", size=4),
-                input=self._get_dropdown("manager_id", options=managers, size=5),
-                marker=self._get_marker("manager_id", size=3),
-            ),
-            "is_remote": FieldGroup(
-                label=self._get_label("is_remote", size=4),
-                input=self._get_radio_group(
-                    "is_remote", options=[("false", "on_site"), ("true", "remote")], default="false", size=4
-                ),
-                marker=self._get_marker("is_remote", size=4),
-            ),
-            "salary": FieldGroup(
-                label=self._get_label("salary", size=4),
-                input=self._get_numeric_input("salary", size=5),
-                marker=self._get_marker("salary", size=2),
-            ),
-        }
-        bank_fields = {
-            "bank_account": FieldGroup(
-                label=self._get_label("bank_account", size=4),
-                input=self._get_text_input("bank_account", size=7),
-                marker=self._get_marker("bank_account", size=1),
-            ),
-            "bank_swift": FieldGroup(
-                label=self._get_label("bank_swift", size=4),
-                input=self._get_text_input("bank_swift", size=7),
-                marker=self._get_marker("bank_swift", size=1),
-            ),
-            "bank_name": FieldGroup(
-                label=self._get_label("bank_name", size=4),
-                input=self._get_text_input("bank_name", size=7),
-                marker=self._get_marker("bank_name", size=1),
-            ),
-        }
+        super().__init__(controller, translation, mode, key, data_row, 4, 7)
+        personal_fields_definitions = [
+            {"key": "first_name", "input": self._get_text_input},
+            {"key": "middle_name", "input": self._get_text_input},
+            {"key": "last_name", "input": self._get_text_input},
+            {"key": "pesel", "input": self._get_text_input},
+            {"key": "birth_date", "input": self._get_date_picker, "input_size": 4},
+            {"key": "birth_place", "input": self._get_text_input},
+            {"key": "passport_number", "input": self._get_text_input},
+            {"key": "passport_expiry", "input": self._get_date_picker, "input_size": 4},
+            {"key": "id_card_number", "input": self._get_text_input},
+            {"key": "id_card_expiry", "input": self._get_date_picker, "input_size": 4},
+        ]
+        contact_fields_definitions = [
+            {"key": "email", "input": self._get_text_input},
+            {"key": "phone_number", "label": "phone", "input": self._get_text_input},
+        ]
+        street_field_definition = [
+            {"key": "street", "input": self._get_text_input},
+        ]
+        house_fields_definitions = [
+            {"key": "house_number", "input": self._get_text_input, "input_size": 3, "columns": 8},
+            {
+                "key": "apartment_number",
+                "label": "/",
+                "input": self._get_text_input,
+                "label_size": 1,
+                "input_size": 2,
+                "columns": 4,
+                "colon": False,
+            },
+        ]
+        city_fields_definitions = [
+            {"key": "city", "input": self._get_text_input, "input_size": 3, "columns": 8},
+            {
+                "key": "postal_code",
+                "input": self._get_text_input,
+                "label_size": 1,
+                "input_size": 2,
+                "columns": 4,
+            },
+        ]
+        country_field_definition = [
+            {"key": "country", "input": self._get_text_input, "input_size": 3},
+        ]
+        employment_fields_definitions = [
+            {"key": "hire_date", "input": self._get_date_picker, "input_size": 5},
+            {"key": "termination_date", "input": self._get_date_picker, "input_size": 5},
+            {
+                "key": "department_id",
+                "label": "department",
+                "input": self._get_dropdown,
+                "input_size": 5,
+                "options": departments,
+                "callbacks": [self._controller.on_department_changed],
+            },
+            {
+                "key": "position_id",
+                "label": "position",
+                "input": self._get_dropdown,
+                "input_size": 5,
+                "options": positions,
+                "callbacks": [self._controller.on_position_changed],
+            },
+            {
+                "key": "manager_id",
+                "label": "manager",
+                "input": self._get_dropdown,
+                "input_size": 5,
+                "options": managers,
+            },
+            {
+                "key": "is_remote",
+                "input": self._get_radio_group,
+                "input_size": 5,
+                "options": [("false", "on_site"), ("true", "remote")],
+                "default": "false",
+            },
+            {"key": "salary", "input": self._get_numeric_input, "input_size": 5},
+        ]
+        bank_fields_definitions = [
+            {"key": "bank_account", "input": self._get_text_input},
+            {"key": "bank_swift", "input": self._get_text_input},
+            {"key": "bank_name", "input": self._get_text_input},
+        ]
+
+        personal_fields = self._build_field_groups(personal_fields_definitions)
+        contact_fields = self._build_field_groups(contact_fields_definitions)
+        street_field = self._build_field_groups(street_field_definition)
+        house_fields = self._build_field_groups(house_fields_definitions)
+        city_fields = self._build_field_groups(city_fields_definitions)
+        country_field = self._build_field_groups(country_field_definition)
+        employment_fields = self._build_field_groups(employment_fields_definitions)
+        bank_fields = self._build_field_groups(bank_fields_definitions)
 
         self._add_to_inputs(
             personal_fields,
@@ -201,6 +130,7 @@ class EmployeeView(BaseView):
             employment_fields,
             bank_fields,
         )
+
         personal_grid = self._build_grid(personal_fields)
         contact_grid = self._build_grid(contact_fields)
         street_grid = self._build_grid(street_field)

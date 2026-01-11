@@ -29,7 +29,7 @@ class SideMenuComponent(BaseComponent, ft.Container):
                 alignment=ft.MainAxisAlignment.START,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            alignment=ft.alignment.top_center,
+            alignment=ft.Alignment.TOP_CENTER,
             width=self.__calculate_width(),
             opacity=1.0,
             animate_opacity=300,
@@ -47,7 +47,7 @@ class SideMenuComponent(BaseComponent, ft.Container):
                 self.__controls.append(
                     ft.ListTile(
                         title=ft.Text(view_label),
-                        leading=ft.Icon(name=ft.Icons.VIEW_LIST),
+                        leading=ft.Icon(icon=ft.Icons.VIEW_LIST),
                         dense=True,
                         on_click=lambda _, id=module_id, key=view_key: self._controller.on_item_clicked(id, key),
                     )

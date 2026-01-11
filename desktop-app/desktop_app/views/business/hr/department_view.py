@@ -6,7 +6,6 @@ import flet as ft
 
 from utils.enums import ViewMode
 
-from utils.field_group import FieldGroup
 from views.base.base_view import BaseView
 
 if TYPE_CHECKING:
@@ -23,34 +22,15 @@ class DepartmentView(BaseView):
         key: str,
         data_row: dict[str, Any] | None,
     ) -> None:
-        super().__init__(controller, translation, mode, key, data_row)
-        main_fields = {
-            "name": FieldGroup(
-                label=self._get_label("name", size=2),
-                input=self._get_text_input("name", size=9),
-                marker=self._get_marker("name", size=1),
-            ),
-            "description": FieldGroup(
-                label=self._get_label("description", size=2),
-                input=self._get_text_input("description", lines=3, size=9),
-                marker=self._get_marker("description", size=1),
-            ),
-            "code": FieldGroup(
-                label=self._get_label("code", size=2),
-                input=self._get_text_input("code", size=2),
-                marker=self._get_marker("code", size=8),
-            ),
-            "email": FieldGroup(
-                label=self._get_label("email", size=2),
-                input=self._get_text_input("email", size=9),
-                marker=self._get_marker("email", size=1),
-            ),
-            "phone_number": FieldGroup(
-                label=self._get_label("phone", size=2),
-                input=self._get_text_input("phone_number", size=9),
-                marker=self._get_marker("phone_number", size=1),
-            ),
-        }
+        super().__init__(controller, translation, mode, key, data_row, 2, 9)
+        main_fields_definitions = [
+            {"key": "name", "input": self._get_text_input},
+            {"key": "description", "input": self._get_text_input, "lines": 3},
+            {"key": "code", "input": self._get_text_input, "input_size": 5},
+            {"key": "email", "input": self._get_text_input},
+            {"key": "phone_number", "label": "phone", "input": self._get_text_input},
+        ]
+        main_fields = self._build_field_groups(main_fields_definitions)
         self._add_to_inputs(main_fields)
         main_grid = self._build_grid(main_fields)
         meta_grid = self._get_meta_grid(label_size=4, id_size=2, datetime_size=7)

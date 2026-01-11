@@ -2,6 +2,7 @@ from enum import StrEnum, IntEnum
 
 
 class ViewMode(StrEnum):
+    NONE = "none"
     SEARCH = "search"
     CREATE = "create"
     READ = "read"
@@ -23,10 +24,12 @@ class View(StrEnum):
     WAREHOUSES = "warehouses"
     BINS = "bins"
     CARRIERS = "carriers"
-    DELIVERY_METHODS = "delivery-methods"
+    DELIVERY_METHODS = "delivery_methods"
     UNITS = "units"
     ITEMS = "items"
     BIN_TRANSFER = "bin_transfer"
+    SUPPLIERS = "suppliers"
+    CATEGORIES = "categories"
 
 
 class Endpoint(StrEnum):
@@ -48,3 +51,5 @@ class Endpoint(StrEnum):
     UNITS = "units"
     ITEMS = "items"
     BIN_ITEMS = "bin-items"
+    SUPPLIERS = "suppliers"
+    CATEGORIES = "categories"

@@ -19,12 +19,12 @@ class AuthDialogComponent(BaseComponent, BaseDialog):
         login_field = ft.TextField(label=translation.get("login"), autofocus=True)
         password_field = ft.TextField(label=translation.get("password"), password=True, can_reveal_password=True)
         cancel_button = ft.Button(
-            text=translation.get("cancel"),
+            content=translation.get("cancel"),
             on_click=lambda _: controller.on_cancel_click(),
             # style=ButtonStyles.small_padding,
         )
         login_button = ft.ElevatedButton(
-            text=translation.get("log_in"),
+            content=translation.get("log_in"),
             on_click=lambda _: controller.on_login_click(
                 login_field.value or "",
                 password_field.value or "",

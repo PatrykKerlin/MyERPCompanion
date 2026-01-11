@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from controllers.base.base_component_controller import BaseComponentController
-from views.base.base_view import BaseView
 from views.components.side_menu_component import SideMenuComponent
-from events.events import SideMenuRequested, SideMenuToggleRequested, TabRequested, ViewReady
+from events.events import SideMenuReady, SideMenuRequested, SideMenuToggleRequested, TabRequested
 
 if TYPE_CHECKING:
     from config.context import Context
@@ -27,17 +26,17 @@ class SideMenuController(BaseComponentController[SideMenuComponent, SideMenuRequ
         self._page.run_task(self._event_bus.publish, TabRequested(module_id=module_id, view_key=view_key))
 
     async def _component_requested_handler(self, _: SideMenuRequested) -> None:
-        translation_state = self._state_store.app_state.translation
-        modules_state = self._state_store.app_state.modules
+        translation = self._state_store.app_state.translation.items
+        modules = self._state_store.app_state.modules.items
         content: dict[str, list[tuple[int, str]]] = {}
-        if modules_state.items:
-            sorted_modules = sorted(modules_state.items, key=lambda module: module.order)
+        if modules:
+            sorted_modules = sorted(modules, key=lambda module: module.order)
             for module in sorted_modules:
                 if not module.in_side_menu:
                     continue
                 content[module.key] = [(module.id, view.key) for view in module.views]
-        self._component = SideMenuComponent(controller=self, translation=translation_state.items, content=content)
-        self._state_store.update(components={"side_menu": self._component})
+        self._component = SideMenuComponent(controller=self, translation=translation, content=content)
+        await self._event_bus.publish(SideMenuReady(self._component))
         self.__is_component_visible = True
         self.__component_width = None
 

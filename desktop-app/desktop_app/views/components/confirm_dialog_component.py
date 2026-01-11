@@ -2,7 +2,7 @@ import asyncio
 
 import flet as ft
 
-from views.base import BaseDialog
+from views.base.base_dialog import BaseDialog
 
 
 class ConfirmDialogComponent(BaseDialog):
@@ -15,11 +15,11 @@ class ConfirmDialogComponent(BaseDialog):
         self.__loop = loop
         self.__future = self.__loop.create_future()
         cancel_button = ft.Button(
-            text=texts["cancel"],
+            content=texts["cancel"],
             on_click=lambda _: self.__set_result(False),
         )
         confirm_button = ft.ElevatedButton(
-            text=texts["ok"],
+            content=texts["ok"],
             on_click=lambda _: self.__set_result(True),
         )
         super().__init__(
@@ -27,7 +27,7 @@ class ConfirmDialogComponent(BaseDialog):
             actions=[cancel_button, confirm_button],
             title=ft.Row(
                 controls=[
-                    ft.Icon(name=ft.Icons.WARNING, color=ft.Colors.ORANGE),
+                    ft.Icon(icon=ft.Icons.WARNING, color=ft.Colors.ORANGE),
                     ft.Text(value=texts["are_you_sure"]),
                 ]
             ),

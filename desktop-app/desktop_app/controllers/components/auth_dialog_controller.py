@@ -23,10 +23,10 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
     async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
         translation_state = self._state_store.app_state.translation
         self._component = AuthDialogComponent(controller=self, translation=translation_state.items)
-        self._open_dialog(self._component)
+        self._page.show_dialog(self._component)
 
     def on_cancel_click(self) -> None:
-        self._page.window.destroy()
+        self._page.run_task(self._page.window.destroy)
 
     def on_login_click(self, username: str, password: str) -> None:
         self._page.run_task(self.__handle_login, "user1", "test1234")
@@ -54,10 +54,10 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
             self._state_store.update(modules={"items": user_modules})
             self._state_store.update(user={"current": user})
             if self._component:
-                self._close_dialog(self._component)
+                self._page.pop_dialog()
             await self._event_bus.publish(UserAuthenticated())
         except Exception as error:
             self._logger.error(error)
             if self._component:
-                self._close_dialog(self._component)
+                self._page.pop_dialog()
             self._open_error_dialog(message_key="invalid_credentials")

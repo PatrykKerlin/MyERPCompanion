@@ -23,6 +23,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         self._settings = settings
         self._logger = logger
         self._tokens_accessor = tokens_accessor
+        self.__sleep_time = 0.05
 
     async def call_api_with_token_refresh(
         self,
@@ -205,7 +206,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
             response = await client.get(Endpoint.REFRESH, headers=headers)
             response.raise_for_status()
             new_access = response.json()["access"]
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(self.__sleep_time)
             return TokenPlainSchema(access=new_access, refresh=tokens.refresh)
 
     async def _get(
@@ -219,7 +220,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
             response = await client.get(url=endpoint, params=query_params)
             response.raise_for_status()
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(self.__sleep_time)
             return response
 
     async def _post(
@@ -233,7 +234,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
             response = await client.post(url=endpoint, json=body_params)
             response.raise_for_status()
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(self.__sleep_time)
             return response
 
     async def _put(
@@ -247,7 +248,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
             response = await client.put(url=endpoint, json=body_params)
             response.raise_for_status()
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(self.__sleep_time)
             return response
 
     async def _delete(
@@ -261,7 +262,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
             response = await client.delete(url=endpoint)
             response.raise_for_status()
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(self.__sleep_time)
             return response
 
     def __prepare_headers(self, tokens: TokenPlainSchema | None = None, module_id: int | None = None) -> dict[str, str]:

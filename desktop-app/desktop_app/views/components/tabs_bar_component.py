@@ -12,13 +12,11 @@ if TYPE_CHECKING:
 
 
 class TabsBarComponent(BaseComponent, ft.Container):
-    def __init__(
-        self, controller: TabsBarController, translation: Translation, tabs: list[str], active_tab: str
-    ) -> None:
+    def __init__(self, controller: TabsBarController, translation: Translation) -> None:
         BaseComponent.__init__(self, controller, translation)
         ft.Container.__init__(self)
-        self.__tabs = tabs
-        self.__active_tab = active_tab
+        self.__tabs: list[str] = []
+        self.__active_tab = ""
         self.content = ft.Row(
             controls=[],
             scroll=ft.ScrollMode.AUTO,
@@ -48,7 +46,7 @@ class TabsBarComponent(BaseComponent, ft.Container):
             ft.Row(
                 controls=[
                     ft.TextButton(
-                        text=title,
+                        content=title,
                         on_click=lambda _, title=title: self._controller.on_tab_clicked(title),
                     ),
                     ft.IconButton(
@@ -60,7 +58,7 @@ class TabsBarComponent(BaseComponent, ft.Container):
             )
             for title in self.__tabs
         ]
-        cast(ft.Row, self.content).controls = controls
+        cast(ft.Row, self.content).controls = cast(list[ft.Control], controls)
 
     def refresh(self) -> None:
         self.__build_controls()

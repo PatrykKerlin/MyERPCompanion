@@ -17,8 +17,5 @@ class WarehouseController(
     _endpoint = Endpoint.WAREHOUSES
     _view_key = View.WAREHOUSES
 
-    async def _view_requested_handler(self, event: ViewRequested) -> None:
-        await self._handle_view_requested(event)
-
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> WarehouseView:
         return WarehouseView(self, translation, mode, event.view_key, event.data)

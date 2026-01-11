@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar, cast
 
 import flet as ft
 
@@ -31,12 +31,15 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         mode: ViewMode,
         key: str,
         data_row: dict[str, Any] | None,
+        base_label_size: int,
+        base_input_size: int,
+        base_columns_qty: int = 12,
     ) -> None:
         BaseComponent.__init__(self, controller, translation)
         self._mode = mode
         self._view_key = key
         self._data_row = data_row
-        self._base_alignment = ft.alignment.center_left
+        self._base_alignment = ft.Alignment.CENTER_LEFT
         self._inputs: dict[str, FieldGroup] = {}
         self._master_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
         self._scrollable_wrapper = ft.ListView(controls=[self._master_column], expand=True)
@@ -46,16 +49,16 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             ft.ResponsiveRow(controls=[ft.Container(content=ft.TextField(disabled=True), opacity=0.0, col={"sm": 1})])
         ]
         self._cancel_button = ft.Button(
-            text=self._translation.get("cancel"),
+            content=self._translation.get("cancel"),
             on_click=lambda _: self._controller.on_cancel_clicked(),
         )
         self._save_button = ft.ElevatedButton(
-            text=self._translation.get("save"),
+            content=self._translation.get("save"),
             on_click=lambda _: self._controller.on_save_clicked(),
             disabled=True,
         )
         self._search_button = ft.ElevatedButton(
-            text=self._translation.get("search"),
+            content=self._translation.get("search"),
             on_click=lambda _: self._controller.on_search_clicked(),
         )
         self._columns_row = ft.Row(
@@ -68,44 +71,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
         self._rows = [self._columns_row, self._spacing_row, self._buttons_row]
+        self.__base_label_size = base_label_size
+        self.__base_input_size = base_input_size
+        self.__base_columns_qty = base_columns_qty
         self.__meta_fields = {"id", "created_by", "created_at", "modified_by", "modified_at"}
-
-    def _get_meta_grid(
-        self, label_size: int, id_size: int, datetime_size: int, columns: int = 12
-    ) -> list[ft.ResponsiveRow]:
-        free_columns = columns - label_size
-        id_marker_size = free_columns - id_size
-        datetime_marker_size = free_columns - datetime_size
-        meta_fields = {
-            "id": FieldGroup(
-                label=self._get_label("id", label_size),
-                input=self._get_text_input("id", id_size),
-                marker=self._get_marker("id", id_marker_size),
-            ),
-            "created_by": FieldGroup(
-                label=self._get_label("created_by", label_size),
-                input=self._get_text_input("created_by", id_size),
-                marker=self._get_marker("created_by", id_marker_size),
-            ),
-            "created_at": FieldGroup(
-                label=self._get_label("created_at", label_size),
-                input=self._get_text_input("created_at", datetime_size),
-                marker=self._get_marker("created_at", datetime_marker_size),
-            ),
-            "modified_by": FieldGroup(
-                label=self._get_label("modified_by", label_size),
-                input=self._get_text_input("modified_by", id_size),
-                marker=self._get_marker("modified_by", id_marker_size),
-            ),
-            "modified_at": FieldGroup(
-                label=self._get_label("modified_at", label_size),
-                input=self._get_text_input("modified_at", datetime_size),
-                marker=self._get_marker("modified_at", datetime_marker_size),
-            ),
-        }
-        self._inputs.update(meta_fields)
-
-        return self._build_grid(meta_fields)
 
     @property
     def view_key(self) -> str:
@@ -143,7 +112,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self.__set_buttons()
 
     def set_input_state(self, input: ft.Control, enable: bool) -> None:
-        input.disabled = not enable
+        if hasattr(input, "disabled"):
+            setattr(input, "disabled", not enable)
+        if hasattr(input, "read_only"):
+            setattr(input, "read_only", not enable)
         input.update()
 
     def set_save_button_state(self, enable: bool) -> None:
@@ -152,10 +124,12 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
 
     def set_field_error(self, key: str, message: str | None) -> None:
         field = self._inputs[key]
-        if isinstance(field.input.content, (ft.TextField, ft.Dropdown, NumericField)):
+        if isinstance(field.input.content, (ft.TextField, NumericField)):
+            field.input.content.error = message
+        if isinstance(field.input.content, ft.Dropdown):
             field.input.content.error_text = message
         elif isinstance(field.input.content, ft.Checkbox):
-            field.input.content.is_error = bool(message)
+            field.input.content.error = bool(message)
             field.input.content.tooltip = message
         if field.input.content:
             field.input.content.update()
@@ -175,6 +149,86 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             self._scrollable_wrapper.controls.append(self._master_column)
             self._mode = ViewMode.SEARCH
         self._scrollable_wrapper.update()
+
+    def clear_inputs(self) -> None:
+        for key, field in self._inputs.items():
+            input = field.input.content
+            if self._data_row and self._data_row.get(key) and hasattr(input, "value"):
+                setattr(input, "value", self._data_row[key])
+            elif isinstance(input, ft.TextField):
+                input.value = ""
+            elif isinstance(input, ft.Dropdown):
+                input.value = "0"
+            elif isinstance(input, ft.Checkbox):
+                input.value = False
+            if input:
+                input.update()
+
+    def _build_field_groups(self, definitions: list[dict[str, Any]]) -> dict[str, FieldGroup]:
+        return {definition["key"]: self.__build_field_group(**definition) for definition in definitions}
+
+    def _build_grid(self, fields: dict[str, FieldGroup], inline: bool = False) -> list[ft.Control]:
+        if not fields:
+            return []
+        if inline:
+            total_columns = sum(group.columns for group in fields.values())
+            inline_controls = [part for group in fields.values() for part in group]
+            return [
+                ft.ResponsiveRow(
+                    columns=total_columns,
+                    controls=cast(list[ft.Control], inline_controls),
+                    alignment=ft.MainAxisAlignment.START,
+                    vertical_alignment=ft.CrossAxisAlignment.START,
+                )
+            ]
+        return [
+            ft.ResponsiveRow(
+                columns=group.columns,
+                controls=[part for part in group],
+                alignment=ft.MainAxisAlignment.START,
+                vertical_alignment=ft.CrossAxisAlignment.START,
+            )
+            for group in fields.values()
+        ]
+
+    def _add_to_inputs(self, *fields: dict[str, FieldGroup]) -> None:
+        for field in fields:
+            self._inputs.update(field)
+
+    def _get_meta_grid(self, label_size: int, id_size: int, datetime_size: int, columns: int = 12) -> list[ft.Control]:
+        free_columns = columns - label_size
+        id_marker_size = free_columns - id_size
+        datetime_marker_size = free_columns - datetime_size
+        meta_fields = {
+            "id": FieldGroup(
+                label=self._get_label("id", label_size),
+                input=self._get_text_input("id", id_size),
+                marker=self._get_marker("id", id_marker_size),
+            ),
+            "created_by": FieldGroup(
+                label=self._get_label("created_by", label_size),
+                input=self._get_text_input("created_by", id_size),
+                marker=self._get_marker("created_by", id_marker_size),
+            ),
+            "created_at": FieldGroup(
+                label=self._get_label("created_at", label_size),
+                input=self._get_text_input("created_at", datetime_size),
+                marker=self._get_marker("created_at", datetime_marker_size),
+            ),
+            "modified_by": FieldGroup(
+                label=self._get_label("modified_by", label_size),
+                input=self._get_text_input("modified_by", id_size),
+                marker=self._get_marker("modified_by", id_marker_size),
+            ),
+            "modified_at": FieldGroup(
+                label=self._get_label("modified_at", label_size),
+                input=self._get_text_input("modified_at", datetime_size),
+                marker=self._get_marker("modified_at", datetime_marker_size),
+            ),
+        }
+        self._inputs.update(meta_fields)
+
+        return self._build_grid(meta_fields)
 
     def _get_label(self, key: str, size: int, colon: bool = True) -> tuple[ft.Container, int]:
         text_value = self._translation.get(key)
@@ -246,11 +300,12 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         return (
             ft.Container(
                 content=ft.Dropdown(
-                    options=[ft.dropdown.Option(key="placeholder", text=self._translation.get("select"))]
+                    options=[ft.dropdown.Option(key="0", text=self._translation.get("select"))]
                     + [ft.dropdown.Option(key=str(option[0]), text=option[1]) for option in options],
-                    on_change=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
+                    on_select=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
                     expand=True,
-                    value="placeholder",
+                    value="0",
+                    enable_filter=True,
                 ),
                 col={"sm": float(size)},
                 alignment=self._base_alignment,
@@ -328,33 +383,32 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             size,
         )
 
-    def _build_grid(self, fields: dict[str, FieldGroup], inline: bool = False) -> list[ft.ResponsiveRow]:
-        if not fields:
-            return []
-        if inline:
-            total_columns = sum(group.columns for group in fields.values())
-            inline_controls = [part for group in fields.values() for part in group]
-            return [
-                ft.ResponsiveRow(
-                    columns=total_columns,
-                    controls=inline_controls,
-                    alignment=ft.MainAxisAlignment.START,
-                    vertical_alignment=ft.CrossAxisAlignment.START,
-                )
-            ]
-        return [
-            ft.ResponsiveRow(
-                columns=group.columns,
-                controls=[part for part in group],
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.START,
-            )
-            for group in fields.values()
-        ]
+    def __build_field_group(
+        self,
+        input: Callable[..., Any],
+        key: str,
+        label: str | None = None,
+        label_size: int | None = None,
+        input_size: int | None = None,
+        columns: int | None = None,
+        colon: bool = True,
+        **kwargs: Any,
+    ) -> FieldGroup:
+        label_size = label_size if label_size is not None else self.__base_label_size
+        input_size = input_size if input_size is not None else self.__base_input_size
+        columns = columns if columns is not None else self.__base_columns_qty
+        marker_size = columns - label_size - input_size
 
-    def _add_to_inputs(self, *fields: dict[str, FieldGroup]) -> None:
-        for field in fields:
-            self._inputs.update(field)
+        if marker_size < 1:
+            raise ValueError(
+                f"Invalid layout sizes: columns={columns}, " f"label_size={label_size}, input_size={input_size}"
+            )
+
+        return FieldGroup(
+            label=self._get_label(key=label if label is not None else key, size=label_size, colon=colon),
+            input=input(key, size=input_size, **kwargs),
+            marker=self._get_marker(key, size=marker_size),
+        )
 
     def __set_search_mode(self) -> None:
         for key, field in self._inputs.items():
@@ -375,7 +429,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 marker.update()
 
     def __set_create_mode(self) -> None:
-        self.__clear_inputs()
+        self.clear_inputs()
         for key, field in self._inputs.items():
             input = field.input.content
             marker = field.marker.content
@@ -384,6 +438,11 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                     setattr(input, "disabled", True)
                 else:
                     setattr(input, "disabled", False)
+            if hasattr(input, "read_only"):
+                if key in self.__meta_fields:
+                    setattr(input, "read_only", True)
+                else:
+                    setattr(input, "read_only", False)
             if hasattr(marker, "disabled"):
                 setattr(marker, "disabled", True)
             if hasattr(marker, "width"):
@@ -436,15 +495,17 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 input.update()
 
     def __set_buttons(self) -> None:
-        if self.mode in [ViewMode.EDIT, ViewMode.CREATE]:
+        if self._mode == ViewMode.STATIC:
+            return
+        if self._mode in [ViewMode.EDIT, ViewMode.CREATE]:
             self._cancel_button.visible = True
             self._save_button.visible = True
             self._search_button.visible = False
-        elif self.mode == ViewMode.SEARCH:
+        elif self._mode == ViewMode.SEARCH:
             self._cancel_button.visible = False
             self._save_button.visible = False
             self._search_button.visible = True
-        elif self.mode == ViewMode.READ:
+        elif self._mode == ViewMode.READ:
             self._cancel_button.visible = False
             self._save_button.visible = False
             self._search_button.visible = False
@@ -454,18 +515,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             self._save_button.update()
         if self._search_button.page:
             self._search_button.update()
-
-    def __clear_inputs(self) -> None:
-        for field in self._inputs.values():
-            input = field.input.content
-            if isinstance(input, ft.TextField):
-                input.value = ""
-            elif isinstance(input, ft.Dropdown):
-                input.value = None
-            elif isinstance(input, ft.Checkbox):
-                input.value = False
-            if input:
-                input.update()
 
 
 # @property

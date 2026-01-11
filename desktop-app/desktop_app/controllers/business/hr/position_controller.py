@@ -22,9 +22,6 @@ class PositionController(BaseViewController[PositionService, PositionView, Posit
         self.__currency_service = CurrencyService(self._settings, self._logger, self._tokens_accessor)
         self.__department_service = DepartmentService(self._settings, self._logger, self._tokens_accessor)
 
-    async def _view_requested_handler(self, event: ViewRequested) -> None:
-        await self._handle_view_requested(event)
-
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> PositionView:
         currencies = await self.__perform_get_all_currencies()
         departments = await self.__perform_get_all_departments()

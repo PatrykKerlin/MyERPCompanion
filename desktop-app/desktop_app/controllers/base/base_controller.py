@@ -1,7 +1,7 @@
 from typing import Any, Awaitable, Callable, TypeVar
 
-import asyncio
-import flet as ft
+# import asyncio
+# import flet as ft
 
 from schemas.base.base_schema import BaseStrictSchema
 from utils.tokens_accessor import TokensAccessor
@@ -16,8 +16,8 @@ TStrictSchema = TypeVar("TStrictSchema", bound=BaseStrictSchema)
 
 class BaseController:
     def __init__(self, context: Context) -> None:
-        self._settings = context.settings
         self._page = context.page
+        self._settings = context.settings
         self._logger = context.logger
         self._event_bus = context.event_bus
         self._state_store = context.state_store
@@ -45,13 +45,13 @@ class BaseController:
             self.__add_unsubscriber(unsubscriber)
 
     def _open_loading_dialog(self) -> None:
-        translation_state = self._state_store.app_state.translation
-        self._loading_dialog = LoadingDialogComponent(translation_state.items)
-        self._open_dialog(self._loading_dialog)
+        translation = self._state_store.app_state.translation.items
+        self._loading_dialog = LoadingDialogComponent(translation)
+        self._page.show_dialog(self._loading_dialog)
 
     def _close_loading_dialog(self) -> None:
         if self._loading_dialog:
-            self._close_dialog(self._loading_dialog)
+            self._page.pop_dialog()
         self._loading_dialog = None
 
     def _open_error_dialog(self, message_key: str | None = None, message: str | None = None) -> None:
@@ -60,36 +60,24 @@ class BaseController:
             translation=translation,
             message_key=message_key,
             message=message,
-            on_click=lambda _: self._close_dialog(error_dialog),
+            on_ok_clicked=lambda _: self._page.pop_dialog(),
         )
-        self._open_dialog(error_dialog)
+        self._page.show_dialog(error_dialog)
 
     def _open_message_dialog(self, message_key: str) -> None:
         translation_state = self._state_store.app_state.translation
         message_dialog = MessageDialogComponent(
             translation=translation_state.items,
             message_key=message_key,
-            on_ok_clicked=lambda: self._close_dialog(message_dialog),
+            on_ok_clicked=lambda _: self._page.pop_dialog(),
         )
-        self._open_dialog(message_dialog)
+        self._page.show_dialog(message_dialog)
 
-    def _open_dialog(self, dialog: ft.AlertDialog) -> None:
-        self._page.open(dialog)
-        self._page.update()
-
-    def _close_dialog(self, dialog: ft.AlertDialog) -> None:
-        self._page.close(dialog)
-        self._page.update()
-
-    async def _run_with_delay(self, func: Callable[[], None], delay: float = 0.1) -> None:
-        await asyncio.sleep(delay)
-        func()
-
-    def _get_tab_title(self, key: str, postfix: int | None) -> str:
+    def _get_tab_title(self, key: str, id: int | None) -> str:
         translation_state = self._state_store.app_state.translation
         title = translation_state.items.get(key)
-        if postfix:
-            return f"{title}: {postfix}"
+        if id:
+            return f"{title}: {id}"
         return title
 
     def __add_unsubscriber(self, func: Callable[[], None]) -> None:

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from controllers.base.base_component_controller import BaseComponentController
 from views.components.menu_bar_component import MenuBarComponent
-from events.events import MenuBarRequested
+from events.events import MenuBarRequested, MenuBarReady
 
 if TYPE_CHECKING:
     from config.context import Context
@@ -18,4 +18,4 @@ class MenuBarController(BaseComponentController[MenuBarComponent, MenuBarRequest
     async def _component_requested_handler(self, _: MenuBarRequested) -> None:
         translation_state = self._state_store.app_state.translation
         self._component = MenuBarComponent(controller=self, translation=translation_state.items)
-        self._state_store.update(components={"menu_bar": self._component})
+        await self._event_bus.publish(MenuBarReady(self._component))

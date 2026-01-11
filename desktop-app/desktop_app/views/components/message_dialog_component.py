@@ -7,8 +7,13 @@ from views.base.base_dialog import BaseDialog
 
 
 class MessageDialogComponent(BaseDialog):
-    def __init__(self, translation: Translation, message_key: str, on_ok_clicked: Callable[[], None]) -> None:
+    def __init__(
+        self,
+        translation: Translation,
+        message_key: str,
+        on_ok_clicked: Callable[[ft.Event[ft.TextButton]], ft.DialogControl | None],
+    ) -> None:
         super().__init__(
             controls=[ft.Text(translation.get(message_key))],
-            actions=[ft.TextButton(translation.get("ok"), on_click=lambda _: on_ok_clicked())],
+            actions=[ft.TextButton(translation.get("ok"), on_click=on_ok_clicked)],
         )

@@ -1,28 +1,26 @@
-from typing import Sequence
-
 import flet as ft
 
 
 class BaseDialog(ft.AlertDialog):
     def __init__(
         self,
-        controls: Sequence[ft.Control],
-        actions: Sequence[ft.Control] = [],
+        controls: list[ft.Control],
+        actions: list[ft.Control] | None = None,
         title: str | ft.Control | None = None,
         **kwargs,
     ) -> None:
         super().__init__(
             modal=True,
-            alignment=ft.alignment.center,
+            alignment=ft.Alignment.CENTER,
             content=ft.Container(
                 content=ft.Column(
-                    controls=list(controls),
+                    controls=controls,
                     tight=True,
                     alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
             ),
-            actions=list(actions),
+            actions=actions or [],
             title=title,
             **kwargs,
         )

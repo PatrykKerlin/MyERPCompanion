@@ -1,0 +1,88 @@
+from typing import Any, Callable
+import flet as ft
+
+from utils.translation import Translation
+
+
+class DataTable(ft.Container):
+    def __init__(
+        self,
+        columns: list[str],
+        rows: list[dict[str, Any]],
+        translation: Translation,
+        on_row_clicked: Callable[[dict[str, Any]], None] | None = None,
+        on_add_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
+        add_button_disabled: bool = False,
+        sort_by: str | None = None,
+        order: str = "asc",
+        expand: bool = True,
+        visible: bool = True,
+    ) -> None:
+        super().__init__(expand=expand, clip_behavior=ft.ClipBehavior.HARD_EDGE)
+        self.__on_add_clicked = on_add_clicked
+        sort_column_index = columns.index(sort_by) if sort_by in columns else None
+        sort_ascending = order == "asc"
+
+        data_table = ft.DataTable(
+            columns=[
+                ft.DataColumn(
+                    label=ft.Text(translation.get(column_key)),
+                )
+                for column_key in columns
+            ],
+            rows=[
+                ft.DataRow(
+                    cells=[ft.DataCell(ft.Text(str(row.get(column_key, "")))) for column_key in columns],
+                    on_select_change=self.__handle_on_row_clicked(row, on_row_clicked),
+                )
+                for row in rows
+            ],
+            sort_column_index=sort_column_index,
+            sort_ascending=sort_ascending,
+        )
+
+        self.__add_button = ft.IconButton(
+            icon=ft.Icons.ADD,
+            disabled=add_button_disabled,
+            on_click=self.__handle_add_clicked if on_add_clicked else None,
+        )
+
+        self.content = ft.Column(
+            controls=[
+                ft.Row(
+                    controls=[data_table],
+                    scroll=ft.ScrollMode.AUTO,
+                    expand=True,
+                ),
+                ft.Row(
+                    controls=[self.__add_button],
+                    alignment=ft.MainAxisAlignment.START,
+                ),
+            ],
+            expand=True,
+            scroll=ft.ScrollMode.AUTO,
+            visible=visible,
+        )
+
+    @property
+    def add_button_disabled(self) -> bool:
+        return self.__add_button.disabled
+
+    @add_button_disabled.setter
+    def add_button_disabled(self, value: bool) -> None:
+        self.__add_button.disabled = value
+
+    def __handle_add_clicked(self, event: ft.Event[ft.IconButton]) -> None:
+        if self.__on_add_clicked:
+            self.__on_add_clicked(event)
+
+    def __handle_on_row_clicked(
+        self, row: dict[str, Any], on_row_clicked: Callable[[dict[str, Any]], None] | None
+    ) -> Callable[[Any], None] | None:
+        if on_row_clicked is None:
+            return None
+
+        def handler(_: Any) -> None:
+            on_row_clicked(row)
+
+        return handler

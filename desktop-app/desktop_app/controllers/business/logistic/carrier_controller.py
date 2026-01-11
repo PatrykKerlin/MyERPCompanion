@@ -7,7 +7,9 @@ from services.business.trade import CurrencyService
 from utils.enums import Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.carrier_view import CarrierView
-from events.events import ViewRequested
+from events.events import DialogRequested, ViewRequested
+
+import flet as ft
 
 
 class CarrierController(BaseViewController[CarrierService, CarrierView, CarrierPlainSchema, CarrierStrictSchema]):
@@ -23,16 +25,27 @@ class CarrierController(BaseViewController[CarrierService, CarrierView, CarrierP
         self.__currency_service = CurrencyService(self._settings, self._logger, self._tokens_accessor)
         self.__delivery_method_service = DeliveryMethodService(self._settings, self._logger, self._tokens_accessor)
 
-    async def _view_requested_handler(self, event: ViewRequested) -> None:
-        await self._handle_view_requested(event)
+    def on_table_row_clicked(self, result_id: int) -> None:
+        self._page.run_task(
+            self._execute_row_clicked,
+            result_id,
+            View.DELIVERY_METHODS,
+            self.__delivery_method_service,
+            Endpoint.DELIVERY_METHODS,
+        )
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> CarrierView:
+    def on_add_delivery_method_clicked(self, _: ft.Event[ft.IconButton]) -> None:
+        self._page.run_task(self.__open_delivery_method_create_dialog)
+
+    async def _build_view(
+        self, translation: Translation, mode: ViewMode, event: ViewRequested | DialogRequested
+    ) -> CarrierView:
         currencies = await self.__perform_get_all_currencies()
         if event.data:
             delivery_method_schemas = await self.__perform_get_delivery_methods_for_id(event.data["id"])
             delivery_methods = [schema.model_dump() for schema in delivery_method_schemas]
         else:
-            delivery_methods = [{}]
+            delivery_methods = []
         return CarrierView(self, translation, mode, event.view_key, event.data, currencies, delivery_methods)
 
     async def __perform_get_all_currencies(self) -> list[tuple[int, str]]:
@@ -50,4 +63,19 @@ class CarrierController(BaseViewController[CarrierService, CarrierView, CarrierP
             endpoint=Endpoint.DELIVERY_METHODS,
             query_params={"carrier_id": id},
             module_id=self._module_id,
+        )
+
+    async def __open_delivery_method_create_dialog(self) -> None:
+        if not self._view or not self._view.data_row:
+            return
+
+        id_value = self._view.data_row["id"]
+
+        self._page.run_task(
+            self._event_bus.publish,
+            DialogRequested(
+                module_id=self._module_id,
+                view_key=View.DELIVERY_METHODS,
+                data={"carrier_id": id_value},
+            ),
         )

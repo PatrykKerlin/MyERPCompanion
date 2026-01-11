@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     # LANGUAGE: str = Field(default_factory=lambda: Settings.__get_system_language())
     LANGUAGE: str = "en"
     THEME: str = "system"
+    API_CHECK_DELAY: int = 60
 
     model_config = {"env_file": ".env"}
 

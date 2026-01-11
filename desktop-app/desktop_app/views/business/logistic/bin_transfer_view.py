@@ -8,8 +8,7 @@ from utils.enums import ViewMode
 
 from views.base.base_view import BaseView
 from utils.translation import Translation
-from controllers.controls.dual_assign_controller import DualAssignController
-from views.controls.dual_assign_control import DualAssign
+from views.controls.bulk_transfer_control import BulkTransfer
 
 if TYPE_CHECKING:
     from controllers.business.logistic.bin_transfer_controller import BinTransferController
@@ -22,49 +21,59 @@ class BinTransferView(BaseView):
         translation: Translation,
         mode: ViewMode,
         key: str,
-        dual_assign_controller: DualAssignController,
-        on_source_submitted: Callable[[ft.ControlEvent], None],
-        on_target_submitted: Callable[[ft.ControlEvent], None],
-        on_save_clicked: Callable[[ft.ControlEvent], None],
+        on_source_submitted: Callable[[ft.Event[ft.TextField]], None],
+        on_target_submitted: Callable[[ft.Event[ft.TextField]], None],
+        on_save_clicked: Callable[[ft.Event[ft.IconButton]], None],
     ) -> None:
-        super().__init__(controller, translation, mode, key, None)
+        super().__init__(controller, translation, mode, key, None, 0, 12)
         self._master_column.scroll = None
-        self.__dual_assign = DualAssign(
-            source_label=self._translation.get("source_bin"),
-            target_label=self._translation.get("target_bin"),
-            on_source_submitted=on_source_submitted,
-            on_target_submitted=on_target_submitted,
-            on_move_clicked=dual_assign_controller.on_move_clicked,
-            on_delete_clicked=dual_assign_controller.on_delete_clicked,
-            on_save_clicked=on_save_clicked,
+
+        self.__source_input = ft.TextField(label=self._translation.get("source_bin"), on_submit=on_source_submitted)
+        self.__target_input = ft.TextField(label=self._translation.get("target_bin"), on_submit=on_target_submitted)
+
+        self.__bulk_transfer = BulkTransfer(on_save_clicked=on_save_clicked)
+
+        inputs_row = ft.Row(
+            controls=[
+                ft.Container(content=self.__source_input, expand=True),
+                ft.Container(expand=True),
+                ft.Container(content=self.__target_input, expand=True),
+            ],
+            vertical_alignment=ft.CrossAxisAlignment.START,
         )
-        dual_assign_controller.attach_control(self.__dual_assign)
-        self._master_column.controls = [self.__dual_assign]
+
+        self._master_column.controls = [inputs_row, self.__bulk_transfer]
+
         ft.Card.__init__(self, content=self._master_column, expand=True)
 
+    def get_pending_move_ids(self) -> list[int]:
+        return self.__bulk_transfer.get_pending_move_ids()
+
     def set_source_enabled(self, enabled: bool) -> None:
-        self.__dual_assign.set_source_enabled(enabled)
+        self.__bulk_transfer.set_source_enabled(enabled)
 
     def set_target_enabled(self, enabled: bool) -> None:
-        self.__dual_assign.set_target_enabled(enabled)
+        self.__bulk_transfer.set_target_enabled(enabled)
 
     def set_source_items(self, items: list[tuple[int, str]]) -> None:
-        self.__dual_assign.set_source_items(items)
+        self.__bulk_transfer.set_source_items(items)
 
     def set_target_items(self, items: list[tuple[int, str]]) -> None:
-        self.__dual_assign.set_target_items(items)
+        self.__bulk_transfer.set_target_items(items)
 
     def prepend_target_items(self, items: list[tuple[int, str]], highlight: bool) -> None:
-        self.__dual_assign.prepend_target_items(items, highlight)
+        self.__bulk_transfer.prepend_target_items(items, highlight)
 
     def remove_source_items(self, ids: list[int]) -> None:
-        self.__dual_assign.remove_source_items(ids)
+        self.__bulk_transfer.remove_source_items(ids)
 
     def get_selected_source_ids(self) -> list[int]:
-        return self.__dual_assign.get_selected_source_ids()
+        return self.__bulk_transfer.get_selected_source_ids()
 
     def set_source_error(self, message: str | None) -> None:
-        self.__dual_assign.set_source_error(message)
+        self.__source_input.error = message
+        self.update()
 
     def set_target_error(self, message: str | None) -> None:
-        self.__dual_assign.set_target_error(message)
+        self.__target_input.error = message
+        self.update()

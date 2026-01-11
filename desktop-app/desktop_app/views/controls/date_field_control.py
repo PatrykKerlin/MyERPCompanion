@@ -13,7 +13,7 @@ class DateField(ft.Row):
         date_format: str = "%Y-%m-%d",
         width: float | None = None,
         expand: int | bool | None = None,
-        read_only: bool | None = None,
+        read_only: bool = True,
         on_change: Callable[[ft.ControlEvent], None] | None = None,
     ) -> None:
         super().__init__(
@@ -51,7 +51,7 @@ class DateField(ft.Row):
 
         self.controls = [
             self.__picker,
-            ft.Container(content=self.__open_button, alignment=ft.alignment.top_center),
+            ft.Container(content=self.__open_button, alignment=ft.Alignment.TOP_CENTER),
             self.__text_field,
         ]
 
@@ -65,20 +65,20 @@ class DateField(ft.Row):
         self.__emit_value()
 
     @property
-    def error_text(self) -> str | None:
-        return self.__text_field.error_text
+    def error(self) -> ft.StrOrControl | None:
+        return self.__text_field.error
 
-    @error_text.setter
-    def error_text(self, message: str | None) -> None:
-        self.__text_field.error_text = message
+    @error.setter
+    def error(self, message: str | None) -> None:
+        self.__text_field.error = message
         self.__text_field.update()
 
     @property
-    def read_only(self) -> bool | None:
+    def read_only(self) -> bool:
         return self.__read_only
 
     @read_only.setter
-    def read_only(self, new_value: bool | None) -> None:
+    def read_only(self, new_value: bool) -> None:
         self.__read_only = new_value
         self.__open_button.disabled = self.__read_only
         self.__open_button.update()
@@ -112,12 +112,13 @@ class DateField(ft.Row):
         if self.__picker.value != self.__value:
             self.__picker.value = self.__value
 
-    def __open_picker(self, _: ft.ControlEvent) -> None:
+    def __open_picker(self, _: ft.Event[ft.IconButton]) -> None:
         if not self.page:
             return
-        self.page.open(self.__picker)
+        self.__picker.open = True
+        self.__picker.update()
 
-    def __handle_picker_change(self, _: ft.ControlEvent) -> None:
+    def __handle_picker_change(self, _: ft.Event[ft.DatePicker]) -> None:
         picked_raw = getattr(self.__picker, "value", None)
         picked = self.__normalize_input(picked_raw)
         self.__set_value(picked)

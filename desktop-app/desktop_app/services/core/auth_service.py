@@ -20,7 +20,7 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: BaseStrictSchema | None = None,
+        body_params: BaseStrictSchema | list[BaseStrictSchema] | dict[str, Any] | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> list[ModulePlainSchema]:
@@ -43,7 +43,7 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: BaseStrictSchema | None = None,
+        body_params: BaseStrictSchema | list[BaseStrictSchema] | dict[str, Any] | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> UserPlainSchema:

@@ -5,7 +5,6 @@ from httpx import HTTPStatusError
 
 from config.context import Context
 from controllers.base.base_view_controller import BaseViewController
-from controllers.controls.dual_assign_controller import DualAssignController
 from events.events import ViewRequested
 from schemas.business.logistic.assoc_bin_item_schema import AssocBinItemPlainSchema, AssocBinItemStrictSchema
 from schemas.business.logistic.bin_schema import BinPlainSchema
@@ -27,7 +26,6 @@ class BinTransferController(
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        self.__dual_assign_controller = DualAssignController()
         self.__bin_item_service = self._service
         self.__bin_service = BinService(self._settings, self._logger, self._tokens_accessor)
         self.__item_service = ItemService(self._settings, self._logger, self._tokens_accessor)
@@ -36,9 +34,6 @@ class BinTransferController(
         self.__source_items: dict[int, tuple[str, int, int]] = {}
         self.__target_items: dict[int, tuple[str, int, int]] = {}
 
-    async def _view_requested_handler(self, event: ViewRequested) -> None:
-        await self._handle_view_requested(event)
-
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinTransferView:
         mode = ViewMode.STATIC
         return BinTransferView(
@@ -46,13 +41,12 @@ class BinTransferController(
             translation,
             mode,
             event.view_key,
-            self.__dual_assign_controller,
             self.on_source_bin_submit,
             self.on_target_bin_submit,
-            self.on_dual_assign_save_clicked,
+            self.on_bulk_transfer_save_clicked,
         )
 
-    def on_source_bin_submit(self, event: ft.ControlEvent) -> None:
+    def on_source_bin_submit(self, event: ft.Event[ft.TextField]) -> None:
         if not self._view:
             return
         location = event.control.value.strip()
@@ -62,7 +56,7 @@ class BinTransferController(
         self._view.set_source_error(None)
         self._page.run_task(self.__validate_enable_and_load_source, location)
 
-    def on_target_bin_submit(self, event: ft.ControlEvent) -> None:
+    def on_target_bin_submit(self, event: ft.Event[ft.TextField]) -> None:
         if not self._view:
             return
         location = event.control.value.strip()
@@ -72,15 +66,15 @@ class BinTransferController(
         self._view.set_target_error(None)
         self._page.run_task(self.__validate_enable_and_load_target, location)
 
-    def on_dual_assign_save_clicked(self, _: ft.ControlEvent) -> None:
+    def on_bulk_transfer_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         if not self._view:
             return
-        self._page.run_task(self.__handle_dual_assign_save)
+        self._page.run_task(self.__handle_bulk_transfer_save)
 
-    async def __handle_dual_assign_save(self) -> None:
+    async def __handle_bulk_transfer_save(self) -> None:
         if not self._view or not self.__target_bin:
             return
-        pending_ids = self.__dual_assign_controller.get_pending_move_ids()
+        pending_ids = self._view.get_pending_move_ids()
         if not pending_ids:
             return
         bin_items_schemas: list[AssocBinItemStrictSchema] = []

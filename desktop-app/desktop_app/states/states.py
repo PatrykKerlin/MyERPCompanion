@@ -1,24 +1,30 @@
-from pydantic import Field
-
 from schemas.core.module_schema import ModulePlainSchema
 from schemas.core.user_schema import UserPlainSchema
 from states.base.base_state import BaseState
+
 from utils.enums import ViewMode
-from views.base.base_view import BaseView
-from views.components.side_menu_component import SideMenuComponent
-from views.components.toolbar_component import ToolbarComponent
-from views.components.tabs_bar_component import TabsBarComponent
-from views.components.footer_component import FooterComponent
-from views.components.menu_bar_component import MenuBarComponent
 from utils.translation import Translation
+from views.base.base_view import BaseView
+
+from flet import Control
 
 
-class ComponentsState(BaseState):
-    menu_bar: MenuBarComponent | None = None
-    side_menu: SideMenuComponent | None = None
-    toolbar: ToolbarComponent | None = None
-    tabs_bar: TabsBarComponent | None = None
-    footer: FooterComponent | None = None
+class ShellState(BaseState):
+    is_menu_bar_ready: bool = False
+    is_toolbar_ready: bool = False
+    is_side_menu_ready: bool = False
+    is_footer_ready: bool = False
+    is_tabs_bar_ready: bool = False
+
+    @property
+    def is_shell_ready(self) -> bool:
+        return (
+            self.is_menu_bar_ready
+            and self.is_toolbar_ready
+            and self.is_side_menu_ready
+            and self.is_footer_ready
+            and self.is_tabs_bar_ready
+        )
 
 
 class TranslationState(BaseState):
@@ -39,10 +45,10 @@ class ModulesState(BaseState):
     items: list[ModulePlainSchema]
 
 
-class TabsState(BaseState):
-    current: str
+class ViewState(BaseState):
+    title: str
     mode: ViewMode
-    items: dict[str, BaseView]
+    view: BaseView | None
 
 
 class AppState(BaseState):
@@ -50,5 +56,8 @@ class AppState(BaseState):
     tokens: TokensState
     user: UserState
     modules: ModulesState
-    components: ComponentsState
-    tabs: TabsState
+    shell: ShellState
+    view: ViewState
+
+
+ViewState.model_rebuild(force=True, _types_namespace={"Control": Control})

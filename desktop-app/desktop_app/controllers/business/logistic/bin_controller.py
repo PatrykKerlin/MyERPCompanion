@@ -20,9 +20,6 @@ class BinController(BaseViewController[BinService, BinView, BinPlainSchema, BinS
         super().__init__(context)
         self.__warehouse_service = WarehouseService(self._settings, self._logger, self._tokens_accessor)
 
-    async def _view_requested_handler(self, event: ViewRequested) -> None:
-        await self._handle_view_requested(event)
-
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinView:
         warehouses = await self.__perform_get_all_warehouses()
         return BinView(self, translation, mode, event.view_key, event.data, warehouses)

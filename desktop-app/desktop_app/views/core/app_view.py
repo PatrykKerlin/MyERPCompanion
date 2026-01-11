@@ -1,9 +1,6 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 import flet as ft
 
+from utils.translation import Translation
 from views.base.base_view import BaseView
 from views.components.footer_component import FooterComponent
 from views.components.menu_bar_component import MenuBarComponent
@@ -11,103 +8,124 @@ from views.components.side_menu_component import SideMenuComponent
 from views.components.tabs_bar_component import TabsBarComponent
 from views.components.toolbar_component import ToolbarComponent
 
-if TYPE_CHECKING:
-    from utils.translation import Translation
-
 
 class AppView:
-    def __init__(self, page: ft.Page, translation: Translation, theme: str) -> None:
-        self.__page = page
-        self.__translation = translation
+    def __init__(self, translation: Translation, theme: str) -> None:
+        # horizontal_divider = ft.Divider(height=1, thickness=1, color=ft.Colors.OUTLINE)
+        # vertical_divider = ft.VerticalDivider(width=1, thickness=1, color=ft.Colors.OUTLINE)
         self.__theme = theme
-        self.__page.window.width = 1600
-        self.__page.window.height = 900
-        self.__page.window.min_width = 1024
-        self.__page.window.min_height = 768
-        self.__view_stack = ft.Stack(expand=True)
-        self.__build()
+        self.__translation = translation
+        self.__menu_bar_container = ft.Container(visible=False)
+        self.__toolbar_container = ft.Container(visible=False)
+        self.__side_menu_container = ft.Container(visible=False)
+        self.__footer_container = ft.Container(visible=False)
+        self.__tabs_bar_container = ft.Container(visible=False)
+        self.__views_stack = ft.Stack(expand=True)
+        self.__root = ft.Column(
+            controls=[
+                self.__menu_bar_container,
+                # horizontal_divider,
+                self.__toolbar_container,
+                # horizontal_divider,
+                ft.Row(
+                    controls=[
+                        self.__side_menu_container,
+                        # vertical_divider,
+                        ft.Column(
+                            controls=[
+                                self.__tabs_bar_container,
+                                self.__views_stack,
+                            ],
+                            expand=True,
+                        ),
+                    ],
+                    expand=True,
+                ),
+                # horizontal_divider,
+                self.__footer_container,
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+            expand=True,
+        )
+
+    def build(self) -> ft.Column:
+        page = ft.context.page
+        self._apply_page_settings(page)
+        return self.__root
 
     def update_translation(self, translation: Translation) -> None:
         self.__translation = translation
-        self.__page.update()
 
-    def __build(self) -> None:
-        self.__page.title = self.__translation.get("my_erp_companion")
-        self.__page.theme_mode = self.__resolve_theme()
-        self.__page.update()
+    def set_menu_bar(self, component: MenuBarComponent) -> None:
+        self.__menu_bar_container.content = component
+        self.__menu_bar_container.visible = True
 
-    def __resolve_theme(self) -> ft.ThemeMode:
-        if self.__theme == "dark":
+    def set_toolbar(self, component: ToolbarComponent) -> None:
+        self.__toolbar_container.content = component
+        self.__toolbar_container.visible = True
+
+    def set_side_menu(self, component: SideMenuComponent) -> None:
+        self.__side_menu_container.content = component
+        self.__side_menu_container.visible = True
+
+    def set_footer(self, component: FooterComponent) -> None:
+        self.__footer_container.content = component
+        self.__footer_container.visible = True
+
+    def set_tabs_bar(self, component: TabsBarComponent) -> None:
+        self.__tabs_bar_container.content = component
+        self.__tabs_bar_container.visible = True
+
+    def _apply_page_settings(self, page: ft.Page) -> None:
+        page.title = self.__translation.get("my_erp_companion")
+        page.theme_mode = self._resolve_theme_mode(self.__theme)
+        page.window.width = 1600
+        page.window.height = 900
+        page.window.min_width = 1024
+        page.window.min_height = 768
+
+    def _resolve_theme_mode(self, theme: str) -> ft.ThemeMode:
+        if theme == "dark":
             return ft.ThemeMode.DARK
-        if self.__theme == "light":
+        if theme == "light":
             return ft.ThemeMode.LIGHT
         return ft.ThemeMode.SYSTEM
 
-    def rebuild(
-        self,
-        menu_bar: MenuBarComponent,
-        side_menu: SideMenuComponent,
-        toolbar: ToolbarComponent,
-        tabs_bar: TabsBarComponent,
-        footer: FooterComponent,
-    ) -> None:
-        horizontal_divider = ft.Divider(height=1, thickness=1, color=ft.Colors.OUTLINE)
-        vertical_divider = ft.VerticalDivider(width=1, thickness=1, color=ft.Colors.OUTLINE)
+    def set_stack_item(self, view: BaseView | None) -> None:
+        if view is None:
+            for stack_view in self.__views_stack.controls:
+                stack_view.visible = False
+        else:
+            if view not in self.__views_stack.controls:
+                self.__views_stack.controls.append(view)
+            for stack_view in self.__views_stack.controls:
+                stack_view.visible = stack_view is view
 
-        self.__page.clean()
-        self.__page.add(
-            ft.Column(
-                controls=[
-                    menu_bar,
-                    horizontal_divider,
-                    toolbar,
-                    horizontal_divider,
-                    ft.Row(
-                        controls=[
-                            side_menu,
-                            vertical_divider,
-                            ft.Column(
-                                controls=[
-                                    tabs_bar,
-                                    self.__view_stack,
-                                ],
-                                expand=True,
-                            ),
-                        ],
-                        expand=True,
-                    ),
-                    horizontal_divider,
-                    footer,
-                ],
-                alignment=ft.MainAxisAlignment.START,
-                horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
-                expand=True,
-            )
-        )
-        self.__build()
-        self.__page.update()
+    def remove_stack_item(self, view: BaseView) -> None:
+        self.__views_stack.controls.remove(view)
 
-    def set_view_content(self, current: str, views: dict[str, BaseView]) -> None:
-        desired_views: list[BaseView] = list(views.values())
-        if not desired_views:
-            self.__view_stack.controls.clear()
-            self.__page.update()
-            return
+    # def set_view_content(self, current: str, views: dict[str, BaseView]) -> None:
+    #     desired_views: list[BaseView] = list(views.values())
+    #     if not desired_views:
+    #         self.__view_stack.controls.clear()
+    #         self.__page.update()
+    #         return
 
-        desired_ids: set[int] = {id(view) for view in desired_views}
-        for existing_view in list(self.__view_stack.controls)[::-1]:
-            if id(existing_view) not in desired_ids:
-                self.__view_stack.controls.remove(existing_view)
+    #     desired_ids: set[int] = {id(view) for view in desired_views}
+    #     for existing_view in list(self.__view_stack.controls)[::-1]:
+    #         if id(existing_view) not in desired_ids:
+    #             self.__view_stack.controls.remove(existing_view)
 
-        existing_ids: set[int] = {id(view) for view in self.__view_stack.controls}
-        for view in desired_views:
-            if id(view) not in existing_ids:
-                self.__view_stack.controls.append(view)
+    #     existing_ids: set[int] = {id(view) for view in self.__view_stack.controls}
+    #     for view in desired_views:
+    #         if id(view) not in existing_ids:
+    #             self.__view_stack.controls.append(view)
 
-        self.__view_stack.controls[:] = desired_views
+    #     self.__view_stack.controls[:] = desired_views
 
-        current_view: BaseView | None = views.get(current) if current else None
-        for view in self.__view_stack.controls:
-            view.visible = (view is current_view) if current_view else False
+    #     current_view: BaseView | None = views.get(current) if current else None
+    #     for view in self.__view_stack.controls:
+    #         view.visible = (view is current_view) if current_view else False
 
-        self.__page.update()
+    #     self.__page.update()

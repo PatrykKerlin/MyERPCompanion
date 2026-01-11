@@ -5,7 +5,13 @@ from typing import Any
 from dataclasses import dataclass
 
 from events.base.base_event import BaseEvent
+from utils.enums import View
 from views.base.base_view import BaseView
+from views.components.footer_component import FooterComponent
+from views.components.menu_bar_component import MenuBarComponent
+from views.components.side_menu_component import SideMenuComponent
+from views.components.tabs_bar_component import TabsBarComponent
+from views.components.toolbar_component import ToolbarComponent
 
 
 @dataclass(frozen=True)
@@ -55,6 +61,11 @@ class SideMenuRequested(BaseEvent):
 
 
 @dataclass(frozen=True)
+class SideMenuReady(BaseEvent):
+    component: SideMenuComponent
+
+
+@dataclass(frozen=True)
 class SideMenuToggleRequested(BaseEvent):
     pass
 
@@ -65,8 +76,18 @@ class ToolbarRequested(BaseEvent):
 
 
 @dataclass(frozen=True)
+class ToolbarReady(BaseEvent):
+    component: ToolbarComponent
+
+
+@dataclass(frozen=True)
 class TabsBarRequested(BaseEvent):
     pass
+
+
+@dataclass(frozen=True)
+class TabsBarReady(BaseEvent):
+    component: TabsBarComponent
 
 
 @dataclass(frozen=True)
@@ -75,8 +96,8 @@ class FooterRequested(BaseEvent):
 
 
 @dataclass(frozen=True)
-class FooterMounted(BaseEvent):
-    pass
+class FooterReady(BaseEvent):
+    component: FooterComponent
 
 
 @dataclass(frozen=True)
@@ -85,27 +106,52 @@ class MenuBarRequested(BaseEvent):
 
 
 @dataclass(frozen=True)
+class MenuBarReady(BaseEvent):
+    component: MenuBarComponent
+
+
+@dataclass(frozen=True)
 class ViewRequested(BaseEvent):
     module_id: int
-    view_key: str
-    postfix: int | None = None
+    view_key: View
+    record_id: int | None = None
     data: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
 class ViewReady(BaseEvent):
-    view_key: str
+    view_key: View
     view: BaseView
-    postfix: int | None = None
+    record_id: int | None = None
+
+
+@dataclass(frozen=True)
+class DialogRequested(BaseEvent):
+    module_id: int
+    view_key: View
+    record_id: int | None = None
+    data: dict[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class DialogReady(BaseEvent):
+    view_key: View
+    view: BaseView
+    record_id: int | None = None
 
 
 @dataclass(frozen=True)
 class TabRequested(BaseEvent):
     module_id: int
-    view_key: str
-    postfix: int | None = None
-    data: dict[str, Any] | None = None
-    replace: bool = False
+    view_key: View
+    record_id: int | None = None
+    record_data: dict[str, Any] | None = None
+    replace_view: bool = False
+
+
+@dataclass(frozen=True)
+class TabReady(BaseEvent):
+    title: str
 
 
 @dataclass(frozen=True)
@@ -115,10 +161,10 @@ class TabCloseRequested(BaseEvent):
 
 @dataclass(frozen=True)
 class TabClosed(BaseEvent):
-    view_key: str
+    view: BaseView
 
 
 @dataclass(frozen=True)
 class RecordDeleteRequested(BaseEvent):
-    view_key: str
+    view_key: View
     id: int

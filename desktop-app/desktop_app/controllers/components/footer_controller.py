@@ -5,8 +5,9 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from controllers.base.base_component_controller import BaseComponentController
+from states.states import ShellState
 from views.components.footer_component import FooterComponent
-from events.events import ApiStatusChecked, ApiStatusRequested, FooterRequested, FooterMounted
+from events.events import ApiStatusChecked, ApiStatusRequested, FooterReady, FooterRequested
 
 if TYPE_CHECKING:
     from config.context import Context
@@ -19,20 +20,29 @@ class FooterController(BaseComponentController[FooterComponent, FooterRequested]
             {
                 FooterRequested: self._component_requested_handler,
                 ApiStatusChecked: self.__api_status_handler,
-                FooterMounted: self.__component_mounted_handler,
+            }
+        )
+        self._subscribe_state_listeners(
+            {
+                "shell": self.__shell_updated_listener,
             }
         )
 
     async def _component_requested_handler(self, _: FooterRequested) -> None:
         translation_state = self._state_store.app_state.translation
         self._component = FooterComponent(controller=self, translation=translation_state.items)
-        self._state_store.update(components={"footer": self._component})
+        await self._event_bus.publish(FooterReady(self._component))
+
+    def __shell_updated_listener(self, state: ShellState) -> None:
+        if state.is_shell_ready:
+            asyncio.create_task(self.__refresh_status())
+            asyncio.create_task(self.__refresh_time())
 
     async def __refresh_status(self, status: bool = True) -> None:
         if not self._component:
             return
         self._component.set_status(status)
-        await asyncio.sleep(60)
+        await asyncio.sleep(self._settings.API_CHECK_DELAY)
         await self._event_bus.publish(ApiStatusRequested())
 
     async def __refresh_time(self) -> None:
@@ -45,7 +55,3 @@ class FooterController(BaseComponentController[FooterComponent, FooterRequested]
 
     async def __api_status_handler(self, event: ApiStatusChecked) -> None:
         await self.__refresh_status(event.status)
-
-    async def __component_mounted_handler(self, _: FooterMounted) -> None:
-        asyncio.create_task(self.__refresh_status())
-        asyncio.create_task(self.__refresh_time())

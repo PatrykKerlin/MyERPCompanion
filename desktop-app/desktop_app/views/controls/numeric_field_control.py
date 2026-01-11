@@ -14,7 +14,7 @@ class NumericField(ft.Row):
         max_value: int | float | None = None,
         is_float: bool = False,
         expand: int | bool | None = None,
-        read_only: bool | None = None,
+        read_only: bool = True,
         on_change: Callable[[ft.ControlEvent], None] | None = None,
     ) -> None:
         super().__init__(
@@ -53,9 +53,9 @@ class NumericField(ft.Row):
         self.__increment_button = ft.IconButton(icon=ft.Icons.ADD, on_click=self.__increment, disabled=self.__read_only)
 
         self.controls = [
-            ft.Container(content=self.__decrement_button, alignment=ft.alignment.top_center),
+            ft.Container(content=self.__decrement_button, alignment=ft.Alignment.TOP_CENTER),
             self.__text_field,
-            ft.Container(content=self.__increment_button, alignment=ft.alignment.top_center),
+            ft.Container(content=self.__increment_button, alignment=ft.Alignment.TOP_CENTER),
         ]
 
     @property
@@ -67,20 +67,20 @@ class NumericField(ft.Row):
         self.__set_value(new_value)
 
     @property
-    def error_text(self) -> str | None:
-        return self.__text_field.error_text
+    def error(self) -> ft.StrOrControl | None:
+        return self.__text_field.error
 
-    @error_text.setter
-    def error_text(self, message: str | None) -> None:
-        self.__text_field.error_text = message
+    @error.setter
+    def error(self, message: str | None) -> None:
+        self.__text_field.error = message
         self.__text_field.update()
 
     @property
-    def read_only(self) -> bool | None:
+    def read_only(self) -> bool:
         return self.__read_only
 
     @read_only.setter
-    def read_only(self, new_value: bool | None) -> None:
+    def read_only(self, new_value: bool) -> None:
         self.__read_only = new_value
         self.__text_field.read_only = self.__read_only
         self.__decrement_button.disabled = self.__read_only
@@ -129,17 +129,17 @@ class NumericField(ft.Row):
         self.__text_field.value = self.__format_value(bounded)
         self.__text_field.update()
 
-    def __increment(self, _: ft.ControlEvent) -> None:
+    def __increment(self, _: ft.Event[ft.IconButton]) -> None:
         current = self.__parse_value(self.__text_field.value or "") or self.__value
         self.__set_value(current + self.__step)
         self.__emit_value(self.__value)
 
-    def __decrement(self, _: ft.ControlEvent) -> None:
+    def __decrement(self, _: ft.Event[ft.IconButton]) -> None:
         current = self.__parse_value(self.__text_field.value or "") or self.__value
         self.__set_value(current - self.__step)
         self.__emit_value(self.__value)
 
-    def __handle_text_change(self, event: ft.ControlEvent) -> None:
+    def __handle_text_change(self, event: ft.Event[ft.TextField]) -> None:
         raw = getattr(event.control, "value", "")
         parsed = self.__parse_value(raw if raw is not None else "")
         if parsed is None:

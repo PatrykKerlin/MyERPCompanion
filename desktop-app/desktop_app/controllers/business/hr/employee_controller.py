@@ -59,9 +59,6 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
             "is_remote",
         ]
 
-    async def _view_requested_handler(self, event: ViewRequested) -> None:
-        await self._handle_view_requested(event)
-
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> EmployeeView:
         self.__all_departments = await self.__get_all_departments()
         self.__all_positions = await self.__perform_get_all_positions()
@@ -72,15 +69,15 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
         selected_position_id = self._request_data.input_values.get("position_id")
 
         if mode == ViewMode.SEARCH:
-            departments_opts = [(d.id, d.name) for d in self.__all_departments]
-            positions_opts = [(p.id, p.name) for p in self.__all_positions]
-            managers_opts = [(e.id, f"{e.first_name} {e.last_name}") for e in self.__all_employees]
+            departments = [(d.id, d.name) for d in self.__all_departments]
+            positions = [(p.id, p.name) for p in self.__all_positions]
+            managers = [(e.id, f"{e.first_name} {e.last_name}") for e in self.__all_employees]
         else:
-            dept_positions = self.__filter_positions_by_department(selected_department_id)
-            departments_opts = [(d.id, d.name) for d in self.__all_departments]
-            positions_opts = [(p.id, p.name) for p in dept_positions]
-            managers = self.__filter_managers_by_position(selected_position_id)
-            managers_opts = [(e.id, f"{e.first_name} {e.last_name}") for e in managers]
+            positions_filtered = self.__filter_positions_by_department(selected_department_id)
+            departments = [(d.id, d.name) for d in self.__all_departments]
+            positions = [(p.id, p.name) for p in positions_filtered]
+            managers_filtered = self.__filter_managers_by_position(selected_position_id)
+            managers = [(e.id, f"{e.first_name} {e.last_name}") for e in managers_filtered]
 
         return EmployeeView(
             self,
@@ -88,9 +85,9 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
             mode,
             event.view_key,
             event.data,
-            departments_opts,
-            positions_opts,
-            managers_opts,
+            departments,
+            positions,
+            managers,
         )
 
     async def __perform_get_all_employees(self) -> list[EmployeePlainSchema]:

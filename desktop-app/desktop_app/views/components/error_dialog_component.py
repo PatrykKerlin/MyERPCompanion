@@ -1,3 +1,4 @@
+from typing import cast
 from collections.abc import Callable
 
 import flet as ft
@@ -12,7 +13,7 @@ class ErrorDialogComponent(BaseDialog):
         translation: Translation,
         message_key: str | None,
         message: str | None,
-        on_click: Callable[[ft.ControlEvent], None],
+        on_ok_clicked: Callable[[ft.Event[ft.TextButton]], ft.DialogControl | None],
     ) -> None:
         final_message = ""
         if message_key:
@@ -23,10 +24,10 @@ class ErrorDialogComponent(BaseDialog):
             final_message += message
         super().__init__(
             controls=[ft.Text(final_message)],
-            actions=[ft.TextButton(translation.get("ok"), on_click=on_click)],
+            actions=cast(list[ft.Control], [ft.TextButton(translation.get("ok"), on_click=on_ok_clicked)]),
             title=ft.Row(
                 controls=[
-                    ft.Icon(name=ft.Icons.ERROR, color=ft.Colors.RED),
+                    ft.Icon(icon=ft.Icons.ERROR, color=ft.Colors.RED),
                     ft.Text(value=translation.get("error")),
                 ]
             ),

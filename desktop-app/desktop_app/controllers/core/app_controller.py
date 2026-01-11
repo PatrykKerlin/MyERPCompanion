@@ -1,13 +1,22 @@
 from __future__ import annotations
 
+import flet as ft
+
 from typing import TYPE_CHECKING
 from controllers.base.base_controller import BaseController
+
 from events.base.base_event import BaseEvent
 from events.events import (
     ApiStatusChecked,
     ApiStatusRequested,
     AppStarted,
+    FooterReady,
     MenuBarRequested,
+    MenuBarReady,
+    SideMenuReady,
+    TabClosed,
+    TabsBarReady,
+    ToolbarReady,
     TranslationFailed,
     TranslationReady,
     TranslationRequested,
@@ -15,30 +24,24 @@ from events.events import (
     UserAuthenticated,
     SideMenuRequested,
     FooterRequested,
-    FooterMounted,
     TabsBarRequested,
     ToolbarRequested,
 )
 from services.core.app_service import AppService
-from states.states import TabsState
+
+from states.states import ViewState
 from views.core.app_view import AppView
 
 if TYPE_CHECKING:
     from config.context import Context
-    from states.states import ComponentsState, TranslationState
-    from views.components.footer_component import FooterComponent
-    from views.components.menu_bar_component import MenuBarComponent
-    from views.components.side_menu_component import SideMenuComponent
-    from views.components.tabs_bar_component import TabsBarComponent
-    from views.components.toolbar_component import ToolbarComponent
+    from states.states import ShellState, TranslationState
 
 
 class AppController(BaseController):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        translation_state = self._state_store.app_state.translation
         self.__service = AppService(self._settings, self._logger, self._tokens_accessor)
-        self.__view = AppView(self._page, translation_state.items, self._settings.THEME)
+        self.__view = AppView(self._state_store.app_state.translation.items, self._settings.THEME)
 
         self._subscribe_event_handlers(
             {
@@ -47,32 +50,28 @@ class AppController(BaseController):
                 TranslationFailed: self.__api_not_responding_handler,
                 UserAuthenticated: self.__user_authenticated_handler,
                 ApiStatusRequested: self.__api_status_handler,
+                MenuBarReady: self.__menu_bar_ready_handler,
+                ToolbarReady: self.__toolbar_ready_handler,
+                SideMenuReady: self.__side_menu_ready_handler,
+                FooterReady: self.__footer_ready_handler,
+                TabsBarReady: self.__tabs_bar_ready_handler,
+                TabClosed: self.__tab_closed_handler,
             }
         )
         self._subscribe_state_listeners(
             {
                 "translation": self.__translation_updated_listener,
-                "components": self.__components_changed_listener,
-                "tabs": self.__tabs_updated_listener,
+                "shell": self.__shell_updated_listener,
+                "view": self.__view_updated_listener,
             }
         )
 
+    def build_root(self) -> ft.Control:
+        return self.__view.build()
+
     def __translation_updated_listener(self, state: TranslationState) -> None:
         self.__view.update_translation(state.items)
-
-    def __components_changed_listener(self, state: ComponentsState) -> None:
-        if state.menu_bar and state.side_menu and state.tabs_bar and state.toolbar and state.footer:
-            self._page.run_task(
-                self.__rebuild_view, state.menu_bar, state.side_menu, state.toolbar, state.tabs_bar, state.footer
-            )
-
-    def __tabs_updated_listener(self, state: TabsState) -> None:
-        self.__view.set_view_content(state.current, state.items)
-        if not state.items or not state.current or state.current not in state.items:
-            return
-        print(f"{state.current} -> {state.mode}")
-        if state.items[state.current].mode != state.mode and state.items[state.current].page:
-            self._page.run_task(self._run_with_delay, lambda: state.items[state.current].set_mode(state.mode))
+        self._page.update()
 
     async def __app_started_handler(self, _: AppStarted) -> None:
         self._open_loading_dialog()
@@ -94,7 +93,9 @@ class AppController(BaseController):
 
     async def __translation_ready_handler(self, event: TranslationReady) -> None:
         self._close_loading_dialog()
-        if not event.user_authenticated:
+        if event.user_authenticated:
+            await self.__request_shell()
+        else:
             await self._event_bus.publish(AuthDialogRequested())
 
     async def __api_not_responding_handler(self, _: BaseEvent):
@@ -103,25 +104,49 @@ class AppController(BaseController):
 
     async def __user_authenticated_handler(self, _: UserAuthenticated) -> None:
         user = self._state_store.app_state.user.current
-        if user:
-            translation = self._state_store.app_state.translation
-            if user.language.symbol != translation.language:
-                self._open_loading_dialog()
-                await self._event_bus.publish(TranslationRequested(user.language.symbol, True))
-            await self._event_bus.publish(MenuBarRequested())
-            await self._event_bus.publish(SideMenuRequested())
-            await self._event_bus.publish(ToolbarRequested())
-            await self._event_bus.publish(TabsBarRequested())
-            await self._event_bus.publish(FooterRequested())
+        if not user:
+            return
+        translation_state = self._state_store.app_state.translation
+        if user.language.symbol == translation_state.language:
+            await self.__request_shell()
+        else:
+            self._open_loading_dialog()
+            await self._event_bus.publish(TranslationRequested(user.language.symbol, True))
 
-    async def __rebuild_view(
-        self,
-        menu_bar: MenuBarComponent,
-        side_menu: SideMenuComponent,
-        toolbar: ToolbarComponent,
-        tabs_bar: TabsBarComponent,
-        footer: FooterComponent,
-    ) -> None:
-        self._close_loading_dialog()
-        await self._run_with_delay(lambda: self.__view.rebuild(menu_bar, side_menu, toolbar, tabs_bar, footer))
-        await self._event_bus.publish(FooterMounted())
+    async def __menu_bar_ready_handler(self, event: MenuBarReady) -> None:
+        self.__view.set_menu_bar(event.component)
+        self._state_store.update(shell={"is_menu_bar_ready": True})
+
+    async def __toolbar_ready_handler(self, event: ToolbarReady) -> None:
+        self.__view.set_toolbar(event.component)
+        self._state_store.update(shell={"is_toolbar_ready": True})
+
+    async def __side_menu_ready_handler(self, event: SideMenuReady) -> None:
+        self.__view.set_side_menu(event.component)
+        self._state_store.update(shell={"is_side_menu_ready": True})
+
+    async def __footer_ready_handler(self, event: FooterReady) -> None:
+        self.__view.set_footer(event.component)
+        self._state_store.update(shell={"is_footer_ready": True})
+
+    async def __tabs_bar_ready_handler(self, event: TabsBarReady) -> None:
+        self.__view.set_tabs_bar(event.component)
+        self._state_store.update(shell={"is_tabs_bar_ready": True})
+
+    async def __tab_closed_handler(self, event: TabClosed) -> None:
+        self.__view.remove_stack_item(event.view)
+
+    def __shell_updated_listener(self, state: ShellState) -> None:
+        if state.is_shell_ready:
+            self._page.update()
+
+    def __view_updated_listener(self, state: ViewState) -> None:
+        self.__view.set_stack_item(state.view)
+        self._page.update()
+
+    async def __request_shell(self) -> None:
+        await self._event_bus.publish(MenuBarRequested())
+        await self._event_bus.publish(ToolbarRequested())
+        await self._event_bus.publish(SideMenuRequested())
+        await self._event_bus.publish(FooterRequested())
+        await self._event_bus.publish(TabsBarRequested())

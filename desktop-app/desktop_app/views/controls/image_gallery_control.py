@@ -13,7 +13,7 @@ class ImageGallery(ft.Row):
         *,
         image_width: float | None = 180,
         image_height: float | None = 120,
-        image_fit: ft.ImageFit = ft.ImageFit.COVER,
+        # image_fit: ft.ImageFit = ft.ImageFit.COVER,
         image_border_radius: float | ft.BorderRadius | None = 8,
         image_padding: float = 4,
         spacing: float = 12,
@@ -29,7 +29,7 @@ class ImageGallery(ft.Row):
         )
         self.image_width = image_width
         self.image_height = image_height
-        self.image_fit = image_fit
+        # self.image_fit = image_fit
         self.image_border_radius = image_border_radius
         self.image_padding = image_padding
         self.__on_image_click = on_image_click

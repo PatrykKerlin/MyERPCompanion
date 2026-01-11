@@ -17,8 +17,5 @@ class DepartmentController(
     _endpoint = Endpoint.DEPARTMENTS
     _view_key = View.DEPARTMENTS
 
-    async def _view_requested_handler(self, event: ViewRequested) -> None:
-        await self._handle_view_requested(event)
-
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> DepartmentView:
         return DepartmentView(self, translation, mode, event.view_key, event.data)

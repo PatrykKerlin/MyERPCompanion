@@ -18,9 +18,9 @@ class GroupController(BaseViewController[GroupService, GroupView, GroupPlainSche
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        self._subscribe_event_handlers({ViewRequested: self._view_requested_handler})
+        self._subscribe_event_handlers({ViewRequested: self.__view_requested_handler})
 
-    async def _view_requested_handler(self, event: ViewRequested) -> None:
+    async def __view_requested_handler(self, event: ViewRequested) -> None:
         pass
         # translation_service = self._state_store.app_state.translation
         # self._view = GroupView(self, translation_service.items)
