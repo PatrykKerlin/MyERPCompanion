@@ -6,7 +6,7 @@ from utils.enums import ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
 
-from flet import Control
+import flet as ft
 
 
 class ShellState(BaseState):
@@ -60,4 +60,4 @@ class AppState(BaseState):
     view: ViewState
 
 
-ViewState.model_rebuild(force=True, _types_namespace={"Control": Control})
+ViewState.model_rebuild(force=True, _types_namespace={"Control": ft.Control})

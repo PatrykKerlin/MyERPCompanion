@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped
@@ -25,8 +25,8 @@ class Discount(BaseModel):
     index: Mapped[str] = Fields.string_10(unique=True)
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
-    start_date: Mapped[datetime] = Fields.datetime()
-    end_date: Mapped[datetime | None] = Fields.datetime(nullable=True)
+    start_date: Mapped[date] = Fields.date()
+    end_date: Mapped[date | None] = Fields.date(nullable=True)
 
     percent: Mapped[float | None] = Fields.numeric_3_2(nullable=True)
     amount: Mapped[float | None] = Fields.numeric_10_2(nullable=True)

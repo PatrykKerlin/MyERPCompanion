@@ -22,5 +22,6 @@ class BaseDialog(ft.AlertDialog):
             ),
             actions=actions or [],
             title=title,
+            scrollable=True,
             **kwargs,
         )

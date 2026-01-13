@@ -23,7 +23,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         self._settings = settings
         self._logger = logger
         self._tokens_accessor = tokens_accessor
-        self.__sleep_time = 0.05
+        self.__sleep_time = 0
 
     async def call_api_with_token_refresh(
         self,

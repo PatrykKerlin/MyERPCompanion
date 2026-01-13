@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
-from utils.enums import ViewMode
+from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
 
@@ -19,7 +19,7 @@ class DepartmentView(BaseView):
         controller: DepartmentController,
         translation: Translation,
         mode: ViewMode,
-        key: str,
+        key: View,
         data_row: dict[str, Any] | None,
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 2, 9)
@@ -28,12 +28,12 @@ class DepartmentView(BaseView):
             {"key": "description", "input": self._get_text_input, "lines": 3},
             {"key": "code", "input": self._get_text_input, "input_size": 5},
             {"key": "email", "input": self._get_text_input},
-            {"key": "phone_number", "label": "phone", "input": self._get_text_input},
+            {"key": "phone_number", "input": self._get_text_input},
         ]
         main_fields = self._build_field_groups(main_fields_definitions)
         self._add_to_inputs(main_fields)
         main_grid = self._build_grid(main_fields)
-        meta_grid = self._get_meta_grid(label_size=4, id_size=2, datetime_size=7)
+        meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
         columns = [
             ft.Column(controls=main_grid, expand=3),
             self._spacing_column,
@@ -41,4 +41,3 @@ class DepartmentView(BaseView):
         ]
         self._columns_row.controls.extend(columns)
         self._master_column.controls.extend(self._rows)
-        ft.Card.__init__(self, content=self._scrollable_wrapper, expand=True)

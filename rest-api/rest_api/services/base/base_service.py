@@ -1,5 +1,6 @@
 from abc import ABC
 from typing import Generic, TypeVar
+from collections.abc import Mapping
 
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,7 +27,7 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
     async def get_all(
         self,
         session: AsyncSession,
-        filters: list[ColumnElement[bool]] | None = None,
+        filters: Mapping[str, str] | None = None,
         offset: int = 0,
         limit: int = 100,
         sort_by: str | None = None,
@@ -40,7 +41,7 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
             sort_by=sort_by,
             sort_order=sort_order,
         )
-        total = await self._repository_cls.count_all(session=session, filters=filters)
+        total = await self._repository_cls._count_all(session=session, params_filters=filters)
         schemas = [self._output_schema_cls.model_validate(model) for model in models]
         return schemas, total
 

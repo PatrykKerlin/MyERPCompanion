@@ -52,5 +52,3 @@ class GroupView(BaseView):
         #     )
         # )
         # self._master_column.controls.extend(self._columns)
-        # ft.Card.__init__(self, content=self._scrollable_wrapper, expand=True)
-        ft.Card.__init__(self, content=ft.Text("Groups View"), expand=True)

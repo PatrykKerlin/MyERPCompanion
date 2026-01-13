@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
-from utils.enums import ViewMode
+from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
 from utils.translation import Translation
@@ -20,7 +20,7 @@ class CarrierView(BaseView):
         controller: CarrierController,
         translation: Translation,
         mode: ViewMode,
-        key: str,
+        key: View,
         data_row: dict[str, Any] | None,
         currencies: list[tuple[int, str]],
         delivery_methods: list[dict[str, Any]],
@@ -71,7 +71,7 @@ class CarrierView(BaseView):
             {"key": "bank_name", "input": self._get_text_input},
             {"key": "tax_id", "input": self._get_text_input},
             {"key": "payment_term", "input": self._get_numeric_input},
-            {"key": "currency_id", "label": "currency", "input": self._get_dropdown, "options": currencies},
+            {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
         ]
         notes_field_definition = [
             {"key": "notes", "input": self._get_text_input, "lines": 5},
@@ -105,16 +105,16 @@ class CarrierView(BaseView):
         contact_grid = self._build_grid(contact_fields)
         bank_grid = self._build_grid(bank_fields)
         notes_grid = self._build_grid(notes_field)
-        meta_grid = self._get_meta_grid(label_size=4, id_size=2, datetime_size=7)
+        meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
 
         self.__delivery_methods_table = DataTable(
-            columns=["id", "name", "price_per_unit", "unit_id"],
+            columns=["id", "name", "description", "price_per_unit", "unit_id"],
             rows=delivery_methods,
             translation=self._translation,
+            height=250,
             on_row_clicked=lambda row: self._controller.on_table_row_clicked(row["id"]),
             on_add_clicked=self._controller.on_add_delivery_method_clicked,
             sort_by="id",
-            expand=True,
         )
 
         columns = [
@@ -129,17 +129,18 @@ class CarrierView(BaseView):
                 expand=3,
             ),
             self._spacing_column,
-            ft.Column(controls=meta_grid + bank_grid + notes_grid, expand=2),
+            ft.Column(controls=meta_grid + [self._spacing_row] + bank_grid + notes_grid, expand=2),
         ]
 
         self._columns_row.controls.extend(columns)
         self._master_column.controls.extend(self._rows)
-        ft.Card.__init__(self, content=self._scrollable_wrapper, expand=True)
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
         if self._mode not in {ViewMode.READ, ViewMode.EDIT}:
-            self.__delivery_methods_table.add_button_disabled = True
+            self.__delivery_methods_table.add_button.disabled = True
+            self.__delivery_methods_table.add_button.visible = False
         else:
-            self.__delivery_methods_table.add_button_disabled = False
+            self.__delivery_methods_table.add_button.disabled = False
+            self.__delivery_methods_table.add_button.visible = True
         self.__delivery_methods_table.update()

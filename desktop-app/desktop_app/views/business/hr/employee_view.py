@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
-from utils.enums import ViewMode
+from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
 
@@ -19,7 +19,7 @@ class EmployeeView(BaseView):
         controller: EmployeeController,
         translation: Translation,
         mode: ViewMode,
-        key: str,
+        key: View,
         data_row: dict[str, Any] | None,
         departments: list[tuple[int, str]],
         positions: list[tuple[int, str]],
@@ -40,7 +40,7 @@ class EmployeeView(BaseView):
         ]
         contact_fields_definitions = [
             {"key": "email", "input": self._get_text_input},
-            {"key": "phone_number", "label": "phone", "input": self._get_text_input},
+            {"key": "phone_number", "input": self._get_text_input},
         ]
         street_field_definition = [
             {"key": "street", "input": self._get_text_input},
@@ -75,7 +75,6 @@ class EmployeeView(BaseView):
             {"key": "termination_date", "input": self._get_date_picker, "input_size": 5},
             {
                 "key": "department_id",
-                "label": "department",
                 "input": self._get_dropdown,
                 "input_size": 5,
                 "options": departments,
@@ -83,7 +82,6 @@ class EmployeeView(BaseView):
             },
             {
                 "key": "position_id",
-                "label": "position",
                 "input": self._get_dropdown,
                 "input_size": 5,
                 "options": positions,
@@ -91,7 +89,6 @@ class EmployeeView(BaseView):
             },
             {
                 "key": "manager_id",
-                "label": "manager",
                 "input": self._get_dropdown,
                 "input_size": 5,
                 "options": managers,
@@ -140,7 +137,7 @@ class EmployeeView(BaseView):
         employment_grid = self._build_grid(employment_fields)
         bank_grid = self._build_grid(bank_fields)
 
-        meta_grid = self._get_meta_grid(label_size=4, id_size=2, datetime_size=7)
+        meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
         columns = [
             ft.Column(
                 controls=personal_grid + contact_grid + street_grid + house_grid + city_grid + country_grid,
@@ -154,7 +151,6 @@ class EmployeeView(BaseView):
         ]
         self._columns_row.controls.extend(columns)
         self._master_column.controls.extend(self._rows)
-        ft.Card.__init__(self, content=self._scrollable_wrapper, expand=True)
 
     def set_dropdown_options(self, key: str, options: list[tuple[int, str]]) -> None:
         field = self._inputs[key]

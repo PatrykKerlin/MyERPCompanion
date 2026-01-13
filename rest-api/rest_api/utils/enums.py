@@ -4,13 +4,13 @@ from enum import StrEnum
 class Action(StrEnum):
     GET_ALL = "get_all"
     GET_ONE = "get_one"
-    GET_MANY = "get_many"
+    GET_BULK = "get_bulk"
     CREATE = "create"
-    CREATE_MANY = "create_many"
+    CREATE_BULK = "create_bulk"
     UPDATE = "update"
-    UPDATE_MANY = "update_many"
+    UPDATE_BULK = "update_bulk"
     DELETE = "delete"
-    DELETE_MANY = "delete_many"
+    DELETE_BULK = "delete_bulk"
 
 
 class Permission(StrEnum):

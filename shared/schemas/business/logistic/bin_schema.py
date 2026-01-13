@@ -28,3 +28,4 @@ class BinPlainSchema(BasePlainSchema):
     max_volume: float
     max_weight: int
     warehouse_id: int
+    item_ids: list[int]

@@ -46,19 +46,7 @@ class UserService(
         model.created_by = created_by
         if schema.password:
             model.password = self.__auth.get_password_hash(schema.password) if self.__auth else ""
-        saved_model = await self._repository_cls.save(session, model, False)
-        # await self._handle_assoc_table(
-        #     session=session,
-        #     owner_model=saved_model,
-        #     assoc_repo_cls=AssocUserGroupRepository,
-        #     model_cls=AssocUserGroup,
-        #     owner_field="user_id",
-        #     related_field="group_id",
-        #     owner_id=saved_model.id,
-        #     related_ids=schema.groups,
-        #     related_repo_cls=GroupRepository,
-        #     created_by=created_by,
-        # )
+        saved_model = await self._repository_cls.save(session, model)
         return self._output_schema_cls.model_validate(saved_model)
 
     async def update(
@@ -76,18 +64,5 @@ class UserService(
         model.modified_by = modified_by
         if schema.password:
             model.password = self.__auth.get_password_hash(schema.password) if self.__auth else ""
-        updated_model = await self._repository_cls.save(session, model, False)
-        # await self._handle_assoc_table(
-        #     session=session,
-        #     owner_model=updated_model,
-        #     assoc_repo_cls=AssocUserGroupRepository,
-        #     model_cls=AssocUserGroup,
-        #     owner_field="user_id",
-        #     related_field="group_id",
-        #     owner_id=updated_model.id,
-        #     related_ids=schema.groups,
-        #     related_repo_cls=GroupRepository,
-        #     created_by=modified_by,
-        #     modified_by=modified_by,
-        # )
+        updated_model = await self._repository_cls.save(session, model)
         return self._output_schema_cls.model_validate(updated_model)

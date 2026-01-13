@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Callable
 
 import flet as ft
 
-from utils.enums import ViewMode
+from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
 from utils.translation import Translation
@@ -20,7 +20,7 @@ class BinTransferView(BaseView):
         controller: BinTransferController,
         translation: Translation,
         mode: ViewMode,
-        key: str,
+        key: View,
         on_source_submitted: Callable[[ft.Event[ft.TextField]], None],
         on_target_submitted: Callable[[ft.Event[ft.TextField]], None],
         on_save_clicked: Callable[[ft.Event[ft.IconButton]], None],
@@ -43,8 +43,6 @@ class BinTransferView(BaseView):
         )
 
         self._master_column.controls = [inputs_row, self.__bulk_transfer]
-
-        ft.Card.__init__(self, content=self._master_column, expand=True)
 
     def get_pending_move_ids(self) -> list[int]:
         return self.__bulk_transfer.get_pending_move_ids()

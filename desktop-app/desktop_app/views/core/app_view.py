@@ -104,28 +104,3 @@ class AppView:
 
     def remove_stack_item(self, view: BaseView) -> None:
         self.__views_stack.controls.remove(view)
-
-    # def set_view_content(self, current: str, views: dict[str, BaseView]) -> None:
-    #     desired_views: list[BaseView] = list(views.values())
-    #     if not desired_views:
-    #         self.__view_stack.controls.clear()
-    #         self.__page.update()
-    #         return
-
-    #     desired_ids: set[int] = {id(view) for view in desired_views}
-    #     for existing_view in list(self.__view_stack.controls)[::-1]:
-    #         if id(existing_view) not in desired_ids:
-    #             self.__view_stack.controls.remove(existing_view)
-
-    #     existing_ids: set[int] = {id(view) for view in self.__view_stack.controls}
-    #     for view in desired_views:
-    #         if id(view) not in existing_ids:
-    #             self.__view_stack.controls.append(view)
-
-    #     self.__view_stack.controls[:] = desired_views
-
-    #     current_view: BaseView | None = views.get(current) if current else None
-    #     for view in self.__view_stack.controls:
-    #         view.visible = (view is current_view) if current_view else False
-
-    #     self.__page.update()

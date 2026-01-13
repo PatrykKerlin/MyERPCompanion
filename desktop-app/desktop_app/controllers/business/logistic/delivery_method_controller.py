@@ -5,7 +5,7 @@ from services.business.logistic import CarrierService, DeliveryMethodService, Un
 from utils.enums import Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.delivery_method_view import DeliveryMethodView
-from events.events import DialogRequested, ViewRequested
+from events.events import ViewRequested
 
 
 class DeliveryMethodController(
@@ -23,12 +23,12 @@ class DeliveryMethodController(
         self.__carrier_service = CarrierService(self._settings, self._logger, self._tokens_accessor)
         self.__unit_service = UnitService(self._settings, self._logger, self._tokens_accessor)
 
-    async def _build_view(
-        self, translation: Translation, mode: ViewMode, event: ViewRequested | DialogRequested
-    ) -> DeliveryMethodView:
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> DeliveryMethodView:
         carriers = await self.__perform_get_all_carriers()
         units = await self.__perform_get_all_units()
-        return DeliveryMethodView(self, translation, mode, event.view_key, event.data, carriers, units)
+        return DeliveryMethodView(
+            self, translation, mode, event.view_key, event.data, event.is_dialog, event.caller_view_key, carriers, units
+        )
 
     async def __perform_get_all_carriers(self) -> list[tuple[int, str]]:
         schemas = await self.__carrier_service.call_api_with_token_refresh(

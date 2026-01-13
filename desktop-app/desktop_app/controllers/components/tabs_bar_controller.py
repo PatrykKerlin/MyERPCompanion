@@ -15,6 +15,7 @@ from events.events import (
     TabsBarRequested,
     TabRequested,
     ViewReady,
+    SaveSucceeded,
     ViewRequested,
 )
 
@@ -54,7 +55,7 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
 
     async def __tab_requested_handler(self, event: TabRequested) -> None:
         tab_title = self._get_tab_title(event.view_key, event.record_id)
-        if tab_title not in self.__active_tabs or event.replace_view:
+        if tab_title not in self.__active_tabs or event.save_succeeded:
             self._page.run_task(
                 self._event_bus.publish,
                 ViewRequested(
@@ -62,6 +63,7 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
                     view_key=event.view_key,
                     record_id=event.record_id,
                     data=event.record_data,
+                    save_succedeed=event.save_succeeded,
                 ),
             )
         else:
@@ -69,9 +71,16 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
             self._state_store.update(view={"title": tab_title, "mode": view.mode, "view": view})
 
     async def __view_ready_handler(self, event: ViewReady) -> None:
+        if event.is_dialog:
+            return
         tab_title = self._get_tab_title(event.view_key, event.record_id)
         self.__active_tabs[tab_title] = event.view
         self._state_store.update(view={"title": tab_title, "mode": event.view.mode, "view": event.view})
+        if event.save_succeeded:
+            self._page.run_task(
+                self._event_bus.publish,
+                SaveSucceeded(view_key=event.view_key),
+            )
 
     async def __tab_close_requested_handler(self, event: TabCloseRequested) -> None:
         await self.__execute_close_clicked(event.title)

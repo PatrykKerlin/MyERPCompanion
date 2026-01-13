@@ -34,10 +34,10 @@ AssocBinItemController = ControllerFactory.create(
     input_schema_cls=AssocBinItemStrictSchema,
     output_schema_cls=AssocBinItemPlainSchema,
     include={
-        Action.GET_ALL: True,
-        Action.CREATE_MANY: True,
-        Action.UPDATE_MANY: True,
-        Action.DELETE_MANY: True,
+        Action.GET_BULK: True,
+        Action.CREATE_BULK: True,
+        Action.UPDATE_BULK: True,
+        Action.DELETE_BULK: True,
     },
 )
 BinController = ControllerFactory.create(
@@ -69,6 +69,14 @@ ItemController = ControllerFactory.create(
     service_cls=ItemService,
     input_schema_cls=ItemStrictSchema,
     output_schema_cls=ItemPlainSchema,
+    include={
+        Action.GET_ALL: True,
+        Action.GET_BULK: True,
+        Action.GET_ONE: True,
+        Action.CREATE: True,
+        Action.UPDATE: True,
+        Action.DELETE: True,
+    },
 )
 UnitController = ControllerFactory.create(
     model_cls=Unit,

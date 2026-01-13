@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
-from utils.enums import ViewMode
+from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
 from utils.translation import Translation
@@ -19,22 +19,26 @@ class DeliveryMethodView(BaseView):
         controller: DeliveryMethodController,
         translation: Translation,
         mode: ViewMode,
-        key: str,
+        key: View,
         data_row: dict[str, Any] | None,
+        is_dialog: bool,
+        caller_view_key: View | None,
         carriers: list[tuple[int, str]],
         units: list[tuple[int, str]],
     ) -> None:
-        super().__init__(controller, translation, mode, key, data_row, 4, 7)
+        super().__init__(
+            controller, translation, mode, key, data_row, 4, 7, is_dialog=is_dialog, caller_view_key=caller_view_key
+        )
         main_fields_definitions = [
-            {"key": "carrier_id", "label": "carrier", "input": self._get_dropdown, "options": carriers},
+            {"key": "carrier_id", "input": self._get_dropdown, "options": carriers},
             {"key": "name", "input": self._get_text_input},
             {"key": "description", "input": self._get_text_input, "lines": 3},
             {"key": "price_per_unit", "input": self._get_numeric_input, "step": 0.01, "is_float": True},
-            {"key": "max_width", "input": self._get_numeric_input, "step": 0.001, "is_float": True},
-            {"key": "max_height", "input": self._get_numeric_input, "step": 0.001, "is_float": True},
-            {"key": "max_length", "input": self._get_numeric_input, "step": 0.001, "is_float": True},
-            {"key": "max_weight", "input": self._get_numeric_input, "step": 0.001, "is_float": True},
-            {"key": "unit_id", "label": "unit", "input": self._get_dropdown, "options": units},
+            {"key": "max_width", "input": self._get_numeric_input, "step": 0.001, "precision": 3, "is_float": True},
+            {"key": "max_height", "input": self._get_numeric_input, "step": 0.001, "precision": 3, "is_float": True},
+            {"key": "max_length", "input": self._get_numeric_input, "step": 0.001, "precision": 3, "is_float": True},
+            {"key": "max_weight", "input": self._get_numeric_input, "step": 0.001, "precision": 3, "is_float": True},
+            {"key": "unit_id", "input": self._get_dropdown, "options": units},
         ]
 
         main_fields = self._build_field_groups(main_fields_definitions)
@@ -42,14 +46,22 @@ class DeliveryMethodView(BaseView):
         self._add_to_inputs(main_fields)
 
         main_grid = self._build_grid(main_fields)
-        meta_grid = self._get_meta_grid(label_size=4, id_size=2, datetime_size=7)
 
-        columns = [
-            ft.Column(controls=main_grid, expand=3),
-            self._spacing_column,
-            ft.Column(controls=meta_grid, expand=2),
-        ]
+        if self._is_dialog:
+            columns = [ft.Column(controls=main_grid, expand=True)]
+        else:
+            meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
+            columns = [
+                ft.Column(controls=main_grid, expand=3),
+                self._spacing_column,
+                ft.Column(controls=meta_grid, expand=2),
+            ]
 
         self._columns_row.controls.extend(columns)
-        self._master_column.controls.extend(self._rows)
-        ft.Card.__init__(self, content=self._scrollable_wrapper, expand=True)
+
+        if self._is_dialog:
+            self._master_column.controls.append(self._columns_row)
+            self._search_button.visible = False
+            self._search_button.disabled = True
+        else:
+            self._master_column.controls.extend(self._rows)

@@ -85,7 +85,7 @@ class WarehouseView(BaseView):
         house_grid = self._build_grid(house_fields, inline=True)
         city_grid = self._build_grid(city_fields, inline=True)
         country_grid = self._build_grid(country_field)
-        meta_grid = self._get_meta_grid(label_size=4, id_size=2, datetime_size=7)
+        meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
         columns = [
             ft.Column(
                 controls=main_grid + street_grid + house_grid + city_grid + country_grid,
@@ -96,4 +96,3 @@ class WarehouseView(BaseView):
         ]
         self._columns_row.controls.extend(columns)
         self._master_column.controls.extend(self._rows)
-        ft.Card.__init__(self, content=self._scrollable_wrapper, expand=True)

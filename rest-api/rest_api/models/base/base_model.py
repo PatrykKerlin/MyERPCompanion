@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, func, select
+from sqlalchemy.orm import Mapped, mapped_column, declared_attr, column_property
+from sqlalchemy.sql import column, table
 
 from models.base.base import Base
 
@@ -15,3 +18,21 @@ class BaseModel(Base):
     created_by: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     modified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, onupdate=func.now())
     modified_by: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+
+    @declared_attr
+    def created_by_username(cls) -> Mapped[str | None]:
+        users_table = table("users", column("id"), column("username"))
+        return column_property(
+            select(users_table.c.username)
+            .where(users_table.c.id == cls.created_by)
+            .scalar_subquery()
+        )
+
+    @declared_attr
+    def modified_by_username(cls) -> Mapped[str | None]:
+        users_table = table("users", column("id"), column("username"))
+        return column_property(
+            select(users_table.c.username)
+            .where(users_table.c.id == cls.modified_by)
+            .scalar_subquery()
+        )

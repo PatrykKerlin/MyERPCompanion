@@ -7,7 +7,7 @@ from services.business.trade import CurrencyService
 from utils.enums import Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.carrier_view import CarrierView
-from events.events import DialogRequested, ViewRequested
+from events.events import ViewRequested
 
 import flet as ft
 
@@ -37,9 +37,7 @@ class CarrierController(BaseViewController[CarrierService, CarrierView, CarrierP
     def on_add_delivery_method_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         self._page.run_task(self.__open_delivery_method_create_dialog)
 
-    async def _build_view(
-        self, translation: Translation, mode: ViewMode, event: ViewRequested | DialogRequested
-    ) -> CarrierView:
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> CarrierView:
         currencies = await self.__perform_get_all_currencies()
         if event.data:
             delivery_method_schemas = await self.__perform_get_delivery_methods_for_id(event.data["id"])
@@ -68,14 +66,14 @@ class CarrierController(BaseViewController[CarrierService, CarrierView, CarrierP
     async def __open_delivery_method_create_dialog(self) -> None:
         if not self._view or not self._view.data_row:
             return
-
         id_value = self._view.data_row["id"]
-
         self._page.run_task(
             self._event_bus.publish,
-            DialogRequested(
+            ViewRequested(
                 module_id=self._module_id,
                 view_key=View.DELIVERY_METHODS,
                 data={"carrier_id": id_value},
+                is_dialog=True,
+                caller_view_key=self._view_key,
             ),
         )

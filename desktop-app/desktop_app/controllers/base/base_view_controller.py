@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Generic, TypeVar, cast
+from typing import Any, Callable, Generic, TypeVar, cast
 
 import flet as ft
 from httpx import HTTPStatusError
@@ -7,13 +7,13 @@ from pydantic import ValidationError
 
 from controllers.base.base_controller import BaseController
 from events.events import (
-    DialogReady,
-    DialogRequested,
     RecordDeleteRequested,
+    RecordSaved,
     TabClosed,
     TabCloseRequested,
     TabRequested,
     ViewReady,
+    SaveSucceeded,
     ViewRequested,
 )
 from schemas.base import BaseStrictSchema, BasePlainSchema
@@ -48,14 +48,15 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         self._view: TView | None = None
         self._request_data = RequestData()
         self._page_size_list = [5, 10, 25, 50, 100]
-        self.__prev_mode: ViewMode | None = None
+        self.__meta_fields = {"id", "created_by_username", "created_at", "modified_by_username", "modified_at"}
         self._subscribe_event_handlers(
             {
                 TabClosed: self.__tab_closed_handler,
                 RecordDeleteRequested: self.__record_delete_requested_handler,
                 ViewRequested: self.__view_requested_handler,
-                DialogRequested: self.__dialog_requested_handler,
-                DialogReady: self.__dialog_ready_handler,
+                ViewReady: self.__view_ready_handler,
+                RecordSaved: self.__record_saved_handler,
+                SaveSucceeded: self.__save_succeeded_handler,
             }
         )
         self._subscribe_state_listeners(
@@ -72,10 +73,12 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
     def page_size_list(self) -> list[int]:
         return self._page_size_list
 
+    @property
+    def meta_fields(self) -> set[str]:
+        return self.__meta_fields
+
     @abstractmethod
-    async def _build_view(
-        self, translation: Translation, mode: ViewMode, event: ViewRequested | DialogRequested
-    ) -> TView: ...
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> TView: ...
 
     def on_marker_clicked(self, event: ft.ControlEvent, key: str) -> None:
         if not self._view:
@@ -101,7 +104,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
     def on_back_clicked(self) -> None:
         if not self._view:
             return
-        self._view.toggle_search_results()
+        self._view.search_results = None
         self._state_store.update(view={"mode": ViewMode.SEARCH})
 
     def on_save_clicked(self) -> None:
@@ -110,7 +113,9 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
     def on_cancel_clicked(self) -> None:
         if not self._view:
             return
-        if self._view.mode == ViewMode.CREATE:
+        if self._view.is_dialog:
+            self._state_store.update(view={"mode": ViewMode.READ})
+        elif self._view.mode == ViewMode.CREATE:
             self._state_store.update(view={"mode": ViewMode.SEARCH})
         elif self._view.mode == ViewMode.EDIT:
             self._state_store.update(view={"mode": ViewMode.READ})
@@ -232,6 +237,8 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         self._open_loading_dialog()
         try:
             response = await self._perform_get_one(result_id, service, endpoint)
+            data = response.model_dump()
+            self.__parse_data_row(data)
             if not view_key:
                 view_key = self._view_key
             await self._event_bus.publish(
@@ -239,13 +246,20 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
                     module_id=self._module_id,
                     view_key=view_key,
                     record_id=response.id,
-                    record_data=response.model_dump(),
+                    record_data=data,
                 )
             )
             self._close_loading_dialog()
-        except Exception as err:
+        except HTTPStatusError as http_error:
             self._close_loading_dialog()
-            self._logger.error(str(err))
+            if http_error.response.status_code == 403:
+                self._open_error_dialog(message_key="no_permissions")
+            else:
+                self._logger.error(str(http_error))
+                self._open_error_dialog(message_key="data_fetch_fail")
+        except Exception as error:
+            self._close_loading_dialog()
+            self._logger.error(str(error))
             self._open_error_dialog(message_key="data_fetch_fail")
 
     async def __view_requested_handler(self, event: ViewRequested) -> None:
@@ -254,34 +268,40 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         self._open_loading_dialog()
         translation = self._state_store.app_state.translation.items
         self._module_id = event.module_id
-        mode = ViewMode.READ if event.data else ViewMode.SEARCH
+        if event.is_dialog:
+            mode = ViewMode.CREATE
+        elif event.data:
+            mode = ViewMode.READ
+        else:
+            mode = ViewMode.SEARCH
         if event.data:
             self._request_data.input_values = dict(event.data)
         self._view = await self._build_view(translation, mode, event)
-        await self._event_bus.publish(ViewReady(view_key=event.view_key, record_id=event.record_id, view=self._view))
+        await self._event_bus.publish(
+            ViewReady(
+                view_key=event.view_key,
+                record_id=event.record_id,
+                view=self._view,
+                is_dialog=event.is_dialog,
+                save_succeeded=event.save_succedeed,
+            )
+        )
         self._close_loading_dialog()
 
-    async def __dialog_requested_handler(self, event: DialogRequested) -> None:
-        if event.view_key != self._view_key:
+    async def __view_ready_handler(self, event: ViewReady) -> None:
+        if not self._view:
             return
-        self._open_loading_dialog()
-        translation = self._state_store.app_state.translation.items
-        self._module_id = event.module_id
-        mode = ViewMode.CREATE
-        if event.data:
-            self._request_data.input_values = dict(event.data)
-        self._view = await self._build_view(translation, mode, event)
-        await self._event_bus.publish(DialogReady(view_key=self._view_key, view=self._view))
-        self._close_loading_dialog()
-
-    async def __dialog_ready_handler(self, event: DialogReady) -> None:
-        if event.view_key != self._view_key:
+        if not event.is_dialog or event.view_key != self._view_key:
             return
         translation = self._state_store.app_state.translation.items
         dialog_title = translation.get("add_new_record")
+        card_content = event.view.content
+        dialog_view = ft.Container(content=card_content, expand=True)
         view_dialog = ViewDialog(
-            view=event.view,
+            view=dialog_view,
             title=dialog_title,
+            width_ratio=event.width_ratio,
+            actions=[self._view.buttons_row],
         )
         self._page.show_dialog(view_dialog)
 
@@ -308,18 +328,52 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             else:
                 self._logger.error(str(http_error))
                 self._open_error_dialog(message_key="record_delete_fail")
-        except Exception as err:
+        except Exception as error:
             self._close_loading_dialog()
-            self._logger.error(str(err))
+            self._logger.error(str(error))
             self._open_error_dialog(message_key="record_delete_fail")
+
+    async def __record_saved_handler(self, event: RecordSaved):
+        if event.view_key != self._view_key:
+            return
+        if not self._view or not self._view.data_row:
+            return
+        self._open_loading_dialog()
+        try:
+            response = await self._perform_get_one(self._view.data_row["id"])
+            await self._event_bus.publish(
+                TabRequested(
+                    module_id=self._module_id,
+                    view_key=self._view_key,
+                    record_id=response.id,
+                    record_data=response.model_dump(),
+                    save_succeeded=True,
+                )
+            )
+            self._close_loading_dialog()
+        except HTTPStatusError as http_error:
+            self._close_loading_dialog()
+            if http_error.response.status_code == 403:
+                self._open_error_dialog(message_key="no_permissions")
+            else:
+                self._logger.error(str(http_error))
+                self._open_error_dialog(message_key="data_fetch_fail")
+        except Exception as error:
+            self._close_loading_dialog()
+            self._logger.error(str(error))
+            self._open_error_dialog(message_key="data_fetch_fail")
+
+    async def __save_succeeded_handler(self, event: SaveSucceeded):
+        if event.view_key != self._view_key:
+            return
+        self._open_message_dialog("record_save_success")
 
     def __view_updated_listener(self, state: ViewState) -> None:
         if not state.title:
             self._view = None
         elif isinstance(state.view, self._view_cls):
             self._view = cast(TView, state.view)
-            if not self.__prev_mode or self.__prev_mode != ViewMode.LIST:
-                self.__prev_mode = self._view.mode
+            if self._view.mode != state.mode:
                 self._view.set_mode(state.mode)
 
     def __parse_value(self, value: str | int | float | bool | None) -> str | int | float | bool | None:
@@ -348,15 +402,17 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             self._request_data.has_prev = response.has_prev
             results = [result.model_dump() for result in response.items]
             if results:
-                self._view.toggle_search_results(results)
+                for row in results:
+                    self.__parse_data_row(row, True)
+                self._view.search_results = results
                 self._state_store.update(view={"mode": ViewMode.LIST})
                 self._close_loading_dialog()
             else:
                 self._close_loading_dialog()
                 self._open_message_dialog("no_records_found")
-        except Exception as err:
+        except Exception as error:
             self._close_loading_dialog()
-            self._logger.error(str(err))
+            self._logger.error(str(error))
             self._open_message_dialog("no_records_found")
 
     async def __execute_save_clicked(self) -> None:
@@ -365,24 +421,30 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         self._open_loading_dialog()
         try:
             response: TPlainSchema | None = None
-            replace_view = False
             if self._view.mode == ViewMode.CREATE:
                 response = await self._perform_create()
+                self._view.clear_inputs()
+                self._state_store.update(view={"mode": ViewMode.SEARCH})
             elif self._view.mode == ViewMode.EDIT:
                 response = await self._perform_update(self._request_data.input_values["id"])
-                replace_view = True
-            if response:
+            if response and not self._view.is_dialog:
                 await self._event_bus.publish(
                     TabRequested(
                         module_id=self._module_id,
                         view_key=self._view_key,
                         record_id=response.id,
                         record_data=response.model_dump(),
-                        replace_view=replace_view,
+                        save_succeeded=True,
                     )
                 )
             self._close_loading_dialog()
-            self._open_message_dialog("record_save_success")
+            if self._view.caller_view_key:
+                await self._event_bus.publish(
+                    RecordSaved(
+                        view_key=self._view.caller_view_key,
+                    )
+                )
+            self._page.pop_dialog()
         except ValidationError as validation_error:
             translate_state = self._state_store.app_state.translation
             error_message = [translate_state.items.get("validation_errors")]
@@ -400,9 +462,9 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             else:
                 self._logger.error(str(http_error))
                 self._open_error_dialog(message_key="record_save_fail")
-        except Exception as err:
+        except Exception as error:
             self._close_loading_dialog()
-            self._logger.error(str(err))
+            self._logger.error(str(error))
             self._open_error_dialog(message_key="record_save_fail")
 
     def __validate_field(self, key: str) -> str | None:
@@ -420,36 +482,9 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
                     return error["msg"]
         return
 
-
-# def get_constraint(self, field: str, constraint: str) -> Any:
-#     metadata = self._output_schema_cls.model_fields[field].metadata
-#     for item in metadata:
-#         if hasattr(item, constraint):
-#             return getattr(item, constraint)
-#     return None
-
-# def toggle_search_marker(
-#     self, event: ft.ControlEvent, key: str, inputs: dict[str, ft.TextField | ft.Dropdown | ft.Checkbox]
-# ) -> None:
-#     if not self._view:
-#         return
-#     enabled = event.control.value
-#     self._view.set_input_enabled(key, enabled, inputs)
-#     if enabled:
-#         self._filters.add(key)
-#         self._input_values[key] = inputs[key].value or ""
-#         error = self.__validate_field(key)
-#         if self._view:
-#             self._view.set_field_error(key, error)
-#     else:
-#         self._filters.discard(key)
-#         if self._view:
-#             self._view.set_field_error(key, None)
-
-# def reset_view(self) -> None:
-#     self._input_values.clear()
-#     self._filters.clear()
-#     if self._view:
-#         self._view.set_search_mode()
-#         self._view.clear_inputs()
-#         self._view.clear_search_markers()
+    def __parse_data_row(self, data_row: dict[str, Any], parse_none: bool = False) -> None:
+        for key, value in data_row.items():
+            if key in self.__meta_fields and key.endswith("_at") and value is not None:
+                data_row[key] = value.strftime("%Y-%m-%d %H:%M:%S")
+            if value is None and parse_none:
+                data_row[key] = ""

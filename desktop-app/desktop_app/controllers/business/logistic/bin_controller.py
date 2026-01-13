@@ -1,6 +1,7 @@
 from config.context import Context
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.logistic.bin_schema import BinPlainSchema, BinStrictSchema
+from schemas.business.logistic.item_schema import ItemPlainSchema
 from services.business.logistic import BinService, WarehouseService
 from utils.enums import Endpoint, View, ViewMode
 from utils.translation import Translation
@@ -32,3 +33,11 @@ class BinController(BaseViewController[BinService, BinView, BinPlainSchema, BinS
         )
 
         return [(schema.id, schema.name) for schema in schemas]
+
+    # async def __perform_get_items_for_id(self, id: int) -> list[ItemPlainSchema]:
+    #     return await self.__delivery_method_service.call_api_with_token_refresh(
+    #         func=self.__delivery_method_service.get_all,
+    #         endpoint=Endpoint.DELIVERY_METHODS,
+    #         query_params={"carrier_id": id},
+    #         module_id=self._module_id,
+    #     )

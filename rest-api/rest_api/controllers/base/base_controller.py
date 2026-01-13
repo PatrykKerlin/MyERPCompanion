@@ -56,19 +56,10 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
     ) -> PaginatedResponseSchema[TOutputSchema]:
         try:
             async with self._get_session() as session:
-                conditions: list[ColumnElement[bool]] = []
-                for key, value in filters.filters.items():
-                    attr = getattr(self._service._model_cls, key, None)
-                    if isinstance(attr, InstrumentedAttribute):
-                        if hasattr(attr, "property") and isinstance(attr.property.columns[0].type, String):
-                            conditions.append(attr.ilike(f"%{value}%"))
-                        else:
-                            conditions.append(attr == value)
-
                 offset, limit = BaseController._get_offset_and_limit(pagination)
                 items, total = await self._service.get_all(
                     session=session,
-                    filters=conditions,
+                    filters=filters.filters,
                     offset=offset,
                     limit=limit,
                     sort_by=sorting.sort_by,
@@ -260,14 +251,14 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 status_code=status.HTTP_200_OK,
                 dependencies=self._restrict_access(permissions=[Permission.CAN_READ], secured=mapping[Action.GET_ONE]),
             )
-        if Action.GET_MANY in mapping:
+        if Action.GET_BULK in mapping:
             self.router.add_api_route(
-                path=path + "/many",
+                path=path + "/get-bulk",
                 endpoint=self.get_many,
                 methods=["POST"],
                 response_model=list[output_schema],
                 status_code=status.HTTP_200_OK,
-                dependencies=self._restrict_access(permissions=[Permission.CAN_READ], secured=mapping[Action.GET_MANY]),
+                dependencies=self._restrict_access(permissions=[Permission.CAN_READ], secured=mapping[Action.GET_BULK]),
             )
         if Action.CREATE in mapping:
             self.router.add_api_route(
@@ -280,15 +271,15 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                     permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.CREATE]
                 ),
             )
-        if Action.CREATE_MANY in mapping:
+        if Action.CREATE_BULK in mapping:
             self.router.add_api_route(
-                path=path + "/bulk",
+                path=path + "/post-bulk",
                 endpoint=self.create_many,
                 methods=["POST"],
                 response_model=list[output_schema],
                 status_code=status.HTTP_201_CREATED,
                 dependencies=self._restrict_access(
-                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.CREATE_MANY]
+                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.CREATE_BULK]
                 ),
             )
         if Action.UPDATE in mapping:
@@ -302,15 +293,15 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                     permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.UPDATE]
                 ),
             )
-        if Action.UPDATE_MANY in mapping:
+        if Action.UPDATE_BULK in mapping:
             self.router.add_api_route(
-                path=path + "/bulk",
+                path=path + "/put-bulk",
                 endpoint=self.update_many,
                 methods=["PUT"],
                 response_model=list[output_schema],
                 status_code=status.HTTP_200_OK,
                 dependencies=self._restrict_access(
-                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.UPDATE_MANY]
+                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.UPDATE_BULK]
                 ),
             )
         if Action.DELETE in mapping:
@@ -323,14 +314,14 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                     permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.DELETE]
                 ),
             )
-        if Action.DELETE_MANY in mapping:
+        if Action.DELETE_BULK in mapping:
             self.router.add_api_route(
-                path=path + "/bulk",
+                path=path + "/delete-bulk",
                 endpoint=self.delete_many,
                 methods=["DELETE"],
                 status_code=status.HTTP_204_NO_CONTENT,
                 dependencies=self._restrict_access(
-                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.DELETE_MANY]
+                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.DELETE_BULK]
                 ),
             )
 

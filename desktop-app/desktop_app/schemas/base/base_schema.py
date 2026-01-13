@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 
 from typing import Annotated
@@ -16,6 +18,9 @@ class BasePlainSchema(BaseSchema):
     created_by: int
     modified_at: datetime | None = None
     modified_by: int | None = None
+
+    created_by_username: str | None = None
+    modified_by_username: str | None = None
 
 
 class BaseStrictSchema(BaseSchema):

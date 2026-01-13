@@ -116,6 +116,10 @@ class ViewRequested(BaseEvent):
     view_key: View
     record_id: int | None = None
     data: dict[str, Any] | None = None
+    is_dialog: bool = False
+    caller_view_key: View | None = None
+    width_ratio: float = 0.5
+    save_succedeed: bool = False
 
 
 @dataclass(frozen=True)
@@ -123,21 +127,9 @@ class ViewReady(BaseEvent):
     view_key: View
     view: BaseView
     record_id: int | None = None
-
-
-@dataclass(frozen=True)
-class DialogRequested(BaseEvent):
-    module_id: int
-    view_key: View
-    record_id: int | None = None
-    data: dict[str, Any] | None = None
-
-
-@dataclass(frozen=True)
-class DialogReady(BaseEvent):
-    view_key: View
-    view: BaseView
-    record_id: int | None = None
+    is_dialog: bool = False
+    width_ratio: float = 0.5
+    save_succeeded: bool = False
 
 
 @dataclass(frozen=True)
@@ -146,7 +138,7 @@ class TabRequested(BaseEvent):
     view_key: View
     record_id: int | None = None
     record_data: dict[str, Any] | None = None
-    replace_view: bool = False
+    save_succeeded: bool = False
 
 
 @dataclass(frozen=True)
@@ -168,3 +160,13 @@ class TabClosed(BaseEvent):
 class RecordDeleteRequested(BaseEvent):
     view_key: View
     id: int
+
+
+@dataclass(frozen=True)
+class RecordSaved(BaseEvent):
+    view_key: View
+
+
+@dataclass(frozen=True)
+class SaveSucceeded(BaseEvent):
+    view_key: View

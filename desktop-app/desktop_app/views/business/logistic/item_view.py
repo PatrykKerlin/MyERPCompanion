@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
-from utils.enums import ViewMode
+from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
 from utils.translation import Translation
@@ -20,7 +20,7 @@ class ItemView(BaseView):
         controller: ItemController,
         translation: Translation,
         mode: ViewMode,
-        key: str,
+        key: View,
         data_row: dict[str, Any] | None,
         categories: list[tuple[int, str]],
         units: list[tuple[int, str]],
@@ -33,15 +33,15 @@ class ItemView(BaseView):
             {"key": "name", "input": self._get_text_input},
             {"key": "description", "input": self._get_text_input, "lines": 3},
             {"key": "ean", "input": self._get_text_input},
-            {"key": "category_id", "label": "category", "input": self._get_dropdown, "options": categories},
-            {"key": "unit_id", "label": "unit", "input": self._get_dropdown, "options": units},
+            {"key": "category_id", "input": self._get_dropdown, "options": categories},
+            {"key": "unit_id", "input": self._get_dropdown, "options": units},
         ]
         financial_fields_definitions = [
-            {"key": "supplier_id", "label": "supplier", "input": self._get_dropdown, "options": suppliers},
-            {"key": "currency_id", "label": "currency", "input": self._get_dropdown, "options": currencies},
+            {"key": "supplier_id", "input": self._get_dropdown, "options": suppliers},
+            {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
             {"key": "purchase_price", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "vat_rate", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
-            {"key": "margin", "input": self._get_numeric_input, "is_float": True, "step": 0.001},
+            {"key": "margin", "input": self._get_numeric_input, "is_float": True, "step": 0.001, "precision": 3},
             {"key": "moq", "input": self._get_numeric_input},
         ]
         param_fields_definitions = [
@@ -51,10 +51,10 @@ class ItemView(BaseView):
             {"key": "is_returnable", "input": self._get_checkbox, "value": False},
         ]
         dimensions_fields_definitions = [
-            {"key": "width", "input": self._get_numeric_input, "is_float": True, "step": 0.001},
-            {"key": "height", "input": self._get_numeric_input, "is_float": True, "step": 0.001},
-            {"key": "length", "input": self._get_numeric_input, "is_float": True, "step": 0.001},
-            {"key": "weight", "input": self._get_numeric_input, "is_float": True, "step": 0.001},
+            {"key": "width", "input": self._get_numeric_input, "is_float": True, "step": 0.001, "precision": 3},
+            {"key": "height", "input": self._get_numeric_input, "is_float": True, "step": 0.001, "precision": 3},
+            {"key": "length", "input": self._get_numeric_input, "is_float": True, "step": 0.001, "precision": 3},
+            {"key": "weight", "input": self._get_numeric_input, "is_float": True, "step": 0.001, "precision": 3},
             {"key": "expiration_date", "input": self._get_date_picker},
         ]
         stock_fields_definitions = [
@@ -90,7 +90,7 @@ class ItemView(BaseView):
         dimensions_grid = self._build_grid(dimensions_fields)
         stock_grid = self._build_grid(stock_fields)
         # images_grid = self._build_grid(images_field)
-        meta_grid = self._get_meta_grid(label_size=4, id_size=2, datetime_size=7)
+        meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
         columns = [
             ft.Column(
                 controls=main_grid + financial_grid + dimensions_grid + stock_grid,
@@ -101,4 +101,3 @@ class ItemView(BaseView):
         ]
         self._columns_row.controls.extend(columns)
         self._master_column.controls.extend(self._rows)
-        ft.Card.__init__(self, content=self._scrollable_wrapper, expand=True)
