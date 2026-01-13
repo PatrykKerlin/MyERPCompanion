@@ -1,6 +1,6 @@
 from collections.abc import Mapping, Sequence
 from typing import Generic, TypeVar, cast
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 
 from sqlalchemy import String, asc, desc, func, select, Date, DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -112,7 +112,7 @@ class BaseRepository(Generic[TModel]):
         query_filters = [*base_filters, *extra_filters]
 
         if additional_filters:
-            additional_filters.extend(query_filters)
+            query_filters.extend(additional_filters)
         query = (
             select(cls._model_cls)
             .filter(*query_filters)
@@ -184,7 +184,7 @@ class BaseRepository(Generic[TModel]):
                 continue
 
             if isinstance(column_type, (Date, DateTime)):
-                expressions.append(cls.__build_date_gte_expression(attribute, raw_value))
+                expressions.append(cls.__build_date_filter_expression(attribute, str(raw_value)))
                 continue
 
             expressions.append(attribute == raw_value)
@@ -192,8 +192,8 @@ class BaseRepository(Generic[TModel]):
         return expressions
 
     @classmethod
-    def __build_date_gte_expression(cls, attribute: InstrumentedAttribute, raw_value: str) -> ColumnElement[bool]:
-        date_part, separator, time_part = raw_value.partition(" ")
+    def __build_date_filter_expression(cls, attribute: InstrumentedAttribute, raw_value: str) -> ColumnElement[bool]:
+        date_part, separator, time_part = raw_value.strip().partition(" ")
 
         date_parts = date_part.split("-")
         if len(date_parts) not in {1, 2, 3}:
@@ -205,25 +205,49 @@ class BaseRepository(Generic[TModel]):
         month = int(date_parts[1]) if len(date_parts) >= 2 else 1
         day = int(date_parts[2]) if len(date_parts) == 3 else 1
 
-        start_date = date(year, month, day)
-
         column_type = attribute.property.columns[0].type
+
         if isinstance(column_type, DateTime):
-            time_text = time_part.strip() if separator else ""
-            if not time_text:
-                start_time = time.min
-            else:
-                time_parts = time_text.split(":")
+            time_parts: list[str] | None = None
+
+            if separator and time_part.strip():
+                time_parts = time_part.strip().split(":")
                 if len(time_parts) not in {2, 3}:
                     raise ValueError(f"Invalid time filter value: '{raw_value}'. Expected 'HH:MM' or 'HH:MM:SS'.")
+
                 hour = int(time_parts[0])
                 minute = int(time_parts[1])
                 second = int(time_parts[2]) if len(time_parts) == 3 else 0
                 start_time = time(hour, minute, second)
+            else:
+                start_time = time.min
 
-            return attribute >= datetime.combine(start_date, start_time)
+            start_dt = datetime.combine(date(year, month, day), start_time)
+
+            if len(date_parts) == 1:
+                end_dt = datetime(year + 1, 1, 1)
+            elif len(date_parts) == 2:
+                end_dt = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
+            else:
+                if time_parts is None:
+                    end_dt = start_dt + timedelta(days=1)
+                elif len(time_parts) == 2:
+                    end_dt = start_dt + timedelta(minutes=1)
+                else:
+                    end_dt = start_dt + timedelta(seconds=1)
+
+            return (attribute >= start_dt) & (attribute < end_dt)
 
         if isinstance(column_type, Date):
-            return attribute >= start_date
+            start_d = date(year, month, day)
+
+            if len(date_parts) == 1:
+                end_d = date(year + 1, 1, 1)
+            elif len(date_parts) == 2:
+                end_d = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
+            else:
+                end_d = start_d + timedelta(days=1)
+
+            return (attribute >= start_d) & (attribute < end_d)
 
         raise ValueError(f"Field '{attribute.key}' is not a date/datetime column.")

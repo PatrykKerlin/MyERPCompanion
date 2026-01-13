@@ -1,6 +1,5 @@
 from typing import Any
 from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
-from schemas.core.param_schema import IdsPayloadSchema
 from schemas.core.token_schema import TokenPlainSchema
 from services.base.base_service import BaseService
 from utils.enums import Endpoint

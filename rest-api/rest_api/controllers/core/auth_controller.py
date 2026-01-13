@@ -34,7 +34,6 @@ class AuthController:
             auth_header = request.headers.get("Authorization")
             if not auth_header:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-            print(auth_header)
             refresh_token = auth_header.split(" ")[1]
             async with self.__get_session() as session:
                 schema = await self.__auth.validate_refresh_token(session, refresh_token)

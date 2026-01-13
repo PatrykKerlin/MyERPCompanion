@@ -441,17 +441,35 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self.__scrollable_wrapper.update()
 
     def __set_search_mode(self) -> None:
+        selected_inputs = self._controller.search_params.selected_inputs
+        input_values = self._controller.search_params.input_values
         for key, field in self._inputs.items():
             input = field.input.content
             marker = field.marker.content
-            if hasattr(input, "read_only"):
-                setattr(input, "read_only", True)
-            if hasattr(input, "disabled"):
-                setattr(input, "disabled", True)
+            is_selected = key in selected_inputs
             if isinstance(input, ft.Dropdown):
                 self.__restore_dropdown_options(input, key)
+            if hasattr(input, "value"):
+                if key in input_values:
+                    value = input_values.get(key)
+                    if value is None:
+                        if isinstance(input, ft.TextField):
+                            value = ""
+                        elif isinstance(input, ft.Dropdown):
+                            value = "0"
+                        elif isinstance(input, ft.Checkbox):
+                            value = False
+                        elif isinstance(input, NumericField):
+                            value = 0
+                    setattr(input, "value", value)
+            if hasattr(input, "read_only"):
+                setattr(input, "read_only", not is_selected)
+            if hasattr(input, "disabled"):
+                setattr(input, "disabled", not is_selected)
             if hasattr(marker, "disabled"):
                 setattr(marker, "disabled", False)
+            if hasattr(marker, "value"):
+                setattr(marker, "value", is_selected)
             if hasattr(marker, "width"):
                 setattr(marker, "width", None)
             self.set_field_error(key, None)
@@ -459,6 +477,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 input.update()
             if marker:
                 marker.update()
+        self.__toggle_search_results()
 
     def __set_create_mode(self) -> None:
         self.clear_inputs()
