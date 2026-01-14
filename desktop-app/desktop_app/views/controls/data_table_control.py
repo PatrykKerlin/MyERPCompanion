@@ -66,6 +66,7 @@ class DataTable(ft.Container):
             on_click=self.__handle_add_clicked if on_add_clicked else None,
             visible=with_button,
             disabled=not with_button or read_only,
+            width=48,
         )
 
         self.content = ft.Column(

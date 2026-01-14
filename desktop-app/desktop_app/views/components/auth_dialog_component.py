@@ -23,7 +23,7 @@ class AuthDialogComponent(BaseComponent, BaseDialog):
             on_click=lambda _: controller.on_cancel_click(),
             # style=ButtonStyles.small_padding,
         )
-        login_button = ft.ElevatedButton(
+        login_button = ft.Button(
             content=translation.get("log_in"),
             on_click=lambda _: controller.on_login_click(
                 login_field.value or "",

@@ -31,9 +31,6 @@ class ImageService(
         self.__allowed_content: dict[str, str] = {
             "image/jpeg": "jpg",
             "image/png": "png",
-            "image/webp": "webp",
-            "image/gif": "gif",
-            "image/avif": "avif",
         }
         self.__storage: FileStorage | None = None
 

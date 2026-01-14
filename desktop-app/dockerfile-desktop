@@ -30,6 +30,7 @@ RUN apt-get update && \
     qt6-base-dev qtwayland5 \
     libmpv2 \
     adwaita-icon-theme xcursor-themes dmz-cursor-theme \
+    zenity \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p "$NVM_DIR" && \

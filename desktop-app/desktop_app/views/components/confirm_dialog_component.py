@@ -18,7 +18,7 @@ class ConfirmDialogComponent(BaseDialog):
             content=texts["cancel"],
             on_click=lambda _: self.__set_result(False),
         )
-        confirm_button = ft.ElevatedButton(
+        confirm_button = ft.Button(
             content=texts["ok"],
             on_click=lambda _: self.__set_result(True),
         )

@@ -94,7 +94,7 @@ class SearchResultsComponent(BaseComponent, ft.Column):
             ),
         )
 
-        back_button = ft.ElevatedButton(
+        back_button = ft.Button(
             content=self._translation.get("back"),
             on_click=lambda _: self._controller.on_back_clicked(),
         )

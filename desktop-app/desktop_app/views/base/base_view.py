@@ -54,12 +54,12 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             content=self._translation.get("cancel"),
             on_click=lambda _: self._controller.on_cancel_clicked(),
         )
-        self._save_button = ft.ElevatedButton(
+        self._save_button = ft.Button(
             content=self._translation.get("save"),
             on_click=lambda _: self._controller.on_save_clicked(),
             disabled=True,
         )
-        self._search_button = ft.ElevatedButton(
+        self._search_button = ft.Button(
             content=self._translation.get("search"),
             on_click=lambda _: self._controller.on_search_clicked(),
         )

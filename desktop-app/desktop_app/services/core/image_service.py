@@ -14,7 +14,13 @@ class ImageService(BaseService[ImagePlainSchema, Union[ImageStrictCreateSchema, 
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: Union[ImageStrictCreateSchema, ImageStrictUpdateSchema] | dict[str, Any] | None = None,
+        body_params: Union[
+            ImageStrictCreateSchema,
+            ImageStrictUpdateSchema,
+            list[ImageStrictCreateSchema | ImageStrictUpdateSchema],
+        ]
+        | dict[str, Any]
+        | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> ImagePlainSchema:
@@ -33,7 +39,13 @@ class ImageService(BaseService[ImagePlainSchema, Union[ImageStrictCreateSchema, 
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: Union[ImageStrictCreateSchema, ImageStrictUpdateSchema] | dict[str, Any] | None = None,
+        body_params: Union[
+            ImageStrictCreateSchema,
+            ImageStrictUpdateSchema,
+            list[ImageStrictCreateSchema | ImageStrictUpdateSchema],
+        ]
+        | dict[str, Any]
+        | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> ImagePlainSchema:

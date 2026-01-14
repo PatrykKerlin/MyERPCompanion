@@ -58,3 +58,4 @@ class Endpoint(StrEnum):
     BIN_ITEMS_DELETE_BULK = "bin-items/delete-bulk"
     SUPPLIERS = "suppliers"
     CATEGORIES = "categories"
+    IMAGES = "images"

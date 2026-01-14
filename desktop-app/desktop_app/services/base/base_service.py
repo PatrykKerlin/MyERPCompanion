@@ -158,6 +158,31 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         data = response.json()
         return self._plain_schema_cls(**data)
 
+    async def create_multipart(
+        self,
+        endpoint: Endpoint,
+        path_param: int | None = None,
+        query_params: dict[str, Any] | None = None,
+        body_params: TStrictSchema | list[TStrictSchema] | dict[str, Any] | None = None,
+        tokens: TokenPlainSchema | None = None,
+        module_id: int | None = None,
+    ) -> TPlainSchema:
+        if isinstance(body_params, dict):
+            data = body_params.get("data")
+            files = body_params.get("files")
+        else:
+            data = None
+            files = None
+        response = await self._post_multipart(
+            endpoint=endpoint,
+            data=data,
+            files=files,
+            tokens=tokens,
+            module_id=module_id,
+        )
+        payload = response.json()
+        return self._plain_schema_cls(**payload)
+
     async def update(
         self,
         endpoint: Endpoint,
@@ -251,6 +276,21 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         headers = self.__prepare_headers(tokens, module_id)
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
             response = await client.post(url=endpoint, json=body_params)
+            response.raise_for_status()
+            await asyncio.sleep(self.__sleep_time)
+            return response
+
+    async def _post_multipart(
+        self,
+        endpoint: str,
+        data: dict[str, Any] | None = None,
+        files: dict[str, tuple[str, bytes, str]] | None = None,
+        tokens: TokenPlainSchema | None = None,
+        module_id: int | None = None,
+    ) -> httpx.Response:
+        headers = self.__prepare_headers(tokens, module_id)
+        async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
+            response = await client.post(url=endpoint, data=data, files=files)
             response.raise_for_status()
             await asyncio.sleep(self.__sleep_time)
             return response
