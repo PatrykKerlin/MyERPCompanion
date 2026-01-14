@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 class Image(BaseModel):
     __tablename__ = "images"
     __table_args__ = (
-        UniqueConstraint("item_id", "order", name="uq_item_image_order"),
         Index("uq_item_images_only_one_primary", "item_id", unique=True, postgresql_where=text("is_primary")),
     )
 
@@ -25,4 +24,4 @@ class Image(BaseModel):
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     item_id: Mapped[int] = Fields.foreign_key(column="items.id")
-    item: Mapped[Item] = Fields.relationship(argument="Item", back_populates="images", foreign_keys=[item_id])
+    item: Mapped[Item] = Fields.relationship(argument="Item", back_populates="images", foreign_keys=[item_id], cascade_soft_delete=False)

@@ -129,6 +129,8 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
             schemas: list[TInputSchema] = []
             for item in body:
+                if not isinstance(item, dict):
+                    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
                 schemas.append(self._input_schema_cls(**item))
             async with self._get_session() as session:
                 return await self._service.create_bulk(session=session, created_by=user.id, schemas=schemas)
@@ -161,13 +163,16 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
     async def update_bulk(self, request: Request) -> list[TOutputSchema]:
         try:
             user = request.state.user
-            print("debug:", request.json())
             body = await request.json()
             if not isinstance(body, list):
                 raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
             items: list[tuple[int, TInputSchema]] = []
             for item in body:
-                model_id = item["id"]
+                if not isinstance(item, dict):
+                    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+                model_id = item.get("id")
+                if not isinstance(model_id, int):
+                    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
                 data = {key: value for key, value in item.items() if key != "id"}
                 schema = self._input_schema_cls(**data)
                 items.append((model_id, schema))

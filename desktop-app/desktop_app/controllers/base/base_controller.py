@@ -2,6 +2,7 @@ from typing import Any, Awaitable, Callable, TypeVar
 
 from schemas.base.base_schema import BaseStrictSchema
 from utils.tokens_accessor import TokensAccessor
+from views.components.confirm_dialog_component import ConfirmDialogComponent
 from views.components.error_dialog_component import ErrorDialogComponent
 from views.components.loading_dialog_component import LoadingDialogComponent
 from views.components.message_dialog_component import MessageDialogComponent
@@ -62,13 +63,22 @@ class BaseController:
         self._page.show_dialog(error_dialog)
 
     def _open_message_dialog(self, message_key: str) -> None:
-        translation_state = self._state_store.app_state.translation
+        translation = self._state_store.app_state.translation.items
         message_dialog = MessageDialogComponent(
-            translation=translation_state.items,
+            translation=translation,
             message_key=message_key,
             on_ok_clicked=lambda _: self._page.pop_dialog(),
         )
         self._page.show_dialog(message_dialog)
+
+    async def _show_confirm_dialog(self, message_key: str) -> bool:
+        translation = self._state_store.app_state.translation.items
+        confirm_dialog = ConfirmDialogComponent(translation=translation, message_key=message_key)
+        self._page.show_dialog(confirm_dialog)
+        try:
+            return await confirm_dialog.future
+        finally:
+            self._page.pop_dialog()
 
     def _get_tab_title(self, key: str, id: int | None) -> str:
         translation_state = self._state_store.app_state.translation
@@ -79,21 +89,3 @@ class BaseController:
 
     def __add_unsubscriber(self, func: Callable[[], None]) -> None:
         self.__unsubscribers.append(func)
-
-    #     async def _show_confirm_dialog(self, message_key: str) -> bool:
-    #         confirm_dialog = ConfirmDialogComponent(
-    #             texts=self._context.texts,
-    #             message_key=message_key,
-    #             loop=self._context.page.loop,
-    #         )
-    #         self._open_dialog(confirm_dialog)
-    #         result = await confirm_dialog.future
-    #         self._close_dialog(confirm_dialog)
-    #         return result
-
-    #     def _remove_control(self, parent: ft.Control, child: ft.Control) -> None:
-    #         if hasattr(parent, "controls"):
-    #             controls = getattr(parent, "controls")
-    #             if isinstance(controls, list) and child in controls:
-    #                 controls.remove(child)
-    #                 self._context.page.update()

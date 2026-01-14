@@ -14,9 +14,6 @@ if TYPE_CHECKING:
 
 
 class ItemView(BaseView):
-    _GALLERY_HEIGHT = 140
-    _PRIMARY_BORDER = 4
-
     def __init__(
         self,
         controller: ItemController,
@@ -30,6 +27,9 @@ class ItemView(BaseView):
         currencies: list[tuple[int, str]],
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
+        self.__GALLERY_HEIGHT = 140
+        self.__PRIMARY_BORDER = 4
+
         product_fields_definitions = [
             {"key": "index", "input": self._get_text_input},
             {"key": "name", "input": self._get_text_input},
@@ -109,6 +109,27 @@ class ItemView(BaseView):
             visible=False,
             width=48,
         )
+        self.__image_order_field = ft.TextField(
+            label=self._translation.get("order"),
+            keyboard_type=ft.KeyboardType.NUMBER,
+        )
+        self.__image_primary_checkbox = ft.Checkbox(
+            label=self._translation.get("is_primary"),
+        )
+        dialog_buttons = [
+            ft.TextButton(self._translation.get("delete"), on_click=self.__on_image_delete_requested),
+            ft.TextButton(self._translation.get("cancel"), on_click=self.__on_image_edit_cancelled),
+            ft.Button(self._translation.get("save"), on_click=self.__on_image_edit_confirmed),
+        ]
+        self.__image_edit_dialog = ft.AlertDialog(
+            title=ft.Text(self._translation.get("edit_image")),
+            content=ft.Column(
+                controls=[self.__image_order_field, self.__image_primary_checkbox],
+                tight=True,
+            ),
+            actions=dialog_buttons,
+        )
+        self.__selected_image_id: int | None = None
         self.__gallery_column = ft.Column(
             controls=[
                 self.__image_gallery,
@@ -151,8 +172,8 @@ class ItemView(BaseView):
     def __build_image_control(self, image: dict[str, Any]) -> ft.Control:
         url = image["url"]
         is_primary = image["is_primary"]
-        image_height = self._GALLERY_HEIGHT - 2 * self._PRIMARY_BORDER
-        padding = self._PRIMARY_BORDER if is_primary else 0
+        image_height = self.__GALLERY_HEIGHT - 2 * self.__PRIMARY_BORDER
+        padding = self.__PRIMARY_BORDER if is_primary else 0
         border = ft.border.all(2, ft.Colors.BLUE_300) if is_primary else None
         return ft.Container(
             content=ft.Image(
@@ -160,11 +181,46 @@ class ItemView(BaseView):
                 height=image_height,
                 fit=ft.BoxFit.CONTAIN,
             ),
-            height=self._GALLERY_HEIGHT,
+            height=self.__GALLERY_HEIGHT,
             padding=padding,
             border=border,
             alignment=ft.Alignment.CENTER,
+            on_click=lambda _: self.__on_image_clicked(image),
         )
 
     def __on_add_image_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         self._controller.on_image_select_requested()
+
+    def __on_image_clicked(self, image: dict[str, Any]) -> None:
+        if self._mode != ViewMode.READ:
+            return
+        self.__selected_image_id = image["id"]
+        self.__image_order_field.value = str(image["order"])
+        self.__image_order_field.error = None
+        self.__image_primary_checkbox.value = image["is_primary"]
+        if self.page:
+            self.page.show_dialog(self.__image_edit_dialog)
+
+    def __on_image_edit_cancelled(self, _: ft.Event[ft.TextButton]) -> None:
+        self.page.pop_dialog()
+
+    def __on_image_edit_confirmed(self, _: ft.Event[ft.Button]) -> None:
+        order_value = (self.__image_order_field.value or "").strip()
+        if not order_value.isdigit():
+            self.__image_order_field.error = self._translation.get("invalid_value")
+            self.__image_order_field.update()
+            return
+        self.page.pop_dialog()
+        if self.__selected_image_id is None:
+            return
+        self._controller.on_image_update_requested(
+            image_id=self.__selected_image_id,
+            new_order=int(order_value),
+            is_primary=bool(self.__image_primary_checkbox.value),
+        )
+
+    def __on_image_delete_requested(self, _: ft.Event[ft.TextButton]) -> None:
+        self.page.pop_dialog()
+        if self.__selected_image_id is None:
+            return
+        self._controller.on_image_delete_requested(self.__selected_image_id)

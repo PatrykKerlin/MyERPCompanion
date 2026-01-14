@@ -74,6 +74,7 @@ class ImageService(
         model = await self._repository_cls.get_one_by_id(session, model_id)
         if not model:
             raise NoResultFound(self._not_found_message.format(model=self._model_cls.__name__, id=model_id))
+        setattr(model, "is_primary", False)
         setattr(model, "modified_by", modified_by)
         url = model.url
         await self._repository_cls.delete(session, model)

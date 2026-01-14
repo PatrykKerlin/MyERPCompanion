@@ -13,6 +13,7 @@ class ImageStrictCreateSchema(BaseStrictSchema):
 
 class ImageStrictUpdateSchema(BaseStrictSchema):
     is_primary: Constraints.BooleanFalse
+    order: Constraints.PositiveInteger
 
 
 class ImageModelSchema(BaseStrictSchema):

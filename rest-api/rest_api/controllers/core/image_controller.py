@@ -10,6 +10,7 @@ from schemas.core.image_schema import ImagePlainSchema, ImageStrictCreateSchema,
 from services.core import ImageService
 from config.context import Context
 from utils.auth import Auth
+from utils.enums import Action
 from starlette.datastructures import UploadFile as StarletteUploadFile
 
 
@@ -21,8 +22,16 @@ class ImageController(
 
     def __init__(self, context: Context, auth: Auth) -> None:
         super().__init__(context, auth)
+        include = {
+            Action.GET_ALL: True,
+            Action.GET_ONE: True,
+            Action.CREATE: True,
+            Action.UPDATE: True,
+            Action.UPDATE_BULK: True,
+            Action.DELETE: True,
+        }
         self._service.set_storage(self._settings.MEDIA_DIR, self._settings.MEDIA_URL)
-        self._register_routes(ImagePlainSchema)
+        self._register_routes(ImagePlainSchema, include=include)
 
     async def create(self, request: Request) -> ImagePlainSchema:
         try:
@@ -53,6 +62,36 @@ class ImageController(
             )
         except ValidationError as err:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
+        except SQLAlchemyError as err:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+        
+    async def update_bulk(self, request: Request) -> list[ImagePlainSchema]:
+        try:
+            user = request.state.user
+            body = await request.json()
+            if not isinstance(body, list):
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            items: list[tuple[int, ImageStrictUpdateSchema]] = []
+            for item in body:
+                if not isinstance(item, dict):
+                    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+                model_id = item.get("id")
+                if not isinstance(model_id, int):
+                    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+                data = {key: value for key, value in item.items() if key != "id"}
+                schema = ImageStrictUpdateSchema(**data)
+                items.append((model_id, schema))
+            async with self._get_session() as session:
+                return await self._service.update_bulk(session=session, items=items, modified_by=user.id)
+        except HTTPException:
+            raise
+        except ValidationError as err:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
+        except NoResultFound as err:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=self._404_message.format(model=self._service._model_cls.__name__, id=str(err.args[0])),
+            )
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 

@@ -59,3 +59,4 @@ class Endpoint(StrEnum):
     SUPPLIERS = "suppliers"
     CATEGORIES = "categories"
     IMAGES = "images"
+    IMAGES_UPDATE_BULK = "images/update-bulk"
