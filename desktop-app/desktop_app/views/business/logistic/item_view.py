@@ -7,6 +7,7 @@ import flet as ft
 from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
+from views.controls.data_table_control import DataTable
 from utils.translation import Translation
 
 if TYPE_CHECKING:
@@ -25,6 +26,7 @@ class ItemView(BaseView):
         units: list[tuple[int, str]],
         suppliers: list[tuple[int, str]],
         currencies: list[tuple[int, str]],
+        bins: list[dict[str, Any]],
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
         self.__GALLERY_HEIGHT = 140
@@ -102,12 +104,25 @@ class ItemView(BaseView):
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
             expand=True,
         )
+        self.__image_gallery_container = ft.Container(
+            content=self.__image_gallery,
+            height=self.__GALLERY_HEIGHT,
+            alignment=ft.Alignment.CENTER_LEFT,
+        )
         self.__add_image_button = ft.IconButton(
             icon=ft.Icons.ADD_A_PHOTO,
             on_click=self.__on_add_image_clicked,
             tooltip=self._translation.get("add_image"),
             visible=False,
             width=48,
+        )
+        self.__bins_table = DataTable(
+            columns=["id", "location", "quantity"],
+            rows=bins,
+            on_row_clicked=lambda row: self._controller.on_table_row_clicked(row["id"]),
+            translation=self._translation,
+            height=250,
+            with_button=False,
         )
         self.__image_order_field = ft.TextField(
             label=self._translation.get("order"),
@@ -132,11 +147,12 @@ class ItemView(BaseView):
         self.__selected_image_id: int | None = None
         self.__gallery_column = ft.Column(
             controls=[
-                self.__image_gallery,
+                self.__image_gallery_container,
                 ft.Row(
                     controls=[self.__add_image_button],
                     alignment=ft.MainAxisAlignment.END,
                 ),
+                self.__bins_table,
             ],
             expand=True,
         )
@@ -159,14 +175,20 @@ class ItemView(BaseView):
             self.__gallery_column.visible = False
             self.__add_image_button.visible = False
             self.__add_image_button.disabled = True
+            self.__bins_table.visible = False
+            self.__bins_table.read_only = True
         elif self._mode == ViewMode.EDIT:
             self.__gallery_column.visible = True
             self.__add_image_button.visible = False
             self.__add_image_button.disabled = True
-        else:
+            self.__bins_table.visible = True
+            self.__bins_table.read_only = True
+        elif self._mode == ViewMode.READ:
             self.__gallery_column.visible = True
             self.__add_image_button.visible = True
             self.__add_image_button.disabled = False
+            self.__bins_table.visible = True
+            self.__bins_table.read_only = False
         self.__gallery_column.update()
 
     def __build_image_control(self, image: dict[str, Any]) -> ft.Control:

@@ -12,7 +12,7 @@ from controllers.base.base_view_controller import BaseViewController
 from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
 from schemas.core.image_schema import ImageStrictCreateSchema, ImageStrictUpdateSchema
 from services.core.image_service import ImageService
-from services.business.logistic import CategoryService, ItemService, UnitService
+from services.business.logistic import AssocBinItemService, BinService, CategoryService, ItemService, UnitService
 from services.business.trade import CurrencyService, SupplierService
 from utils.enums import Endpoint, View, ViewMode
 from utils.translation import Translation
@@ -35,6 +35,8 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         self.__supplier_service = SupplierService(self._settings, self._logger, self._tokens_accessor)
         self.__currency_service = CurrencyService(self._settings, self._logger, self._tokens_accessor)
         self.__image_service = ImageService(self._settings, self._logger, self._tokens_accessor)
+        self.__bin_service = BinService(self._settings, self._logger, self._tokens_accessor)
+        self.__bin_item_service = AssocBinItemService(self._settings, self._logger, self._tokens_accessor)
 
     def on_image_select_requested(self) -> None:
         self._page.run_task(self.__execute_pick_and_upload)
@@ -45,12 +47,24 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
     def on_image_delete_requested(self, image_id: int) -> None:
         self._page.run_task(self.__execute_image_delete, image_id)
 
+    def on_table_row_clicked(self, result_id: int) -> None:
+        self._page.run_task(
+            self._execute_row_clicked,
+            result_id,
+            View.BINS,
+            self.__bin_service,
+            Endpoint.BINS,
+        )
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> ItemView:
         categories = await self.__perform_get_all_categories()
         units = await self.__perform_get_all_units()
         suppliers = await self.__perform_get_all_suppliers()
         currencies = await self.__perform_get_all_currencies()
-        return ItemView(self, translation, mode, event.view_key, event.data, categories, units, suppliers, currencies)
+        bins = await self.__perform_get_bins_for_item(event.data["id"]) if event.data else []
+        return ItemView(
+            self, translation, mode, event.view_key, event.data, categories, units, suppliers, currencies, bins
+        )
 
     async def __perform_get_all_categories(self) -> list[tuple[int, str]]:
         schemas = await self.__category_service.call_api_with_token_refresh(
@@ -83,6 +97,30 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
             module_id=self._module_id,
         )
         return [(schema.id, schema.code) for schema in schemas]
+
+    async def __perform_get_bins_for_item(self, item_id: int) -> list[dict[str, Any]]:
+        bin_item_schemas = await self.__bin_item_service.call_api_with_token_refresh(
+            func=self.__bin_item_service.get_all,
+            endpoint=Endpoint.BIN_ITEMS,
+            query_params={"item_id": item_id},
+            module_id=self._module_id,
+        )
+        if not bin_item_schemas:
+            return []
+        bin_ids = [schema.bin_id for schema in bin_item_schemas]
+        bins = await self.__bin_service.call_api_with_token_refresh(
+            func=self.__bin_service.get_bulk,
+            endpoint=Endpoint.BINS_GET_BULK,
+            body_params={"ids": bin_ids},
+            module_id=self._module_id,
+        )
+        quantity_by_bin_id = {schema.bin_id: schema.quantity for schema in bin_item_schemas}
+        rows = []
+        for bin_schema in bins:
+            row = bin_schema.model_dump()
+            row["quantity"] = quantity_by_bin_id.get(bin_schema.id, 0)
+            rows.append(row)
+        return rows
 
     async def __execute_pick_and_upload(self) -> None:
         file_path = await self.__pick_file_path()

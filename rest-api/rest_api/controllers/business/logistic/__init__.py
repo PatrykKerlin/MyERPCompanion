@@ -50,6 +50,14 @@ BinController = ControllerFactory.create(
     service_cls=BinService,
     input_schema_cls=BinStrictSchema,
     output_schema_cls=BinPlainSchema,
+    include={
+        Action.GET_ALL: True,
+        Action.GET_BULK: True,
+        Action.GET_ONE: True,
+        Action.CREATE: True,
+        Action.UPDATE: True,
+        Action.DELETE: True,
+    },
 )
 CarrierController = ControllerFactory.create(
     model_cls=Carrier,

@@ -46,6 +46,7 @@ class Endpoint(StrEnum):
     EMPLOYEES = "employees"
     WAREHOUSES = "warehouses"
     BINS = "bins"
+    BINS_GET_BULK = "bins/get-bulk"
     CARRIERS = "carriers"
     DELIVERY_METHODS = "delivery-methods"
     UNITS = "units"
