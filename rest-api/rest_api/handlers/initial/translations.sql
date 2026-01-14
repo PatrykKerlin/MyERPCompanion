@@ -61,7 +61,7 @@ VALUES
 ('warehouses', 'Warehouses', 1, TRUE, NOW(), 1),
 ('warehouses', 'Magazyny', 2, TRUE, NOW(), 1),
 ('bins', 'Bins', 1, TRUE, NOW(), 1),
-('bins', 'Lokacje magazynowe', 2, TRUE, NOW(), 1),
+('bins', 'Biny', 2, TRUE, NOW(), 1),
 ('carriers', 'Carriers', 1, TRUE, NOW(), 1),
 ('carriers', 'Przewoźnicy', 2, TRUE, NOW(), 1),
 ('id', 'ID', 1, TRUE, NOW(), 1),

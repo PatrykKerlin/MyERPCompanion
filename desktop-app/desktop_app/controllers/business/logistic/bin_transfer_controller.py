@@ -97,14 +97,14 @@ class BinTransferController(
         except HTTPStatusError as error:
             self._close_loading_dialog()
             self._open_error_dialog(message=str(error))
-            self._close_loading_dialog()
         except Exception as error:
+            self._close_loading_dialog()
             self._open_error_dialog(message=str(error))
 
     async def __move_items_to_target(self, bin_items: list[AssocBinItemStrictSchema]) -> None:
         await self.__bin_item_service.call_api_with_token_refresh(
-            func=self.__bin_item_service.update_many,
-            endpoint=Endpoint.BIN_ITEMS,
+            func=self.__bin_item_service.update_bulk,
+            endpoint=Endpoint.BIN_ITEMS_UPDATE_BULK,
             body_params=bin_items,
             module_id=self._module_id,
         )
@@ -149,14 +149,17 @@ class BinTransferController(
     async def __validate_enable_and_load_source(self, location: str) -> None:
         if not self._view:
             return
+        self._open_loading_dialog()
         bin_schema = await self.__get_single_bin(location)
         if not bin_schema:
+            self._close_loading_dialog()
             self._view.set_source_enabled(False)
             translate_state = self._state_store.app_state.translation
             self._view.set_source_error(translate_state.items.get("bin_not_found"))
             self.__source_bin = None
             return
         if self.__target_bin and bin_schema.id == self.__target_bin.id:
+            self._close_loading_dialog()
             self._view.set_target_enabled(False)
             translate_state = self._state_store.app_state.translation
             self._view.set_target_error(translate_state.items.get("bins_must_be_different"))
@@ -164,20 +167,24 @@ class BinTransferController(
             return
         self.__source_bin = bin_schema
         self.__source_items = await self.__fetch_bin_items(bin_schema)
+        self._close_loading_dialog()
         self._view.set_source_items([(key, value[0]) for key, value in self.__source_items.items()])
         self._view.set_source_enabled(True)
 
     async def __validate_enable_and_load_target(self, location: str) -> None:
         if not self._view:
             return
+        self._open_loading_dialog()
         bin_schema = await self.__get_single_bin(location)
         if not bin_schema:
+            self._close_loading_dialog()
             self._view.set_target_enabled(False)
             translate_state = self._state_store.app_state.translation
             self._view.set_target_error(translate_state.items.get("bin_not_found"))
             self.__target_bin = None
             return
         if self.__source_bin and bin_schema.id == self.__source_bin.id:
+            self._close_loading_dialog()
             self._view.set_target_enabled(False)
             translate_state = self._state_store.app_state.translation
             self._view.set_target_error(translate_state.items.get("bins_must_be_different"))
@@ -185,6 +192,7 @@ class BinTransferController(
             return
         self.__target_bin = bin_schema
         self.__target_items = await self.__fetch_bin_items(bin_schema)
+        self._close_loading_dialog()
         self._view.set_target_items([(key, value[0]) for key, value in self.__target_items.items()])
         self._view.set_target_enabled(True)
 
@@ -200,11 +208,20 @@ class BinTransferController(
         return None
 
     async def __fetch_bin_items(self, bin: BinPlainSchema) -> dict[int, tuple[str, int, int]]:
-        params = {"bin_id": bin.id, "sort_by": "id", "order": "asc"}
+        if not bin.item_ids:
+            return {}
+        item_schemas = await self.__item_service.call_api_with_token_refresh(
+            func=self.__item_service.get_bulk,
+            endpoint=Endpoint.ITEMS_GET_BULK,
+            body_params={"ids": bin.item_ids},
+            module_id=self._module_id,
+        )
+        item_map = {item.id: item for item in item_schemas}
+
         bin_item_schemas = await self.__bin_item_service.call_api_with_token_refresh(
             func=self.__bin_item_service.get_all,
             endpoint=Endpoint.BIN_ITEMS,
-            query_params=params,
+            query_params={"bin_id": bin.id},
             module_id=self._module_id,
         )
         if not bin_item_schemas:
@@ -212,12 +229,9 @@ class BinTransferController(
 
         source_items: dict[int, tuple[str, int, int]] = {}
         for bin_item in bin_item_schemas:
-            item_schema = await self.__item_service.call_api_with_token_refresh(
-                func=self.__item_service.get_one,
-                endpoint=Endpoint.ITEMS,
-                path_param=bin_item.item_id,
-                module_id=self._module_id,
-            )
+            item_schema = item_map.get(bin_item.item_id)
+            if not item_schema:
+                continue
             source_items[item_schema.id] = (item_schema.index, bin_item.id, bin_item.quantity)
 
         return source_items

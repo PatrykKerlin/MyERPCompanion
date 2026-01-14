@@ -34,9 +34,14 @@ AssocBinItemController = ControllerFactory.create(
     input_schema_cls=AssocBinItemStrictSchema,
     output_schema_cls=AssocBinItemPlainSchema,
     include={
+        Action.GET_ONE: True,
+        Action.GET_ALL: True,
         Action.GET_BULK: True,
+        Action.CREATE: True,
         Action.CREATE_BULK: True,
+        Action.UPDATE: True,
         Action.UPDATE_BULK: True,
+        Action.DELETE: True,
         Action.DELETE_BULK: True,
     },
 )

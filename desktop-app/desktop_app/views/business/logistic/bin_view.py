@@ -8,6 +8,7 @@ from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
 from utils.translation import Translation
+from views.controls.data_table_control import DataTable
 
 if TYPE_CHECKING:
     from controllers.business.logistic.bin_controller import BinController
@@ -22,6 +23,7 @@ class BinView(BaseView):
         key: View,
         data_row: dict[str, Any] | None,
         warehouses: list[tuple[int, str]],
+        items: list[dict[str, Any]],
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
         main_fields_definitions = [
@@ -36,10 +38,32 @@ class BinView(BaseView):
         self._add_to_inputs(main_fields)
         main_grid = self._build_grid(main_fields)
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
+        self.__items_table = DataTable(
+            columns=["id", "index", "name", "quantity"],
+            rows=items,
+            translation=self._translation,
+            height=250,
+            on_row_clicked=lambda row: self._controller.on_table_row_clicked(row["id"]),
+            sort_by="id",
+            with_button=False,
+        )
         columns = [
-            ft.Column(controls=main_grid, expand=3),
+            ft.Column(controls=main_grid + [self.__items_table], expand=3),
             self._spacing_column,
             ft.Column(controls=meta_grid, expand=2),
         ]
         self._columns_row.controls.extend(columns)
         self._master_column.controls.extend(self._rows)
+
+    def set_mode(self, mode: ViewMode) -> None:
+        super().set_mode(mode)
+        if self._mode not in {ViewMode.READ, ViewMode.EDIT}:
+            self.__items_table.read_only = True
+            self.__items_table.visible = False
+        elif self._mode == ViewMode.EDIT:
+            self.__items_table.read_only = True
+            self.__items_table.visible = True
+        else:
+            self.__items_table.read_only = False
+            self.__items_table.visible = True
+        self.__items_table.update()

@@ -139,8 +139,12 @@ class CarrierView(BaseView):
         super().set_mode(mode)
         if self._mode not in {ViewMode.READ, ViewMode.EDIT}:
             self.__delivery_methods_table.add_button.disabled = True
-            self.__delivery_methods_table.add_button.visible = False
+            self.__delivery_methods_table.visible = False
+        elif self._mode == ViewMode.EDIT:
+            self.__delivery_methods_table.visible = True
+            self.__delivery_methods_table.read_only = True
         else:
+            self.__delivery_methods_table.read_only = False
             self.__delivery_methods_table.add_button.disabled = False
             self.__delivery_methods_table.add_button.visible = True
         self.__delivery_methods_table.update()

@@ -75,7 +75,11 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self._rows = [self._columns_row, self._spacing_row, self._buttons_row]
         self._is_dialog = is_dialog
         self._caller_view_key = caller_view_key
-        self.__scrollable_wrapper = ft.ListView(controls=[self._master_column], expand=True)
+        self.__scrollable_wrapper = ft.Column(
+            controls=[self._master_column],
+            expand=True,
+            scroll=ft.ScrollMode.AUTO,
+        )
         self.__base_label_size = base_label_size
         self.__base_input_size = base_input_size
         self.__base_columns_qty = base_columns_qty

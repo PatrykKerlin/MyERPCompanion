@@ -20,7 +20,7 @@ class AppView:
         self.__side_menu_container = ft.Container(visible=False)
         self.__footer_container = ft.Container(visible=False)
         self.__tabs_bar_container = ft.Container(visible=False)
-        self.__views_stack = ft.Stack(expand=True)
+        self.__views_stack = ft.Stack(expand=True, fit=ft.StackFit.EXPAND)
         self.__root = ft.Column(
             controls=[
                 self.__menu_bar_container,

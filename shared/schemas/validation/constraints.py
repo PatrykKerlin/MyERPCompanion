@@ -14,7 +14,7 @@ class Constraints:
     Bytes = bytes
     BooleanFalse = Annotated[bool, Field(default=False)]
     BooleanTrue = Annotated[bool, Field(default=True)]
-    PositiveFloat = Annotated[int, Field(gt=0)]
+    PositiveFloat = Annotated[float, Field(gt=0)]
     PositiveInteger = Annotated[int, Field(ge=1)]
     PositiveIntegerOptional = Annotated[int | None, Field(ge=1)]
     PositiveIntegerList = Annotated[list[Annotated[int, Field(ge=1)]], Field(min_length=1)]
@@ -37,7 +37,7 @@ class Constraints:
     String1000 = Annotated[str, Field(min_length=1, max_length=1000)]
     String1000Optional = Annotated[str | None, Field(min_length=1, max_length=1000)]
 
-    BankAccount = Annotated[str, Field(min_length=26, max_length=26, pattern=r"^[A-Z]{2}\d{26}$")]
+    BankAccount = Annotated[str, Field(min_length=28, max_length=28, pattern=r"^[A-Z]{2}\d{26}$")]
     BankSwift = Annotated[str, Field(min_length=8, max_length=11, pattern=r"^[A-Z0-9]+$")]
     Ean = Annotated[str, Field(min_length=1, max_length=100, pattern=__digits_only_regex)]
     Email = Annotated[EmailStr, Field(min_length=1, max_length=100)]

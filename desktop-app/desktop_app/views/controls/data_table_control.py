@@ -11,15 +11,19 @@ class DataTable(ft.Container):
         rows: list[dict[str, Any]],
         translation: Translation,
         height: int,
+        with_button: bool = True,
         on_row_clicked: Callable[[dict[str, Any]], None] | None = None,
         on_add_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
         sort_by: str | None = None,
         order: str = "asc",
         expand: bool = True,
         visible: bool = True,
+        read_only: bool = False,
     ) -> None:
         super().__init__(expand=expand, visible=visible)
         self.__on_add_clicked = on_add_clicked
+        self.__read_only = read_only
+        self.__with_button = with_button
         sort_column_index = columns.index(sort_by) if sort_by in columns else None
         sort_ascending = order == "asc"
 
@@ -60,6 +64,8 @@ class DataTable(ft.Container):
         self.__add_button = ft.IconButton(
             icon=ft.Icons.ADD,
             on_click=self.__handle_add_clicked if on_add_clicked else None,
+            visible=with_button,
+            disabled=not with_button or read_only,
         )
 
         self.content = ft.Column(
@@ -77,17 +83,33 @@ class DataTable(ft.Container):
     def add_button(self) -> ft.IconButton:
         return self.__add_button
 
+    @property
+    def read_only(self) -> bool:
+        return self.__read_only
+
+    @read_only.setter
+    def read_only(self, value: bool) -> None:
+        self.__read_only = value
+        if self.__with_button:
+            self.__add_button.disabled = value
+
     def __handle_add_clicked(self, event: ft.Event[ft.IconButton]) -> None:
+        if self.__read_only:
+            return
         if self.__on_add_clicked:
             self.__on_add_clicked(event)
 
     def __handle_on_row_clicked(
-        self, row: dict[str, Any], on_row_clicked: Callable[[dict[str, Any]], None] | None
+        self,
+        row: dict[str, Any],
+        on_row_clicked: Callable[[dict[str, Any]], None] | None,
     ) -> Callable[[Any], None] | None:
         if on_row_clicked is None:
             return None
 
         def handler(_: Any) -> None:
+            if self.__read_only:
+                return
             on_row_clicked(row)
 
         return handler

@@ -61,7 +61,7 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         saved_model = await self._repository_cls.save(session, model)
         return self._output_schema_cls.model_validate(saved_model)
 
-    async def create_many(
+    async def create_bulk(
         self, session: AsyncSession, created_by: int, schemas: list[TInputSchema]
     ) -> list[TOutputSchema]:
         if not schemas:
@@ -86,7 +86,7 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         updated_model = await self._repository_cls.save(session, model)
         return self._output_schema_cls.model_validate(updated_model)
 
-    async def update_many(
+    async def update_bulk(
         self, session: AsyncSession, items: list[tuple[int, TInputSchema]], modified_by: int
     ) -> list[TOutputSchema]:
         if not items:
@@ -114,7 +114,7 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         setattr(model, "modified_by", modified_by)
         await self._repository_cls.delete(session, model)
 
-    async def delete_many(self, session: AsyncSession, model_ids: list[int], modified_by: int) -> None:
+    async def delete_bulk(self, session: AsyncSession, model_ids: list[int], modified_by: int) -> None:
         if not model_ids:
             return
         ids = list(set(model_ids))

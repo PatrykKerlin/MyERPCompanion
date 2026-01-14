@@ -28,3 +28,7 @@ class PaginatedResponseSchema(BaseModel, Generic[TResponseSchema]):
     page_size: int
     has_next: bool
     has_prev: bool
+
+
+class IdsPayloadSchema(BaseModel):
+    ids: Annotated[list[int], Field(min_length=1)]

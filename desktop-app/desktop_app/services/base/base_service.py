@@ -118,6 +118,25 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         data = response.json()
         return self._plain_schema_cls(**data)
 
+    async def get_bulk(
+        self,
+        endpoint: Endpoint,
+        path_param: int | None = None,
+        query_params: dict[str, Any] | None = None,
+        body_params: TStrictSchema | list[TStrictSchema] | dict[str, Any] | None = None,
+        tokens: TokenPlainSchema | None = None,
+        module_id: int | None = None,
+    ) -> list[TPlainSchema]:
+        if isinstance(body_params, dict):
+            resolved_body_params = body_params
+        else:
+            resolved_body_params = {}
+        response = await self._post(
+            endpoint=endpoint, body_params=resolved_body_params, tokens=tokens, module_id=module_id
+        )
+        data = response.json()
+        return [self._plain_schema_cls(**item) for item in data]
+
     async def create(
         self,
         endpoint: Endpoint,
@@ -161,7 +180,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         data = response.json()
         return self._plain_schema_cls(**data)
 
-    async def update_many(
+    async def update_bulk(
         self,
         endpoint: Endpoint,
         path_param: int | None = None,
@@ -177,9 +196,8 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
                 param = schema_item.model_dump()
                 param["id"] = schema_item.id
                 resolved_body_params.append(param)
-        resolved_endpoint = f"{endpoint}/bulk"
         response = await self._put(
-            endpoint=resolved_endpoint,
+            endpoint=endpoint,
             body_params=resolved_body_params,
             tokens=tokens,
             module_id=module_id,

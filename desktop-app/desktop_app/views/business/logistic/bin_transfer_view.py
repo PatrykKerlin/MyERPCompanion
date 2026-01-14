@@ -43,6 +43,7 @@ class BinTransferView(BaseView):
         )
 
         self._master_column.controls = [inputs_row, self.__bulk_transfer]
+        self.content = ft.Container(content=self._master_column, expand=True)
 
     def get_pending_move_ids(self) -> list[int]:
         return self.__bulk_transfer.get_pending_move_ids()

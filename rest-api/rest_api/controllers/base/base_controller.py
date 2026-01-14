@@ -94,7 +94,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    async def get_many(self, request: Request) -> list[TOutputSchema]:
+    async def get_bulk(self, request: Request) -> list[TOutputSchema]:
         try:
             body = await request.json()
             payload = IdsPayloadSchema(**body)
@@ -121,7 +121,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    async def create_many(self, request: Request) -> list[TOutputSchema]:
+    async def create_bulk(self, request: Request) -> list[TOutputSchema]:
         try:
             user = request.state.user
             body = await request.json()
@@ -131,7 +131,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             for item in body:
                 schemas.append(self._input_schema_cls(**item))
             async with self._get_session() as session:
-                return await self._service.create_many(session=session, created_by=user.id, schemas=schemas)
+                return await self._service.create_bulk(session=session, created_by=user.id, schemas=schemas)
         except HTTPException:
             raise
         except ValidationError as err:
@@ -158,9 +158,10 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    async def update_many(self, request: Request) -> list[TOutputSchema]:
+    async def update_bulk(self, request: Request) -> list[TOutputSchema]:
         try:
             user = request.state.user
+            print("debug:", request.json())
             body = await request.json()
             if not isinstance(body, list):
                 raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
@@ -171,7 +172,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 schema = self._input_schema_cls(**data)
                 items.append((model_id, schema))
             async with self._get_session() as session:
-                return await self._service.update_many(session=session, items=items, modified_by=user.id)
+                return await self._service.update_bulk(session=session, items=items, modified_by=user.id)
         except HTTPException:
             raise
         except ValidationError as err:
@@ -200,13 +201,13 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    async def delete_many(self, request: Request) -> Response:
+    async def delete_bulk(self, request: Request) -> Response:
         try:
             user = request.state.user
             body = await request.json()
             payload = IdsPayloadSchema(**body)
             async with self._get_session() as session:
-                await self._service.delete_many(session=session, model_ids=payload.ids, modified_by=user.id)
+                await self._service.delete_bulk(session=session, model_ids=payload.ids, modified_by=user.id)
                 return Response(status_code=status.HTTP_204_NO_CONTENT)
         except HTTPException:
             raise
@@ -254,7 +255,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         if Action.GET_BULK in mapping:
             self.router.add_api_route(
                 path=path + "/get-bulk",
-                endpoint=self.get_many,
+                endpoint=self.get_bulk,
                 methods=["POST"],
                 response_model=list[output_schema],
                 status_code=status.HTTP_200_OK,
@@ -273,13 +274,24 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             )
         if Action.CREATE_BULK in mapping:
             self.router.add_api_route(
-                path=path + "/post-bulk",
-                endpoint=self.create_many,
+                path=path + "/create-bulk",
+                endpoint=self.create_bulk,
                 methods=["POST"],
                 response_model=list[output_schema],
                 status_code=status.HTTP_201_CREATED,
                 dependencies=self._restrict_access(
                     permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.CREATE_BULK]
+                ),
+            )
+        if Action.UPDATE_BULK in mapping:
+            self.router.add_api_route(
+                path=path + "/update-bulk",
+                endpoint=self.update_bulk,
+                methods=["PUT"],
+                response_model=list[output_schema],
+                status_code=status.HTTP_200_OK,
+                dependencies=self._restrict_access(
+                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.UPDATE_BULK]
                 ),
             )
         if Action.UPDATE in mapping:
@@ -293,15 +305,14 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                     permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.UPDATE]
                 ),
             )
-        if Action.UPDATE_BULK in mapping:
+        if Action.DELETE_BULK in mapping:
             self.router.add_api_route(
-                path=path + "/put-bulk",
-                endpoint=self.update_many,
-                methods=["PUT"],
-                response_model=list[output_schema],
-                status_code=status.HTTP_200_OK,
+                path=path + "/delete-bulk",
+                endpoint=self.delete_bulk,
+                methods=["DELETE"],
+                status_code=status.HTTP_204_NO_CONTENT,
                 dependencies=self._restrict_access(
-                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.UPDATE_BULK]
+                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.DELETE_BULK]
                 ),
             )
         if Action.DELETE in mapping:
@@ -312,16 +323,6 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 status_code=status.HTTP_204_NO_CONTENT,
                 dependencies=self._restrict_access(
                     permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.DELETE]
-                ),
-            )
-        if Action.DELETE_BULK in mapping:
-            self.router.add_api_route(
-                path=path + "/delete-bulk",
-                endpoint=self.delete_many,
-                methods=["DELETE"],
-                status_code=status.HTTP_204_NO_CONTENT,
-                dependencies=self._restrict_access(
-                    permissions=[Permission.CAN_READ, Permission.CAN_MODIFY], secured=mapping[Action.DELETE_BULK]
                 ),
             )
 
