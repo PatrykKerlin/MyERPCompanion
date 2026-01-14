@@ -236,7 +236,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 marker=self._get_marker("created_at", text_marker_size),
             ),
             "modified_by_username": FieldGroup(
-                label=self._get_label("modified_by", label_size),
+                label=self._get_label("modified_by_username", label_size),
                 input=self._get_text_input("modified_by_username", text_size),
                 marker=self._get_marker("modified_by_username", text_marker_size),
             ),

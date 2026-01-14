@@ -34,7 +34,7 @@ class DateField(ft.Row):
             value=self.__format_value(self.__value),
             read_only=True,
             expand=True,
-            text_align=ft.TextAlign.START,
+            text_align=ft.TextAlign.CENTER,
         )
 
         self.__picker = ft.DatePicker(on_change=self.__handle_picker_change)
@@ -46,7 +46,7 @@ class DateField(ft.Row):
             self.__picker.value = self.__value
 
         self.__open_button = ft.IconButton(
-            icon=ft.Icons.CALENDAR_MONTH, on_click=self.__open_picker, disabled=self.__read_only
+            icon=ft.Icons.CALENDAR_MONTH, on_click=self.__open_picker, disabled=self.__read_only, width=48
         )
 
         self.controls = [

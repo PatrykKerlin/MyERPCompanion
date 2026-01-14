@@ -8,7 +8,6 @@ from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
 from utils.translation import Translation
-from views.controls.image_gallery_control import ImageGallery
 
 if TYPE_CHECKING:
     from controllers.business.logistic.item_controller import ItemController
@@ -45,10 +44,10 @@ class ItemView(BaseView):
             {"key": "moq", "input": self._get_numeric_input},
         ]
         param_fields_definitions = [
-            {"key": "is_available", "input": self._get_checkbox, "value": True},
-            {"key": "is_fragile", "input": self._get_checkbox, "value": False},
-            {"key": "is_package", "input": self._get_checkbox, "value": False},
-            {"key": "is_returnable", "input": self._get_checkbox, "value": False},
+            {"key": "is_available", "input": self._get_checkbox, "value": True, "input_size": 1},
+            {"key": "is_fragile", "input": self._get_checkbox, "value": False, "input_size": 1},
+            {"key": "is_package", "input": self._get_checkbox, "value": False, "input_size": 1},
+            {"key": "is_returnable", "input": self._get_checkbox, "value": False, "input_size": 1},
         ]
         dimensions_fields_definitions = [
             {"key": "width", "input": self._get_numeric_input, "is_float": True, "step": 0.001, "precision": 3},
@@ -68,20 +67,6 @@ class ItemView(BaseView):
         param_fields = self._build_field_groups(param_fields_definitions)
         dimensions_fields = self._build_field_groups(dimensions_fields_definitions)
         stock_fields = self._build_field_groups(stock_fields_definitions)
-        # images_field = {
-        #     "images": FieldGroup(
-        #         label=self._get_label("images", size=4),
-        #         input=self._get_text_input("images", size=7),
-        #         marker=self._get_marker("images", size=1),
-        #     ),
-        # }
-        images: list[str] = []
-        if data_row:
-            for image in data_row.get("images") or []:
-                url = image.get("url") if isinstance(image, dict) else getattr(image, "url", None)
-                if url:
-                    images.append(url)
-        gallery = ImageGallery(image_urls=images, expand=True)
 
         self._add_to_inputs(product_fields, financial_fields, param_fields, dimensions_fields, stock_fields)
         main_grid = self._build_grid(product_fields)
@@ -89,15 +74,22 @@ class ItemView(BaseView):
         param_grid = self._build_grid(param_fields)
         dimensions_grid = self._build_grid(dimensions_fields)
         stock_grid = self._build_grid(stock_fields)
-        # images_grid = self._build_grid(images_field)
-        meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
+        meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=5)
+
         columns = [
             ft.Column(
-                controls=main_grid + financial_grid + dimensions_grid + stock_grid,
-                expand=3,
+                controls=main_grid + financial_grid + stock_grid,
+                expand=True,
             ),
             self._spacing_column,
-            ft.Column(controls=meta_grid + self._spacing_responsive_row + [gallery] + param_grid, expand=2),
+            ft.Column(
+                controls=meta_grid
+                + self._spacing_responsive_row
+                + dimensions_grid
+                + self._spacing_responsive_row
+                + param_grid,
+                expand=True,
+            ),
         ]
         self._columns_row.controls.extend(columns)
         self._master_column.controls.extend(self._rows)

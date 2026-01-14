@@ -129,7 +129,7 @@ class CarrierView(BaseView):
                 expand=3,
             ),
             self._spacing_column,
-            ft.Column(controls=meta_grid + [self._spacing_row] + bank_grid + notes_grid, expand=2),
+            ft.Column(controls=meta_grid + self._spacing_responsive_row + bank_grid + notes_grid, expand=2),
         ]
 
         self._columns_row.controls.extend(columns)

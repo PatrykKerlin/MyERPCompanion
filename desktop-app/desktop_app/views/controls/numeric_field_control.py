@@ -48,9 +48,11 @@ class NumericField(ft.Row):
         )
 
         self.__decrement_button = ft.IconButton(
-            icon=ft.Icons.REMOVE, on_click=self.__decrement, disabled=self.__read_only
+            icon=ft.Icons.REMOVE, on_click=self.__decrement, disabled=self.__read_only, width=48
         )
-        self.__increment_button = ft.IconButton(icon=ft.Icons.ADD, on_click=self.__increment, disabled=self.__read_only)
+        self.__increment_button = ft.IconButton(
+            icon=ft.Icons.ADD, on_click=self.__increment, disabled=self.__read_only, width=48
+        )
 
         self.controls = [
             ft.Container(content=self.__decrement_button, alignment=ft.Alignment.TOP_CENTER),

@@ -84,7 +84,7 @@ class App:
             logistic.BinTransferController(self.__context),
             logistic.CarrierController(self.__context),
             logistic.DeliveryMethodController(self.__context),
-            # logistic.ItemController(self.__context),
+            logistic.ItemController(self.__context),
             # logistic.WarehouseController(self.__context),
         ]
         self.__controllers = core_controllers + hr_controllers + logistic_controllers
