@@ -61,8 +61,8 @@ class NumericField(ft.Row):
         ]
 
     @property
-    def value(self) -> int | float:
-        return self.__value
+    def value(self) -> int | float | None:
+        return None if self.__value == 0 else self.__value
 
     @value.setter
     def value(self, new_value: int | float) -> None:
@@ -94,10 +94,11 @@ class NumericField(ft.Row):
     def __emit_value(self, value: int | float | None) -> None:
         if not self.__on_change:
             return
+        emitted_value = None if value == 0 else value
         proxy = SimpleNamespace(
             target="",
             name="change",
-            data=value,
+            data=emitted_value,
             control=self,
             page=self.page,
         )
