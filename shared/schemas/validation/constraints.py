@@ -56,5 +56,6 @@ class Constraints:
     Quantity = Annotated[int, Field(ge=0)]
     Symbol = Annotated[str, Field(min_length=1, max_length=3)]
     TaxId = Annotated[str, Field(min_length=10, max_length=10, pattern=__digits_only_regex)]
+    TaxIdOptional = Annotated[str | None, Field(min_length=10, max_length=10, pattern=__digits_only_regex)]
     Username = Annotated[str, Field(min_length=5, max_length=20)]
     WebsiteOptional = Annotated[HttpUrl | None, Field(max_length=50)]

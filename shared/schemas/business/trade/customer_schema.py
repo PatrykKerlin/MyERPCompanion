@@ -16,6 +16,7 @@ class CustomerStrictSchema(BaseStrictSchema):
     company_name: Constraints.String50Optional
 
     payment_term: Constraints.PaymentTerm
+    tax_id: Constraints.TaxIdOptional
 
     email: Constraints.Email
     phone_number: Constraints.PhoneNumber
@@ -41,17 +42,23 @@ class CustomerStrictSchema(BaseStrictSchema):
     @model_validator(mode="after")
     def _validate_data(self) -> CustomerStrictSchema:
         if self.is_company and not self.company_name:
-            raise ValueError("company_name is required when is_company is true")
+            raise ValueError("Company_name is required when is_company is true.")
 
         if not self.is_company and self.company_name:
-            raise ValueError("company_name must be empty when is_company is false")
+            raise ValueError("Company_name must be empty when is_company is false.")
+        
+        if self.tax_id and not self.is_company:
+            raise ValueError("Tax_id can be provided only when is_company is true.")
+
+        if self.is_company and not self.tax_id:
+            raise ValueError("Tax_id is required when is_company is true.")
 
         billing_address = [self.billing_house_number, self.billing_postal_code, self.billing_city, self.billing_country]
         if self.use_one_address and any(billing_address):
-            raise ValueError("when use_one_address is true, billing address must be empty")
+            raise ValueError("When use_one_address is true, billing address must be empty.")
 
         if not self.use_one_address and not all(billing_address):
-            raise ValueError("when use_one_address is false, billing address must be fully provided")
+            raise ValueError("When use_one_address is false, billing address must be fully provided.")
 
         return self
 
@@ -65,6 +72,7 @@ class CustomerPlainSchema(BasePlainSchema):
     company_name: str | None
 
     payment_term: int
+    tax_id: str | None
 
     email: str
     phone_number: str

@@ -91,6 +91,7 @@ class App:
         ]
         trade_controllers = [
             trade.CurrencyController(self.__context),
+            trade.CustomerController(self.__context),
             trade.DiscountController(self.__context),
         ]
         self.__controllers = core_controllers + hr_controllers + logistic_controllers + trade_controllers

@@ -26,6 +26,7 @@ class Customer(BaseModel):
     company_name: Mapped[str | None] = Fields.string_50(nullable=True)
 
     payment_term: Mapped[int] = Fields.integer()
+    tax_id: Mapped[str] = Fields.string_10(nullable=True)
 
     email: Mapped[str] = Fields.string_100(unique=True)
     phone_number: Mapped[str] = Fields.string_20(unique=True)

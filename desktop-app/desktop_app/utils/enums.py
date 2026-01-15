@@ -32,6 +32,7 @@ class View(StrEnum):
     CATEGORIES = "categories"
     DISCOUNTS = "discounts"
     CURRENCIES = "currencies"
+    CUSTOMERS = "customers"
 
 
 class Endpoint(StrEnum):
@@ -65,3 +66,4 @@ class Endpoint(StrEnum):
     IMAGES_UPDATE_BULK = "images/update-bulk"
     DISCOUNTS = "discounts"
     DISCOUNTS_GET_BULK = "discounts/get-bulk"
+    CUSTOMERS = "customers"
