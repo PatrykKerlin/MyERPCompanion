@@ -79,9 +79,7 @@ def build_constraint_fingerprint(
 ) -> tuple[str, str, tuple[str, ...], str, tuple[str, ...]]:
     normalized_name = normalize_constraint_name(constraint_name)
     if normalized_name is None:
-        normalized_name = (
-            f"{source_table}__{target_table}__{'__'.join(local_columns)}__{'__'.join(target_columns)}"
-        )
+        normalized_name = f"{source_table}__{target_table}__{'__'.join(local_columns)}__{'__'.join(target_columns)}"
     return (
         normalized_name,
         source_table,

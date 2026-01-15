@@ -1,4 +1,4 @@
-from schemas.base.base_schema import BaseStrictSchema, BasePlainSchema
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
 
 

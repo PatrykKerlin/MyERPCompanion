@@ -30,6 +30,8 @@ class View(StrEnum):
     BIN_TRANSFER = "bin_transfer"
     SUPPLIERS = "suppliers"
     CATEGORIES = "categories"
+    DISCOUNTS = "discounts"
+    CURRENCIES = "currencies"
 
 
 class Endpoint(StrEnum):
@@ -61,3 +63,5 @@ class Endpoint(StrEnum):
     CATEGORIES = "categories"
     IMAGES = "images"
     IMAGES_UPDATE_BULK = "images/update-bulk"
+    DISCOUNTS = "discounts"
+    DISCOUNTS_GET_BULK = "discounts/get-bulk"

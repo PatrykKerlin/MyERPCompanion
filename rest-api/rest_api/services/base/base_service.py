@@ -1,10 +1,9 @@
 from abc import ABC
-from typing import Generic, TypeVar
 from collections.abc import Mapping
+from typing import Generic, Sequence, TypeVar
 
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.elements import ColumnElement
 
 from models.base.base_model import BaseModel
 from repositories.base.base_repository import BaseRepository
@@ -87,7 +86,7 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         return self._output_schema_cls.model_validate(updated_model)
 
     async def update_bulk(
-        self, session: AsyncSession, items: list[tuple[int, TInputSchema]], modified_by: int
+        self, session: AsyncSession, items: Sequence[tuple[int, TInputSchema]], modified_by: int
     ) -> list[TOutputSchema]:
         if not items:
             return []

@@ -4,19 +4,16 @@ from typing import Annotated, Generic, TypeVar
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.params import Depends as DependsParam
 from pydantic import ValidationError
-from sqlalchemy import String
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
-from sqlalchemy.orm.attributes import InstrumentedAttribute
-from sqlalchemy.sql.elements import ColumnElement
 
 from config.context import Context
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.core.param_schema import (
     FilterParamsSchema,
+    IdsPayloadSchema,
     PaginatedResponseSchema,
     PaginationParamsSchema,
     SortingParamsSchema,
-    IdsPayloadSchema,
 )
 from services.base.base_service import BaseService
 from utils.auth import Auth

@@ -1,14 +1,15 @@
 from typing import Union, cast
+
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.core.image import Image
 from repositories.core import ImageRepository
 from schemas.core.image_schema import (
+    ImageModelSchema,
+    ImagePlainSchema,
     ImageStrictCreateSchema,
     ImageStrictUpdateSchema,
-    ImagePlainSchema,
-    ImageModelSchema,
 )
 from services.base.base_service import BaseService
 from utils.file_storage import FileStorage

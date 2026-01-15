@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy.orm import Mapped
+from sqlalchemy import literal_column, select
+from sqlalchemy.orm import Mapped, column_property
 
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
+from models.core import User
 
 if TYPE_CHECKING:
     from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
@@ -49,6 +51,16 @@ class Customer(BaseModel):
     )
     customer_discounts: Mapped[list[AssocCustomerDiscount]] = Fields.relationship(
         argument="AssocCustomerDiscount", back_populates="customer", foreign_keys="AssocCustomerDiscount.customer_id"
+    )
+
+    user_id: Mapped[int] = column_property(
+        select(User.id)
+        .where(User.employee_id == literal_column("customers.id"))
+        .where(User.is_active.is_(True))
+        .scalar_subquery()
+    )
+    user: Mapped[User] = Fields.relationship(
+        argument="User", back_populates="customer", foreign_keys="User.customer_id", uselist=False
     )
 
     @property

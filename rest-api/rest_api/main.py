@@ -67,6 +67,7 @@ class App:
         ]
         business_trade_endpoints = [
             {"router": trade.CurrencyController(self.__context, self.__auth).router, "prefix": "/currencies"},
+            {"router": trade.DiscountController(self.__context, self.__auth).router, "prefix": "/discounts"},
             {"router": trade.SupplierController(self.__context, self.__auth).router, "prefix": "/suppliers"},
         ]
 

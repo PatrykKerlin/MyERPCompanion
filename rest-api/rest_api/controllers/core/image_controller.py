@@ -4,14 +4,18 @@ from typing import Union
 from fastapi import HTTPException, Request, status
 from pydantic import ValidationError
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
+from starlette.datastructures import UploadFile as StarletteUploadFile
 
-from controllers.base.base_controller import BaseController
-from schemas.core.image_schema import ImagePlainSchema, ImageStrictCreateSchema, ImageStrictUpdateSchema
-from services.core import ImageService
 from config.context import Context
+from controllers.base.base_controller import BaseController
+from schemas.core.image_schema import (
+    ImagePlainSchema,
+    ImageStrictCreateSchema,
+    ImageStrictUpdateSchema,
+)
+from services.core import ImageService
 from utils.auth import Auth
 from utils.enums import Action
-from starlette.datastructures import UploadFile as StarletteUploadFile
 
 
 class ImageController(
@@ -64,7 +68,7 @@ class ImageController(
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
         except SQLAlchemyError as err:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
-        
+
     async def update_bulk(self, request: Request) -> list[ImagePlainSchema]:
         try:
             user = request.state.user

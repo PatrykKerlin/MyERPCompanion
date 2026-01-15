@@ -1,5 +1,5 @@
-from typing import Any
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import ARRAY, Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column
@@ -40,27 +40,27 @@ class Fields:
             info=info,
             **kwargs,
         )
-    
+
     @staticmethod
     def id() -> Mapped[int]:
         return mapped_column(Integer, primary_key=True, autoincrement=True, index=True)
-    
+
     @staticmethod
     def is_active() -> Mapped[bool]:
         return mapped_column(Boolean, default=True, nullable=False)
-    
+
     @staticmethod
     def created_at() -> Mapped[datetime]:
         return mapped_column(DateTime(timezone=True), nullable=False, default=func.now())
-    
+
     @staticmethod
     def created_by() -> Mapped[int | None]:
         return mapped_column(Integer, ForeignKey("users.id"), nullable=True)
-    
+
     @staticmethod
     def modified_at() -> Mapped[datetime | None]:
         return mapped_column(DateTime(timezone=True), nullable=True, onupdate=func.now())
-    
+
     @staticmethod
     def modified_by() -> Mapped[int | None]:
         return mapped_column(Integer, ForeignKey("users.id"), nullable=True)

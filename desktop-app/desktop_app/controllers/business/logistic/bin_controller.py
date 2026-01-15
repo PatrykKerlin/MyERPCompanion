@@ -3,7 +3,7 @@ from controllers.base.base_view_controller import BaseViewController
 from schemas.business.logistic.bin_schema import BinPlainSchema, BinStrictSchema
 from schemas.business.logistic.item_schema import ItemPlainSchema
 from services.business.logistic import AssocBinItemService, BinService, WarehouseService
-from services.business.logistic.item_service import ItemService
+from services.business.logistic import ItemService
 from utils.enums import Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.bin_view import BinView

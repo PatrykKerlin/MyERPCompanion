@@ -7,4 +7,6 @@ VALUES
 (1, 3, TRUE, FALSE, TRUE, NOW(), :superuser_id),
 (1, 4, TRUE, TRUE, TRUE, NOW(), :superuser_id),
 (2, 3, TRUE, TRUE, TRUE, NOW(), :superuser_id),
-(3, 4, TRUE, TRUE, TRUE, NOW(), :superuser_id);
+(3, 4, TRUE, TRUE, TRUE, NOW(), :superuser_id),
+(4, 5, TRUE, TRUE, TRUE, NOW(), :superuser_id),
+(5, 6, TRUE, TRUE, TRUE, NOW(), :superuser_id);

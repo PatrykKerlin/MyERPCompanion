@@ -1,5 +1,5 @@
-from models.business.logistic.bin import Bin
 from models.business.logistic.assoc_bin_item import AssocBinItem
+from models.business.logistic.bin import Bin
 from models.business.logistic.carrier import Carrier
 from models.business.logistic.category import Category
 from models.business.logistic.delivery_method import DeliveryMethod
@@ -19,14 +19,13 @@ from services.business.logistic import (
     BinService,
     CarrierService,
     CategoryService,
-    ItemService,
-    WarehouseService,
-    UnitService,
     DeliveryMethodService,
+    ItemService,
+    UnitService,
+    WarehouseService,
 )
 from utils.controller_factory import ControllerFactory
 from utils.enums import Action
-
 
 AssocBinItemController = ControllerFactory.create(
     model_cls=AssocBinItem,

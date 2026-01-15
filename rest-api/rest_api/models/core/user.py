@@ -9,6 +9,7 @@ from models.base.fields import Fields
 
 if TYPE_CHECKING:
     from models.business.hr.employee import Employee
+    from models.business.trade.customer import Customer
     from models.core.assoc_user_group import AssocUserGroup
     from models.core.group import Group
     from models.core.language import Language
@@ -25,6 +26,11 @@ class User(BaseModel):
     employee_id: Mapped[int | None] = Fields.foreign_key(column="employees.id", unique=True, nullable=True)
     employee: Mapped[Employee | None] = Fields.relationship(
         argument="Employee", back_populates="user", foreign_keys=[employee_id], uselist=False
+    )
+
+    customer_id: Mapped[int | None] = Fields.foreign_key(column="customers.id", unique=True, nullable=True)
+    customer: Mapped[Customer | None] = Fields.relationship(
+        argument="Customer", back_populates="user", foreign_keys=[customer_id], uselist=False
     )
 
     language_id: Mapped[int | None] = Fields.foreign_key(column="languages.id", nullable=True)

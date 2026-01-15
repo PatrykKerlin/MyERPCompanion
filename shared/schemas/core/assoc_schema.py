@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from pydantic import model_validator
+
 from schemas.base.base_schema import BaseStrictSchema
 from schemas.validation.constraints import Constraints
-from pydantic import model_validator
 
 
 class AssocModuleGroupStrictSchema(BaseStrictSchema):

@@ -1,7 +1,10 @@
 from models.business.trade.currency import Currency
+from models.business.trade.discount import Discount
 from models.business.trade.supplier import Supplier
 from repositories.business.trade import CurrencyRepository, SupplierRepository
+from repositories.business.trade.bin_repository import DiscountRepository
 from schemas.business.trade.currency_schema import CurrencyPlainSchema, CurrencyStrictSchema
+from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
 from utils.service_factory import ServiceFactory
 
@@ -10,6 +13,12 @@ CurrencyService = ServiceFactory.create(
     repository_cls=CurrencyRepository,
     input_schema_cls=CurrencyStrictSchema,
     output_schema_cls=CurrencyPlainSchema,
+)
+DiscountService = ServiceFactory.create(
+    model_cls=Discount,
+    repository_cls=DiscountRepository,
+    input_schema_cls=DiscountStrictSchema,
+    output_schema_cls=DiscountPlainSchema,
 )
 SupplierService = ServiceFactory.create(
     model_cls=Supplier,
@@ -21,5 +30,6 @@ SupplierService = ServiceFactory.create(
 
 __all__ = [
     "CurrencyService",
+    "DiscountService",
     "SupplierService",
 ]

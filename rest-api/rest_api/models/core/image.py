@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Index, UniqueConstraint, text
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -24,4 +24,6 @@ class Image(BaseModel):
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     item_id: Mapped[int] = Fields.foreign_key(column="items.id")
-    item: Mapped[Item] = Fields.relationship(argument="Item", back_populates="images", foreign_keys=[item_id], cascade_soft_delete=False)
+    item: Mapped[Item] = Fields.relationship(
+        argument="Item", back_populates="images", foreign_keys=[item_id], cascade_soft_delete=False
+    )

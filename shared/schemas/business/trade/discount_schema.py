@@ -10,7 +10,7 @@ from schemas.validation.constraints import Constraints
 
 class DiscountStrictSchema(BaseStrictSchema):
     name: Constraints.Name
-    index: Constraints.String10
+    code: Constraints.String10
     description: Constraints.String1000Optional
 
     start_date: datetime
@@ -45,7 +45,7 @@ class DiscountStrictSchema(BaseStrictSchema):
 
 class DiscountPlainSchema(BasePlainSchema):
     name: str
-    index: str
+    code: str
     description: str | None
 
     start_date: datetime

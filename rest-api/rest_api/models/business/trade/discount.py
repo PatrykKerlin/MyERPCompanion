@@ -22,7 +22,7 @@ class Discount(BaseModel):
     __tablename__ = "discounts"
 
     name: Mapped[str] = Fields.name()
-    index: Mapped[str] = Fields.string_10(unique=True)
+    code: Mapped[str] = Fields.string_10(unique=True)
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     start_date: Mapped[date] = Fields.date()

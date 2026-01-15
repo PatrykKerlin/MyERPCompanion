@@ -5,7 +5,7 @@ import flet as ft
 from config.settings import Settings
 from controllers import components, core
 from controllers.base.base_controller import BaseController
-from controllers.business import hr, logistic
+from controllers.business import hr, logistic, trade
 from events.event_bus import EventBus
 from events.events import AppStarted
 from states.state_store import StateStore
@@ -83,11 +83,17 @@ class App:
             logistic.BinController(self.__context),
             logistic.BinTransferController(self.__context),
             logistic.CarrierController(self.__context),
+            logistic.CategoryController(self.__context),
             logistic.DeliveryMethodController(self.__context),
             logistic.ItemController(self.__context),
-            # logistic.WarehouseController(self.__context),
+            logistic.UnitController(self.__context),
+            logistic.WarehouseController(self.__context),
         ]
-        self.__controllers = core_controllers + hr_controllers + logistic_controllers
+        trade_controllers = [
+            trade.CurrencyController(self.__context),
+            trade.DiscountController(self.__context),
+        ]
+        self.__controllers = core_controllers + hr_controllers + logistic_controllers + trade_controllers
         page.window.on_event = self.__on_window_event
         page.render(lambda: app_controller.build_root())
         self.__event_bus.start()

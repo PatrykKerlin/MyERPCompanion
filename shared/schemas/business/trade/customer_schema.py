@@ -36,6 +36,8 @@ class CustomerStrictSchema(BaseStrictSchema):
     billing_city: str | None
     billing_country: str | None
 
+    user_id: int
+
     @model_validator(mode="after")
     def _validate_data(self) -> CustomerStrictSchema:
         if self.is_company and not self.company_name:
@@ -82,5 +84,7 @@ class CustomerPlainSchema(BasePlainSchema):
     billing_postal_code: str | None
     billing_city: str | None
     billing_country: str | None
+
+    user_id: int
 
     discounts: list[DiscountPlainSchema]

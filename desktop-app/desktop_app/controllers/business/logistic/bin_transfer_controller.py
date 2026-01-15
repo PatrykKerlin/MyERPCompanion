@@ -78,20 +78,40 @@ class BinTransferController(
         if not pending_ids:
             return
         bin_items_schemas: list[AssocBinItemStrictSchema] = []
+        delete_ids: list[int] = []
         for item_id in pending_ids:
-            bin_items_schemas.append(
-                AssocBinItemStrictSchema(
-                    id=self.__source_items[item_id][1],
-                    bin_id=self.__target_bin.id,
-                    item_id=item_id,
-                    quantity=self.__source_items[item_id][2],
+            source_item = self.__source_items[item_id]
+            source_bin_item_id = source_item[1]
+            source_quantity = source_item[2]
+            target_item = self.__target_items.get(item_id)
+            if target_item:
+                target_bin_item_id = target_item[1]
+                target_quantity = target_item[2]
+                bin_items_schemas.append(
+                    AssocBinItemStrictSchema(
+                        id=target_bin_item_id,
+                        bin_id=self.__target_bin.id,
+                        item_id=item_id,
+                        quantity=target_quantity + source_quantity,
+                    )
                 )
-            )
+                delete_ids.append(source_bin_item_id)
+            else:
+                bin_items_schemas.append(
+                    AssocBinItemStrictSchema(
+                        id=source_bin_item_id,
+                        bin_id=self.__target_bin.id,
+                        item_id=item_id,
+                        quantity=source_quantity,
+                    )
+                )
         if not bin_items_schemas:
             return
         try:
             self._open_loading_dialog()
             await self.__move_items_to_target(bin_items_schemas)
+            if delete_ids:
+                await self.__delete_source_items(delete_ids)
             await self.__refresh_transfer_lists()
             self._close_loading_dialog()
         except HTTPStatusError as error:
@@ -106,6 +126,14 @@ class BinTransferController(
             func=self.__bin_item_service.update_bulk,
             endpoint=Endpoint.BIN_ITEMS_UPDATE_BULK,
             body_params=bin_items,
+            module_id=self._module_id,
+        )
+
+    async def __delete_source_items(self, ids: list[int]) -> None:
+        await self.__bin_item_service.call_api_with_token_refresh(
+            func=self.__bin_item_service.delete_bulk,
+            endpoint=Endpoint.BIN_ITEMS_DELETE_BULK,
+            body_params={"ids": ids},
             module_id=self._module_id,
         )
 

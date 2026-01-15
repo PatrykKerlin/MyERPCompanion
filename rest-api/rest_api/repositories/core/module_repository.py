@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement

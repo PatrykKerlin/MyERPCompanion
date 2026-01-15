@@ -17,6 +17,7 @@ class Category(BaseModel):
     __tablename__ = "categories"
 
     name: Mapped[str] = Fields.name()
+    code: Mapped[str] = Fields.string_10(unique=True, nullable=False)
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     items: Mapped[list[Item]] = Fields.relationship(

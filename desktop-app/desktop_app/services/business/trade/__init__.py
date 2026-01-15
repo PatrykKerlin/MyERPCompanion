@@ -1,4 +1,5 @@
 from schemas.business.trade.currency_schema import CurrencyPlainSchema, CurrencyStrictSchema
+from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
 from utils.service_factory import ServiceFactory
 
@@ -6,6 +7,11 @@ CurrencyService = ServiceFactory.create(
     name_prefix="Currency",
     plain_schema_cls=CurrencyPlainSchema,
     strict_schema_cls=CurrencyStrictSchema,
+)
+DiscountService = ServiceFactory.create(
+    name_prefix="Discount",
+    plain_schema_cls=DiscountPlainSchema,
+    strict_schema_cls=DiscountStrictSchema,
 )
 SupplierService = ServiceFactory.create(
     name_prefix="Supplier",
@@ -15,5 +21,6 @@ SupplierService = ServiceFactory.create(
 
 __all__ = [
     "CurrencyService",
+    "DiscountService",
     "SupplierService",
 ]

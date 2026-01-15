@@ -243,6 +243,22 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         await self._delete(endpoint=resolved_endpoint, tokens=tokens, module_id=module_id)
         return True
 
+    async def delete_bulk(
+        self,
+        endpoint: Endpoint,
+        path_param: int | None = None,
+        query_params: dict[str, Any] | None = None,
+        body_params: TStrictSchema | list[TStrictSchema] | dict[str, Any] | None = None,
+        tokens: TokenPlainSchema | None = None,
+        module_id: int | None = None,
+    ) -> bool:
+        if isinstance(body_params, dict):
+            resolved_body_params = body_params
+        else:
+            resolved_body_params = {}
+        await self._post(endpoint=endpoint, body_params=resolved_body_params, tokens=tokens, module_id=module_id)
+        return True
+
     async def refresh_tokens(self, tokens: TokenPlainSchema) -> TokenPlainSchema:
         headers = {"Authorization": f"Bearer {tokens.refresh}"}
         async with httpx.AsyncClient(base_url=self._settings.API_URL) as client:

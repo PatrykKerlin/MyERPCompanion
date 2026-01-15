@@ -1,8 +1,9 @@
 from collections.abc import Mapping, Sequence
+
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.core import Language, Translation
 from repositories.base.base_repository import BaseRepository

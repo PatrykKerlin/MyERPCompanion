@@ -9,11 +9,11 @@ from models.business.logistic.warehouse import Warehouse
 from repositories.business.logistic import (
     AssocBinItemRepository,
     BinRepository,
-    CategoryRepository,
-    WarehouseRepository,
-    UnitRepository,
-    DeliveryMethodRepository,
     CarrierRepository,
+    CategoryRepository,
+    DeliveryMethodRepository,
+    UnitRepository,
+    WarehouseRepository,
 )
 from repositories.business.logistic.item_repository import ItemRepository
 from schemas.business.logistic.assoc_bin_item_schema import AssocBinItemPlainSchema, AssocBinItemStrictSchema
@@ -25,7 +25,6 @@ from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSch
 from schemas.business.logistic.unit_schema import UnitPlainSchema, UnitStrictSchema
 from schemas.business.logistic.warehouse_schema import WarehousePlainSchema, WarehouseStrictSchema
 from utils.service_factory import ServiceFactory
-
 
 AssocBinItemService = ServiceFactory.create(
     model_cls=AssocBinItem,

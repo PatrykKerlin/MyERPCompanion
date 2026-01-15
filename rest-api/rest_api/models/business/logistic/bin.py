@@ -35,7 +35,7 @@ class Bin(BaseModel):
     @property
     def items(self) -> list[Item]:
         return [row.item for row in self.bin_items]
-    
+
     @property
     def item_ids(self) -> list[int]:
         return [row.item.id for row in self.bin_items]
