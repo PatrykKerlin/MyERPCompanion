@@ -7,12 +7,12 @@ from sqlalchemy.orm import Mapped, column_property
 
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
-from models.core import User
 
 if TYPE_CHECKING:
     from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
     from models.business.trade.discount import Discount
     from models.business.trade.order import Order
+    from models.core.user import User
 
 
 class Customer(BaseModel):
@@ -46,21 +46,16 @@ class Customer(BaseModel):
     billing_city: Mapped[str | None] = Fields.string_50(nullable=True)
     billing_country: Mapped[str | None] = Fields.string_50(nullable=True)
 
+    user_id: Mapped[int | None] = Fields.foreign_key(column="users.id", unique=True)
+    user: Mapped[User | None] = Fields.relationship(
+        argument="User", back_populates="customer", foreign_keys=[user_id], uselist=False
+    )
+
     orders: Mapped[list[Order]] = Fields.relationship(
         argument="Order", back_populates="customer", foreign_keys="Order.customer_id"
     )
     customer_discounts: Mapped[list[AssocCustomerDiscount]] = Fields.relationship(
         argument="AssocCustomerDiscount", back_populates="customer", foreign_keys="AssocCustomerDiscount.customer_id"
-    )
-
-    user_id: Mapped[int] = column_property(
-        select(User.id)
-        .where(User.employee_id == literal_column("customers.id"))
-        .where(User.is_active.is_(True))
-        .scalar_subquery()
-    )
-    user: Mapped[User] = Fields.relationship(
-        argument="User", back_populates="customer", foreign_keys="User.customer_id", uselist=False
     )
 
     @property

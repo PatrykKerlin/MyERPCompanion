@@ -30,9 +30,11 @@ class DiscountView(BaseView):
             {"key": "start_date", "input": self._get_date_picker},
             {"key": "end_date", "input": self._get_date_picker},
             {"key": "percent", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
-            {"key": "amount", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "min_value", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "min_quantity", "input": self._get_numeric_input},
+            {"key": "for_categories", "input": self._get_checkbox, "input_size": 2},
+            {"key": "for_customers", "input": self._get_checkbox, "input_size": 2},
+            {"key": "for_items", "input": self._get_checkbox, "input_size": 2},
         ]
         main_fields = self._build_field_groups(main_fields_definitions)
         self._add_to_inputs(main_fields)

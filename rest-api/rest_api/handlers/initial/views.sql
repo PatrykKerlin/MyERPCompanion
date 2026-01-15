@@ -14,4 +14,5 @@ VALUES
 ('items', 'Items view', 7, 4, TRUE, NOW(), :superuser_id),
 ('bin_transfer', 'Bin transfer view', 8, 4, TRUE, NOW(), :superuser_id),
 ('discounts', 'Discounts view', 1, 5, TRUE, NOW(), :superuser_id),
+('customers', 'Customers view', 2, 5, TRUE, NOW(), :superuser_id),
 ('currencies', 'Currencies view', 1, 6, TRUE, NOW(), :superuser_id);

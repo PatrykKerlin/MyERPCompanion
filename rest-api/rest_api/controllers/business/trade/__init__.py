@@ -1,10 +1,12 @@
 from models.business.trade.currency import Currency
+from models.business.trade.customer import Customer
 from models.business.trade.discount import Discount
 from models.business.trade.supplier import Supplier
 from schemas.business.trade.currency_schema import CurrencyPlainSchema, CurrencyStrictSchema
+from schemas.business.trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
 from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
-from services.business.trade import CurrencyService, DiscountService, SupplierService
+from services.business.trade import CurrencyService, CustomerService, DiscountService, SupplierService
 from utils.controller_factory import ControllerFactory
 from utils.enums import Action
 
@@ -13,6 +15,12 @@ CurrencyController = ControllerFactory.create(
     service_cls=CurrencyService,
     input_schema_cls=CurrencyStrictSchema,
     output_schema_cls=CurrencyPlainSchema,
+)
+CustomerController = ControllerFactory.create(
+    model_cls=Customer,
+    service_cls=CustomerService,
+    input_schema_cls=CustomerStrictSchema,
+    output_schema_cls=CustomerPlainSchema,
 )
 DiscountController = ControllerFactory.create(
     model_cls=Discount,
@@ -37,6 +45,7 @@ SupplierController = ControllerFactory.create(
 
 __all__ = [
     "CurrencyController",
+    "CustomerController",
     "DiscountController",
     "SupplierController",
 ]

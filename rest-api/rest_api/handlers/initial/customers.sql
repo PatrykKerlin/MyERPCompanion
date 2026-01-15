@@ -1,0 +1,3 @@
+INSERT INTO customers (first_name, middle_name, last_name, is_company, company_name, payment_term, email, phone_number, use_one_address, shipping_street, shipping_house_number, shipping_apartment_number, shipping_postal_code, shipping_city, shipping_country, billing_street, billing_house_number, billing_apartment_number, billing_postal_code, billing_city, billing_country, user_id, is_active, created_at, created_by)
+VALUES
+('Jan', NULL, 'Kowalski', TRUE, 'ACME Sp. z o.o.', 30, 'kontakt@acme.pl', '+48221234567', TRUE, 'Przemysłowa', '15', NULL, '00-950', 'Warszawa', 'Polska', 'Przemysłowa', '15', NULL, '00-950', 'Warszawa', 'Polska', 2, TRUE, NOW(), :superuser_id);

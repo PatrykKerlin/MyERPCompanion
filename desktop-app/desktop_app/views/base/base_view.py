@@ -320,11 +320,13 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         return (
             ft.Container(
                 content=ft.Dropdown(
-                    options=[ft.dropdown.Option(key="0", text=self._translation.get("select"))]
+                    options=[ft.dropdown.Option(key="0", text="")]
                     + [ft.dropdown.Option(key=str(option[0]), text=option[1]) for option in options],
                     on_select=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
                     expand=True,
                     value="0",
+                    editable=True,
+                    enable_search=True,
                     enable_filter=True,
                 ),
                 col={"sm": float(size)},

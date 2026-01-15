@@ -29,10 +29,13 @@ class Discount(BaseModel):
     end_date: Mapped[date | None] = Fields.date(nullable=True)
 
     percent: Mapped[float | None] = Fields.numeric_3_2(nullable=True)
-    amount: Mapped[float | None] = Fields.numeric_10_2(nullable=True)
 
     min_value: Mapped[float | None] = Fields.numeric_10_2(nullable=True)
     min_quantity: Mapped[int | None] = Fields.integer(nullable=True)
+
+    for_categories: Mapped[bool] = Fields.boolean(default=False)
+    for_customers: Mapped[bool] = Fields.boolean(default=False)
+    for_items: Mapped[bool] = Fields.boolean(default=False)
 
     discount_categories: Mapped[list[AssocCategoryDiscount]] = Fields.relationship(
         argument="AssocCategoryDiscount", back_populates="discount", foreign_keys="AssocCategoryDiscount.discount_id"

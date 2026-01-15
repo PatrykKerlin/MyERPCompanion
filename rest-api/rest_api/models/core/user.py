@@ -28,9 +28,8 @@ class User(BaseModel):
         argument="Employee", back_populates="user", foreign_keys=[employee_id], uselist=False
     )
 
-    customer_id: Mapped[int | None] = Fields.foreign_key(column="customers.id", unique=True, nullable=True)
     customer: Mapped[Customer | None] = Fields.relationship(
-        argument="Customer", back_populates="user", foreign_keys=[customer_id], uselist=False
+        argument="Customer", back_populates="user", foreign_keys="Customer.user_id", uselist=False
     )
 
     language_id: Mapped[int | None] = Fields.foreign_key(column="languages.id", nullable=True)
