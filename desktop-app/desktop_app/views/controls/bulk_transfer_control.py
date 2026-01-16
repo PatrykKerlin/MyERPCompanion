@@ -32,7 +32,7 @@ class BulkTransfer(ft.Container):
                 ft.Container(
                     content=self.__source_list,
                     expand=True,
-                    border=ft.border.all(1, ft.Colors.OUTLINE),
+                    border=ft.Border.all(1, ft.Colors.OUTLINE),
                     border_radius=6,
                     padding=6,
                 ),
@@ -53,7 +53,7 @@ class BulkTransfer(ft.Container):
                 ft.Container(
                     content=self.__target_list,
                     expand=True,
-                    border=ft.border.all(1, ft.Colors.OUTLINE),
+                    border=ft.Border.all(1, ft.Colors.OUTLINE),
                     border_radius=6,
                     padding=6,
                 ),
@@ -78,7 +78,7 @@ class BulkTransfer(ft.Container):
         self.__button_move.disabled = not buttons_enabled
         self.__button_delete.disabled = not buttons_enabled
         self.__update_save_button_state()
-        self.update()
+        self.__safe_update()
 
     def set_source_enabled(self, enabled: bool) -> None:
         self.set_enabled_states(enabled, self.__target_enabled, enabled and self.__target_enabled)
@@ -175,7 +175,7 @@ class BulkTransfer(ft.Container):
                 )
             )
         self.__source_list.controls = controls
-        self.update()
+        self.__safe_update()
 
     def __render_target_list(self) -> None:
         controls: list[ft.Control] = []
@@ -201,7 +201,13 @@ class BulkTransfer(ft.Container):
             else:
                 controls.append(container)
         self.__target_list.controls = controls
-        self.update()
+        self.__safe_update()
+
+    def __safe_update(self) -> None:
+        try:
+            self.update()
+        except RuntimeError:
+            return
 
     def __toggle_source_selection(self, item_id: int) -> None:
         if item_id in self.__selected_source_ids:

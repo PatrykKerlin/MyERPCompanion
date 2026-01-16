@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Generic, TypeVar, cast
 
 import flet as ft
-from httpx import HTTPStatusError
 from pydantic import ValidationError
 
 from controllers.base.base_controller import BaseController
@@ -20,7 +19,7 @@ from schemas.base import BaseStrictSchema, BasePlainSchema
 from schemas.core.param_schema import PaginatedResponseSchema
 from services.base.base_service import BaseService
 from states.states import ViewState
-from utils.enums import Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.request_data import RequestData
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -29,13 +28,17 @@ from views.components.view_dialog_component import ViewDialog
 
 TService = TypeVar("TService", bound=BaseService)
 TView = TypeVar("TView", bound=BaseView)
-TPlainSchema = TypeVar("TPlainSchema", bound=BasePlainSchema)
-TStrictSchema = TypeVar("TStrictSchema", bound=BaseStrictSchema)
+TControllerPlainSchema = TypeVar("TControllerPlainSchema", bound=BasePlainSchema)
+TControllerStrictSchema = TypeVar("TControllerStrictSchema", bound=BaseStrictSchema)
+TServicePlainSchema = TypeVar("TServicePlainSchema", bound=BasePlainSchema)
+TServiceStrictSchema = TypeVar("TServiceStrictSchema", bound=BaseStrictSchema)
 
 
-class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, TStrictSchema], ABC):
-    _plain_schema_cls: type[TPlainSchema]
-    _strict_schema_cls: type[TStrictSchema]
+class BaseViewController(
+    BaseController, Generic[TService, TView, TControllerPlainSchema, TControllerStrictSchema], ABC
+):
+    _plain_schema_cls: type[TControllerPlainSchema]
+    _strict_schema_cls: type[TControllerStrictSchema]
     _service_cls: type[TService]
     _view_cls: type[TView]
     _endpoint: Endpoint
@@ -99,7 +102,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
         self._page.run_task(self.__execute_search_clicked)
 
     def on_row_clicked(self, result_id: int) -> None:
-        self._page.run_task(self._execute_row_clicked, result_id)
+        self._page.run_task(self._execute_row_clicked, result_id, self._view_key, self._service, self._endpoint)
 
     def on_back_clicked(self) -> None:
         if not self._view:
@@ -160,9 +163,9 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
     def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
         return available_fields
 
-    async def _perform_get_page(self, endpoint: Endpoint | None = None) -> PaginatedResponseSchema[TPlainSchema]:
-        if not endpoint:
-            endpoint = self._endpoint
+    async def _perform_get_page(
+        self, service: BaseService[TServicePlainSchema, TServiceStrictSchema], endpoint: Endpoint
+    ) -> PaginatedResponseSchema[TServicePlainSchema]:
         filters: dict[str, str] = {}
         for field in self._request_data.selected_inputs:
             filters[field] = self._request_data.input_values.get(field, "")
@@ -173,94 +176,62 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             "order": self._request_data.order,
             **filters,
         }
-        return await self._service.call_api_with_token_refresh(
-            func=self._service.get_page,
-            endpoint=endpoint,
-            query_params=params,
-            module_id=self._module_id,
-        )
+        return await service.get_page(endpoint, None, params, None, self._module_id)
 
     async def _perform_get_one(
-        self, id: int, service: BaseService | None = None, endpoint: Endpoint | None = None
-    ) -> TPlainSchema:
-        if not endpoint:
-            endpoint = self._endpoint
-        if not service:
-            service = self._service
-        return await service.call_api_with_token_refresh(
-            func=service.get_one,
-            endpoint=endpoint,
-            path_param=id,
-            module_id=self._module_id,
-        )
+        self, id: int, service: BaseService[TServicePlainSchema, TServiceStrictSchema], endpoint: Endpoint
+    ) -> TServicePlainSchema:
+        return await service.get_one(endpoint, id, None, None, self._module_id)
 
-    async def _perform_create(self, endpoint: Endpoint | None = None) -> TPlainSchema:
-        if not endpoint:
-            endpoint = self._endpoint
-        data = self._strict_schema_cls(**self._request_data.input_values)
-        return await self._service.call_api_with_token_refresh(
-            func=self._service.create,
-            endpoint=endpoint,
-            body_params=data,
-            module_id=self._module_id,
-        )
+    async def _perform_create(
+        self,
+        service: BaseService[TServicePlainSchema, TServiceStrictSchema],
+        endpoint: Endpoint,
+        payload: TServiceStrictSchema,
+    ) -> TServicePlainSchema:
+        return await service.create(endpoint, None, None, payload, self._module_id)
 
-    async def _perform_update(self, id: int, endpoint: Endpoint | None = None) -> TPlainSchema:
-        if not endpoint:
-            endpoint = self._endpoint
-        data = self._strict_schema_cls(**self._request_data.input_values)
-        return await self._service.call_api_with_token_refresh(
-            func=self._service.update,
-            endpoint=endpoint,
-            path_param=id,
-            body_params=data,
-            module_id=self._module_id,
-        )
+    async def _perform_create_bulk(
+        self,
+        service: BaseService[TServicePlainSchema, TServiceStrictSchema],
+        endpoint: Endpoint,
+        payload: list[TServiceStrictSchema],
+    ) -> list[TServicePlainSchema]:
+        return await service.create_bulk(endpoint, None, None, payload, self._module_id)
 
-    async def _perform_delete(self, id: int, endpoint: Endpoint | None = None) -> bool:
-        if not endpoint:
-            endpoint = self._endpoint
-        return await self._service.call_api_with_token_refresh(
-            func=self._service.delete,
-            endpoint=endpoint,
-            path_param=id,
-            module_id=self._module_id,
-        )
+    async def _perform_update(
+        self,
+        id: int,
+        service: BaseService[TServicePlainSchema, TServiceStrictSchema],
+        endpoint: Endpoint,
+        payload: TServiceStrictSchema,
+    ) -> TServicePlainSchema:
+        return await service.update(endpoint, id, None, payload, self._module_id)
 
+    async def _perform_delete(
+        self, id: int, service: BaseService[TServicePlainSchema, TServiceStrictSchema], endpoint: Endpoint
+    ) -> bool:
+        return await service.delete(endpoint, id, None, None, self._module_id)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def _execute_row_clicked(
         self,
         result_id: int,
-        view_key: View | None = None,
-        service: BaseService | None = None,
-        endpoint: Endpoint | None = None,
+        view_key: View,
+        service: BaseService[TServicePlainSchema, TServiceStrictSchema],
+        endpoint: Endpoint,
     ) -> None:
-        self._open_loading_dialog()
-        try:
-            response = await self._perform_get_one(result_id, service, endpoint)
-            data = response.model_dump()
-            self.__parse_data_row(data)
-            if not view_key:
-                view_key = self._view_key
-            await self._event_bus.publish(
-                TabRequested(
-                    module_id=self._module_id,
-                    view_key=view_key,
-                    record_id=response.id,
-                    record_data=data,
-                )
+        response = await self._perform_get_one(result_id, service, endpoint)
+        data = response.model_dump()
+        self.__parse_data_row(data)
+        await self._event_bus.publish(
+            TabRequested(
+                module_id=self._module_id,
+                view_key=view_key,
+                record_id=response.id,
+                record_data=data,
             )
-            self._close_loading_dialog()
-        except HTTPStatusError as http_error:
-            self._close_loading_dialog()
-            if http_error.response.status_code == 403:
-                self._open_error_dialog(message_key="no_permissions")
-            else:
-                self._logger.error(str(http_error))
-                self._open_error_dialog(message_key="data_fetch_fail")
-        except Exception as error:
-            self._close_loading_dialog()
-            self._logger.error(str(error))
-            self._open_error_dialog(message_key="data_fetch_fail")
+        )
 
     async def __view_requested_handler(self, event: ViewRequested) -> None:
         if event.view_key != self._view_key:
@@ -310,58 +281,33 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             return
         self._request_data = RequestData()
 
+    @BaseController.handle_api_action(ApiActionError.DELETE)
     async def __record_delete_requested_handler(self, event: RecordDeleteRequested) -> None:
         if event.view_key != self._view_key:
             return
-        self._open_loading_dialog()
-        try:
-            await self._perform_delete(event.id)
-            tab_title = self._get_tab_title(event.view_key, event.id)
-            await self._event_bus.publish(TabCloseRequested(tab_title))
-            self._close_loading_dialog()
-            await self.__execute_search_clicked()
-            self._open_message_dialog("record_delete_success")
-        except HTTPStatusError as http_error:
-            self._close_loading_dialog()
-            if http_error.response.status_code == 403:
-                self._open_error_dialog(message_key="no_permissions")
-            else:
-                self._logger.error(str(http_error))
-                self._open_error_dialog(message_key="record_delete_fail")
-        except Exception as error:
-            self._close_loading_dialog()
-            self._logger.error(str(error))
-            self._open_error_dialog(message_key="record_delete_fail")
+        await self._perform_delete(event.id, self._service, self._endpoint)
+        tab_title = self._get_tab_title(event.view_key, event.id)
+        await self._event_bus.publish(TabCloseRequested(tab_title))
+        self._close_loading_dialog()
+        await self.__execute_search_clicked()
+        self._open_message_dialog("record_delete_success")
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __record_saved_handler(self, event: RecordSaved):
         if event.view_key != self._view_key:
             return
         if not self._view or not self._view.data_row:
             return
-        self._open_loading_dialog()
-        try:
-            response = await self._perform_get_one(self._view.data_row["id"])
-            await self._event_bus.publish(
-                TabRequested(
-                    module_id=self._module_id,
-                    view_key=self._view_key,
-                    record_id=response.id,
-                    record_data=response.model_dump(),
-                    save_succeeded=True,
-                )
+        response = await self._perform_get_one(self._view.data_row["id"], self._service, self._endpoint)
+        await self._event_bus.publish(
+            TabRequested(
+                module_id=self._module_id,
+                view_key=self._view_key,
+                record_id=response.id,
+                record_data=response.model_dump(),
+                save_succeeded=True,
             )
-            self._close_loading_dialog()
-        except HTTPStatusError as http_error:
-            self._close_loading_dialog()
-            if http_error.response.status_code == 403:
-                self._open_error_dialog(message_key="no_permissions")
-            else:
-                self._logger.error(str(http_error))
-                self._open_error_dialog(message_key="data_fetch_fail")
-        except Exception as error:
-            self._close_loading_dialog()
-            self._logger.error(str(error))
-            self._open_error_dialog(message_key="data_fetch_fail")
+        )
 
     async def __save_succeeded_handler(self, event: SaveSucceeded):
         if event.view_key != self._view_key:
@@ -389,44 +335,42 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             return value_lower == "true"
         return value_stripped
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __execute_search_clicked(self) -> None:
         if not self._view:
             return
-        self._open_loading_dialog()
-        try:
-            response = await self._perform_get_page()
-            self._request_data.total = response.total
-            self._request_data.page = response.page
-            self._request_data.page_size = response.page_size
-            self._request_data.has_next = response.has_next
-            self._request_data.has_prev = response.has_prev
-            results = [result.model_dump() for result in response.items]
-            if results:
-                for row in results:
-                    self.__parse_data_row(row, True)
-                self._view.search_results = results
-                self._state_store.update(view={"mode": ViewMode.LIST})
-                self._close_loading_dialog()
-            else:
-                self._close_loading_dialog()
-                self._open_message_dialog("no_records_found")
-        except Exception as error:
+        response = await self._perform_get_page(self._service, self._endpoint)
+        self._request_data.total = response.total
+        self._request_data.page = response.page
+        self._request_data.page_size = response.page_size
+        self._request_data.has_next = response.has_next
+        self._request_data.has_prev = response.has_prev
+        results = [result.model_dump() for result in response.items]
+        if results:
+            for row in results:
+                self.__parse_data_row(row, True)
+            self._view.search_results = results
+            self._state_store.update(view={"mode": ViewMode.LIST})
+        else:
             self._close_loading_dialog()
-            self._logger.error(str(error))
             self._open_message_dialog("no_records_found")
 
+    @BaseController.handle_api_action(ApiActionError.SAVE)
     async def __execute_save_clicked(self) -> None:
         if not self._view:
             return
-        self._open_loading_dialog()
         try:
-            response: TPlainSchema | None = None
+            response: TControllerPlainSchema | None = None
             if self._view.mode == ViewMode.CREATE:
-                response = await self._perform_create()
+                payload = self._strict_schema_cls(**self._request_data.input_values)
+                response = await self._perform_create(self._service, self._endpoint, payload)
                 self._view.clear_inputs()
                 self._state_store.update(view={"mode": ViewMode.SEARCH})
             elif self._view.mode == ViewMode.EDIT:
-                response = await self._perform_update(self._request_data.input_values["id"])
+                payload = self._strict_schema_cls(**self._request_data.input_values)
+                response = await self._perform_update(
+                    self._request_data.input_values["id"], self._service, self._endpoint, payload
+                )
             if response and not self._view.is_dialog:
                 await self._event_bus.publish(
                     TabRequested(
@@ -444,7 +388,7 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
                         view_key=self._view.caller_view_key,
                     )
                 )
-            self._page.pop_dialog()
+            # self._page.pop_dialog()
         except ValidationError as validation_error:
             translate_state = self._state_store.app_state.translation
             error_message = [translate_state.items.get("validation_errors")]
@@ -455,17 +399,6 @@ class BaseViewController(BaseController, Generic[TService, TView, TPlainSchema, 
             final_message = "\n".join(error_message)
             self._close_loading_dialog()
             self._open_error_dialog(message=final_message)
-        except HTTPStatusError as http_error:
-            self._close_loading_dialog()
-            if http_error.response.status_code == 403:
-                self._open_error_dialog(message_key="no_permissions")
-            else:
-                self._logger.error(str(http_error))
-                self._open_error_dialog(message_key="record_save_fail")
-        except Exception as error:
-            self._close_loading_dialog()
-            self._logger.error(str(error))
-            self._open_error_dialog(message_key="record_save_fail")
 
     def __validate_field(self, key: str) -> str | None:
         if not self._view or self._view.mode not in {ViewMode.CREATE, ViewMode.EDIT}:

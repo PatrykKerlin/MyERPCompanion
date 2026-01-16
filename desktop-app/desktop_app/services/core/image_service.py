@@ -9,18 +9,22 @@ from schemas.core.token_schema import TokenPlainSchema
 class ImageService(BaseService[ImagePlainSchema, Union[ImageStrictCreateSchema, ImageStrictUpdateSchema]]):
     _plain_schema_cls = ImagePlainSchema
 
+    @BaseService.handle_token_refresh
     async def create(
         self,
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: Union[
-            ImageStrictCreateSchema,
-            ImageStrictUpdateSchema,
-            list[ImageStrictCreateSchema | ImageStrictUpdateSchema],
-        ]
-        | dict[str, Any]
-        | None = None,
+        body_params: (
+            Union[
+                ImageStrictCreateSchema,
+                ImageStrictUpdateSchema,
+                list[ImageStrictCreateSchema | ImageStrictUpdateSchema],
+            ]
+            | dict[str, Any]
+            | list[dict[str, Any]]
+            | None
+        ) = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> ImagePlainSchema:
@@ -34,18 +38,22 @@ class ImageService(BaseService[ImagePlainSchema, Union[ImageStrictCreateSchema, 
         data = response.json()
         return self._plain_schema_cls(**data)
 
+    @BaseService.handle_token_refresh
     async def update(
         self,
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: Union[
-            ImageStrictCreateSchema,
-            ImageStrictUpdateSchema,
-            list[ImageStrictCreateSchema | ImageStrictUpdateSchema],
-        ]
-        | dict[str, Any]
-        | None = None,
+        body_params: (
+            Union[
+                ImageStrictCreateSchema,
+                ImageStrictUpdateSchema,
+                list[ImageStrictCreateSchema | ImageStrictUpdateSchema],
+            ]
+            | dict[str, Any]
+            | list[dict[str, Any]]
+            | None
+        ) = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> ImagePlainSchema:

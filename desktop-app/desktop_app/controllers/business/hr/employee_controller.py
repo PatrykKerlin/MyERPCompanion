@@ -62,22 +62,24 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> EmployeeView:
         self.__all_departments = await self.__get_all_departments()
         self.__all_positions = await self.__perform_get_all_positions()
-        self.__positions_by_id = {p.id: p for p in self.__all_positions}
+        self.__positions_by_id = {position.id: position for position in self.__all_positions}
         self.__all_employees = await self.__perform_get_all_employees()
 
         selected_department_id = self._request_data.input_values.get("department_id")
         selected_position_id = self._request_data.input_values.get("position_id")
 
         if mode == ViewMode.SEARCH:
-            departments = [(d.id, d.name) for d in self.__all_departments]
-            positions = [(p.id, p.name) for p in self.__all_positions]
-            managers = [(e.id, f"{e.first_name} {e.last_name}") for e in self.__all_employees]
+            departments = [(department.id, department.name) for department in self.__all_departments]
+            positions = [(position.id, position.name) for position in self.__all_positions]
+            managers = [
+                (employee.id, f"{employee.first_name} {employee.last_name}") for employee in self.__all_employees
+            ]
         else:
             positions_filtered = self.__filter_positions_by_department(selected_department_id)
-            departments = [(d.id, d.name) for d in self.__all_departments]
-            positions = [(p.id, p.name) for p in positions_filtered]
+            departments = [(department.id, department.name) for department in self.__all_departments]
+            positions = [(position.id, position.name) for position in positions_filtered]
             managers_filtered = self.__filter_managers_by_position(selected_position_id)
-            managers = [(e.id, f"{e.first_name} {e.last_name}") for e in managers_filtered]
+            managers = [(employee.id, f"{employee.first_name} {employee.last_name}") for employee in managers_filtered]
 
         return EmployeeView(
             self,
@@ -91,25 +93,13 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
         )
 
     async def __perform_get_all_employees(self) -> list[EmployeePlainSchema]:
-        return await self._service.call_api_with_token_refresh(
-            func=self._service.get_all,
-            endpoint=self._endpoint,
-            module_id=self._module_id,
-        )
+        return await self._service.get_all(self._endpoint, None, None, None, self._module_id)
 
     async def __perform_get_all_positions(self) -> list[PositionPlainSchema]:
-        return await self.__position_service.call_api_with_token_refresh(
-            func=self.__position_service.get_all,
-            endpoint=Endpoint.POSITIONS,
-            module_id=self._module_id,
-        )
+        return await self.__position_service.get_all(Endpoint.POSITIONS, None, None, None, self._module_id)
 
     async def __get_all_departments(self) -> list[DepartmentPlainSchema]:
-        return await self.__department_service.call_api_with_token_refresh(
-            func=self.__department_service.get_all,
-            endpoint=Endpoint.DEPARTMENTS,
-            module_id=self._module_id,
-        )
+        return await self.__department_service.get_all(Endpoint.DEPARTMENTS, None, None, None, self._module_id)
 
     def __filter_positions_by_department(self, department_id: int | None) -> list[PositionPlainSchema]:
         if department_id is None:

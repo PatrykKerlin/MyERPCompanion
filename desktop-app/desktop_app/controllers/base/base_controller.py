@@ -1,6 +1,12 @@
-from typing import Any, Awaitable, Callable, TypeVar
+from __future__ import annotations
+
+from functools import wraps
+from typing import Any, Awaitable, Callable, TypeVar, cast
+
+from httpx import HTTPStatusError
 
 from schemas.base.base_schema import BaseStrictSchema
+from utils.enums import ApiActionError
 from utils.tokens_accessor import TokensAccessor
 from views.components.confirm_dialog_component import ConfirmDialogComponent
 from views.components.error_dialog_component import ErrorDialogComponent
@@ -10,6 +16,7 @@ from views.components.message_dialog_component import MessageDialogComponent
 from config.context import Context
 
 TStrictSchema = TypeVar("TStrictSchema", bound=BaseStrictSchema)
+TReturn = TypeVar("TReturn")
 
 
 class BaseController:
@@ -31,6 +38,41 @@ class BaseController:
         while self.__unsubscribers:
             func = self.__unsubscribers.pop()
             func()
+
+    @classmethod
+    def handle_api_action(
+        cls, message_key: ApiActionError
+    ) -> Callable[[Callable[..., Awaitable[TReturn]]], Callable[..., Awaitable[TReturn]]]:
+        def decorator(func: Callable[..., Awaitable[TReturn]]) -> Callable[..., Awaitable[TReturn]]:
+            @wraps(func)
+            async def wrapper(self: BaseController, *args: Any, **kwargs: Any) -> TReturn:
+                opened_loading = self._loading_dialog is None
+                if opened_loading:
+                    self._open_loading_dialog()
+                try:
+                    result = await func(self, *args, **kwargs)
+                    if opened_loading:
+                        self._close_loading_dialog()
+                    return result
+                except HTTPStatusError as http_error:
+                    if opened_loading:
+                        self._close_loading_dialog()
+                    if http_error.response.status_code == 403:
+                        self._open_error_dialog(message_key="no_permissions")
+                    else:
+                        self._logger.error(str(http_error))
+                        self._open_error_dialog(message_key=message_key)
+                    return cast(TReturn, None)
+                except Exception as error:
+                    if opened_loading:
+                        self._close_loading_dialog()
+                    self._logger.error(str(error))
+                    self._open_error_dialog(message_key=message_key)
+                    return cast(TReturn, None)
+
+            return wrapper
+
+        return decorator
 
     def _subscribe_event_handlers(self, event_handlers: dict[type[Any], Callable[[Any], Awaitable[None]]]) -> None:
         for event, handler in event_handlers.items():

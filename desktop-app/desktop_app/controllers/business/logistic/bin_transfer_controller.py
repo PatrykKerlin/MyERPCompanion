@@ -122,19 +122,14 @@ class BinTransferController(
             self._open_error_dialog(message=str(error))
 
     async def __move_items_to_target(self, bin_items: list[AssocBinItemStrictSchema]) -> None:
-        await self.__bin_item_service.call_api_with_token_refresh(
-            func=self.__bin_item_service.update_bulk,
-            endpoint=Endpoint.BIN_ITEMS_UPDATE_BULK,
-            body_params=bin_items,
-            module_id=self._module_id,
+        await self.__bin_item_service.update_bulk(
+            Endpoint.BIN_ITEMS_UPDATE_BULK, None, None, bin_items, self._module_id
         )
 
     async def __delete_source_items(self, ids: list[int]) -> None:
-        await self.__bin_item_service.call_api_with_token_refresh(
-            func=self.__bin_item_service.delete_bulk,
-            endpoint=Endpoint.BIN_ITEMS_DELETE_BULK,
-            body_params={"ids": ids},
-            module_id=self._module_id,
+        body_params = {"ids": ids}
+        await self.__bin_item_service.delete_bulk(
+            Endpoint.BIN_ITEMS_DELETE_BULK, None, None, body_params, self._module_id
         )
 
     async def __refresh_transfer_lists(self) -> None:
@@ -225,10 +220,8 @@ class BinTransferController(
         self._view.set_target_enabled(True)
 
     async def __get_single_bin(self, location: str) -> BinPlainSchema | None:
-        params = {"page": 1, "page_size": 2, "location": location}
-        response = await self.__bin_service.call_api_with_token_refresh(
-            func=self.__bin_service.get_page, endpoint=Endpoint.BINS, query_params=params, module_id=self._module_id
-        )
+        query_params = {"page": 1, "page_size": 2, "location": location}
+        response = await self.__bin_service.get_page(Endpoint.BINS, None, query_params, None, self._module_id)
         items = response.items
         exact_matches = [bin for bin in items if bin.location.lower() == location.lower()]
         if len(exact_matches) == 1:
@@ -238,19 +231,14 @@ class BinTransferController(
     async def __fetch_bin_items(self, bin: BinPlainSchema) -> dict[int, tuple[str, int, int]]:
         if not bin.item_ids:
             return {}
-        item_schemas = await self.__item_service.call_api_with_token_refresh(
-            func=self.__item_service.get_bulk,
-            endpoint=Endpoint.ITEMS_GET_BULK,
-            body_params={"ids": bin.item_ids},
-            module_id=self._module_id,
+        body_params = {"ids": bin.item_ids}
+        item_schemas = await self.__item_service.get_bulk(
+            Endpoint.ITEMS_GET_BULK, None, None, body_params, self._module_id
         )
         item_map = {item.id: item for item in item_schemas}
-
-        bin_item_schemas = await self.__bin_item_service.call_api_with_token_refresh(
-            func=self.__bin_item_service.get_all,
-            endpoint=Endpoint.BIN_ITEMS,
-            query_params={"bin_id": bin.id},
-            module_id=self._module_id,
+        query_params = {"bin_id": bin.id}
+        bin_item_schemas = await self.__bin_item_service.get_all(
+            Endpoint.BIN_ITEMS, None, query_params, None, self._module_id
         )
         if not bin_item_schemas:
             return {}

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
 
@@ -8,6 +8,7 @@ from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
 from utils.translation import Translation
+from views.controls.bulk_transfer_control import BulkTransfer
 
 if TYPE_CHECKING:
     from controllers.business.trade.customer_controller import CustomerController
@@ -21,6 +22,9 @@ class CustomerView(BaseView):
         mode: ViewMode,
         key: View,
         data_row: dict[str, Any] | None,
+        discount_source_items: list[tuple[int, str]],
+        discount_target_items: list[tuple[int, str]],
+        on_discount_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
         # users: list[tuple[int, str]],
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
@@ -83,7 +87,7 @@ class CustomerView(BaseView):
         billing_house_fields_definitions = [
             {"key": "billing_house_number", "input": self._get_text_input, "input_size": 3, "columns": 8},
             {
-                "key": "apartment_number",
+                "key": "billing_apartment_number",
                 "label": "/",
                 "input": self._get_text_input,
                 "label_size": 1,
@@ -182,4 +186,46 @@ class CustomerView(BaseView):
             ),
         ]
         self._columns_row.controls.extend(columns)
-        self._master_column.controls.extend(self._rows)
+        self.__bulk_transfer = BulkTransfer(
+            on_save_clicked=on_discount_save_clicked or (lambda _: None),
+        )
+        self.__pending_discount_source_items = list(discount_source_items)
+        self.__pending_discount_target_items = list(discount_target_items)
+        self.__bulk_transfer.visible = mode in {ViewMode.CREATE, ViewMode.EDIT, ViewMode.READ}
+        self.__set_bulk_transfer_state(mode)
+
+        bulk_transfer_row = ft.Row(
+            controls=[ft.Container(content=self.__bulk_transfer, expand=True, height=260)],
+        )
+        self._master_column.controls.extend(
+            [
+                self._columns_row,
+                ft.Row(height=25),
+                bulk_transfer_row,
+                ft.Row(height=25),
+                self._buttons_row,
+            ]
+        )
+
+    def did_mount(self):
+        self.__bulk_transfer.set_source_items(self.__pending_discount_source_items)
+        self.__bulk_transfer.set_target_items(self.__pending_discount_target_items)
+        return super().did_mount()
+
+    def set_mode(self, mode: ViewMode) -> None:
+        super().set_mode(mode)
+        self.__bulk_transfer.visible = mode in {ViewMode.CREATE, ViewMode.EDIT, ViewMode.READ}
+        self.__set_bulk_transfer_state(mode)
+
+    def __set_bulk_transfer_state(self, mode: ViewMode) -> None:
+        editable = mode == ViewMode.EDIT
+        self.__bulk_transfer.set_enabled_states(editable, editable, editable)
+
+    def get_pending_discount_ids(self) -> list[int]:
+        return self.__bulk_transfer.get_pending_move_ids()
+
+    def set_discount_source_items(self, items: list[tuple[int, str]]) -> None:
+        self.__bulk_transfer.set_source_items(items)
+
+    def set_discount_target_items(self, items: list[tuple[int, str]]) -> None:
+        self.__bulk_transfer.set_target_items(items)

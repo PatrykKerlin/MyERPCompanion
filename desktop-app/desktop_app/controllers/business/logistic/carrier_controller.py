@@ -47,20 +47,13 @@ class CarrierController(BaseViewController[CarrierService, CarrierView, CarrierP
         return CarrierView(self, translation, mode, event.view_key, event.data, currencies, delivery_methods)
 
     async def __perform_get_all_currencies(self) -> list[tuple[int, str]]:
-        schemas = await self.__currency_service.call_api_with_token_refresh(
-            func=self.__currency_service.get_all,
-            endpoint=Endpoint.CURRENCIES,
-            module_id=self._module_id,
-        )
-
+        schemas = await self.__currency_service.get_all(Endpoint.CURRENCIES, None, None, None, self._module_id)
         return [(schema.id, schema.code) for schema in schemas]
 
     async def __perform_get_delivery_methods_for_id(self, id: int) -> list[DeliveryMethodPlainSchema]:
-        return await self.__delivery_method_service.call_api_with_token_refresh(
-            func=self.__delivery_method_service.get_all,
-            endpoint=Endpoint.DELIVERY_METHODS,
-            query_params={"carrier_id": id},
-            module_id=self._module_id,
+        query_params = {"carrier_id": id}
+        return await self.__delivery_method_service.get_all(
+            Endpoint.DELIVERY_METHODS, None, query_params, None, self._module_id
         )
 
     async def __open_delivery_method_create_dialog(self) -> None:

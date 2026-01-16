@@ -31,19 +31,9 @@ class DeliveryMethodController(
         )
 
     async def __perform_get_all_carriers(self) -> list[tuple[int, str]]:
-        schemas = await self.__carrier_service.call_api_with_token_refresh(
-            func=self.__carrier_service.get_all,
-            endpoint=Endpoint.CARRIERS,
-            module_id=self._module_id,
-        )
-
+        schemas = await self.__carrier_service.get_all(Endpoint.CARRIERS, None, None, None, self._module_id)
         return [(schema.id, schema.name) for schema in schemas]
 
     async def __perform_get_all_units(self) -> list[tuple[int, str]]:
-        schemas = await self.__unit_service.call_api_with_token_refresh(
-            func=self.__unit_service.get_all,
-            endpoint=Endpoint.UNITS,
-            module_id=self._module_id,
-        )
-
+        schemas = await self.__unit_service.get_all(Endpoint.UNITS, None, None, None, self._module_id)
         return [(schema.id, schema.name) for schema in schemas]

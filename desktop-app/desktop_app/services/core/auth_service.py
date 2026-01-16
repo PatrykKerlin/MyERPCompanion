@@ -12,15 +12,15 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
 
     async def fetch_tokens(self, username: str, password: str) -> TokenPlainSchema:
         response = await self._post(Endpoint.TOKEN, {"username": username, "password": password})
-
         return TokenPlainSchema(**response.json())
 
+    @BaseService.handle_token_refresh
     async def get_all_modules(
         self,
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: BaseStrictSchema | list[BaseStrictSchema] | dict[str, Any] | None = None,
+        body_params: BaseStrictSchema | list[BaseStrictSchema] | dict[str, Any] | list[dict[str, Any]] | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> list[ModulePlainSchema]:
@@ -38,15 +38,15 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
 
         return modules
 
+    @BaseService.handle_token_refresh
     async def get_current_user(
         self,
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: BaseStrictSchema | list[BaseStrictSchema] | dict[str, Any] | None = None,
+        body_params: BaseStrictSchema | list[BaseStrictSchema] | dict[str, Any] | list[dict[str, Any]] | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> UserPlainSchema:
         response = await self._get(endpoint=endpoint, tokens=tokens, module_id=module_id)
-
         return UserPlainSchema(**response.json(), is_superuser=False, password="")

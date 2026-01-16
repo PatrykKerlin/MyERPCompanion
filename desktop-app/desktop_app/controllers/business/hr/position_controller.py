@@ -28,19 +28,9 @@ class PositionController(BaseViewController[PositionService, PositionView, Posit
         return PositionView(self, translation, mode, event.view_key, event.data, currencies, departments)
 
     async def __perform_get_all_currencies(self) -> list[tuple[int, str]]:
-        schemas = await self.__currency_service.call_api_with_token_refresh(
-            func=self.__currency_service.get_all,
-            endpoint=Endpoint.CURRENCIES,
-            module_id=self._module_id,
-        )
-
+        schemas = await self.__currency_service.get_all(Endpoint.CURRENCIES, None, None, None, self._module_id)
         return [(schema.id, schema.code) for schema in schemas]
 
     async def __perform_get_all_departments(self) -> list[tuple[int, str]]:
-        schemas = await self.__department_service.call_api_with_token_refresh(
-            func=self.__department_service.get_all,
-            endpoint=Endpoint.DEPARTMENTS,
-            module_id=self._module_id,
-        )
-
+        schemas = await self.__department_service.get_all(Endpoint.DEPARTMENTS, None, None, None, self._module_id)
         return [(schema.id, schema.code) for schema in schemas]

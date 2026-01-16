@@ -48,27 +48,16 @@ class BinController(BaseViewController[BinService, BinView, BinPlainSchema, BinS
         return BinView(self, translation, mode, event.view_key, event.data, warehouses, items)
 
     async def __perform_get_all_warehouses(self) -> list[tuple[int, str]]:
-        schemas = await self.__warehouse_service.call_api_with_token_refresh(
-            func=self.__warehouse_service.get_all,
-            endpoint=Endpoint.WAREHOUSES,
-            module_id=self._module_id,
-        )
-
+        schemas = await self.__warehouse_service.get_all(Endpoint.WAREHOUSES, None, None, None, self._module_id)
         return [(schema.id, schema.name) for schema in schemas]
 
     async def __perform_get_items_for_ids(self, item_ids: list[int]) -> list[ItemPlainSchema]:
-        return await self.__item_service.call_api_with_token_refresh(
-            func=self.__item_service.get_bulk,
-            endpoint=Endpoint.ITEMS_GET_BULK,
-            body_params={"ids": item_ids},
-            module_id=self._module_id,
-        )
+        body_params = {"ids": item_ids}
+        return await self.__item_service.get_bulk(Endpoint.ITEMS_GET_BULK, None, None, body_params, self._module_id)
 
     async def __perform_get_bin_item_quantities(self, bin_id: int) -> dict[int, int]:
-        bin_item_schemas = await self.__bin_item_service.call_api_with_token_refresh(
-            func=self.__bin_item_service.get_all,
-            endpoint=Endpoint.BIN_ITEMS,
-            query_params={"bin_id": bin_id},
-            module_id=self._module_id,
+        query_params = {"bin_id": bin_id}
+        bin_item_schemas = await self.__bin_item_service.get_all(
+            Endpoint.BIN_ITEMS, None, query_params, None, self._module_id
         )
         return {schema.item_id: schema.quantity for schema in bin_item_schemas}

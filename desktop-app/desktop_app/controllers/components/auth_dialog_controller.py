@@ -35,16 +35,8 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
         try:
             tokens = await self.__service.fetch_tokens(username, password)
             self._state_store.update(tokens={"access": tokens.access, "refresh": tokens.refresh})
-            all_modules = await self.__service.call_api_with_token_refresh(
-                func=self.__service.get_all_modules,
-                endpoint=Endpoint.MODULES,
-                module_id=self._module_id,
-            )
-            user = await self.__service.call_api_with_token_refresh(
-                func=self.__service.get_current_user,
-                endpoint=Endpoint.CURRENT_USER,
-                module_id=self._module_id,
-            )
+            all_modules = await self.__service.get_all_modules(Endpoint.MODULES, None, None, None, self._module_id)
+            user = await self.__service.get_current_user(Endpoint.CURRENT_USER, None, None, None, self._module_id)
             user_groups_set = {group.id for group in user.groups}
             user_modules: list[ModulePlainSchema] = []
             for module in all_modules:

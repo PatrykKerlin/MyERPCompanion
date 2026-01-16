@@ -66,6 +66,18 @@ class App:
             {"router": logistic.WarehouseController(self.__context, self.__auth).router, "prefix": "/warehouses"},
         ]
         business_trade_endpoints = [
+            {
+                "router": trade.AssocCategoryDiscountController(self.__context, self.__auth).router,
+                "prefix": "/category-discounts",
+            },
+            {
+                "router": trade.AssocCustomerDiscountController(self.__context, self.__auth).router,
+                "prefix": "/customer-discounts",
+            },
+            {
+                "router": trade.AssocItemDiscountController(self.__context, self.__auth).router,
+                "prefix": "/item-discounts",
+            },
             {"router": trade.CurrencyController(self.__context, self.__auth).router, "prefix": "/currencies"},
             {"router": trade.CustomerController(self.__context, self.__auth).router, "prefix": "/customers"},
             {"router": trade.DiscountController(self.__context, self.__auth).router, "prefix": "/discounts"},

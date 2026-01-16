@@ -9,6 +9,6 @@ class AssocBinItemStrictSchema(BaseStrictSchema):
 
 
 class AssocBinItemPlainSchema(BasePlainSchema):
-    quantity: Constraints.PositiveInteger
-    item_id: Constraints.PositiveInteger
-    bin_id: Constraints.PositiveInteger
+    quantity: int
+    item_id: int
+    bin_id: int

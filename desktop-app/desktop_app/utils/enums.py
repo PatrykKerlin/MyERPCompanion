@@ -15,6 +15,13 @@ class Module(IntEnum):
     CORE = 1
 
 
+class ApiActionError(StrEnum):
+    FETCH = "data_fetch_fail"
+    SAVE = "record_save_fail"
+    DELETE = "record_delete_fail"
+    GENERIC = "operation_failed"
+
+
 class View(StrEnum):
     SIDE_MENU = "side_menu"
     CURRENT_USER = "current_user"
@@ -67,3 +74,18 @@ class Endpoint(StrEnum):
     DISCOUNTS = "discounts"
     DISCOUNTS_GET_BULK = "discounts/get-bulk"
     CUSTOMERS = "customers"
+    CATEGORY_DISCOUNTS = "/category-discounts"
+    CATEGORY_DISCOUNTS_GET_BULK = "/category-discounts/get-bulk"
+    CATEGORY_DISCOUNTS_CREATE_BULK = "/category-discounts/create-bulk"
+    CATEGORY_DISCOUNTS_UPDATE_BULK = "/category-discounts/update-bulk"
+    CATEGORY_DISCOUNTS_DELETE_BULK = "/category-discounts/delete-bulk"
+    CUSTOMER_DISCOUNTS = "/customer-discounts"
+    CUSTOMER_DISCOUNTS_GET_BULK = "/customer-discounts/get-bulk"
+    CUSTOMER_DISCOUNTS_CREATE_BULK = "/customer-discounts/create-bulk"
+    CUSTOMER_DISCOUNTS_UPDATE_BULK = "/customer-discounts/update-bulk"
+    CUSTOMER_DISCOUNTS_DELETE_BULK = "/customer-discounts/delete-bulk"
+    ITEM_DISCOUNTS = "/item-discounts"
+    ITEM_DISCOUNTS_GET_BULK = "/item-discounts/get-bulk"
+    ITEM_DISCOUNTS_CREATE_BULK = "/item-discounts/create-bulk"
+    ITEM_DISCOUNTS_UPDATE_BULK = "/item-discounts/update-bulk"
+    ITEM_DISCOUNTS_DELETE_BULK = "/item-discounts/delete-bulk"

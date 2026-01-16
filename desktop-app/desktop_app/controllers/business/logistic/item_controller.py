@@ -67,53 +67,31 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         )
 
     async def __perform_get_all_categories(self) -> list[tuple[int, str]]:
-        schemas = await self.__category_service.call_api_with_token_refresh(
-            func=self.__category_service.get_all,
-            endpoint=Endpoint.CATEGORIES,
-            module_id=self._module_id,
-        )
+        schemas = await self.__category_service.get_all(Endpoint.CATEGORIES, None, None, None, self._module_id)
         return [(schema.id, schema.name) for schema in schemas]
 
     async def __perform_get_all_units(self) -> list[tuple[int, str]]:
-        schemas = await self.__unit_service.call_api_with_token_refresh(
-            func=self.__unit_service.get_all,
-            endpoint=Endpoint.UNITS,
-            module_id=self._module_id,
-        )
+        schemas = await self.__unit_service.get_all(Endpoint.UNITS, None, None, None, self._module_id)
         return [(schema.id, schema.name) for schema in schemas]
 
     async def __perform_get_all_suppliers(self) -> list[tuple[int, str]]:
-        schemas = await self.__supplier_service.call_api_with_token_refresh(
-            func=self.__supplier_service.get_all,
-            endpoint=Endpoint.SUPPLIERS,
-            module_id=self._module_id,
-        )
+        schemas = await self.__supplier_service.get_all(Endpoint.SUPPLIERS, None, None, None, self._module_id)
         return [(schema.id, schema.name) for schema in schemas]
 
     async def __perform_get_all_currencies(self) -> list[tuple[int, str]]:
-        schemas = await self.__currency_service.call_api_with_token_refresh(
-            func=self.__currency_service.get_all,
-            endpoint=Endpoint.CURRENCIES,
-            module_id=self._module_id,
-        )
+        schemas = await self.__currency_service.get_all(Endpoint.CURRENCIES, None, None, None, self._module_id)
         return [(schema.id, schema.code) for schema in schemas]
 
     async def __perform_get_bins_for_item(self, item_id: int) -> list[dict[str, Any]]:
-        bin_item_schemas = await self.__bin_item_service.call_api_with_token_refresh(
-            func=self.__bin_item_service.get_all,
-            endpoint=Endpoint.BIN_ITEMS,
-            query_params={"item_id": item_id},
-            module_id=self._module_id,
+        query_params = {"item_id": item_id}
+        bin_item_schemas = await self.__bin_item_service.get_all(
+            Endpoint.BIN_ITEMS, None, query_params, None, self._module_id
         )
         if not bin_item_schemas:
             return []
         bin_ids = [schema.bin_id for schema in bin_item_schemas]
-        bins = await self.__bin_service.call_api_with_token_refresh(
-            func=self.__bin_service.get_bulk,
-            endpoint=Endpoint.BINS_GET_BULK,
-            body_params={"ids": bin_ids},
-            module_id=self._module_id,
-        )
+        body_params = {"ids": bin_ids}
+        bins = await self.__bin_service.get_bulk(Endpoint.BINS_GET_BULK, None, None, body_params, self._module_id)
         quantity_by_bin_id = {schema.bin_id: schema.quantity for schema in bin_item_schemas}
         rows = []
         for bin_schema in bins:
@@ -201,14 +179,9 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
                 "content_type": content_type,
                 "item_id": str(item_id),
             }
-            response = await self.__image_service.call_api_with_token_refresh(
-                func=self.__image_service.create_multipart,
-                endpoint=Endpoint.IMAGES,
-                body_params={
-                    "data": form_data,
-                    "files": {"data": (file_name, data, content_type)},
-                },
-                module_id=self._module_id,
+            body_params = {"data": form_data, "files": {"data": (file_name, data, content_type)}}
+            response = await self.__image_service.create_multipart(
+                Endpoint.IMAGES, None, None, body_params, self._module_id
             )
             images.append(response.model_dump())
             self._view.data_row["images"] = images
@@ -268,12 +241,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         try:
             images_before = self._view.data_row["images"]
             deleted_image = next((image for image in images_before if image["id"] == image_id), None)
-            await self.__image_service.call_api_with_token_refresh(
-                func=self.__image_service.delete,
-                endpoint=Endpoint.IMAGES,
-                path_param=image_id,
-                module_id=self._module_id,
-            )
+            await self.__image_service.delete(Endpoint.IMAGES, image_id, None, None, self._module_id)
             images = [image for image in images_before if image["id"] != image_id]
             if images:
                 ordered = sorted(images, key=lambda image: image["order"])
@@ -319,17 +287,13 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
                 cleared = [
                     ImageStrictUpdateSchema(id=update.id, order=update.order, is_primary=False) for update in updates
                 ]
-                await self.__image_service.call_api_with_token_refresh(
-                    func=self.__image_service.update_bulk,
-                    endpoint=Endpoint.IMAGES_UPDATE_BULK,
-                    body_params=cast(list[ImageStrictCreateSchema | ImageStrictUpdateSchema], cleared),
-                    module_id=self._module_id,
+                body_params = cast(list[ImageStrictCreateSchema | ImageStrictUpdateSchema], cleared)
+                await self.__image_service.update_bulk(
+                    Endpoint.IMAGES_UPDATE_BULK, None, None, body_params, self._module_id
                 )
-            response = await self.__image_service.call_api_with_token_refresh(
-                func=self.__image_service.update_bulk,
-                endpoint=Endpoint.IMAGES_UPDATE_BULK,
-                body_params=cast(list[ImageStrictCreateSchema | ImageStrictUpdateSchema], updates),
-                module_id=self._module_id,
+            body_params = cast(list[ImageStrictCreateSchema | ImageStrictUpdateSchema], updates)
+            response = await self.__image_service.update_bulk(
+                Endpoint.IMAGES_UPDATE_BULK, None, None, body_params, self._module_id
             )
             updated_images = [item.model_dump() for item in response]
             self._view.data_row["images"] = updated_images
