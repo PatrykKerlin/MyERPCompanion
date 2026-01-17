@@ -92,6 +92,10 @@ class Fields:
     @staticmethod
     def numeric_3_2(nullable: bool = False) -> Mapped[Any]:
         return mapped_column(Numeric(3, 2), nullable=nullable)
+    
+    @staticmethod
+    def numeric_4_3(nullable: bool = False) -> Mapped[Any]:
+        return mapped_column(Numeric(4, 3), nullable=nullable)
 
     @staticmethod
     def numeric_10_2(nullable: bool = False) -> Mapped[Any]:

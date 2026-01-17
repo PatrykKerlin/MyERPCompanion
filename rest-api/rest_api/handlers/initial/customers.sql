@@ -1,3 +1,3 @@
 INSERT INTO customers (first_name, last_name, company_name, payment_term, tax_id, email, phone_number, street, house_number, apartment_number, postal_code, city, country, shipping_street, shipping_house_number, shipping_apartment_number, shipping_postal_code, shipping_city, shipping_country, user_id, is_active, created_at, created_by)
 VALUES
-('Jan', 'Kowalski', 'ACME Sp. z o.o.', 30, 1234567890, 'kontakt@acme.pl', '+48221234567', 'Przemysłowa', '15', NULL, '00-950', 'Warszawa', 'Polska', 'Przemysłowa', '15', NULL, '00-950', 'Warszawa', 'Polska', 2, TRUE, NOW(), :superuser_id);
+('Jan', 'Kowalski', 'ACME Sp. z o.o.', 30, 1234567890, 'kontakt@acme.pl', '+48221234567', 'Przemysłowa', '15', NULL, '00-950', 'Warszawa', 'Polska', 'Przemysłowa', '15', NULL, '00-950', 'Warszawa', 'Polska', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id);

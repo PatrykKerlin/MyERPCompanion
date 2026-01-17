@@ -4,6 +4,8 @@ from models.business.trade.assoc_item_discount import AssocItemDiscount
 from models.business.trade.currency import Currency
 from models.business.trade.customer import Customer
 from models.business.trade.discount import Discount
+from models.business.trade.exchange_rate import ExchangeRate
+from models.business.trade.payment_method import PaymentMethod
 from models.business.trade.supplier import Supplier
 from schemas.business.trade.assoc_category_discount_schema import (
     AssocCategoryDiscountPlainSchema,
@@ -20,6 +22,8 @@ from schemas.business.trade.assoc_item_discount_schema import (
 from schemas.business.trade.currency_schema import CurrencyPlainSchema, CurrencyStrictSchema
 from schemas.business.trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
 from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
+from schemas.business.trade.exchange_rate_schema import ExchangeRatePlainSchema, ExchangeRateStrictSchema
+from schemas.business.trade.payment_method_schema import PaymentMethodPlainSchema, PaymentMethodStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
 from services.business.trade import (
     AssocCategoryDiscountService,
@@ -28,6 +32,8 @@ from services.business.trade import (
     CurrencyService,
     CustomerService,
     DiscountService,
+    ExchangeRateService,
+    PaymentMethodService,
     SupplierService,
 )
 from utils.controller_factory import ControllerFactory
@@ -111,6 +117,18 @@ DiscountController = ControllerFactory.create(
         Action.DELETE: True,
     },
 )
+ExchangeRateController = ControllerFactory.create(
+    model_cls=ExchangeRate,
+    service_cls=ExchangeRateService,
+    input_schema_cls=ExchangeRateStrictSchema,
+    output_schema_cls=ExchangeRatePlainSchema,
+)
+PaymentMethodController = ControllerFactory.create(
+    model_cls=PaymentMethod,
+    service_cls=PaymentMethodService,
+    input_schema_cls=PaymentMethodStrictSchema,
+    output_schema_cls=PaymentMethodPlainSchema,
+)
 SupplierController = ControllerFactory.create(
     model_cls=Supplier,
     service_cls=SupplierService,
@@ -126,5 +144,6 @@ __all__ = [
     "CurrencyController",
     "CustomerController",
     "DiscountController",
+    "PaymentMethodController",
     "SupplierController",
 ]

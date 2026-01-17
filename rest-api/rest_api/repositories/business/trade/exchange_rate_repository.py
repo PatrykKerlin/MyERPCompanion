@@ -4,12 +4,14 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.business.trade import Customer, AssocCustomerDiscount, Discount
+
+from models.business.trade.currency import Currency
+from models.business.trade.exchange_rate import ExchangeRate
 from repositories.base.base_repository import BaseRepository
 
 
-class CustomerRepository(BaseRepository[Customer]):
-    _model_cls = Customer
+class ExchangeRateRepository(BaseRepository[ExchangeRate]):
+    _model_cls = ExchangeRate
 
     @classmethod
     def _build_query(
@@ -21,7 +23,7 @@ class CustomerRepository(BaseRepository[Customer]):
     ) -> Select:
         query = super()._build_query(params_filters, additional_filters, sort_by, sort_order)
         return query.options(
-            selectinload(cls._model_cls.customer_discounts).selectinload(AssocCustomerDiscount.discount),
-            with_loader_criteria(AssocCustomerDiscount, cls._expr(AssocCustomerDiscount.is_active.is_(True))),
-            with_loader_criteria(Discount, cls._expr(Discount.is_active.is_(True))),
+            selectinload(cls._model_cls.base_currency),
+            selectinload(cls._model_cls.quote_currency),
+            with_loader_criteria(Currency, cls._expr(Currency.is_active.is_(True))),
         )

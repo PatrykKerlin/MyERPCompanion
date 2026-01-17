@@ -7,5 +7,6 @@ from services.core.translation_service import TranslationService
 __all__ = [
     "AppService",
     "AuthService",
+    "ImageService",
     "TranslationService",
 ]

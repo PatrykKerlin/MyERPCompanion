@@ -19,10 +19,10 @@ class ExchangeRateStrictSchema(BaseStrictSchema):
     @model_validator(mode="after")
     def _validate_data(self) -> ExchangeRateStrictSchema:
         if self.base_currency_id == self.quote_currency_id:
-            raise ValueError("base_currency_id and quote_currency_id must be different")
+            raise ValueError("Base currency and quote currency must be different.")
 
         if self.valid_to and self.valid_to < self.valid_from:
-            raise ValueError("valid_to must be greater than or equal to valid_from")
+            raise ValueError("'Valid to' must be greater than or equal to 'Valid from'.")
 
         return self
 

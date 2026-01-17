@@ -19,7 +19,7 @@ class PaymentMethod(BaseModel):
 
     provider: Mapped[str] = Fields.string_50()
     api_url: Mapped[str] = Fields.string_1000()
-    surcharge_percent: Mapped[float] = Fields.numeric_3_2()
+    surcharge_percent: Mapped[float] = Fields.numeric_4_3()
 
     invoices: Mapped[list[Invoice]] = Fields.relationship(
         argument="Invoice", back_populates="payment_method", foreign_keys="Invoice.payment_method_id"

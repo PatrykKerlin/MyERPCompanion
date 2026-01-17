@@ -4,16 +4,20 @@ from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
 from models.business.trade.currency import Currency
 from models.business.trade.customer import Customer
 from models.business.trade.discount import Discount
+from models.business.trade.exchange_rate import ExchangeRate
+from models.business.trade.payment_method import PaymentMethod
 from models.business.trade.supplier import Supplier
 from repositories.business.trade import (
     AssocCategoryDiscountRepository,
     AssocCustomerDiscountRepository,
     AssocItemDiscountRepository,
     CurrencyRepository,
+    PaymentMethodRepository,
     SupplierRepository,
 )
 from repositories.business.trade.customer_repository import CustomerRepository
 from repositories.business.trade.discount_repository import DiscountRepository
+from repositories.business.trade.exchange_rate_repository import ExchangeRateRepository
 from schemas.business.trade.assoc_category_discount_schema import (
     AssocCategoryDiscountPlainSchema,
     AssocCategoryDiscountStrictSchema,
@@ -29,6 +33,8 @@ from schemas.business.trade.assoc_item_discount_schema import (
 from schemas.business.trade.currency_schema import CurrencyPlainSchema, CurrencyStrictSchema
 from schemas.business.trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
 from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
+from schemas.business.trade.exchange_rate_schema import ExchangeRatePlainSchema, ExchangeRateStrictSchema
+from schemas.business.trade.payment_method_schema import PaymentMethodPlainSchema, PaymentMethodStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
 from utils.service_factory import ServiceFactory
 
@@ -69,6 +75,18 @@ DiscountService = ServiceFactory.create(
     input_schema_cls=DiscountStrictSchema,
     output_schema_cls=DiscountPlainSchema,
 )
+ExchangeRateService = ServiceFactory.create(
+    model_cls=ExchangeRate,
+    repository_cls=ExchangeRateRepository,
+    input_schema_cls=ExchangeRateStrictSchema,
+    output_schema_cls=ExchangeRatePlainSchema,
+)
+PaymentMethodService = ServiceFactory.create(
+    model_cls=PaymentMethod,
+    repository_cls=PaymentMethodRepository,
+    input_schema_cls=PaymentMethodStrictSchema,
+    output_schema_cls=PaymentMethodPlainSchema,
+)
 SupplierService = ServiceFactory.create(
     model_cls=Supplier,
     repository_cls=SupplierRepository,
@@ -84,5 +102,7 @@ __all__ = [
     "CurrencyService",
     "CustomerService",
     "DiscountService",
+    "ExchangeRateService",
+    "PaymentMethodService",
     "SupplierService",
 ]

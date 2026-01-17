@@ -55,6 +55,7 @@ class PopulateDatabase:
             "views",
             "assoc_module_groups",
             "currencies",
+            "exchange_rates",
             "departments",
             "positions",
             "employees",
@@ -73,6 +74,7 @@ class PopulateDatabase:
             "assoc_bin_items",
             "assoc_item_discounts",
             "customers",
+            "payment_methods",
         ]
         for file_name in sql_files:
             file_path = self.__base_path / f"{file_name}.sql"
