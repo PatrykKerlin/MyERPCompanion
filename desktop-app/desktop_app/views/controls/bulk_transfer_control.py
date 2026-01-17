@@ -3,7 +3,13 @@ from typing import Callable
 
 
 class BulkTransfer(ft.Container):
-    def __init__(self, on_save_clicked: Callable[[ft.Event[ft.IconButton]], None]) -> None:
+    def __init__(
+        self,
+        on_save_clicked: Callable[[ft.Event[ft.IconButton]], None],
+        source_label: str,
+        target_label: str,
+        on_delete_clicked: Callable[[list[int]], None] | None = None,
+    ) -> None:
         super().__init__(expand=True)
         self.__source_enabled = False
         self.__target_enabled = False
@@ -17,6 +23,7 @@ class BulkTransfer(ft.Container):
         self.__source_ids_to_move: set[int] = set()
 
         self.__on_save_clicked = on_save_clicked
+        self.__on_delete_clicked = on_delete_clicked
 
         self.__source_list = ft.ListView(expand=True, spacing=2, auto_scroll=False, disabled=True)
         self.__target_list = ft.ListView(expand=True, spacing=2, auto_scroll=False, disabled=True)
@@ -29,6 +36,7 @@ class BulkTransfer(ft.Container):
 
         source_column = ft.Column(
             controls=[
+                ft.Text(source_label, weight=ft.FontWeight.W_600),
                 ft.Container(
                     content=self.__source_list,
                     expand=True,
@@ -50,6 +58,7 @@ class BulkTransfer(ft.Container):
 
         target_column = ft.Column(
             controls=[
+                ft.Text(target_label, weight=ft.FontWeight.W_600),
                 ft.Container(
                     content=self.__target_list,
                     expand=True,
@@ -69,6 +78,17 @@ class BulkTransfer(ft.Container):
             vertical_alignment=ft.CrossAxisAlignment.STRETCH,
         )
 
+    def clear_pending_changes(self) -> None:
+        ids_to_remove = list(self.__source_ids_to_move)
+        if ids_to_remove:
+            self.remove_target_items(ids_to_remove)
+        self.__selected_source_ids.clear()
+        self.__selected_target_ids.clear()
+        self.__source_ids_to_move.clear()
+        self.__update_save_button_state()
+        self.__render_source_list()
+        self.__render_target_list()
+
     def set_enabled_states(self, source_enabled: bool, target_enabled: bool, buttons_enabled: bool) -> None:
         self.__source_enabled = source_enabled
         self.__target_enabled = target_enabled
@@ -78,7 +98,7 @@ class BulkTransfer(ft.Container):
         self.__button_move.disabled = not buttons_enabled
         self.__button_delete.disabled = not buttons_enabled
         self.__update_save_button_state()
-        self.__safe_update()
+        self.__render_target_list()
 
     def set_source_enabled(self, enabled: bool) -> None:
         self.set_enabled_states(enabled, self.__target_enabled, enabled and self.__target_enabled)
@@ -191,7 +211,8 @@ class BulkTransfer(ft.Container):
                 padding=6,
                 bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST if is_selected else None,
             )
-            if is_highlighted:
+            selectable = self.__buttons_enabled and (is_highlighted or self.__on_delete_clicked is not None)
+            if selectable:
                 controls.append(
                     ft.GestureDetector(
                         content=container,
@@ -243,10 +264,15 @@ class BulkTransfer(ft.Container):
         selected_ids = self.get_selected_target_ids()
         if not selected_ids:
             return
-        deletable_ids = [item_id for item_id in selected_ids if self.is_target_item_from_source(item_id)]
-        if not deletable_ids:
-            return
-        self.remove_target_items(deletable_ids)
+        moved_ids = [item_id for item_id in selected_ids if self.is_target_item_from_source(item_id)]
+        persisted_ids = [item_id for item_id in selected_ids if item_id not in moved_ids]
+        if moved_ids:
+            self.remove_target_items(moved_ids)
+        if persisted_ids:
+            if self.__on_delete_clicked:
+                self.__on_delete_clicked(persisted_ids)
+            self.__selected_target_ids.difference_update(persisted_ids)
+            self.__render_target_list()
 
     def __handle_save_clicked(self, event: ft.Event[ft.IconButton]) -> None:
         self.__on_save_clicked(event)

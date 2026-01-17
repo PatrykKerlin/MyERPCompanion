@@ -25,6 +25,7 @@ class CustomerView(BaseView):
         discount_source_items: list[tuple[int, str]],
         discount_target_items: list[tuple[int, str]],
         on_discount_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
+        on_discount_delete_clicked: Callable[[list[int]], None] | None = None,
         # users: list[tuple[int, str]],
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
@@ -188,10 +189,13 @@ class CustomerView(BaseView):
         self._columns_row.controls.extend(columns)
         self.__bulk_transfer = BulkTransfer(
             on_save_clicked=on_discount_save_clicked or (lambda _: None),
+            source_label=self._translation.get("discounts"),
+            target_label=self._translation.get("customer_discounts"),
+            on_delete_clicked=on_discount_delete_clicked,
         )
-        self.__pending_discount_source_items = list(discount_source_items)
-        self.__pending_discount_target_items = list(discount_target_items)
-        self.__bulk_transfer.visible = mode in {ViewMode.CREATE, ViewMode.EDIT, ViewMode.READ}
+        self.__pending_discount_source_items = discount_source_items
+        self.__pending_discount_target_items = discount_target_items
+        self.__bulk_transfer.visible = mode in {ViewMode.EDIT, ViewMode.READ}
         self.__set_bulk_transfer_state(mode)
 
         bulk_transfer_row = ft.Row(
@@ -216,9 +220,10 @@ class CustomerView(BaseView):
         super().set_mode(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.CREATE, ViewMode.EDIT, ViewMode.READ}
         self.__set_bulk_transfer_state(mode)
+        self.__bulk_transfer.clear_pending_changes()
 
     def __set_bulk_transfer_state(self, mode: ViewMode) -> None:
-        editable = mode == ViewMode.EDIT
+        editable = mode == ViewMode.READ
         self.__bulk_transfer.set_enabled_states(editable, editable, editable)
 
     def get_pending_discount_ids(self) -> list[int]:

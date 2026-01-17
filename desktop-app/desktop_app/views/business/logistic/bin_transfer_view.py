@@ -31,7 +31,11 @@ class BinTransferView(BaseView):
         self.__source_input = ft.TextField(label=self._translation.get("source_bin"), on_submit=on_source_submitted)
         self.__target_input = ft.TextField(label=self._translation.get("target_bin"), on_submit=on_target_submitted)
 
-        self.__bulk_transfer = BulkTransfer(on_save_clicked=on_save_clicked)
+        self.__bulk_transfer = BulkTransfer(
+            on_save_clicked=on_save_clicked,
+            source_label=self._translation.get("source_bin"),
+            target_label=self._translation.get("target_bin"),
+        )
 
         inputs_row = ft.Row(
             controls=[

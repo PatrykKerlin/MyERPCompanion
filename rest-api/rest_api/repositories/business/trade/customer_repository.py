@@ -25,5 +25,6 @@ class CustomerRepository(BaseRepository[Customer]):
             selectinload(cls._model_cls.customer_discounts).selectinload(AssocCustomerDiscount.discount),
             selectinload(cls._model_cls.user),
             with_loader_criteria(User, cls._expr(User.is_active.is_(True))),
+            with_loader_criteria(AssocCustomerDiscount, cls._expr(AssocCustomerDiscount.is_active.is_(True))),
             with_loader_criteria(Discount, cls._expr(Discount.is_active.is_(True))),
         )

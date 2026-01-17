@@ -314,8 +314,8 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         if isinstance(body_params, dict):
             resolved_body_params = body_params
         else:
-            resolved_body_params = {}
-        await self._post(endpoint=endpoint, body_params=resolved_body_params, tokens=tokens, module_id=module_id)
+            resolved_body_params = None
+        await self._delete(endpoint=endpoint, body_params=resolved_body_params, tokens=tokens, module_id=module_id)
         return True
 
     async def refresh_tokens(self, tokens: TokenPlainSchema) -> TokenPlainSchema:
@@ -387,13 +387,13 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
     async def _delete(
         self,
         endpoint: str,
-        _: dict[str, Any] | None = None,
+        body_params: dict[str, Any] | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> httpx.Response:
         headers = self.__prepare_headers(tokens, module_id)
         async with httpx.AsyncClient(base_url=self._settings.API_URL, headers=headers) as client:
-            response = await client.delete(url=endpoint)
+            response = await client.request("DELETE", url=endpoint, json=body_params)
             response.raise_for_status()
             await asyncio.sleep(self.__sleep_time)
             return response
