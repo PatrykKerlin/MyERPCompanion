@@ -8,6 +8,7 @@ class BulkTransfer(ft.Container):
         on_save_clicked: Callable[[ft.Event[ft.IconButton]], None],
         source_label: str,
         target_label: str,
+        on_move_requested: Callable[[list[int]], None] | None = None,
         on_delete_clicked: Callable[[list[int]], None] | None = None,
     ) -> None:
         super().__init__(expand=True)
@@ -18,11 +19,13 @@ class BulkTransfer(ft.Container):
         self.__source_items: list[tuple[int, str]] = []
         self.__target_items: list[tuple[int, str]] = []
         self.__target_item_ids: set[int] = set()
+        self.__initial_target_item_ids: set[int] = set()
         self.__selected_source_ids: set[int] = set()
         self.__selected_target_ids: set[int] = set()
         self.__source_ids_to_move: set[int] = set()
 
         self.__on_save_clicked = on_save_clicked
+        self.__on_move_requested = on_move_requested
         self.__on_delete_clicked = on_delete_clicked
 
         self.__source_list = ft.ListView(expand=True, spacing=2, auto_scroll=False, disabled=True)
@@ -79,7 +82,9 @@ class BulkTransfer(ft.Container):
         )
 
     def clear_pending_changes(self) -> None:
-        ids_to_remove = list(self.__source_ids_to_move)
+        ids_to_remove = [
+            item_id for item_id in self.__source_ids_to_move if item_id not in self.__initial_target_item_ids
+        ]
         if ids_to_remove:
             self.remove_target_items(ids_to_remove)
         self.__selected_source_ids.clear()
@@ -116,6 +121,7 @@ class BulkTransfer(ft.Container):
     def set_target_items(self, items: list[tuple[int, str]]) -> None:
         self.__target_items = items
         self.__target_item_ids = {item_id for item_id, _ in items}
+        self.__initial_target_item_ids = set(self.__target_item_ids)
         self.__selected_target_ids.clear()
         self.__render_target_list()
         self.__update_save_button_state()
@@ -202,9 +208,18 @@ class BulkTransfer(ft.Container):
         for item_id, label in self.__target_items:
             is_selected = item_id in self.__selected_target_ids
             is_highlighted = item_id in self.__source_ids_to_move
-            text = ft.Text(
-                label, no_wrap=True, color=ft.Colors.ERROR if is_highlighted else None, key=f"tgt-txt-{item_id}"
-            )
+            if is_highlighted and item_id in self.__initial_target_item_ids:
+                text = ft.Column(
+                    controls=[
+                        ft.Text(label, no_wrap=True, key=f"tgt-txt-{item_id}"),
+                        ft.Text(label, no_wrap=True, color=ft.Colors.ERROR),
+                    ],
+                    spacing=2,
+                )
+            else:
+                text = ft.Text(
+                    label, no_wrap=True, color=ft.Colors.ERROR if is_highlighted else None, key=f"tgt-txt-{item_id}"
+                )
             container = ft.Container(
                 content=text,
                 key=f"tgt-row-{item_id}",
@@ -234,6 +249,7 @@ class BulkTransfer(ft.Container):
         if item_id in self.__selected_source_ids:
             self.__selected_source_ids.remove(item_id)
         else:
+            self.__selected_source_ids.clear()
             self.__selected_source_ids.add(item_id)
         self.__render_source_list()
 
@@ -241,33 +257,52 @@ class BulkTransfer(ft.Container):
         if item_id in self.__selected_target_ids:
             self.__selected_target_ids.remove(item_id)
         else:
+            self.__selected_target_ids.clear()
             self.__selected_target_ids.add(item_id)
         self.__render_target_list()
 
-    def __handle_move_clicked(self, event: ft.Event[ft.IconButton]) -> None:
+    def __handle_move_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         selected_ids = self.get_selected_source_ids()
         if not selected_ids:
             return
-        ids_to_add = [item_id for item_id in selected_ids if not self.has_target_item(item_id)]
+        if self.__on_move_requested:
+            self.__on_move_requested(selected_ids)
+            return
+        self.move_source_items(selected_ids, highlight=True)
+
+    def move_source_items(self, ids_to_add: list[int], highlight: bool) -> None:
         if not ids_to_add:
             return
-        items_to_move = self.get_source_items_by_ids(ids_to_add)
+        existing_ids = [item_id for item_id in ids_to_add if self.has_target_item(item_id)]
+        new_ids = [item_id for item_id in ids_to_add if item_id not in existing_ids]
+        if existing_ids:
+            self.mark_source_items_as_moved(existing_ids)
+            self.__render_target_list()
+        if not new_ids:
+            return
+        items_to_move = self.get_source_items_by_ids(new_ids)
         if not items_to_move:
             return
         actual_ids = [item_id for item_id, _ in items_to_move]
         if not actual_ids:
             return
         self.mark_source_items_as_moved(actual_ids)
-        self.prepend_target_items(items_to_move, highlight=True)
+        self.prepend_target_items(items_to_move, highlight=highlight)
 
-    def __handle_delete_clicked(self, event: ft.Event[ft.IconButton]) -> None:
+    def __handle_delete_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         selected_ids = self.get_selected_target_ids()
         if not selected_ids:
             return
         moved_ids = [item_id for item_id in selected_ids if self.is_target_item_from_source(item_id)]
+        moved_existing_ids = [item_id for item_id in moved_ids if item_id in self.__initial_target_item_ids]
+        moved_new_ids = [item_id for item_id in moved_ids if item_id not in moved_existing_ids]
         persisted_ids = [item_id for item_id in selected_ids if item_id not in moved_ids]
-        if moved_ids:
-            self.remove_target_items(moved_ids)
+        if moved_new_ids:
+            self.remove_target_items(moved_new_ids)
+        if moved_existing_ids:
+            self.__source_ids_to_move.difference_update(moved_existing_ids)
+            self.__selected_target_ids.difference_update(moved_existing_ids)
+            self.__render_target_list()
         if persisted_ids:
             if self.__on_delete_clicked:
                 self.__on_delete_clicked(persisted_ids)

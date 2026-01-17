@@ -1,10 +1,11 @@
 from config.context import Context
+from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.logistic.carrier_schema import CarrierPlainSchema, CarrierStrictSchema
 from schemas.business.logistic.delivery_method_schema import DeliveryMethodPlainSchema
 from services.business.logistic import CarrierService, DeliveryMethodService
 from services.business.trade import CurrencyService
-from utils.enums import Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.carrier_view import CarrierView
 from events.events import ViewRequested
@@ -46,10 +47,12 @@ class CarrierController(BaseViewController[CarrierService, CarrierView, CarrierP
             delivery_methods = []
         return CarrierView(self, translation, mode, event.view_key, event.data, currencies, delivery_methods)
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_currencies(self) -> list[tuple[int, str]]:
         schemas = await self.__currency_service.get_all(Endpoint.CURRENCIES, None, None, None, self._module_id)
         return [(schema.id, schema.code) for schema in schemas]
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_delivery_methods_for_id(self, id: int) -> list[DeliveryMethodPlainSchema]:
         query_params = {"carrier_id": id}
         return await self.__delivery_method_service.get_all(

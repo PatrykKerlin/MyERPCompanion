@@ -48,11 +48,18 @@ class DateField(ft.Row):
         self.__open_button = ft.IconButton(
             icon=ft.Icons.CALENDAR_MONTH, on_click=self.__open_picker, disabled=self.__read_only, width=48
         )
+        self.__clear_button = ft.IconButton(
+            icon=ft.Icons.CLEAR,
+            on_click=self.__clear_date,
+            disabled=self.__read_only or self.__value is None,
+            width=48,
+        )
 
         self.controls = [
             self.__picker,
             ft.Container(content=self.__open_button, alignment=ft.Alignment.TOP_CENTER),
             self.__text_field,
+            ft.Container(content=self.__clear_button, alignment=ft.Alignment.TOP_CENTER),
         ]
 
     @property
@@ -81,7 +88,9 @@ class DateField(ft.Row):
     def read_only(self, new_value: bool) -> None:
         self.__read_only = new_value
         self.__open_button.disabled = self.__read_only
+        self.__clear_button.disabled = self.__read_only or self.__value is None
         self.__open_button.update()
+        self.__clear_button.update()
 
     def __emit_value(self) -> None:
         if not self.__on_change:
@@ -111,6 +120,8 @@ class DateField(ft.Row):
         self.__text_field.update()
         if self.__picker.value != self.__value:
             self.__picker.value = self.__value
+        self.__clear_button.disabled = self.__read_only or self.__value is None
+        self.__clear_button.update()
 
     def __open_picker(self, _: ft.Event[ft.IconButton]) -> None:
         if not self.page:
@@ -122,4 +133,8 @@ class DateField(ft.Row):
         picked_raw = getattr(self.__picker, "value", None)
         picked = self.__normalize_input(picked_raw)
         self.__set_value(picked)
+        self.__emit_value()
+
+    def __clear_date(self, _: ft.Event[ft.IconButton]) -> None:
+        self.__set_value(None)
         self.__emit_value()

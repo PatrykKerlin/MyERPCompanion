@@ -20,6 +20,10 @@ class ApiActionError(StrEnum):
     SAVE = "record_save_fail"
     DELETE = "record_delete_fail"
     GENERIC = "operation_failed"
+    IMAGE_UPLOAD = "cant_upload_file"
+    IMAGE_UPDATE = "cant_update_image"
+    IMAGE_DELETE = "cant_delete_image"
+    INVALID_CREDENTIALS = "invalid_credentials"
 
 
 class View(StrEnum):

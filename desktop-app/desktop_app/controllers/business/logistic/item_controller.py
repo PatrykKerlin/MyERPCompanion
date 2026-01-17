@@ -5,16 +5,16 @@ import subprocess
 from typing import Any, cast
 
 import flet as ft
-from httpx import HTTPStatusError
 
 from config.context import Context
+from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
 from schemas.core.image_schema import ImageStrictCreateSchema, ImageStrictUpdateSchema
 from services.core.image_service import ImageService
 from services.business.logistic import AssocBinItemService, BinService, CategoryService, ItemService, UnitService
 from services.business.trade import CurrencyService, SupplierService
-from utils.enums import Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.item_view import ItemView
 from events.events import ViewRequested
@@ -66,22 +66,27 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
             self, translation, mode, event.view_key, event.data, categories, units, suppliers, currencies, bins
         )
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_categories(self) -> list[tuple[int, str]]:
         schemas = await self.__category_service.get_all(Endpoint.CATEGORIES, None, None, None, self._module_id)
         return [(schema.id, schema.name) for schema in schemas]
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_units(self) -> list[tuple[int, str]]:
         schemas = await self.__unit_service.get_all(Endpoint.UNITS, None, None, None, self._module_id)
         return [(schema.id, schema.name) for schema in schemas]
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_suppliers(self) -> list[tuple[int, str]]:
         schemas = await self.__supplier_service.get_all(Endpoint.SUPPLIERS, None, None, None, self._module_id)
-        return [(schema.id, schema.name) for schema in schemas]
+        return [(schema.id, schema.company_name) for schema in schemas]
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_currencies(self) -> list[tuple[int, str]]:
         schemas = await self.__currency_service.get_all(Endpoint.CURRENCIES, None, None, None, self._module_id)
         return [(schema.id, schema.code) for schema in schemas]
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_bins_for_item(self, item_id: int) -> list[dict[str, Any]]:
         query_params = {"item_id": item_id}
         bin_item_schemas = await self.__bin_item_service.get_all(
@@ -99,6 +104,59 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
             row["quantity"] = quantity_by_bin_id.get(bin_schema.id, 0)
             rows.append(row)
         return rows
+
+    @BaseController.handle_api_action(ApiActionError.IMAGE_UPLOAD)
+    async def __perform_image_upload(self, file_path: str) -> None:
+        if not self._view or not self._view.data_row:
+            return
+        item_id = self._view.data_row["id"]
+        images = self._view.data_row["images"]
+        is_primary = not self.__has_primary_image(images)
+        max_order = max((image["order"] for image in images), default=0)
+        next_order = max_order + 1
+        content_type = mimetypes.guess_type(file_path)[0]
+        file_name = os.path.basename(file_path)
+        with open(file_path, "rb") as file:
+            data = file.read()
+        form_data = {
+            "is_primary": str(is_primary).lower(),
+            "order": str(next_order),
+            "content_type": content_type,
+            "item_id": str(item_id),
+        }
+        body_params = {"data": form_data, "files": {"data": (file_name, data, content_type)}}
+        response = await self.__image_service.create_multipart(
+            Endpoint.IMAGES, None, None, body_params, self._module_id
+        )
+        images.append(response.model_dump())
+        self._view.data_row["images"] = images
+        self._view.set_images(images)
+
+    @BaseController.handle_api_action(ApiActionError.IMAGE_UPDATE)
+    async def __perform_images_bulk_update(
+        self, updates: list[ImageStrictUpdateSchema], primary_target_id: int | None
+    ) -> None:
+        if not self._view or not self._view.data_row:
+            return
+        if primary_target_id is not None:
+            cleared = [
+                ImageStrictUpdateSchema(id=update.id, order=update.order, is_primary=False) for update in updates
+            ]
+            body_params = cast(list[ImageStrictCreateSchema | ImageStrictUpdateSchema], cleared)
+            await self.__image_service.update_bulk(
+                Endpoint.IMAGES_UPDATE_BULK, None, None, body_params, self._module_id
+            )
+        body_params = cast(list[ImageStrictCreateSchema | ImageStrictUpdateSchema], updates)
+        response = await self.__image_service.update_bulk(
+            Endpoint.IMAGES_UPDATE_BULK, None, None, body_params, self._module_id
+        )
+        updated_images = [item.model_dump() for item in response]
+        self._view.data_row["images"] = updated_images
+        self._view.set_images(updated_images)
+
+    @BaseController.handle_api_action(ApiActionError.IMAGE_DELETE)
+    async def __perform_delete_image(self, image_id: int) -> None:
+        await self.__image_service.delete(Endpoint.IMAGES, image_id, None, None, self._module_id)
 
     async def __execute_pick_and_upload(self) -> None:
         file_path = await self.__pick_file_path()
@@ -152,46 +210,6 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
             return None
         return result.stdout.strip() or None
 
-    async def __perform_image_upload(self, file_path: str) -> None:
-        self._open_loading_dialog()
-        translation = self._state_store.app_state.translation.items
-        if not self._view or not self._view.data_row:
-            return
-        item_id = self._view.data_row["id"]
-        images = self._view.data_row["images"]
-        is_primary = not self.__has_primary_image(images)
-        max_order = max((image["order"] for image in images), default=0)
-        next_order = max_order + 1
-        content_type = mimetypes.guess_type(file_path)[0]
-        file_name = os.path.basename(file_path)
-        try:
-            with open(file_path, "rb") as file:
-                data = file.read()
-        except Exception as error:
-            self._open_loading_dialog()
-            self._logger.error(str(error))
-            self._open_error_dialog(message=translation.get("cant_read_file"))
-            return
-        try:
-            form_data = {
-                "is_primary": str(is_primary).lower(),
-                "order": str(next_order),
-                "content_type": content_type,
-                "item_id": str(item_id),
-            }
-            body_params = {"data": form_data, "files": {"data": (file_name, data, content_type)}}
-            response = await self.__image_service.create_multipart(
-                Endpoint.IMAGES, None, None, body_params, self._module_id
-            )
-            images.append(response.model_dump())
-            self._view.data_row["images"] = images
-            self._view.set_images(images)
-            self._close_loading_dialog()
-        except Exception as error:
-            self._close_loading_dialog()
-            self._logger.error(str(error))
-            self._open_error_dialog(message=translation.get("cant_upload_file"))
-
     def __has_primary_image(self, images: list[dict[str, Any]]) -> bool:
         for image in images:
             if image["is_primary"]:
@@ -222,14 +240,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
                     is_primary=updated_primary,
                 )
             )
-        self._open_loading_dialog()
-        try:
-            await self.__execute_images_bulk_update(updates, primary_target_id=image_id if is_primary else None)
-            self._close_loading_dialog()
-        except Exception as error:
-            self._close_loading_dialog()
-            self._logger.error(str(error))
-            self._open_error_dialog(message_key="cant_update_image")
+        await self.__perform_images_bulk_update(updates, primary_target_id=image_id if is_primary else None)
 
     async def __execute_image_delete(self, image_id: int) -> None:
         if not self._view or not self._view.data_row:
@@ -237,73 +248,28 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         confirm = await self._show_confirm_dialog("confirm_delete_image")
         if not confirm:
             return
-        self._open_loading_dialog()
-        try:
-            images_before = self._view.data_row["images"]
-            deleted_image = next((image for image in images_before if image["id"] == image_id), None)
-            await self.__image_service.delete(Endpoint.IMAGES, image_id, None, None, self._module_id)
-            images = [image for image in images_before if image["id"] != image_id]
-            if images:
-                ordered = sorted(images, key=lambda image: image["order"])
-                updates = []
-                for index, image in enumerate(ordered, start=1):
-                    is_primary = image["is_primary"]
-                    if deleted_image and deleted_image["is_primary"]:
-                        is_primary = index == 1
-                    updates.append(
-                        ImageStrictUpdateSchema(
-                            id=image["id"],
-                            order=index,
-                            is_primary=is_primary,
-                        )
+        images_before = self._view.data_row["images"]
+        deleted_image = next((image for image in images_before if image["id"] == image_id), None)
+        await self.__perform_delete_image(image_id)
+        images = [image for image in images_before if image["id"] != image_id]
+        if images:
+            ordered = sorted(images, key=lambda image: image["order"])
+            updates = []
+            for index, image in enumerate(ordered, start=1):
+                is_primary = image["is_primary"]
+                if deleted_image and deleted_image["is_primary"]:
+                    is_primary = index == 1
+                updates.append(
+                    ImageStrictUpdateSchema(
+                        id=image["id"],
+                        order=index,
+                        is_primary=is_primary,
                     )
-                await self.__execute_images_bulk_update(
-                    updates,
-                    primary_target_id=updates[0].id if deleted_image and deleted_image["is_primary"] else None,
                 )
-                images = self._view.data_row["images"]
-            self._view.data_row["images"] = images
-            self._view.set_images(images)
-            self._close_loading_dialog()
-        except HTTPStatusError as http_error:
-            self._close_loading_dialog()
-            if http_error.response.status_code == 403:
-                self._open_error_dialog(message_key="no_permissions")
-            else:
-                self._logger.error(str(http_error))
-                self._open_error_dialog(message_key="cant_delete_image")
-        except Exception as error:
-            self._close_loading_dialog()
-            self._logger.error(str(error))
-            self._open_error_dialog(message_key="cant_delete_image")
-
-    async def __execute_images_bulk_update(
-        self, updates: list[ImageStrictUpdateSchema], primary_target_id: int | None
-    ) -> None:
-        if not self._view or not self._view.data_row:
-            return
-        try:
-            if primary_target_id is not None:
-                cleared = [
-                    ImageStrictUpdateSchema(id=update.id, order=update.order, is_primary=False) for update in updates
-                ]
-                body_params = cast(list[ImageStrictCreateSchema | ImageStrictUpdateSchema], cleared)
-                await self.__image_service.update_bulk(
-                    Endpoint.IMAGES_UPDATE_BULK, None, None, body_params, self._module_id
-                )
-            body_params = cast(list[ImageStrictCreateSchema | ImageStrictUpdateSchema], updates)
-            response = await self.__image_service.update_bulk(
-                Endpoint.IMAGES_UPDATE_BULK, None, None, body_params, self._module_id
+            await self.__perform_images_bulk_update(
+                updates,
+                primary_target_id=updates[0].id if deleted_image and deleted_image["is_primary"] else None,
             )
-            updated_images = [item.model_dump() for item in response]
-            self._view.data_row["images"] = updated_images
-            self._view.set_images(updated_images)
-        except HTTPStatusError as http_error:
-            if http_error.response.status_code == 403:
-                self._open_error_dialog(message_key="no_permissions")
-            else:
-                self._logger.error(str(http_error))
-                self._open_error_dialog(message_key="cant_update_image")
-        except Exception as error:
-            self._logger.error(str(error))
-            self._open_error_dialog(message_key="cant_update_image")
+            images = self._view.data_row["images"]
+        self._view.data_row["images"] = images
+        self._view.set_images(images)

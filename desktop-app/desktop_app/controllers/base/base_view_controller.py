@@ -163,6 +163,7 @@ class BaseViewController(
     def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
         return available_fields
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def _perform_get_page(
         self, service: BaseService[TServicePlainSchema, TServiceStrictSchema], endpoint: Endpoint
     ) -> PaginatedResponseSchema[TServicePlainSchema]:
@@ -178,11 +179,13 @@ class BaseViewController(
         }
         return await service.get_page(endpoint, None, params, None, self._module_id)
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def _perform_get_one(
         self, id: int, service: BaseService[TServicePlainSchema, TServiceStrictSchema], endpoint: Endpoint
     ) -> TServicePlainSchema:
         return await service.get_one(endpoint, id, None, None, self._module_id)
 
+    @BaseController.handle_api_action(ApiActionError.SAVE)
     async def _perform_create(
         self,
         service: BaseService[TServicePlainSchema, TServiceStrictSchema],
@@ -191,6 +194,7 @@ class BaseViewController(
     ) -> TServicePlainSchema:
         return await service.create(endpoint, None, None, payload, self._module_id)
 
+    @BaseController.handle_api_action(ApiActionError.SAVE)
     async def _perform_create_bulk(
         self,
         service: BaseService[TServicePlainSchema, TServiceStrictSchema],
@@ -199,6 +203,7 @@ class BaseViewController(
     ) -> list[TServicePlainSchema]:
         return await service.create_bulk(endpoint, None, None, payload, self._module_id)
 
+    @BaseController.handle_api_action(ApiActionError.SAVE)
     async def _perform_update(
         self,
         id: int,
@@ -208,12 +213,12 @@ class BaseViewController(
     ) -> TServicePlainSchema:
         return await service.update(endpoint, id, None, payload, self._module_id)
 
+    @BaseController.handle_api_action(ApiActionError.DELETE)
     async def _perform_delete(
         self, id: int, service: BaseService[TServicePlainSchema, TServiceStrictSchema], endpoint: Endpoint
     ) -> bool:
         return await service.delete(endpoint, id, None, None, self._module_id)
 
-    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def _execute_row_clicked(
         self,
         result_id: int,
@@ -281,18 +286,15 @@ class BaseViewController(
             return
         self._request_data = RequestData()
 
-    @BaseController.handle_api_action(ApiActionError.DELETE)
     async def __record_delete_requested_handler(self, event: RecordDeleteRequested) -> None:
         if event.view_key != self._view_key:
             return
         await self._perform_delete(event.id, self._service, self._endpoint)
         tab_title = self._get_tab_title(event.view_key, event.id)
         await self._event_bus.publish(TabCloseRequested(tab_title))
-        self._close_loading_dialog()
         await self.__execute_search_clicked()
         self._open_message_dialog("record_delete_success")
 
-    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __record_saved_handler(self, event: RecordSaved):
         if event.view_key != self._view_key:
             return
@@ -335,7 +337,6 @@ class BaseViewController(
             return value_lower == "true"
         return value_stripped
 
-    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __execute_search_clicked(self) -> None:
         if not self._view:
             return
@@ -352,10 +353,8 @@ class BaseViewController(
             self._view.search_results = results
             self._state_store.update(view={"mode": ViewMode.LIST})
         else:
-            self._close_loading_dialog()
             self._open_message_dialog("no_records_found")
 
-    @BaseController.handle_api_action(ApiActionError.SAVE)
     async def __execute_save_clicked(self) -> None:
         if not self._view:
             return
@@ -381,35 +380,35 @@ class BaseViewController(
                         save_succeeded=True,
                     )
                 )
-            self._close_loading_dialog()
             if self._view.caller_view_key:
                 await self._event_bus.publish(
                     RecordSaved(
                         view_key=self._view.caller_view_key,
                     )
                 )
-            # self._page.pop_dialog()
         except ValidationError as validation_error:
             translate_state = self._state_store.app_state.translation
             error_message = [translate_state.items.get("validation_errors")]
             for error in validation_error.errors():
-                key = error["loc"][0]
-                message = error["msg"]
-                error_message.append(f"{translate_state.items.get(str(key))}: {message}")
+                message = error.get("msg", "")
+                loc = error.get("loc", ())
+                if loc:
+                    key = loc[0]
+                    error_message.append(f"{translate_state.items.get(str(key))}: {message}")
+                else:
+                    error_message.append(message)
             final_message = "\n".join(error_message)
-            self._close_loading_dialog()
             self._open_error_dialog(message=final_message)
 
     def __validate_field(self, key: str) -> str | None:
         if not self._view or self._view.mode not in {ViewMode.CREATE, ViewMode.EDIT}:
             return
+        self._view.set_save_button_state(True)
         if self._view.mode == ViewMode.CREATE:
             self._request_data.input_values["id"] = 1
         try:
             self._strict_schema_cls(**self._request_data.input_values)
-            self._view.set_save_button_state(True)
         except ValidationError as validation_error:
-            self._view.set_save_button_state(False)
             for error in validation_error.errors():
                 if error["loc"] == (key,):
                     return error["msg"]

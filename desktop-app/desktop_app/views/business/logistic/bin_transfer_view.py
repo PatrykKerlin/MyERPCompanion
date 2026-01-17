@@ -24,6 +24,7 @@ class BinTransferView(BaseView):
         on_source_submitted: Callable[[ft.Event[ft.TextField]], None],
         on_target_submitted: Callable[[ft.Event[ft.TextField]], None],
         on_save_clicked: Callable[[ft.Event[ft.IconButton]], None],
+        on_move_requested: Callable[[list[int]], None],
     ) -> None:
         super().__init__(controller, translation, mode, key, None, 0, 12)
         self._master_column.scroll = None
@@ -35,6 +36,7 @@ class BinTransferView(BaseView):
             on_save_clicked=on_save_clicked,
             source_label=self._translation.get("source_bin"),
             target_label=self._translation.get("target_bin"),
+            on_move_requested=on_move_requested,
         )
 
         inputs_row = ft.Row(
@@ -72,6 +74,9 @@ class BinTransferView(BaseView):
 
     def get_selected_source_ids(self) -> list[int]:
         return self.__bulk_transfer.get_selected_source_ids()
+
+    def move_source_items(self, ids: list[int], highlight: bool = True) -> None:
+        self.__bulk_transfer.move_source_items(ids, highlight)
 
     def set_source_error(self, message: str | None) -> None:
         self.__source_input.error = message

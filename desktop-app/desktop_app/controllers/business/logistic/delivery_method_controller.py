@@ -1,8 +1,9 @@
 from config.context import Context
+from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.logistic.delivery_method_schema import DeliveryMethodPlainSchema, DeliveryMethodStrictSchema
 from services.business.logistic import CarrierService, DeliveryMethodService, UnitService
-from utils.enums import Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.delivery_method_view import DeliveryMethodView
 from events.events import ViewRequested
@@ -30,10 +31,12 @@ class DeliveryMethodController(
             self, translation, mode, event.view_key, event.data, event.is_dialog, event.caller_view_key, carriers, units
         )
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_carriers(self) -> list[tuple[int, str]]:
         schemas = await self.__carrier_service.get_all(Endpoint.CARRIERS, None, None, None, self._module_id)
         return [(schema.id, schema.name) for schema in schemas]
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_units(self) -> list[tuple[int, str]]:
         schemas = await self.__unit_service.get_all(Endpoint.UNITS, None, None, None, self._module_id)
         return [(schema.id, schema.name) for schema in schemas]

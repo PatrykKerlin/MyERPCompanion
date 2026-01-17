@@ -8,90 +8,87 @@ from schemas.validation.constraints import Constraints
 
 
 class CustomerStrictSchema(BaseStrictSchema):
-    first_name: Constraints.String50
-    middle_name: str | None
-    last_name: Constraints.String50
+    first_name: Constraints.String50Optional
+    last_name: Constraints.String50Optional
 
-    is_company: Constraints.BooleanFalse
-    company_name: Constraints.String50Optional
+    company_name: Constraints.Name
 
     payment_term: Constraints.PaymentTerm
-    tax_id: Constraints.TaxIdOptional
+    tax_id: Constraints.TaxId
 
     email: Constraints.Email
     phone_number: Constraints.PhoneNumber
 
-    use_one_address: Constraints.BooleanTrue
+    street: str | None
+    house_number: Constraints.String10
+    apartment_number: str | None
+    postal_code: Constraints.PostalCode
+    city: Constraints.String50
+    country: Constraints.String50
 
     shipping_street: str | None
-    shipping_house_number: Constraints.String10
+    shipping_house_number: str | None
     shipping_apartment_number: str | None
-    shipping_postal_code: Constraints.PostalCode
-    shipping_city: Constraints.String50
-    shipping_country: Constraints.String50
-
-    billing_street: str | None
-    billing_house_number: str | None
-    billing_apartment_number: str | None
-    billing_postal_code: Constraints.PostalCodeOptional
-    billing_city: str | None
-    billing_country: str | None
+    shipping_postal_code: Constraints.PostalCodeOptional
+    shipping_city: str | None
+    shipping_country: str | None
 
     user_id: int
 
     @model_validator(mode="after")
     def _validate_data(self) -> CustomerStrictSchema:
-        if self.is_company and not self.company_name:
-            raise ValueError("Company_name is required when is_company is true.")
+        shipping_required_values = [
+            self.shipping_house_number,
+            self.shipping_postal_code,
+            self.shipping_city,
+            self.shipping_country,
+        ]
 
-        if not self.is_company and self.company_name:
-            raise ValueError("Company_name must be empty when is_company is false.")
-        
-        if self.tax_id and not self.is_company:
-            raise ValueError("Tax_id can be provided only when is_company is true.")
+        shipping_all_values = [
+            self.shipping_street,
+            self.shipping_house_number,
+            self.shipping_apartment_number,
+            self.shipping_postal_code,
+            self.shipping_city,
+            self.shipping_country,
+        ]
 
-        if self.is_company and not self.tax_id:
-            raise ValueError("Tax_id is required when is_company is true.")
+        if all(value is None for value in shipping_all_values):
+            return self
 
-        billing_address = [self.billing_house_number, self.billing_postal_code, self.billing_city, self.billing_country]
-        if self.use_one_address and any(billing_address):
-            raise ValueError("When use_one_address is true, billing address must be empty.")
+        is_shipping_required_complete = all(value not in {None, ""} for value in shipping_required_values)
 
-        if not self.use_one_address and not all(billing_address):
-            raise ValueError("When use_one_address is false, billing address must be fully provided.")
+        if not is_shipping_required_complete:
+            raise ValueError("Shipping address must be either completely empty or fully provided.")
 
         return self
 
 
 class CustomerPlainSchema(BasePlainSchema):
-    first_name: str
-    middle_name: str | None
-    last_name: str
+    first_name: str | None
+    last_name: str | None
 
-    is_company: bool
-    company_name: str | None
+    company_name: str
 
     payment_term: int
-    tax_id: str | None
+    tax_id: str
 
     email: str
     phone_number: str
 
-    use_one_address: bool
+    street: str | None
+    house_number: str
+    apartment_number: str | None
+    postal_code: str
+    city: str
+    country: str
 
     shipping_street: str | None
-    shipping_house_number: str
+    shipping_house_number: str | None
     shipping_apartment_number: str | None
-    shipping_postal_code: str
-    shipping_city: str
-    shipping_country: str
-
-    billing_street: str | None
-    billing_house_number: str | None
-    billing_apartment_number: str | None
-    billing_postal_code: str | None
-    billing_city: str | None
-    billing_country: str | None
+    shipping_postal_code: str | None
+    shipping_city: str | None
+    shipping_country: str | None
 
     user_id: int
 

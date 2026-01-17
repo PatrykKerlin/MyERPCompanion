@@ -1,9 +1,10 @@
 from config.context import Context
+from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.hr.position_schema import PositionPlainSchema, PositionStrictSchema
 from services.business.hr import DepartmentService, PositionService
 from services.business.trade import CurrencyService
-from utils.enums import Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.hr.position_view import PositionView
 from events.events import ViewRequested
@@ -27,10 +28,12 @@ class PositionController(BaseViewController[PositionService, PositionView, Posit
         departments = await self.__perform_get_all_departments()
         return PositionView(self, translation, mode, event.view_key, event.data, currencies, departments)
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_currencies(self) -> list[tuple[int, str]]:
         schemas = await self.__currency_service.get_all(Endpoint.CURRENCIES, None, None, None, self._module_id)
         return [(schema.id, schema.code) for schema in schemas]
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_departments(self) -> list[tuple[int, str]]:
         schemas = await self.__department_service.get_all(Endpoint.DEPARTMENTS, None, None, None, self._module_id)
         return [(schema.id, schema.code) for schema in schemas]

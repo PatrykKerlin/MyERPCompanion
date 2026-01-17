@@ -1,10 +1,11 @@
 from config.context import Context
+from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.hr.employee_schema import EmployeePlainSchema, EmployeeStrictSchema
 from schemas.business.hr.department_schema import DepartmentPlainSchema
 from schemas.business.hr.position_schema import PositionPlainSchema
 from services.business.hr import DepartmentService, EmployeeService, PositionService
-from utils.enums import Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.hr.employee_view import EmployeeView
 from events.events import ViewRequested
@@ -92,12 +93,15 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
             managers,
         )
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_employees(self) -> list[EmployeePlainSchema]:
         return await self._service.get_all(self._endpoint, None, None, None, self._module_id)
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_positions(self) -> list[PositionPlainSchema]:
         return await self.__position_service.get_all(Endpoint.POSITIONS, None, None, None, self._module_id)
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __get_all_departments(self) -> list[DepartmentPlainSchema]:
         return await self.__department_service.get_all(Endpoint.DEPARTMENTS, None, None, None, self._module_id)
 

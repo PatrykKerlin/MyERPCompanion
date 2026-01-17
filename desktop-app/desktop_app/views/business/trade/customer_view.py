@@ -32,14 +32,9 @@ class CustomerView(BaseView):
         # user_field_definition = [
         #     {"key": "user_id", "input": self._get_dropdown, "options": users},
         # ]
-        personal_fields_definitions = [
-            {"key": "first_name", "input": self._get_text_input},
-            {"key": "middle_name", "input": self._get_text_input},
-            {"key": "last_name", "input": self._get_text_input},
-        ]
-
         company_fields_definitions = [
-            {"key": "is_company", "input": self._get_checkbox},
+            {"key": "first_name", "input": self._get_text_input},
+            {"key": "last_name", "input": self._get_text_input},
             {"key": "company_name", "input": self._get_text_input},
         ]
         financial_fields_definitions = [
@@ -54,6 +49,34 @@ class CustomerView(BaseView):
             {"key": "use_one_address", "input": self._get_checkbox},
         ]
 
+        street_field_definition = [
+            {"key": "street", "input": self._get_text_input},
+        ]
+        house_fields_definitions = [
+            {"key": "house_number", "input": self._get_text_input, "input_size": 3, "columns": 8},
+            {
+                "key": "apartment_number",
+                "label": "/",
+                "input": self._get_text_input,
+                "label_size": 1,
+                "input_size": 2,
+                "columns": 4,
+                "colon": False,
+            },
+        ]
+        city_fields_definitions = [
+            {"key": "city", "input": self._get_text_input, "input_size": 3, "columns": 8},
+            {
+                "key": "postal_code",
+                "input": self._get_text_input,
+                "label_size": 1,
+                "input_size": 2,
+                "columns": 4,
+            },
+        ]
+        country_field_definition = [
+            {"key": "country", "input": self._get_text_input, "input_size": 3},
+        ]
         shipping_street_field_definition = [
             {"key": "shipping_street", "input": self._get_text_input},
         ]
@@ -82,81 +105,50 @@ class CustomerView(BaseView):
         shipping_country_field_definition = [
             {"key": "shipping_country", "input": self._get_text_input, "input_size": 3},
         ]
-        billing_street_field_definition = [
-            {"key": "billing_street", "input": self._get_text_input},
-        ]
-        billing_house_fields_definitions = [
-            {"key": "billing_house_number", "input": self._get_text_input, "input_size": 3, "columns": 8},
-            {
-                "key": "billing_apartment_number",
-                "label": "/",
-                "input": self._get_text_input,
-                "label_size": 1,
-                "input_size": 2,
-                "columns": 4,
-                "colon": False,
-            },
-        ]
-        billing_city_fields_definitions = [
-            {"key": "billing_city", "input": self._get_text_input, "input_size": 3, "columns": 8},
-            {
-                "key": "billing_postal_code",
-                "input": self._get_text_input,
-                "label_size": 1,
-                "input_size": 2,
-                "columns": 4,
-            },
-        ]
-        billing_country_field_definition = [
-            {"key": "billing_country", "input": self._get_text_input, "input_size": 3},
-        ]
 
         # user_field = self._build_field_groups(user_field_definition)
-        personal_fields = self._build_field_groups(personal_fields_definitions)
         company_fields = self._build_field_groups(company_fields_definitions)
         financial_fields = self._build_field_groups(financial_fields_definitions)
         contact_fields = self._build_field_groups(contact_fields_definitions)
         address_field = self._build_field_groups(address_field_definition)
+        street_field = self._build_field_groups(street_field_definition)
+        house_fields = self._build_field_groups(house_fields_definitions)
+        city_fields = self._build_field_groups(city_fields_definitions)
+        country_field = self._build_field_groups(country_field_definition)
         shipping_street_field = self._build_field_groups(shipping_street_field_definition)
         shipping_house_fields = self._build_field_groups(shipping_house_fields_definitions)
         shipping_city_fields = self._build_field_groups(shipping_city_fields_definitions)
         shipping_country_field = self._build_field_groups(shipping_country_field_definition)
-        billing_street_field = self._build_field_groups(billing_street_field_definition)
-        billing_house_fields = self._build_field_groups(billing_house_fields_definitions)
-        billing_city_fields = self._build_field_groups(billing_city_fields_definitions)
-        billing_country_field = self._build_field_groups(billing_country_field_definition)
 
         self._add_to_inputs(
             # user_field,
-            personal_fields,
             company_fields,
             financial_fields,
             contact_fields,
             address_field,
+            street_field,
+            house_fields,
+            city_fields,
+            country_field,
             shipping_street_field,
             shipping_house_fields,
             shipping_city_fields,
             shipping_country_field,
-            billing_street_field,
-            billing_house_fields,
-            billing_city_fields,
-            billing_country_field,
         )
 
         # user_grid = self._build_grid(user_field)
-        personal_grid = self._build_grid(personal_fields)
         company_grid = self._build_grid(company_fields)
         financial_grid = self._build_grid(financial_fields)
         contact_grid = self._build_grid(contact_fields)
         address_grid = self._build_grid(address_field)
+        street_grid = self._build_grid(street_field)
+        house_grid = self._build_grid(house_fields, inline=True)
+        city_grid = self._build_grid(city_fields, inline=True)
+        country_grid = self._build_grid(country_field)
         shipping_street_grid = self._build_grid(shipping_street_field)
         shipping_house_grid = self._build_grid(shipping_house_fields, inline=True)
         shipping_city_grid = self._build_grid(shipping_city_fields, inline=True)
         shipping_country_grid = self._build_grid(shipping_country_field)
-        billing_street_grid = self._build_grid(billing_street_field)
-        billing_house_grid = self._build_grid(billing_house_fields, inline=True)
-        billing_city_grid = self._build_grid(billing_city_fields, inline=True)
-        billing_country_grid = self._build_grid(billing_country_field)
 
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
 
@@ -164,25 +156,25 @@ class CustomerView(BaseView):
             ft.Column(
                 controls=
                 # user_grid
-                personal_grid
-                + company_grid
+                company_grid
+                + financial_grid
                 + contact_grid
                 + address_grid
-                + shipping_street_grid
-                + shipping_house_grid
-                + shipping_city_grid
-                + shipping_country_grid,
+                + street_grid
+                + house_grid
+                + city_grid
+                + country_grid,
                 expand=3,
             ),
             self._spacing_column,
             ft.Column(
                 controls=meta_grid
                 + self._spacing_responsive_row
-                + financial_grid
-                + billing_street_grid
-                + billing_house_grid
-                + billing_city_grid
-                + billing_country_grid,
+                + self._spacing_responsive_row
+                + shipping_street_grid
+                + shipping_house_grid
+                + shipping_city_grid
+                + shipping_country_grid,
                 expand=2,
             ),
         ]

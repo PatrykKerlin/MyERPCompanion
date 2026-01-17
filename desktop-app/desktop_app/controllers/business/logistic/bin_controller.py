@@ -1,10 +1,11 @@
 from config.context import Context
+from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.logistic.bin_schema import BinPlainSchema, BinStrictSchema
 from schemas.business.logistic.item_schema import ItemPlainSchema
 from services.business.logistic import AssocBinItemService, BinService, WarehouseService
 from services.business.logistic import ItemService
-from utils.enums import Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.bin_view import BinView
 from events.events import ViewRequested
@@ -47,14 +48,17 @@ class BinController(BaseViewController[BinService, BinView, BinPlainSchema, BinS
             items = []
         return BinView(self, translation, mode, event.view_key, event.data, warehouses, items)
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_warehouses(self) -> list[tuple[int, str]]:
         schemas = await self.__warehouse_service.get_all(Endpoint.WAREHOUSES, None, None, None, self._module_id)
         return [(schema.id, schema.name) for schema in schemas]
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_items_for_ids(self, item_ids: list[int]) -> list[ItemPlainSchema]:
         body_params = {"ids": item_ids}
         return await self.__item_service.get_bulk(Endpoint.ITEMS_GET_BULK, None, None, body_params, self._module_id)
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_bin_item_quantities(self, bin_id: int) -> dict[int, int]:
         query_params = {"bin_id": bin_id}
         bin_item_schemas = await self.__bin_item_service.get_all(

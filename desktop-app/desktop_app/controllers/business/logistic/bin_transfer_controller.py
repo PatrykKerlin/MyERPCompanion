@@ -1,17 +1,18 @@
 import asyncio
 
 import flet as ft
-from httpx import HTTPStatusError
 
 from config.context import Context
+from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from events.events import ViewRequested
 from schemas.business.logistic.assoc_bin_item_schema import AssocBinItemPlainSchema, AssocBinItemStrictSchema
 from schemas.business.logistic.bin_schema import BinPlainSchema
 from services.business.logistic import AssocBinItemService, BinService, ItemService
-from utils.enums import Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.bin_transfer_view import BinTransferView
+from views.components.quantity_dialog_component import QuantityDialogComponent
 
 
 class BinTransferController(
@@ -33,6 +34,7 @@ class BinTransferController(
         self.__target_bin: BinPlainSchema | None = None
         self.__source_items: dict[int, tuple[str, int, int]] = {}
         self.__target_items: dict[int, tuple[str, int, int]] = {}
+        self.__pending_move_quantities: dict[int, int] = {}
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinTransferView:
         mode = ViewMode.STATIC
@@ -44,6 +46,7 @@ class BinTransferController(
             self.on_source_bin_submit,
             self.on_target_bin_submit,
             self.on_bulk_transfer_save_clicked,
+            self.on_bulk_transfer_move_requested,
         )
 
     def on_source_bin_submit(self, event: ft.Event[ft.TextField]) -> None:
@@ -71,155 +74,33 @@ class BinTransferController(
             return
         self._page.run_task(self.__handle_bulk_transfer_save)
 
-    async def __handle_bulk_transfer_save(self) -> None:
-        if not self._view or not self.__target_bin:
+    def on_bulk_transfer_move_requested(self, selected_ids: list[int]) -> None:
+        if not self._view or not selected_ids:
             return
-        pending_ids = self._view.get_pending_move_ids()
-        if not pending_ids:
+        item_id = selected_ids[0]
+        source_item = self.__source_items.get(item_id)
+        if not source_item:
             return
-        bin_items_schemas: list[AssocBinItemStrictSchema] = []
-        delete_ids: list[int] = []
-        for item_id in pending_ids:
-            source_item = self.__source_items[item_id]
-            source_bin_item_id = source_item[1]
-            source_quantity = source_item[2]
-            target_item = self.__target_items.get(item_id)
-            if target_item:
-                target_bin_item_id = target_item[1]
-                target_quantity = target_item[2]
-                bin_items_schemas.append(
-                    AssocBinItemStrictSchema(
-                        id=target_bin_item_id,
-                        bin_id=self.__target_bin.id,
-                        item_id=item_id,
-                        quantity=target_quantity + source_quantity,
-                    )
-                )
-                delete_ids.append(source_bin_item_id)
-            else:
-                bin_items_schemas.append(
-                    AssocBinItemStrictSchema(
-                        id=source_bin_item_id,
-                        bin_id=self.__target_bin.id,
-                        item_id=item_id,
-                        quantity=source_quantity,
-                    )
-                )
-        if not bin_items_schemas:
-            return
-        try:
-            self._open_loading_dialog()
-            await self.__move_items_to_target(bin_items_schemas)
-            if delete_ids:
-                await self.__delete_source_items(delete_ids)
-            await self.__refresh_transfer_lists()
-            self._close_loading_dialog()
-        except HTTPStatusError as error:
-            self._close_loading_dialog()
-            self._open_error_dialog(message=str(error))
-        except Exception as error:
-            self._close_loading_dialog()
-            self._open_error_dialog(message=str(error))
+        max_quantity = source_item[2]
+        self._page.run_task(self.__handle_move_with_quantity, item_id, max_quantity)
 
-    async def __move_items_to_target(self, bin_items: list[AssocBinItemStrictSchema]) -> None:
-        await self.__bin_item_service.update_bulk(
-            Endpoint.BIN_ITEMS_UPDATE_BULK, None, None, bin_items, self._module_id
-        )
+    @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def __perform_create_bin_items(self, items: list[AssocBinItemStrictSchema]) -> None:
+        await self.__bin_item_service.create_bulk(Endpoint.BIN_ITEMS_CREATE_BULK, None, None, items, self._module_id)
 
-    async def __delete_source_items(self, ids: list[int]) -> None:
+    @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def __perform_update_bin_items(self, items: list[AssocBinItemStrictSchema]) -> None:
+        await self.__bin_item_service.update_bulk(Endpoint.BIN_ITEMS_UPDATE_BULK, None, None, items, self._module_id)
+
+    @BaseController.handle_api_action(ApiActionError.DELETE)
+    async def __perform_delete_source_items(self, ids: list[int]) -> None:
         body_params = {"ids": ids}
         await self.__bin_item_service.delete_bulk(
             Endpoint.BIN_ITEMS_DELETE_BULK, None, None, body_params, self._module_id
         )
 
-    async def __refresh_transfer_lists(self) -> None:
-        await asyncio.gather(self.__refresh_source_items(), self.__refresh_target_items())
-
-    async def __refresh_source_items(self) -> None:
-        if not self._view or not self.__source_bin:
-            return
-        translation_items = self._state_store.app_state.translation.items
-        bin_schema = await self.__get_single_bin(self.__source_bin.location)
-        if not bin_schema:
-            self._view.set_source_items([])
-            self._view.set_source_enabled(False)
-            self._view.set_source_error(translation_items.get("bin_not_found"))
-            self.__source_bin = None
-            return
-        self.__source_bin = bin_schema
-        self.__source_items = await self.__fetch_bin_items(bin_schema)
-        self._view.set_source_items([(key, value[0]) for key, value in self.__source_items.items()])
-        self._view.set_source_enabled(True)
-        self._view.set_source_error(None)
-
-    async def __refresh_target_items(self) -> None:
-        if not self._view or not self.__target_bin:
-            return
-        translation_items = self._state_store.app_state.translation.items
-        bin_schema = await self.__get_single_bin(self.__target_bin.location)
-        if not bin_schema:
-            self._view.set_target_items([])
-            self._view.set_target_enabled(False)
-            self._view.set_target_error(translation_items.get("bin_not_found"))
-            self.__target_bin = None
-            return
-        self.__target_bin = bin_schema
-        self.__target_items = await self.__fetch_bin_items(bin_schema)
-        self._view.set_target_items([(key, value[0]) for key, value in self.__target_items.items()])
-        self._view.set_target_enabled(True)
-        self._view.set_target_error(None)
-
-    async def __validate_enable_and_load_source(self, location: str) -> None:
-        if not self._view:
-            return
-        self._open_loading_dialog()
-        bin_schema = await self.__get_single_bin(location)
-        if not bin_schema:
-            self._close_loading_dialog()
-            self._view.set_source_enabled(False)
-            translate_state = self._state_store.app_state.translation
-            self._view.set_source_error(translate_state.items.get("bin_not_found"))
-            self.__source_bin = None
-            return
-        if self.__target_bin and bin_schema.id == self.__target_bin.id:
-            self._close_loading_dialog()
-            self._view.set_target_enabled(False)
-            translate_state = self._state_store.app_state.translation
-            self._view.set_target_error(translate_state.items.get("bins_must_be_different"))
-            self.__source_bin = None
-            return
-        self.__source_bin = bin_schema
-        self.__source_items = await self.__fetch_bin_items(bin_schema)
-        self._close_loading_dialog()
-        self._view.set_source_items([(key, value[0]) for key, value in self.__source_items.items()])
-        self._view.set_source_enabled(True)
-
-    async def __validate_enable_and_load_target(self, location: str) -> None:
-        if not self._view:
-            return
-        self._open_loading_dialog()
-        bin_schema = await self.__get_single_bin(location)
-        if not bin_schema:
-            self._close_loading_dialog()
-            self._view.set_target_enabled(False)
-            translate_state = self._state_store.app_state.translation
-            self._view.set_target_error(translate_state.items.get("bin_not_found"))
-            self.__target_bin = None
-            return
-        if self.__source_bin and bin_schema.id == self.__source_bin.id:
-            self._close_loading_dialog()
-            self._view.set_target_enabled(False)
-            translate_state = self._state_store.app_state.translation
-            self._view.set_target_error(translate_state.items.get("bins_must_be_different"))
-            self.__target_bin = None
-            return
-        self.__target_bin = bin_schema
-        self.__target_items = await self.__fetch_bin_items(bin_schema)
-        self._close_loading_dialog()
-        self._view.set_target_items([(key, value[0]) for key, value in self.__target_items.items()])
-        self._view.set_target_enabled(True)
-
-    async def __get_single_bin(self, location: str) -> BinPlainSchema | None:
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_single_bin(self, location: str) -> BinPlainSchema | None:
         query_params = {"page": 1, "page_size": 2, "location": location}
         response = await self.__bin_service.get_page(Endpoint.BINS, None, query_params, None, self._module_id)
         items = response.items
@@ -228,7 +109,8 @@ class BinTransferController(
             return exact_matches[0]
         return None
 
-    async def __fetch_bin_items(self, bin: BinPlainSchema) -> dict[int, tuple[str, int, int]]:
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_fetch_bin_items(self, bin: BinPlainSchema) -> dict[int, tuple[str, int, int]]:
         if not bin.item_ids:
             return {}
         body_params = {"ids": bin.item_ids}
@@ -251,3 +133,183 @@ class BinTransferController(
             source_items[item_schema.id] = (item_schema.index, bin_item.id, bin_item.quantity)
 
         return source_items
+
+    async def __handle_bulk_transfer_save(self) -> None:
+        if not self._view or not self.__target_bin or not self.__source_bin:
+            return
+        pending_ids = self._view.get_pending_move_ids()
+        if not pending_ids:
+            return
+        updates: list[AssocBinItemStrictSchema] = []
+        creates: list[AssocBinItemStrictSchema] = []
+        delete_ids: list[int] = []
+        for item_id in pending_ids:
+            source_item = self.__source_items[item_id]
+            source_bin_item_id = source_item[1]
+            source_quantity = source_item[2]
+            move_quantity = self.__pending_move_quantities.get(item_id, source_quantity)
+            move_quantity = max(1, min(move_quantity, source_quantity))
+            target_item = self.__target_items.get(item_id)
+            if target_item:
+                target_bin_item_id = target_item[1]
+                target_quantity = target_item[2]
+                updates.append(
+                    AssocBinItemStrictSchema(
+                        id=target_bin_item_id,
+                        bin_id=self.__target_bin.id,
+                        item_id=item_id,
+                        quantity=target_quantity + move_quantity,
+                    )
+                )
+                if move_quantity < source_quantity:
+                    updates.append(
+                        AssocBinItemStrictSchema(
+                            id=source_bin_item_id,
+                            bin_id=self.__source_bin.id,
+                            item_id=item_id,
+                            quantity=source_quantity - move_quantity,
+                        )
+                    )
+                else:
+                    delete_ids.append(source_bin_item_id)
+            else:
+                if move_quantity < source_quantity:
+                    creates.append(
+                        AssocBinItemStrictSchema(
+                            bin_id=self.__target_bin.id,
+                            item_id=item_id,
+                            quantity=move_quantity,
+                        )
+                    )
+                    updates.append(
+                        AssocBinItemStrictSchema(
+                            id=source_bin_item_id,
+                            bin_id=self.__source_bin.id,
+                            item_id=item_id,
+                            quantity=source_quantity - move_quantity,
+                        )
+                    )
+                else:
+                    updates.append(
+                        AssocBinItemStrictSchema(
+                            id=source_bin_item_id,
+                            bin_id=self.__target_bin.id,
+                            item_id=item_id,
+                            quantity=source_quantity,
+                        )
+                    )
+        if not updates and not creates:
+            return
+        if creates:
+            await self.__perform_create_bin_items(creates)
+        if updates:
+            await self.__perform_update_bin_items(updates)
+        if delete_ids:
+            await self.__perform_delete_source_items(delete_ids)
+        await self.__refresh_transfer_lists()
+        self.__pending_move_quantities.clear()
+
+    async def __handle_move_with_quantity(self, item_id: int, max_quantity: int) -> None:
+        if not self._view:
+            return
+        quantity = await self.__show_quantity_dialog(max_quantity)
+        if not quantity:
+            return
+        self.__pending_move_quantities[item_id] = quantity
+        self._view.move_source_items([item_id], highlight=True)
+
+    async def __show_quantity_dialog(self, max_quantity: int) -> int | None:
+        translation = self._state_store.app_state.translation.items
+        dialog = QuantityDialogComponent(translation, max_quantity)
+        self._page.show_dialog(dialog)
+        try:
+            return await dialog.future
+        finally:
+            self._page.pop_dialog()
+
+    async def __refresh_transfer_lists(self) -> None:
+        await asyncio.gather(self.__refresh_source_items(), self.__refresh_target_items())
+
+    async def __refresh_source_items(self) -> None:
+        if not self._view or not self.__source_bin:
+            return
+        translation = self._state_store.app_state.translation.items
+        bin_schema = await self.__perform_get_single_bin(self.__source_bin.location)
+        if not bin_schema:
+            self._view.set_source_items([])
+            self._view.set_source_enabled(False)
+            self._view.set_source_error(translation.get("bin_not_found"))
+            self.__source_bin = None
+            return
+        self.__source_bin = bin_schema
+        self.__source_items = await self.__perform_fetch_bin_items(bin_schema)
+        self._view.set_source_items([(key, value[0]) for key, value in self.__source_items.items()])
+        self._view.set_source_enabled(True)
+        self._view.set_source_error(None)
+
+    async def __refresh_target_items(self) -> None:
+        if not self._view or not self.__target_bin:
+            return
+        translation = self._state_store.app_state.translation.items
+        bin_schema = await self.__perform_get_single_bin(self.__target_bin.location)
+        if not bin_schema:
+            self._view.set_target_items([])
+            self._view.set_target_enabled(False)
+            self._view.set_target_error(translation.get("bin_not_found"))
+            self.__target_bin = None
+            return
+        self.__target_bin = bin_schema
+        self.__target_items = await self.__perform_fetch_bin_items(bin_schema)
+        self._view.set_target_items([(key, value[0]) for key, value in self.__target_items.items()])
+        self._view.set_target_enabled(True)
+        self._view.set_target_error(None)
+
+    async def __validate_enable_and_load_source(self, location: str) -> None:
+        if not self._view:
+            return
+        self._open_loading_dialog()
+        bin_schema = await self.__perform_get_single_bin(location)
+        if not bin_schema:
+            self._close_loading_dialog()
+            self._view.set_source_enabled(False)
+            translate = self._state_store.app_state.translation.items
+            self._view.set_source_error(translate.get("bin_not_found"))
+            self.__source_bin = None
+            return
+        if self.__target_bin and bin_schema.id == self.__target_bin.id:
+            self._close_loading_dialog()
+            self._view.set_target_enabled(False)
+            translate = self._state_store.app_state.translation.items
+            self._view.set_target_error(translate.get("bins_must_be_different"))
+            self.__source_bin = None
+            return
+        self.__source_bin = bin_schema
+        self.__source_items = await self.__perform_fetch_bin_items(bin_schema)
+        self._close_loading_dialog()
+        self._view.set_source_items([(key, value[0]) for key, value in self.__source_items.items()])
+        self._view.set_source_enabled(True)
+
+    async def __validate_enable_and_load_target(self, location: str) -> None:
+        if not self._view:
+            return
+        self._open_loading_dialog()
+        bin_schema = await self.__perform_get_single_bin(location)
+        if not bin_schema:
+            self._close_loading_dialog()
+            self._view.set_target_enabled(False)
+            translate = self._state_store.app_state.translation.items
+            self._view.set_target_error(translate.get("bin_not_found"))
+            self.__target_bin = None
+            return
+        if self.__source_bin and bin_schema.id == self.__source_bin.id:
+            self._close_loading_dialog()
+            self._view.set_target_enabled(False)
+            translate = self._state_store.app_state.translation.items
+            self._view.set_target_error(translate.get("bins_must_be_different"))
+            self.__target_bin = None
+            return
+        self.__target_bin = bin_schema
+        self.__target_items = await self.__perform_fetch_bin_items(bin_schema)
+        self._close_loading_dialog()
+        self._view.set_target_items([(key, value[0]) for key, value in self.__target_items.items()])
+        self._view.set_target_enabled(True)
