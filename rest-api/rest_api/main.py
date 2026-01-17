@@ -84,6 +84,7 @@ class App:
             {"router": trade.ExchangeRateController(self.__context, self.__auth).router, "prefix": "/exchange-rates"},
             {"router": trade.PaymentMethodController(self.__context, self.__auth).router, "prefix": "/payment-methods"},
             {"router": trade.SupplierController(self.__context, self.__auth).router, "prefix": "/suppliers"},
+            {"router": trade.OrderController(self.__context, self.__auth).router, "prefix": "/orders"},
         ]
 
         endpoints.extend(core_endpoints)

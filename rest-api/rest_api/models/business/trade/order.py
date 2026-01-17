@@ -78,3 +78,11 @@ class Order(BaseModel):
     @property
     def statuses(self) -> list[Status]:
         return [row.status for row in self.order_statuses]
+
+    @property
+    def item_ids(self) -> list[int]:
+        return [row.item.id for row in self.order_items]
+
+    @property
+    def status_ids(self) -> list[int]:
+        return [row.status.id for row in self.order_statuses]

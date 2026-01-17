@@ -46,6 +46,8 @@ class View(StrEnum):
     CUSTOMERS = "customers"
     EXCHANGE_RATES = "exchange_rates"
     PAYMENT_METHODS = "payment_methods"
+    SALES_ORDERS = "sales_orders"
+    PURCHASE_ORDERS = "purchase_orders"
 
 
 class Endpoint(StrEnum):
@@ -97,3 +99,5 @@ class Endpoint(StrEnum):
     ITEM_DISCOUNTS_DELETE_BULK = "item-discounts/delete-bulk"
     EXCHANGE_RATES = "exchange-rates"
     PAYMENT_METHODS = "payment-methods"
+    SALES_ORDERS = "sales_orders"
+    PURCHASE_ORDERS = "purchase_orders"

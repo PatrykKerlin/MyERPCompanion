@@ -1,0 +1,80 @@
+from collections.abc import Mapping, Sequence
+
+from sqlalchemy import ColumnElement
+from sqlalchemy.ext.asyncio import AsyncSession
+from models.business.trade import Order
+from repositories.base.base_repository import BaseRepository
+
+
+class OrderRepository(BaseRepository[Order]):
+    _model_cls = Order
+
+    @classmethod
+    async def get_all_sales(
+        cls,
+        session: AsyncSession,
+        offset: int,
+        limit: int,
+        filters: Mapping[str, str] | None = None,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
+    ) -> Sequence[Order]:
+        additional_filters = cls.__is_sales_filter(True)
+        query = (
+            cls._build_query(
+                params_filters=filters,
+                additional_filters=additional_filters,
+                sort_by=sort_by,
+                sort_order=sort_order,
+            )
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await session.execute(query)
+        return result.scalars().all()
+
+    @classmethod
+    async def get_all_purchase(
+        cls,
+        session: AsyncSession,
+        offset: int,
+        limit: int,
+        filters: Mapping[str, str] | None = None,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
+    ) -> Sequence[Order]:
+        additional_filters = cls.__is_sales_filter(False)
+        query = (
+            cls._build_query(
+                params_filters=filters,
+                additional_filters=additional_filters,
+                sort_by=sort_by,
+                sort_order=sort_order,
+            )
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await session.execute(query)
+        return result.scalars().all()
+
+    @classmethod
+    async def count_all_sales(
+        cls,
+        session: AsyncSession,
+        filters: Mapping[str, str] | None = None,
+    ) -> int:
+        additional_filters = cls.__is_sales_filter(True)
+        return await cls._count_all(session=session, params_filters=filters, additional_filters=additional_filters)
+
+    @classmethod
+    async def count_all_purchase(
+        cls,
+        session: AsyncSession,
+        filters: Mapping[str, str] | None = None,
+    ) -> int:
+        additional_filters = cls.__is_sales_filter(False)
+        return await cls._count_all(session=session, params_filters=filters, additional_filters=additional_filters)
+
+    @classmethod
+    def __is_sales_filter(cls, is_sales: bool) -> list[ColumnElement[bool]]:
+        return [cls._expr(cls._model_cls.is_sales.has(Order.is_sales == is_sales))]

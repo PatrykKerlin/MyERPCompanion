@@ -16,14 +16,14 @@ class TranslationRepository(BaseRepository[Translation]):
     async def get_all_by_language(
         cls, session: AsyncSession, language: str, offset: int, limit: int
     ) -> Sequence[Translation]:
-        additional_filters = cls.__language_filters(language)
+        additional_filters = cls.__language_filter(language)
         query = cls._build_query(additional_filters=additional_filters).offset(offset).limit(limit)
         result = await session.execute(query)
         return result.scalars().all()
 
     @classmethod
     async def count_all_by_language(cls, session: AsyncSession, language: str) -> int:
-        additional_filters = cls.__language_filters(language)
+        additional_filters = cls.__language_filter(language)
         return await cls._count_all(session=session, additional_filters=additional_filters)
 
     @classmethod
@@ -41,5 +41,5 @@ class TranslationRepository(BaseRepository[Translation]):
         )
 
     @classmethod
-    def __language_filters(cls, language: str) -> list[ColumnElement[bool]]:
+    def __language_filter(cls, language: str) -> list[ColumnElement[bool]]:
         return [cls._expr(cls._model_cls.language.has(Language.symbol == language))]

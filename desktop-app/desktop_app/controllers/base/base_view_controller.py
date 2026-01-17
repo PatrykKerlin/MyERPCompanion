@@ -319,7 +319,7 @@ class BaseViewController(
     def __view_updated_listener(self, state: ViewState) -> None:
         if not state.title:
             self._view = None
-        elif isinstance(state.view, self._view_cls):
+        elif isinstance(state.view, self._view_cls) and state.view.view_key == self._view_key:
             self._view = cast(TView, state.view)
             if self._view.mode != state.mode:
                 self._view.set_mode(state.mode)

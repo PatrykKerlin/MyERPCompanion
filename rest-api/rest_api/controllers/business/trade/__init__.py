@@ -36,6 +36,7 @@ from services.business.trade import (
     PaymentMethodService,
     SupplierService,
 )
+from controllers.business.trade.order_controller import OrderController
 from utils.controller_factory import ControllerFactory
 from utils.enums import Action
 
@@ -145,5 +146,6 @@ __all__ = [
     "CustomerController",
     "DiscountController",
     "PaymentMethodController",
+    "OrderController",
     "SupplierController",
 ]
