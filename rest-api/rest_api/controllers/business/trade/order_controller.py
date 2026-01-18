@@ -50,25 +50,25 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
         sorting: Annotated[SortingParamsSchema, Depends()],
     ) -> PaginatedResponseSchema[OrderPlainSchema]:
         try:
-            async with self._get_session() as session:
-                offset, limit = BaseController._get_offset_and_limit(pagination)
-                items, total = await self._service.get_all_sales(
-                    session=session,
-                    filters=filters.filters,
-                    offset=offset,
-                    limit=limit,
-                    sort_by=sorting.sort_by,
-                    sort_order=sorting.order,
-                )
-                has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
-                return PaginatedResponseSchema[OrderPlainSchema](
-                    items=items,
-                    total=total,
-                    page=pagination.page,
-                    page_size=pagination.page_size,
-                    has_next=has_next,
-                    has_prev=has_prev,
-                )
+            session = BaseController._get_request_session(request)
+            offset, limit = BaseController._get_offset_and_limit(pagination)
+            items, total = await self._service.get_all_sales(
+                session=session,
+                filters=filters.filters,
+                offset=offset,
+                limit=limit,
+                sort_by=sorting.sort_by,
+                sort_order=sorting.order,
+            )
+            has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
+            return PaginatedResponseSchema[OrderPlainSchema](
+                items=items,
+                total=total,
+                page=pagination.page,
+                page_size=pagination.page_size,
+                has_next=has_next,
+                has_prev=has_prev,
+            )
         except HTTPException:
             raise
         except SQLAlchemyError as err:
@@ -82,25 +82,25 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
         sorting: Annotated[SortingParamsSchema, Depends()],
     ) -> PaginatedResponseSchema[OrderPlainSchema]:
         try:
-            async with self._get_session() as session:
-                offset, limit = BaseController._get_offset_and_limit(pagination)
-                items, total = await self._service.get_all_purchase(
-                    session=session,
-                    filters=filters.filters,
-                    offset=offset,
-                    limit=limit,
-                    sort_by=sorting.sort_by,
-                    sort_order=sorting.order,
-                )
-                has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
-                return PaginatedResponseSchema[OrderPlainSchema](
-                    items=items,
-                    total=total,
-                    page=pagination.page,
-                    page_size=pagination.page_size,
-                    has_next=has_next,
-                    has_prev=has_prev,
-                )
+            session = BaseController._get_request_session(request)
+            offset, limit = BaseController._get_offset_and_limit(pagination)
+            items, total = await self._service.get_all_purchase(
+                session=session,
+                filters=filters.filters,
+                offset=offset,
+                limit=limit,
+                sort_by=sorting.sort_by,
+                sort_order=sorting.order,
+            )
+            has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
+            return PaginatedResponseSchema[OrderPlainSchema](
+                items=items,
+                total=total,
+                page=pagination.page,
+                page_size=pagination.page_size,
+                has_next=has_next,
+                has_prev=has_prev,
+            )
         except HTTPException:
             raise
         except SQLAlchemyError as err:

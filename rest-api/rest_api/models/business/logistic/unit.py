@@ -20,6 +20,6 @@ class Unit(BaseModel):
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     items: Mapped[list[Item]] = Fields.relationship(argument="Item", back_populates="unit", foreign_keys="Item.unit_id")
-    delivery_methods: Mapped[DeliveryMethod] = Fields.relationship(
+    delivery_methods: Mapped[list[DeliveryMethod]] = Fields.relationship(
         argument="DeliveryMethod", back_populates="unit", foreign_keys="DeliveryMethod.unit_id"
     )

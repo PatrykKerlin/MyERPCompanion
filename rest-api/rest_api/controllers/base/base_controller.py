@@ -4,6 +4,7 @@ from typing import Annotated, Generic, TypeVar
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.params import Depends as DependsParam
 from pydantic import ValidationError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 
 from config.context import Context
@@ -44,6 +45,16 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             Action.DELETE: True,
         }
 
+    @staticmethod
+    def _get_request_session(request: Request) -> AsyncSession:
+        session = getattr(request.state, "db", None)
+        if session is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database session is not initialized.",
+            )
+        return session
+
     async def get_all(
         self,
         request: Request,
@@ -52,26 +63,26 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         sorting: Annotated[SortingParamsSchema, Depends()],
     ) -> PaginatedResponseSchema[TOutputSchema]:
         try:
-            async with self._get_session() as session:
-                offset, limit = BaseController._get_offset_and_limit(pagination)
-                items, total = await self._service.get_all(
-                    session=session,
-                    filters=filters.filters,
-                    offset=offset,
-                    limit=limit,
-                    sort_by=sorting.sort_by,
-                    sort_order=sorting.order,
-                )
-                has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
+            session = BaseController._get_request_session(request)
+            offset, limit = BaseController._get_offset_and_limit(pagination)
+            items, total = await self._service.get_all(
+                session=session,
+                filters=filters.filters,
+                offset=offset,
+                limit=limit,
+                sort_by=sorting.sort_by,
+                sort_order=sorting.order,
+            )
+            has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
 
-                return PaginatedResponseSchema[TOutputSchema](
-                    items=items,
-                    total=total,
-                    page=pagination.page,
-                    page_size=pagination.page_size,
-                    has_next=has_next,
-                    has_prev=has_prev,
-                )
+            return PaginatedResponseSchema[TOutputSchema](
+                items=items,
+                total=total,
+                page=pagination.page,
+                page_size=pagination.page_size,
+                has_next=has_next,
+                has_prev=has_prev,
+            )
         except HTTPException:
             raise
         except SQLAlchemyError as err:
@@ -79,8 +90,8 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
 
     async def get_by_id(self, request: Request, model_id: int) -> TOutputSchema:
         try:
-            async with self._get_session() as session:
-                return await self._service.get_one_by_id(session, model_id)
+            session = BaseController._get_request_session(request)
+            return await self._service.get_one_by_id(session, model_id)
         except HTTPException:
             raise
         except NoResultFound:
@@ -95,8 +106,8 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         try:
             body = await request.json()
             payload = IdsPayloadSchema(**body)
-            async with self._get_session() as session:
-                return await self._service.get_many_by_ids(session, payload.ids)
+            session = BaseController._get_request_session(request)
+            return await self._service.get_many_by_ids(session, payload.ids)
         except HTTPException:
             raise
         except ValidationError as err:
@@ -109,8 +120,8 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             user = request.state.user
             body = await request.json()
             schema = self._input_schema_cls(**body)
-            async with self._get_session() as session:
-                return await self._service.create(session, user.id, schema)
+            session = BaseController._get_request_session(request)
+            return await self._service.create(session, user.id, schema)
         except HTTPException:
             raise
         except ValidationError as err:
@@ -129,8 +140,8 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 if not isinstance(item, dict):
                     raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
                 schemas.append(self._input_schema_cls(**item))
-            async with self._get_session() as session:
-                return await self._service.create_bulk(session=session, created_by=user.id, schemas=schemas)
+            session = BaseController._get_request_session(request)
+            return await self._service.create_bulk(session=session, created_by=user.id, schemas=schemas)
         except HTTPException:
             raise
         except ValidationError as err:
@@ -143,8 +154,8 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             user = request.state.user
             body = await request.json()
             schema = self._input_schema_cls(**body)
-            async with self._get_session() as session:
-                return await self._service.update(session, model_id, user.id, schema)
+            session = BaseController._get_request_session(request)
+            return await self._service.update(session, model_id, user.id, schema)
         except HTTPException:
             raise
         except NoResultFound:
@@ -173,8 +184,8 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 data = {key: value for key, value in item.items() if key != "id"}
                 schema = self._input_schema_cls(**data)
                 items.append((model_id, schema))
-            async with self._get_session() as session:
-                return await self._service.update_bulk(session=session, items=items, modified_by=user.id)
+            session = BaseController._get_request_session(request)
+            return await self._service.update_bulk(session=session, items=items, modified_by=user.id)
         except HTTPException:
             raise
         except ValidationError as err:
@@ -190,9 +201,9 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
     async def delete(self, request: Request, model_id: int) -> Response:
         try:
             user = request.state.user
-            async with self._get_session() as session:
-                await self._service.delete(session, model_id, user.id)
-                return Response(status_code=status.HTTP_204_NO_CONTENT)
+            session = BaseController._get_request_session(request)
+            await self._service.delete(session, model_id, user.id)
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
         except HTTPException:
             raise
         except NoResultFound:
@@ -208,9 +219,9 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             user = request.state.user
             body = await request.json()
             payload = IdsPayloadSchema(**body)
-            async with self._get_session() as session:
-                await self._service.delete_bulk(session=session, model_ids=payload.ids, modified_by=user.id)
-                return Response(status_code=status.HTTP_204_NO_CONTENT)
+            session = BaseController._get_request_session(request)
+            await self._service.delete_bulk(session=session, model_ids=payload.ids, modified_by=user.id)
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
         except HTTPException:
             raise
         except ValidationError as err:

@@ -41,8 +41,8 @@ class ImageController(
         try:
             user = request.state.user
             schema = await self.__parse_create_payload(request)
-            async with self._get_session() as session:
-                return await self._service.create(session, user.id, schema)
+            session = BaseController._get_request_session(request)
+            return await self._service.create(session, user.id, schema)
         except HTTPException:
             raise
         except ValidationError as err:
@@ -55,8 +55,8 @@ class ImageController(
             user = request.state.user
             body = await request.json()
             schema = ImageStrictUpdateSchema(**body)
-            async with self._get_session() as session:
-                return await self._service.update(session, model_id, user.id, schema)
+            session = BaseController._get_request_session(request)
+            return await self._service.update(session, model_id, user.id, schema)
         except HTTPException:
             raise
         except NoResultFound:
@@ -85,8 +85,8 @@ class ImageController(
                 data = {key: value for key, value in item.items() if key != "id"}
                 schema = ImageStrictUpdateSchema(**data)
                 items.append((model_id, schema))
-            async with self._get_session() as session:
-                return await self._service.update_bulk(session=session, items=items, modified_by=user.id)
+            session = BaseController._get_request_session(request)
+            return await self._service.update_bulk(session=session, items=items, modified_by=user.id)
         except HTTPException:
             raise
         except ValidationError as err:

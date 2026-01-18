@@ -34,21 +34,21 @@ class TranslationController(BaseController[TranslationService, TranslationStrict
         self, request: Request, language: str, pagination: Annotated[PaginationParamsSchema, Depends()]
     ) -> PaginatedResponseSchema[TranslationByLanguagePlainSchema]:
         try:
-            async with self._get_session() as session:
-                offset, limit = BaseController._get_offset_and_limit(pagination)
-                items, total = await self._service.get_all_by_language(
-                    session=session, language=language, offset=offset, limit=limit
-                )
-                has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
+            session = BaseController._get_request_session(request)
+            offset, limit = BaseController._get_offset_and_limit(pagination)
+            items, total = await self._service.get_all_by_language(
+                session=session, language=language, offset=offset, limit=limit
+            )
+            has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
 
-                return PaginatedResponseSchema[TranslationByLanguagePlainSchema](
-                    items=items,
-                    total=total,
-                    page=pagination.page,
-                    page_size=pagination.page_size,
-                    has_next=has_next,
-                    has_prev=has_prev,
-                )
+            return PaginatedResponseSchema[TranslationByLanguagePlainSchema](
+                items=items,
+                total=total,
+                page=pagination.page,
+                page_size=pagination.page_size,
+                has_next=has_next,
+                has_prev=has_prev,
+            )
         except HTTPException:
             raise
         except SQLAlchemyError as err:

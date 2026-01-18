@@ -27,8 +27,8 @@ class UserController(
             user = request.state.user
             body = await request.json()
             schema = UserStrictCreateSchema(**body)
-            async with self._get_session() as session:
-                return await self._service.create(session, user.id, schema)
+            session = BaseController._get_request_session(request)
+            return await self._service.create(session, user.id, schema)
         except HTTPException:
             raise
         except ValidationError as err:
@@ -41,8 +41,8 @@ class UserController(
             user = request.state.user
             body = await request.json()
             schema = UserStrictUpdateSchema(**body)
-            async with self._get_session() as session:
-                return await self._service.update(session, model_id, user.id, schema)
+            session = BaseController._get_request_session(request)
+            return await self._service.update(session, model_id, user.id, schema)
         except HTTPException:
             raise
         except NoResultFound:

@@ -23,11 +23,11 @@ class EmployeeController(BaseController[EmployeeService, EmployeeStrictSchema, E
             user = request.state.user
             body = await request.json()
             position_id = body["position_id"]
-            async with self._get_session() as session:
-                position_schema = await self.__position_service.get_one_by_id(session, position_id)
-                salary_range = (position_schema.min_salary, position_schema.max_salary)
-                employee_schema = self._input_schema_cls.model_validate(body, context={"salary_range": salary_range})
-                return await self._service.create(session, user.id, employee_schema)
+            session = BaseController._get_request_session(request)
+            position_schema = await self.__position_service.get_one_by_id(session, position_id)
+            salary_range = (position_schema.min_salary, position_schema.max_salary)
+            employee_schema = self._input_schema_cls.model_validate(body, context={"salary_range": salary_range})
+            return await self._service.create(session, user.id, employee_schema)
         except HTTPException:
             raise
         except ValidationError as err:
@@ -40,11 +40,11 @@ class EmployeeController(BaseController[EmployeeService, EmployeeStrictSchema, E
             user = request.state.user
             body = await request.json()
             position_id = body["position_id"]
-            async with self._get_session() as session:
-                position_schema = await self.__position_service.get_one_by_id(session, position_id)
-                salary_range = (position_schema.min_salary, position_schema.max_salary)
-                employee_schema = self._input_schema_cls.model_validate(body, context={"salary_range": salary_range})
-                return await self._service.update(session, model_id, user.id, employee_schema)
+            session = BaseController._get_request_session(request)
+            position_schema = await self.__position_service.get_one_by_id(session, position_id)
+            salary_range = (position_schema.min_salary, position_schema.max_salary)
+            employee_schema = self._input_schema_cls.model_validate(body, context={"salary_range": salary_range})
+            return await self._service.update(session, model_id, user.id, employee_schema)
         except HTTPException:
             raise
         except NoResultFound:

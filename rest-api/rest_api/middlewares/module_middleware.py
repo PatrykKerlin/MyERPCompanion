@@ -23,9 +23,11 @@ class ModuleMiddleware(BaseHTTPMiddleware):
         if module_id_str:
             try:
                 module_id = int(module_id_str)
-                async with self.__get_session() as session:
-                    module_schema = await self.__module_service.get_one_by_id(session, module_id)
-                    request.state.module = module_schema
+                session = getattr(request.state, "db", None)
+                if session is None:
+                    raise RuntimeError("Database session is not initialized.")
+                module_schema = await self.__module_service.get_one_by_id(session, module_id)
+                request.state.module = module_schema
             except Exception:
                 pass
 

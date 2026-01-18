@@ -12,6 +12,7 @@ from controllers import core
 from controllers.business import hr, logistic, trade
 from handlers.check_database_state import CheckDatabaseState
 from handlers.populate_database import PopulateDatabase
+from middlewares.db_session_middleware import DbSessionMiddleware
 from middlewares.module_middleware import ModuleMiddleware
 from middlewares.user_middleware import UserMiddleware
 from utils.auth import Auth
@@ -37,7 +38,7 @@ class App:
         core_endpoints = [
             {"router": core.HealthCheckController().router},
             {"router": core.CurrentUserController(self.__context, self.__auth).router},
-            {"router": core.AuthController(self.__context.get_session, self.__auth).router, "prefix": "/auth"},
+            {"router": core.AuthController(self.__auth).router, "prefix": "/auth"},
             {"router": core.TranslationController(self.__context, self.__auth).router, "prefix": "/translations"},
             {"router": core.ModuleController(self.__context, self.__auth).router, "prefix": "/modules"},
             {"router": core.ViewController(self.__context, self.__auth).router, "prefix": "/views"},
@@ -135,6 +136,7 @@ def create_app() -> FastAPI:
     app_instance = App(context=context, database=database, auth=auth, lifespan=lifespan)
     app_instance.get_app().add_middleware(UserMiddleware, get_session=context.get_session, auth=auth)  # type: ignore
     app_instance.get_app().add_middleware(ModuleMiddleware, context=context)  # type: ignore
+    app_instance.get_app().add_middleware(DbSessionMiddleware, get_session=context.get_session)  # type: ignore
 
     return app_instance.get_app()
 

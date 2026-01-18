@@ -31,8 +31,10 @@ class UserMiddleware(BaseHTTPMiddleware):
             if isinstance(user_id, int) and payload.get("type") == "access":
                 user_service = UserService()
                 user_service.set_auth(self.__auth)
-                async with self.__get_session() as session:
-                    user_schema = await user_service.get_one_by_id(session, user_id)
-                    request.state.user = user_schema
+                session = getattr(request.state, "db", None)
+                if session is None:
+                    raise RuntimeError("Database session is not initialized.")
+                user_schema = await user_service.get_one_by_id(session, user_id)
+                request.state.user = user_schema
 
         return await call_next(request)

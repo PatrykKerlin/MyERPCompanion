@@ -45,7 +45,7 @@ class UserService(
         model = self._model_cls(**schema.model_dump(exclude={"groups"}))
         model.created_by = created_by
         if schema.password:
-            model.password = self.__auth.get_password_hash(schema.password) if self.__auth else ""
+            model.password = await self.__auth.get_password_hash(schema.password) if self.__auth else ""
         saved_model = await self._repository_cls.save(session, model)
         return self._output_schema_cls.model_validate(saved_model)
 
@@ -63,6 +63,6 @@ class UserService(
             setattr(model, key, value)
         model.modified_by = modified_by
         if schema.password:
-            model.password = self.__auth.get_password_hash(schema.password) if self.__auth else ""
+            model.password = await self.__auth.get_password_hash(schema.password) if self.__auth else ""
         updated_model = await self._repository_cls.save(session, model)
         return self._output_schema_cls.model_validate(updated_model)
