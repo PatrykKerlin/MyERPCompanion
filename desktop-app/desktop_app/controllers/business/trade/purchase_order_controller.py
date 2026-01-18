@@ -55,8 +55,7 @@ class PurchaseOrderController(
             order_id = event.data["id"]
             supplier_id = event.data["supplier_id"]
             target_items = await self.__build_target_items(order_id)
-            target_ids = {item_id for item_id, _ in target_items}
-            source_items = await self.__perform_get_items_for_supplier(supplier_id, target_ids)
+            source_items = await self.__perform_get_items_for_supplier(supplier_id, set())
         return PurchaseOrderView(
             self,
             translation,
@@ -157,7 +156,7 @@ class PurchaseOrderController(
 
     async def __build_target_items(self, order_id: int) -> list[tuple[int, str]]:
         order_items = await self.__perform_get_order_items(order_id)
-        self.__order_items = {item.item_id: (item.id, item.quantity) for item in order_items}
+        self.__order_items = {item.id: (item.item_id, item.quantity) for item in order_items}
         item_ids = [item.item_id for item in order_items]
         if not item_ids:
             return []
@@ -166,7 +165,7 @@ class PurchaseOrderController(
         targets: list[tuple[int, str]] = []
         for item in order_items:
             label = item_map.get(item.item_id, str(item.item_id))
-            targets.append((item.item_id, f"{label} x{item.quantity}"))
+            targets.append((item.id, f"{label} x{item.quantity}"))
         return targets
 
     async def __handle_move_with_quantity(self, item_id: int) -> None:
@@ -175,12 +174,13 @@ class PurchaseOrderController(
         quantity = await self.__show_quantity_dialog()
         if not quantity:
             return
-        self.__pending_move_quantities[item_id] = quantity
-        self._view.move_source_items([item_id], highlight=True)
+        created_target_ids = self._view.move_source_items([item_id], highlight=True)
+        for target_id in created_target_ids:
+            self.__pending_move_quantities[target_id] = quantity
 
     async def __show_quantity_dialog(self) -> int | None:
         translation = self._state_store.app_state.translation.items
-        dialog = QuantityDialogComponent(translation, 1000000)
+        dialog = QuantityDialogComponent(translation, 1000000, default_value=0, min_value=0)
         self._page.show_dialog(dialog)
         try:
             return await dialog.future
@@ -192,14 +192,12 @@ class PurchaseOrderController(
             return
         order_id = self._view.data_row["id"]
         supplier_id = self._view.data_row["supplier_id"]
-        pending_ids = self._view.get_pending_item_ids()
-        if not pending_ids:
+        pending_targets = self._view.get_pending_targets()
+        if not pending_targets:
             return
         payload: list[AssocOrderItemStrictSchema] = []
-        for item_id in pending_ids:
-            if item_id in self.__order_items:
-                continue
-            quantity = self.__pending_move_quantities.get(item_id, 1)
+        for target_id, item_id in pending_targets:
+            quantity = self.__pending_move_quantities.get(target_id, 1)
             payload.append(
                 AssocOrderItemStrictSchema(
                     order_id=order_id,
@@ -216,6 +214,7 @@ class PurchaseOrderController(
             return
         await self.__perform_create_order_items(payload)
         await self.__refresh_order_item_lists(order_id, supplier_id)
+        self._view.clear_pending_item_changes()
         self.__pending_move_quantities.clear()
 
     async def __handle_order_items_delete(self, item_ids: list[int]) -> None:
@@ -223,7 +222,7 @@ class PurchaseOrderController(
             return
         order_id = self._view.data_row["id"]
         supplier_id = self._view.data_row["supplier_id"]
-        assoc_ids = [self.__order_items[item_id][0] for item_id in item_ids if item_id in self.__order_items]
+        assoc_ids = [item_id for item_id in item_ids if item_id in self.__order_items]
         if not assoc_ids:
             return
         await self.__perform_delete_order_items(assoc_ids)
@@ -233,8 +232,7 @@ class PurchaseOrderController(
         if not self._view:
             return
         target_items = await self.__build_target_items(order_id)
-        target_ids = {item_id for item_id, _ in target_items}
-        source_items = await self.__perform_get_items_for_supplier(supplier_id, target_ids)
+        source_items = await self.__perform_get_items_for_supplier(supplier_id, set())
         self._view.set_target_items(target_items)
         self._view.set_source_items(source_items)
 

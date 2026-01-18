@@ -220,7 +220,7 @@ class BinTransferController(
 
     async def __show_quantity_dialog(self, max_quantity: int) -> int | None:
         translation = self._state_store.app_state.translation.items
-        dialog = QuantityDialogComponent(translation, max_quantity)
+        dialog = QuantityDialogComponent(translation, max_quantity, default_value=max_quantity, min_value=1)
         self._page.show_dialog(dialog)
         try:
             return await dialog.future

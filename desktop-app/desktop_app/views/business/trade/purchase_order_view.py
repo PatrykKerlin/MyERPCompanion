@@ -77,6 +77,7 @@ class PurchaseOrderView(BaseView):
             target_label=self._translation.get("order_items"),
             on_move_requested=on_items_move_requested,
             on_delete_clicked=on_items_delete_clicked,
+            allow_duplicate_targets=True,
         )
         self.__bulk_transfer.visible = mode == ViewMode.READ
         self.__set_bulk_transfer_state(mode)
@@ -137,8 +138,8 @@ class PurchaseOrderView(BaseView):
         enabled = mode == ViewMode.READ
         self.__bulk_transfer.set_enabled_states(enabled, enabled, enabled)
 
-    def get_pending_item_ids(self) -> list[int]:
-        return self.__bulk_transfer.get_pending_move_ids()
+    def get_pending_targets(self) -> list[tuple[int, int]]:
+        return self.__bulk_transfer.get_pending_targets()
 
     def set_source_items(self, items: list[tuple[int, str]]) -> None:
         self.__bulk_transfer.set_source_items(items)
@@ -146,5 +147,8 @@ class PurchaseOrderView(BaseView):
     def set_target_items(self, items: list[tuple[int, str]]) -> None:
         self.__bulk_transfer.set_target_items(items)
 
-    def move_source_items(self, item_ids: list[int], highlight: bool) -> None:
-        self.__bulk_transfer.move_source_items(item_ids, highlight=highlight)
+    def move_source_items(self, item_ids: list[int], highlight: bool) -> list[int]:
+        return self.__bulk_transfer.move_source_items(item_ids, highlight=highlight)
+
+    def clear_pending_item_changes(self) -> None:
+        self.__bulk_transfer.clear_pending_changes()

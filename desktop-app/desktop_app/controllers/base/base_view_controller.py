@@ -388,6 +388,9 @@ class BaseViewController(
                         save_succeeded=True,
                     )
                 )
+            self._request_data = RequestData()
+            if self._view and self._view.mode == ViewMode.SEARCH:
+                self._view.clear_inputs()
             if self._view.caller_view_key:
                 await self._event_bus.publish(
                     RecordSaved(

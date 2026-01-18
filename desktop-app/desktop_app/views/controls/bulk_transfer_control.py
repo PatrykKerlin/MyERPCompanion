@@ -10,11 +10,13 @@ class BulkTransfer(ft.Container):
         target_label: str,
         on_move_requested: Callable[[list[int]], None] | None = None,
         on_delete_clicked: Callable[[list[int]], None] | None = None,
+        allow_duplicate_targets: bool = False,
     ) -> None:
         super().__init__(expand=True)
         self.__source_enabled = False
         self.__target_enabled = False
         self.__buttons_enabled = False
+        self.__allow_duplicate_targets = allow_duplicate_targets
 
         self.__source_items: list[tuple[int, str]] = []
         self.__target_items: list[tuple[int, str]] = []
@@ -23,6 +25,8 @@ class BulkTransfer(ft.Container):
         self.__selected_source_ids: set[int] = set()
         self.__selected_target_ids: set[int] = set()
         self.__source_ids_to_move: set[int] = set()
+        self.__pending_target_map: dict[int, int] = {}
+        self.__next_pending_target_id = -1
 
         self.__on_save_clicked = on_save_clicked
         self.__on_move_requested = on_move_requested
@@ -83,13 +87,14 @@ class BulkTransfer(ft.Container):
 
     def clear_pending_changes(self) -> None:
         ids_to_remove = [
-            item_id for item_id in self.__source_ids_to_move if item_id not in self.__initial_target_item_ids
+            target_id for target_id in self.__pending_target_map if target_id not in self.__initial_target_item_ids
         ]
         if ids_to_remove:
             self.remove_target_items(ids_to_remove)
         self.__selected_source_ids.clear()
         self.__selected_target_ids.clear()
         self.__source_ids_to_move.clear()
+        self.__pending_target_map.clear()
         self.__update_save_button_state()
         self.__render_source_list()
         self.__render_target_list()
@@ -123,6 +128,8 @@ class BulkTransfer(ft.Container):
         self.__target_item_ids = {item_id for item_id, _ in items}
         self.__initial_target_item_ids = set(self.__target_item_ids)
         self.__selected_target_ids.clear()
+        self.__pending_target_map.clear()
+        self.__source_ids_to_move.clear()
         self.__render_target_list()
         self.__update_save_button_state()
 
@@ -150,10 +157,15 @@ class BulkTransfer(ft.Container):
 
     def remove_target_items(self, ids: list[int]) -> None:
         ids_set = set(ids)
+        pending_source_ids = {self.__pending_target_map[target_id] for target_id in ids_set if target_id in self.__pending_target_map}
         self.__target_items = [(item_id, label) for item_id, label in self.__target_items if item_id not in ids_set]
         self.__target_item_ids.difference_update(ids_set)
         self.__selected_target_ids.difference_update(ids_set)
-        self.__source_ids_to_move.difference_update(ids_set)
+        for target_id in ids_set:
+            self.__pending_target_map.pop(target_id, None)
+        for source_id in pending_source_ids:
+            if source_id not in self.__pending_target_map.values():
+                self.__source_ids_to_move.discard(source_id)
         self.__render_target_list()
         self.__render_source_list()
         self.__update_save_button_state()
@@ -169,7 +181,7 @@ class BulkTransfer(ft.Container):
         return [(item_id, label) for item_id, label in self.__source_items if item_id in ids_set]
 
     def is_target_item_from_source(self, item_id: int) -> bool:
-        return item_id in self.__source_ids_to_move
+        return item_id in self.__pending_target_map
 
     def has_target_item(self, item_id: int) -> bool:
         return item_id in self.__target_item_ids
@@ -182,7 +194,10 @@ class BulkTransfer(ft.Container):
         self.__update_save_button_state()
 
     def get_pending_move_ids(self) -> list[int]:
-        return list(self.__source_ids_to_move)
+        return [source_id for source_id in self.__pending_target_map.values()]
+
+    def get_pending_targets(self) -> list[tuple[int, int]]:
+        return list(self.__pending_target_map.items())
 
     def __render_source_list(self) -> None:
         controls: list[ft.Control] = []
@@ -207,19 +222,10 @@ class BulkTransfer(ft.Container):
         controls: list[ft.Control] = []
         for item_id, label in self.__target_items:
             is_selected = item_id in self.__selected_target_ids
-            is_highlighted = item_id in self.__source_ids_to_move
-            if is_highlighted and item_id in self.__initial_target_item_ids:
-                text = ft.Column(
-                    controls=[
-                        ft.Text(label, no_wrap=True, key=f"tgt-txt-{item_id}"),
-                        ft.Text(label, no_wrap=True, color=ft.Colors.ERROR),
-                    ],
-                    spacing=2,
-                )
-            else:
-                text = ft.Text(
-                    label, no_wrap=True, color=ft.Colors.ERROR if is_highlighted else None, key=f"tgt-txt-{item_id}"
-                )
+            is_highlighted = self.is_target_item_from_source(item_id)
+            text = ft.Text(
+                label, no_wrap=True, color=ft.Colors.ERROR if is_highlighted else None, key=f"tgt-txt-{item_id}"
+            )
             container = ft.Container(
                 content=text,
                 key=f"tgt-row-{item_id}",
@@ -270,24 +276,45 @@ class BulkTransfer(ft.Container):
             return
         self.move_source_items(selected_ids, highlight=True)
 
-    def move_source_items(self, ids_to_add: list[int], highlight: bool) -> None:
+    def move_source_items(self, ids_to_add: list[int], highlight: bool) -> list[int]:
         if not ids_to_add:
-            return
+            return []
         existing_ids = [item_id for item_id in ids_to_add if self.has_target_item(item_id)]
         new_ids = [item_id for item_id in ids_to_add if item_id not in existing_ids]
-        if existing_ids:
+        created_target_ids: list[int] = []
+        if not self.__allow_duplicate_targets and existing_ids:
             self.mark_source_items_as_moved(existing_ids)
             self.__render_target_list()
+        if self.__allow_duplicate_targets:
+            items_to_move = self.get_source_items_by_ids(ids_to_add)
+            if not items_to_move:
+                return []
+            for source_id, label in items_to_move:
+                target_id = self.__next_pending_target_id
+                self.__next_pending_target_id -= 1
+                self.__pending_target_map[target_id] = source_id
+                created_target_ids.append(target_id)
+                self.__target_items = [(target_id, label)] + self.__target_items
+                self.__target_item_ids.add(target_id)
+            if highlight:
+                self.__source_ids_to_move.update(ids_to_add)
+            self.__render_source_list()
+            self.__render_target_list()
+            self.__update_save_button_state()
+            return created_target_ids
         if not new_ids:
-            return
+            return []
         items_to_move = self.get_source_items_by_ids(new_ids)
         if not items_to_move:
-            return
+            return []
         actual_ids = [item_id for item_id, _ in items_to_move]
         if not actual_ids:
-            return
+            return []
         self.mark_source_items_as_moved(actual_ids)
+        for item_id in actual_ids:
+            self.__pending_target_map[item_id] = item_id
         self.prepend_target_items(items_to_move, highlight=highlight)
+        return actual_ids
 
     def __handle_delete_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         selected_ids = self.get_selected_target_ids()
@@ -300,7 +327,10 @@ class BulkTransfer(ft.Container):
         if moved_new_ids:
             self.remove_target_items(moved_new_ids)
         if moved_existing_ids:
-            self.__source_ids_to_move.difference_update(moved_existing_ids)
+            for target_id in moved_existing_ids:
+                source_id = self.__pending_target_map.pop(target_id, None)
+                if source_id is not None and source_id not in self.__pending_target_map.values():
+                    self.__source_ids_to_move.discard(source_id)
             self.__selected_target_ids.difference_update(moved_existing_ids)
             self.__render_target_list()
         if persisted_ids:
@@ -313,5 +343,5 @@ class BulkTransfer(ft.Container):
         self.__on_save_clicked(event)
 
     def __update_save_button_state(self) -> None:
-        has_pending = bool(self.__source_ids_to_move)
+        has_pending = bool(self.__pending_target_map)
         self.__button_save.disabled = not (self.__buttons_enabled and has_pending)
