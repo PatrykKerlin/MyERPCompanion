@@ -55,18 +55,18 @@ class BaseController:
                         self._close_loading_dialog()
                     return result
                 except HTTPStatusError as http_error:
-                    if opened_loading:
-                        self._close_loading_dialog()
+                    self._close_loading_dialog()
+                    self._logger.exception(f"HTTPStatusError in {func.__qualname__}")
                     if http_error.response.status_code == 403:
                         self._open_error_dialog(message_key="no_permissions")
                     else:
-                        self._logger.error(str(http_error))
                         self._open_error_dialog(message_key=message_key)
                     return cast(TReturn, None)
-                except Exception as error:
-                    if opened_loading:
-                        self._close_loading_dialog()
-                    self._logger.error(str(error))
+                except Exception:
+                    self._close_loading_dialog()
+                    self._logger.exception(
+                        f"Unhandled exception in {func.__qualname__}",
+                    )
                     self._open_error_dialog(message_key=message_key)
                     return cast(TReturn, None)
 

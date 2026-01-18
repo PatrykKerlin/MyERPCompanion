@@ -79,16 +79,16 @@ class AppController(BaseController):
             await self.__service.api_health_check()
             initial_language = self._settings.LANGUAGE
             await self._event_bus.publish(TranslationRequested(initial_language, False))
-        except Exception as err:
-            self._logger.error(str(err))
+        except Exception:
+            self._logger.exception(f"Unhandled exception in {self.__app_started_handler.__qualname__}")
             self._open_error_dialog(message_key="api_not_responding")
 
     async def __api_status_handler(self, _: ApiStatusRequested) -> None:
         try:
             await self.__service.api_health_check()
             await self._event_bus.publish(ApiStatusChecked(status=True))
-        except Exception as err:
-            self._logger.error(str(err))
+        except Exception:
+            self._logger.exception(f"Unhandled exception in {self.__api_status_handler.__qualname__}")
             await self._event_bus.publish(ApiStatusChecked(status=False))
 
     async def __translation_ready_handler(self, event: TranslationReady) -> None:

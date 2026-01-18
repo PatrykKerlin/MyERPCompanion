@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Generic, TypeVar, cast
+from datetime import date, datetime
 
 import flet as ft
 from pydantic import ValidationError
@@ -152,7 +153,7 @@ class BaseViewController(
         for callback in after_change:
             callback()
 
-    def set_field_value(self, key: str, value: str | int | float | bool | None) -> None:
+    def set_field_value(self, key: str, value: str | int | float | bool | date | None) -> None:
         if not self._view:
             return
         parsed_value = self.__parse_value(value)
@@ -324,9 +325,15 @@ class BaseViewController(
             if self._view.mode != state.mode:
                 self._view.set_mode(state.mode)
 
-    def __parse_value(self, value: str | int | float | bool | None) -> str | int | float | bool | None:
+    def __parse_value(
+        self, value: str | int | float | bool | date | datetime | None
+    ) -> str | int | float | bool | date | None:
         if value is None:
             return None
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
         if isinstance(value, (bool, int, float)):
             return value
         value_stripped = str(value).strip()
@@ -341,6 +348,7 @@ class BaseViewController(
         if not self._view:
             return
         response = await self._perform_get_page(self._service, self._endpoint)
+        print(response)
         self._request_data.total = response.total
         self._request_data.page = response.page
         self._request_data.page_size = response.page_size

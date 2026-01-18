@@ -1,6 +1,8 @@
 from models.business.trade.assoc_item_discount import AssocItemDiscount
 from models.business.trade.assoc_category_discount import AssocCategoryDiscount
 from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
+from models.business.trade.assoc_order_item import AssocOrderItem
+from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.currency import Currency
 from models.business.trade.customer import Customer
 from models.business.trade.discount import Discount
@@ -11,6 +13,8 @@ from repositories.business.trade import (
     AssocCategoryDiscountRepository,
     AssocCustomerDiscountRepository,
     AssocItemDiscountRepository,
+    AssocOrderItemRepository,
+    AssocOrderStatusRepository,
     CurrencyRepository,
     PaymentMethodRepository,
     SupplierRepository,
@@ -30,6 +34,8 @@ from schemas.business.trade.assoc_item_discount_schema import (
     AssocItemDiscountPlainSchema,
     AssocItemDiscountStrictSchema,
 )
+from schemas.business.trade.assoc_order_item_schema import AssocOrderItemPlainSchema, AssocOrderItemStrictSchema
+from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusPlainSchema, AssocOrderStatusStrictSchema
 from schemas.business.trade.currency_schema import CurrencyPlainSchema, CurrencyStrictSchema
 from schemas.business.trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
 from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
@@ -56,6 +62,18 @@ AssocItemDiscountService = ServiceFactory.create(
     repository_cls=AssocItemDiscountRepository,
     input_schema_cls=AssocItemDiscountStrictSchema,
     output_schema_cls=AssocItemDiscountPlainSchema,
+)
+AssocOrderItemService = ServiceFactory.create(
+    model_cls=AssocOrderItem,
+    repository_cls=AssocOrderItemRepository,
+    input_schema_cls=AssocOrderItemStrictSchema,
+    output_schema_cls=AssocOrderItemPlainSchema,
+)
+AssocOrderStatusService = ServiceFactory.create(
+    model_cls=AssocOrderStatus,
+    repository_cls=AssocOrderStatusRepository,
+    input_schema_cls=AssocOrderStatusStrictSchema,
+    output_schema_cls=AssocOrderStatusPlainSchema,
 )
 CurrencyService = ServiceFactory.create(
     model_cls=Currency,
@@ -99,6 +117,8 @@ __all__ = [
     "AssocCategoryDiscountService",
     "AssocCustomerDiscountService",
     "AssocItemDiscountService",
+    "AssocOrderItemService",
+    "AssocOrderStatusService",
     "CurrencyService",
     "CustomerService",
     "DiscountService",

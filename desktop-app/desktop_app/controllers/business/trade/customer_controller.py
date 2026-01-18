@@ -67,9 +67,7 @@ class CustomerController(BaseViewController[CustomerService, CustomerView, Custo
     async def __handle_discount_save(self) -> None:
         if not self._view or not self._view.data_row:
             return
-        customer_id = self._view.data_row.get("id")
-        if not isinstance(customer_id, int):
-            return
+        customer_id = self._view.data_row["id"]
         pending_ids = self._view.get_pending_discount_ids()
         if not pending_ids:
             return
@@ -83,9 +81,7 @@ class CustomerController(BaseViewController[CustomerService, CustomerView, Custo
     async def __handle_discount_delete(self, discount_ids: list[int]) -> None:
         if not self._view or not self._view.data_row:
             return
-        customer_id = self._view.data_row.get("id")
-        if not isinstance(customer_id, int):
-            return
+        customer_id = self._view.data_row["id"]
         await self.__perform_delete_customer_discounts(customer_id, discount_ids)
         await self.__refresh_customer_discount_lists(customer_id)
 

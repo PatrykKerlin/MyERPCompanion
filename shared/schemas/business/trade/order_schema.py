@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
 
 from pydantic import model_validator
 
@@ -29,9 +28,7 @@ class OrderStrictSchema(BaseStrictSchema):
     customer_id: Constraints.PositiveIntegerOptional
     supplier_id: Constraints.PositiveIntegerOptional
     delivery_method_id: Constraints.PositiveInteger
-
-    order_items: Constraints.PositiveIntegerList
-    order_statuses: Constraints.PositiveIntegerList
+    currency_id: Constraints.PositiveInteger
 
     @model_validator(mode="after")
     def _validate_data(self) -> OrderStrictSchema:
@@ -42,6 +39,52 @@ class OrderStrictSchema(BaseStrictSchema):
             raise ValueError("customer_id and supplier_id are mutually exclusive")
 
         return self
+
+
+class PurchaseOrderStrictSchema(BaseStrictSchema):
+    number: Constraints.String20
+    is_sales: Constraints.BooleanTrue
+
+    total_net: Constraints.PositiveNumeric102
+    total_vat: Constraints.PositiveNumeric102
+    total_gross: Constraints.PositiveNumeric102
+    total_discount: Constraints.PositiveNumeric102
+
+    order_date: date
+
+    tracking_number: Constraints.String50Optional
+    shipping_cost: Constraints.PositiveNumeric102
+
+    notes: Constraints.String1000Optional
+    internal_notes: Constraints.String1000Optional
+
+    customer_id: Constraints.PositiveIntegerOptional
+    supplier_id: Constraints.PositiveInteger
+    delivery_method_id: Constraints.PositiveInteger
+    currency_id: Constraints.PositiveInteger
+
+
+class SalesOrderStrictSchema(BaseStrictSchema):
+    number: Constraints.String20
+    is_sales: Constraints.BooleanTrue
+
+    total_net: Constraints.PositiveNumeric102
+    total_vat: Constraints.PositiveNumeric102
+    total_gross: Constraints.PositiveNumeric102
+    total_discount: Constraints.PositiveNumeric102
+
+    order_date: date
+
+    tracking_number: Constraints.String50Optional
+    shipping_cost: Constraints.PositiveNumeric102
+
+    notes: Constraints.String1000Optional
+    internal_notes: Constraints.String1000Optional
+
+    customer_id: Constraints.PositiveInteger
+    supplier_id: Constraints.PositiveIntegerOptional
+    delivery_method_id: Constraints.PositiveInteger
+    currency_id: Constraints.PositiveInteger
 
 
 class OrderPlainSchema(BasePlainSchema):
@@ -60,9 +103,10 @@ class OrderPlainSchema(BasePlainSchema):
     notes: str | None
     internal_notes: str | None
 
-    customer_id: int
-    supplier_id: int
+    customer_id: int | None
+    supplier_id: int | None
     delivery_method_id: int
+    currency_id: int
     invoice_id: int | None
 
     item_ids: list[int]

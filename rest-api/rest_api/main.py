@@ -78,6 +78,14 @@ class App:
                 "router": trade.AssocItemDiscountController(self.__context, self.__auth).router,
                 "prefix": "/item-discounts",
             },
+            {
+                "router": trade.AssocOrderItemController(self.__context, self.__auth).router,
+                "prefix": "/order-items",
+            },
+            {
+                "router": trade.AssocOrderStatusController(self.__context, self.__auth).router,
+                "prefix": "/order-statuses",
+            },
             {"router": trade.CurrencyController(self.__context, self.__auth).router, "prefix": "/currencies"},
             {"router": trade.CustomerController(self.__context, self.__auth).router, "prefix": "/customers"},
             {"router": trade.DiscountController(self.__context, self.__auth).router, "prefix": "/discounts"},

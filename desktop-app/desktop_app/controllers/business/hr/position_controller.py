@@ -1,3 +1,4 @@
+import asyncio
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
@@ -24,8 +25,10 @@ class PositionController(BaseViewController[PositionService, PositionView, Posit
         self.__department_service = DepartmentService(self._settings, self._logger, self._tokens_accessor)
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> PositionView:
-        currencies = await self.__perform_get_all_currencies()
-        departments = await self.__perform_get_all_departments()
+        currencies, departments = await asyncio.gather(
+            self.__perform_get_all_currencies(),
+            self.__perform_get_all_departments(),
+        )
         return PositionView(self, translation, mode, event.view_key, event.data, currencies, departments)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)

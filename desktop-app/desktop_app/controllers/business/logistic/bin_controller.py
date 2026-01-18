@@ -1,3 +1,4 @@
+import asyncio
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
@@ -37,8 +38,10 @@ class BinController(BaseViewController[BinService, BinView, BinPlainSchema, BinS
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinView:
         warehouses = await self.__perform_get_all_warehouses()
         if event.data:
-            item_schemas = await self.__perform_get_items_for_ids(event.data["item_ids"])
-            bin_item_quantities = await self.__perform_get_bin_item_quantities(event.data["id"])
+            item_schemas, bin_item_quantities = await asyncio.gather(
+                self.__perform_get_items_for_ids(event.data["item_ids"]),
+                self.__perform_get_bin_item_quantities(event.data["id"]),
+            )
             items = []
             for item_schema in item_schemas:
                 row = item_schema.model_dump()

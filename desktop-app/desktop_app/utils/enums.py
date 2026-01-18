@@ -50,6 +50,10 @@ class View(StrEnum):
     PURCHASE_ORDERS = "purchase_orders"
 
 
+class EditDisabledView(StrEnum):
+    PURCHASE_ORDERS = View.PURCHASE_ORDERS
+
+
 class Endpoint(StrEnum):
     HEALTH_CHECK = "health-check"
     TRANSLATIONS_BY_LANGUAGE = "translations/by-language"
@@ -99,5 +103,15 @@ class Endpoint(StrEnum):
     ITEM_DISCOUNTS_DELETE_BULK = "item-discounts/delete-bulk"
     EXCHANGE_RATES = "exchange-rates"
     PAYMENT_METHODS = "payment-methods"
-    SALES_ORDERS = "sales_orders"
-    PURCHASE_ORDERS = "purchase_orders"
+    ORDERS = "orders"
+    PURCHASE_ORDERS = "orders/purchase"
+    ORDER_ITEMS = "order-items"
+    ORDER_ITEMS_GET_BULK = "order-items/get-bulk"
+    ORDER_ITEMS_CREATE_BULK = "order-items/create-bulk"
+    ORDER_ITEMS_UPDATE_BULK = "order-items/update-bulk"
+    ORDER_ITEMS_DELETE_BULK = "order-items/delete-bulk"
+    ORDER_STATUSES = "order-statuses"
+    ORDER_STATUSES_GET_BULK = "order-statuses/get-bulk"
+    ORDER_STATUSES_CREATE_BULK = "order-statuses/create-bulk"
+    ORDER_STATUSES_UPDATE_BULK = "order-statuses/update-bulk"
+    ORDER_STATUSES_DELETE_BULK = "order-statuses/delete-bulk"

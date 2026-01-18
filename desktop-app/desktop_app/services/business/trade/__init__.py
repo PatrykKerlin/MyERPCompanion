@@ -10,6 +10,10 @@ from schemas.business.trade.assoc_item_discount_schema import (
     AssocItemDiscountPlainSchema,
     AssocItemDiscountStrictSchema,
 )
+from schemas.business.trade.assoc_order_item_schema import (
+    AssocOrderItemPlainSchema,
+    AssocOrderItemStrictSchema,
+)
 from schemas.business.trade.currency_schema import CurrencyPlainSchema, CurrencyStrictSchema
 from schemas.business.trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
 from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
@@ -34,6 +38,11 @@ AssocItemDiscountService = ServiceFactory.create(
     name_prefix="AssocItemDiscount",
     plain_schema_cls=AssocItemDiscountPlainSchema,
     strict_schema_cls=AssocItemDiscountStrictSchema,
+)
+AssocOrderItemService = ServiceFactory.create(
+    name_prefix="AssocOrderItem",
+    plain_schema_cls=AssocOrderItemPlainSchema,
+    strict_schema_cls=AssocOrderItemStrictSchema,
 )
 CurrencyService = ServiceFactory.create(
     name_prefix="Currency",
@@ -76,6 +85,7 @@ __all__ = [
     "AssocCategoryDiscountService",
     "AssocCustomerDiscountService",
     "AssocItemDiscountService",
+    "AssocOrderItemService",
     "CurrencyService",
     "CustomerService",
     "DiscountService",

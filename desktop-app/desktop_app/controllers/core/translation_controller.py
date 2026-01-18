@@ -23,6 +23,6 @@ class TranslationController(BaseController):
             translation = Translation(translation_items)
             self._state_store.update(translation={"language": event.language, "items": translation})
             await self._event_bus.publish(TranslationReady(event.user_authenticated))
-        except Exception as exception:
-            self._logger.error(str(exception))
+        except Exception:
+            self._logger.exception(f"Unhandled exception in {self.__translations_requested_handler.__qualname__}")
             await self._event_bus.publish(TranslationFailed())

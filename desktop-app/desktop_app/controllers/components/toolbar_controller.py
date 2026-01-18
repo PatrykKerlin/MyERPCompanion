@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from controllers.base.base_component_controller import BaseComponentController
 from states.states import ViewState
-from utils.enums import ViewMode
+from utils.enums import EditDisabledView, ViewMode
 from views.components.toolbar_component import ToolbarComponent
 from events.events import RecordDeleteRequested, ToolbarReady, ToolbarRequested, SideMenuToggleRequested
 
@@ -51,6 +51,8 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         if view_state.mode == ViewMode.SEARCH:
             self._state_store.update(view={"mode": ViewMode.CREATE})
         elif view_state.mode == ViewMode.READ:
+            if view_state.view and view_state.view.view_key.value in set(EditDisabledView):
+                return
             self._state_store.update(view={"mode": ViewMode.EDIT})
         self._component.set_lock_view_button_icon(unlocked=True)
         self._component.set_lock_view_button_state(disabled=True)
@@ -95,6 +97,12 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
 
     def __set_read_mode(self) -> None:
         if not self._component:
+            return
+        view_state = self._state_store.app_state.view
+        if view_state.view and view_state.view.view_key.value in EditDisabledView._value2member_map_:
+            self._component.set_lock_view_button_icon(unlocked=False)
+            self._component.set_lock_view_button_state(disabled=True)
+            self._component.set_delete_button_state(disabled=False)
             return
         self._component.set_lock_view_button_icon(unlocked=False)
         self._component.set_lock_view_button_state(disabled=False)

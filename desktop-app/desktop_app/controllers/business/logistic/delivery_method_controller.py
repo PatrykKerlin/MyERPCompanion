@@ -1,3 +1,4 @@
+import asyncio
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
@@ -25,8 +26,10 @@ class DeliveryMethodController(
         self.__unit_service = UnitService(self._settings, self._logger, self._tokens_accessor)
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> DeliveryMethodView:
-        carriers = await self.__perform_get_all_carriers()
-        units = await self.__perform_get_all_units()
+        carriers, units = await asyncio.gather(
+            self.__perform_get_all_carriers(),
+            self.__perform_get_all_units(),
+        )
         return DeliveryMethodView(
             self, translation, mode, event.view_key, event.data, event.is_dialog, event.caller_view_key, carriers, units
         )

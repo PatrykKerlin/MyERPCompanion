@@ -57,11 +57,16 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         )
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> ItemView:
-        categories = await self.__perform_get_all_categories()
-        units = await self.__perform_get_all_units()
-        suppliers = await self.__perform_get_all_suppliers()
-        currencies = await self.__perform_get_all_currencies()
-        bins = await self.__perform_get_bins_for_item(event.data["id"]) if event.data else []
+        categories, units, suppliers, currencies = await asyncio.gather(
+            self.__perform_get_all_categories(),
+            self.__perform_get_all_units(),
+            self.__perform_get_all_suppliers(),
+            self.__perform_get_all_currencies(),
+        )
+        if event.data:
+            bins = await self.__perform_get_bins_for_item(event.data["id"])
+        else:
+            bins = []
         return ItemView(
             self, translation, mode, event.view_key, event.data, categories, units, suppliers, currencies, bins
         )
@@ -174,8 +179,8 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
                 return await asyncio.to_thread(self.__pick_linux_file)
             self._open_error_dialog(message=translation.get("image_upload_not_supported"))
             return None
-        except Exception as error:
-            self._logger.error(str(error))
+        except Exception:
+            self._logger.exception(f"Unhandled exception in {self.__pick_file_path.__qualname__}")
             self._open_error_dialog(message=translation.get("image_upload_not_supported"))
             return None
 

@@ -16,9 +16,9 @@ class Constraints:
     BooleanTrue = Annotated[bool, Field(default=True)]
     PositiveFloat = Annotated[float, Field(gt=0)]
     PositiveInteger = Annotated[int, Field(ge=1)]
-    PositiveIntegerOptional = Annotated[int | None, Field(ge=1)]
+    PositiveIntegerOptional = Annotated[int | None, Field(ge=1, default=None)]
     PositiveIntegerList = Annotated[list[Annotated[int, Field(ge=1)]], Field(min_length=1)]
-    PositiveIntegerListOptional = Annotated[list[Annotated[int, Field(ge=1)]] | None, Field(min_length=1)]
+    PositiveIntegerListOptional = Annotated[list[Annotated[int, Field(ge=1)]] | None, Field(min_length=1, default=None)]
 
     PositiveNumeric63 = Annotated[float, Field(gt=0, lt=1000)]
     PositiveNumeric102 = Annotated[float, Field(gt=0, lt=100000000)]

@@ -1,6 +1,8 @@
 from models.business.trade.assoc_category_discount import AssocCategoryDiscount
 from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
 from models.business.trade.assoc_item_discount import AssocItemDiscount
+from models.business.trade.assoc_order_item import AssocOrderItem
+from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.currency import Currency
 from models.business.trade.customer import Customer
 from models.business.trade.discount import Discount
@@ -19,6 +21,8 @@ from schemas.business.trade.assoc_item_discount_schema import (
     AssocItemDiscountPlainSchema,
     AssocItemDiscountStrictSchema,
 )
+from schemas.business.trade.assoc_order_item_schema import AssocOrderItemPlainSchema, AssocOrderItemStrictSchema
+from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusPlainSchema, AssocOrderStatusStrictSchema
 from schemas.business.trade.currency_schema import CurrencyPlainSchema, CurrencyStrictSchema
 from schemas.business.trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
 from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
@@ -29,6 +33,8 @@ from services.business.trade import (
     AssocCategoryDiscountService,
     AssocCustomerDiscountService,
     AssocItemDiscountService,
+    AssocOrderItemService,
+    AssocOrderStatusService,
     CurrencyService,
     CustomerService,
     DiscountService,
@@ -92,6 +98,40 @@ AssocItemDiscountController = ControllerFactory.create(
         Action.DELETE_BULK: True,
     },
 )
+AssocOrderItemController = ControllerFactory.create(
+    model_cls=AssocOrderItem,
+    service_cls=AssocOrderItemService,
+    input_schema_cls=AssocOrderItemStrictSchema,
+    output_schema_cls=AssocOrderItemPlainSchema,
+    include={
+        Action.GET_ONE: True,
+        Action.GET_ALL: True,
+        Action.GET_BULK: True,
+        Action.CREATE: True,
+        Action.CREATE_BULK: True,
+        Action.UPDATE: True,
+        Action.UPDATE_BULK: True,
+        Action.DELETE: True,
+        Action.DELETE_BULK: True,
+    },
+)
+AssocOrderStatusController = ControllerFactory.create(
+    model_cls=AssocOrderStatus,
+    service_cls=AssocOrderStatusService,
+    input_schema_cls=AssocOrderStatusStrictSchema,
+    output_schema_cls=AssocOrderStatusPlainSchema,
+    include={
+        Action.GET_ONE: True,
+        Action.GET_ALL: True,
+        Action.GET_BULK: True,
+        Action.CREATE: True,
+        Action.CREATE_BULK: True,
+        Action.UPDATE: True,
+        Action.UPDATE_BULK: True,
+        Action.DELETE: True,
+        Action.DELETE_BULK: True,
+    },
+)
 CurrencyController = ControllerFactory.create(
     model_cls=Currency,
     service_cls=CurrencyService,
@@ -142,6 +182,8 @@ __all__ = [
     "AssocCategoryDiscountController",
     "AssocCustomerDiscountController",
     "AssocItemDiscountController",
+    "AssocOrderItemController",
+    "AssocOrderStatusController",
     "CurrencyController",
     "CustomerController",
     "DiscountController",

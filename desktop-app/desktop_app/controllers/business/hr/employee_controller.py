@@ -1,3 +1,4 @@
+import asyncio
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
@@ -61,8 +62,10 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
         ]
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> EmployeeView:
-        self.__all_departments = await self.__get_all_departments()
-        self.__all_positions = await self.__perform_get_all_positions()
+        self.__all_departments, self.__all_positions = await asyncio.gather(
+            self.__perform_get_all_departments(),
+            self.__perform_get_all_positions(),
+        )
         self.__positions_by_id = {position.id: position for position in self.__all_positions}
         self.__all_employees = await self.__perform_get_all_employees()
 
@@ -102,7 +105,7 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
         return await self.__position_service.get_all(Endpoint.POSITIONS, None, None, None, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __get_all_departments(self) -> list[DepartmentPlainSchema]:
+    async def __perform_get_all_departments(self) -> list[DepartmentPlainSchema]:
         return await self.__department_service.get_all(Endpoint.DEPARTMENTS, None, None, None, self._module_id)
 
     def __filter_positions_by_department(self, department_id: int | None) -> list[PositionPlainSchema]:

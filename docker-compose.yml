@@ -45,7 +45,7 @@ services:
       - postgres
     command:
       sh -lc "mkdir -p /media/images &&
-      exec /project/bin/uvicorn main:start_app --host 0.0.0.0 --port 8000 --reload --lifespan=on"
+      exec /project/bin/uvicorn main:start_app --host 0.0.0.0 --port 8000 --lifespan=on --workers 16"
 
   desktop-app:
     build:
