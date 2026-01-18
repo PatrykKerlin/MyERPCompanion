@@ -1,9 +1,10 @@
 from collections.abc import Mapping, Sequence
 
 from sqlalchemy import Select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql.elements import ColumnElement
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from models.business.logistic.delivery_method import DeliveryMethod
 from models.business.trade import Order
 from models.business.trade.assoc_order_item import AssocOrderItem

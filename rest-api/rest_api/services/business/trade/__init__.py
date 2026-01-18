@@ -1,6 +1,6 @@
-from models.business.trade.assoc_item_discount import AssocItemDiscount
 from models.business.trade.assoc_category_discount import AssocCategoryDiscount
 from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
+from models.business.trade.assoc_item_discount import AssocItemDiscount
 from models.business.trade.assoc_order_item import AssocOrderItem
 from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.currency import Currency
@@ -43,7 +43,6 @@ from schemas.business.trade.exchange_rate_schema import ExchangeRatePlainSchema,
 from schemas.business.trade.payment_method_schema import PaymentMethodPlainSchema, PaymentMethodStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
 from utils.service_factory import ServiceFactory
-
 
 AssocCategoryDiscountService = ServiceFactory.create(
     model_cls=AssocCategoryDiscount,

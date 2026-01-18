@@ -1,3 +1,4 @@
+from controllers.business.trade.order_controller import OrderController
 from models.business.trade.assoc_category_discount import AssocCategoryDiscount
 from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
 from models.business.trade.assoc_item_discount import AssocItemDiscount
@@ -42,10 +43,8 @@ from services.business.trade import (
     PaymentMethodService,
     SupplierService,
 )
-from controllers.business.trade.order_controller import OrderController
 from utils.controller_factory import ControllerFactory
 from utils.enums import Action
-
 
 AssocCategoryDiscountController = ControllerFactory.create(
     model_cls=AssocCategoryDiscount,

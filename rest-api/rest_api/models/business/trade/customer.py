@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import literal_column, select
-from sqlalchemy.orm import Mapped, column_property
+from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
 from models.base.fields import Fields

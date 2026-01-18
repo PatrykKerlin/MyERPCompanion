@@ -20,9 +20,7 @@ class Database:
 
     def __init__(self, settings: Settings) -> None:
         if not self.__initialized:
-            self.engine: AsyncEngine = create_async_engine(
-                settings.DATABASE_URL
-            )
+            self.engine: AsyncEngine = create_async_engine(settings.DATABASE_URL)
             self.__async_session_maker = async_sessionmaker(
                 bind=self.engine,
                 expire_on_commit=False,
