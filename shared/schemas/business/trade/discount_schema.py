@@ -10,15 +10,15 @@ from schemas.validation.constraints import Constraints
 
 class DiscountStrictSchema(BaseStrictSchema):
     name: Constraints.Name
-    code: Constraints.String10
-    description: Constraints.String1000Optional
+    code: Constraints.String_10
+    description: Constraints.StringOptional_1000
 
     start_date: datetime
     end_date: datetime | None
 
     percent: Constraints.PercentFloat
 
-    min_value: Constraints.PositiveNumeric102Optional
+    min_value: Constraints.PositiveNumericOptional_10_2
     min_quantity: Constraints.PositiveIntegerOptional
 
     for_categories: Constraints.BooleanFalse

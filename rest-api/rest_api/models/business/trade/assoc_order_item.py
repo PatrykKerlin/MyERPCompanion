@@ -23,10 +23,14 @@ class AssocOrderItem(BaseModel):
     total_discount: Mapped[float] = Fields.numeric_10_2()
 
     order_id: Mapped[int] = Fields.foreign_key(column="orders.id", primary_key=True)
-    order: Mapped[Order] = Fields.relationship(argument="Order", back_populates="order_items", foreign_keys=[order_id])
+    order: Mapped[Order] = Fields.relationship(
+        argument="Order", back_populates="order_items", foreign_keys=[order_id], cascade_soft_delete=False
+    )
 
     item_id: Mapped[int] = Fields.foreign_key(column="items.id", primary_key=True)
-    item: Mapped[Item] = Fields.relationship(argument="Item", back_populates="item_orders", foreign_keys=[item_id])
+    item: Mapped[Item] = Fields.relationship(
+        argument="Item", back_populates="item_orders", foreign_keys=[item_id], cascade_soft_delete=False
+    )
 
     discount_id: Mapped[int | None] = Fields.foreign_key(column="discounts.id", nullable=True)
     discount: Mapped[Discount | None] = Fields.relationship(

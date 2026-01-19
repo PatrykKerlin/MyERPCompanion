@@ -4,7 +4,7 @@ from schemas.validation.constraints import Constraints
 
 class GroupStrictSchema(BaseStrictSchema):
     key: Constraints.Key
-    description: Constraints.String1000Optional
+    description: Constraints.StringOptional_1000
 
 
 class GroupPlainSchema(BasePlainSchema):

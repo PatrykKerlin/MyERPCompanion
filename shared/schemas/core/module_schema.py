@@ -6,10 +6,10 @@ from schemas.validation.constraints import Constraints
 
 class ModuleStrictSchema(BaseStrictSchema):
     key: Constraints.Key
-    description: Constraints.String1000Optional
+    description: Constraints.StringOptional_1000
     in_side_menu: Constraints.BooleanTrue
     order: Constraints.PositiveInteger
-    controllers: Constraints.String50List
+    controllers: Constraints.StringList_50
     groups: Constraints.PositiveIntegerList
 
 

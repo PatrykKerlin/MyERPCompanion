@@ -4,7 +4,7 @@ from schemas.validation.constraints import Constraints
 
 class ViewStrictSchema(BaseStrictSchema):
     key: Constraints.Key
-    description: Constraints.String1000Optional
+    description: Constraints.StringOptional_1000
     order: Constraints.PositiveInteger
     module_id: Constraints.PositiveInteger
 

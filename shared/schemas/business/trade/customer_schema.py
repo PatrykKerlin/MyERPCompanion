@@ -8,8 +8,8 @@ from schemas.validation.constraints import Constraints
 
 
 class CustomerStrictSchema(BaseStrictSchema):
-    first_name: Constraints.String50Optional
-    last_name: Constraints.String50Optional
+    first_name: Constraints.StringOptional_50
+    last_name: Constraints.StringOptional_50
 
     company_name: Constraints.Name
 
@@ -20,11 +20,11 @@ class CustomerStrictSchema(BaseStrictSchema):
     phone_number: Constraints.PhoneNumber
 
     street: str | None
-    house_number: Constraints.String10
+    house_number: Constraints.String_10
     apartment_number: str | None
     postal_code: Constraints.PostalCode
-    city: Constraints.String50
-    country: Constraints.String50
+    city: Constraints.String_50
+    country: Constraints.String_50
 
     shipping_street: str | None
     shipping_house_number: str | None

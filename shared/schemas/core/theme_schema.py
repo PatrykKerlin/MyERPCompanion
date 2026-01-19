@@ -4,7 +4,7 @@ from schemas.validation.constraints import Constraints
 
 class ThemeStrictSchema(BaseStrictSchema):
     key: Constraints.Key
-    value: Constraints.String20
+    value: Constraints.String_20
 
 
 class ThemePlainSchema(BasePlainSchema):

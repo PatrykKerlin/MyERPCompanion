@@ -26,11 +26,12 @@ class PurchaseOrderView(BaseView):
         suppliers: list[tuple[int, str]],
         currencies: list[tuple[int, str]],
         delivery_methods: list[tuple[int, str]],
-        source_items: list[tuple[int, str]],
-        target_items: list[tuple[int, str]],
+        source_items: list[tuple[int, list[str]]],
+        target_items: list[tuple[int, list[str]]],
         on_items_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
         on_items_move_requested: Callable[[list[int]], None] | None = None,
         on_items_delete_clicked: Callable[[list[int]], None] | None = None,
+        on_items_pending_reverted: Callable[[list[int]], None] | None = None,
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
         self.__create_defaults = create_defaults or {}
@@ -77,7 +78,18 @@ class PurchaseOrderView(BaseView):
             target_label=self._translation.get("order_items"),
             on_move_requested=on_items_move_requested,
             on_delete_clicked=on_items_delete_clicked,
+            on_pending_reverted=on_items_pending_reverted,
             allow_duplicate_targets=True,
+            source_columns=[
+                self._translation.get("index"),
+                self._translation.get("name"),
+                self._translation.get("ean"),
+            ],
+            target_columns=[
+                self._translation.get("index"),
+                self._translation.get("name"),
+                self._translation.get("quantity"),
+            ],
         )
         self.__bulk_transfer.visible = mode == ViewMode.READ
         self.__set_bulk_transfer_state(mode)
@@ -95,8 +107,8 @@ class PurchaseOrderView(BaseView):
         )
 
     def did_mount(self):
-        self.__bulk_transfer.set_source_items(self.__pending_source_items)
-        self.__bulk_transfer.set_target_items(self.__pending_target_items)
+        self.__bulk_transfer.set_source_rows(self.__pending_source_items)
+        self.__bulk_transfer.set_target_rows(self.__pending_target_items)
         return super().did_mount()
 
     def set_mode(self, mode: ViewMode) -> None:
@@ -141,14 +153,14 @@ class PurchaseOrderView(BaseView):
     def get_pending_targets(self) -> list[tuple[int, int]]:
         return self.__bulk_transfer.get_pending_targets()
 
-    def set_source_items(self, items: list[tuple[int, str]]) -> None:
-        self.__bulk_transfer.set_source_items(items)
+    def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
+        self.__bulk_transfer.set_source_rows(rows)
 
-    def set_target_items(self, items: list[tuple[int, str]]) -> None:
-        self.__bulk_transfer.set_target_items(items)
+    def set_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
+        self.__bulk_transfer.set_target_rows(rows)
 
-    def move_source_items(self, item_ids: list[int], highlight: bool) -> list[int]:
-        return self.__bulk_transfer.move_source_items(item_ids, highlight=highlight)
+    def add_target_row(self, source_id: int, values: list[str], highlight: bool = True) -> int:
+        return self.__bulk_transfer.add_target_row(source_id, values, highlight=highlight)
 
-    def clear_pending_item_changes(self) -> None:
-        self.__bulk_transfer.clear_pending_changes()
+    def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
+        self.__bulk_transfer.update_existing_target(target_id, source_id, values)

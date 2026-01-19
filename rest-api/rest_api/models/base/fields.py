@@ -106,8 +106,8 @@ class Fields:
         return mapped_column(Numeric(7, 3), nullable=nullable)
 
     @staticmethod
-    def numeric_10_3(nullable: bool = False) -> Mapped[Any]:
-        return mapped_column(Numeric(10, 3), nullable=nullable)
+    def numeric_11_3(nullable: bool = False) -> Mapped[Any]:
+        return mapped_column(Numeric(11, 3), nullable=nullable)
 
     @staticmethod
     def string_10(nullable: bool = False, unique: bool = False) -> Mapped[Any]:

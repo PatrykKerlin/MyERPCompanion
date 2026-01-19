@@ -5,16 +5,16 @@ from schemas.validation.constraints import Constraints
 
 
 class InvoiceStrictSchema(BaseStrictSchema):
-    number: Constraints.String20
+    number: Constraints.String_20
 
     issue_date: date
     due_date: date
 
     is_paid: Constraints.BooleanFalse
-    total_net: Constraints.PositiveNumeric102
-    total_vat: Constraints.PositiveNumeric102
-    total_gross: Constraints.PositiveNumeric102
-    total_discount: Constraints.PositiveNumeric102
+    total_net: Constraints.PositiveNumeric_10_2
+    total_vat: Constraints.PositiveNumeric_10_2
+    total_gross: Constraints.PositiveNumeric_10_2
+    total_discount: Constraints.PositiveNumeric_10_2
 
     currency_id: Constraints.PositiveInteger
     payment_method_id: Constraints.PositiveInteger

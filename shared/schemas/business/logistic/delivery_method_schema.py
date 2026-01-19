@@ -4,12 +4,12 @@ from schemas.validation.constraints import Constraints
 
 class DeliveryMethodStrictSchema(BaseStrictSchema):
     name: Constraints.Name
-    description: Constraints.String1000Optional
-    price_per_unit: Constraints.PositiveNumeric102
-    max_width: Constraints.PositiveNumeric63
-    max_height: Constraints.PositiveNumeric63
-    max_length: Constraints.PositiveNumeric63
-    max_weight: Constraints.PositiveNumeric103
+    description: Constraints.StringOptional_1000
+    price_per_unit: Constraints.PositiveNumeric_10_2
+    max_width: Constraints.PositiveNumeric_6_3
+    max_height: Constraints.PositiveNumeric_6_3
+    max_length: Constraints.PositiveNumeric_6_3
+    max_weight: Constraints.PositiveNumeric_11_3
     carrier_id: Constraints.PositiveInteger
     unit_id: Constraints.PositiveInteger
 

@@ -8,7 +8,7 @@ from schemas.validation.constraints import Constraints
 
 class PositionStrictSchema(BaseStrictSchema):
     name: Constraints.Name
-    description: Constraints.String1000Optional
+    description: Constraints.StringOptional_1000
     code: Constraints.Symbol
     level: Constraints.PositiveInteger
     min_salary: Constraints.PositiveInteger

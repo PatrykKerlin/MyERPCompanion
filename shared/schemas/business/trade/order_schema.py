@@ -9,21 +9,21 @@ from schemas.validation.constraints import Constraints
 
 
 class OrderStrictSchema(BaseStrictSchema):
-    number: Constraints.String20
+    number: Constraints.String_20
     is_sales: Constraints.BooleanTrue
 
-    total_net: Constraints.PositiveNumeric102
-    total_vat: Constraints.PositiveNumeric102
-    total_gross: Constraints.PositiveNumeric102
-    total_discount: Constraints.PositiveNumeric102
+    total_net: Constraints.PositiveNumeric_10_2
+    total_vat: Constraints.PositiveNumeric_10_2
+    total_gross: Constraints.PositiveNumeric_10_2
+    total_discount: Constraints.PositiveNumeric_10_2
 
     order_date: date
 
-    tracking_number: Constraints.String50Optional
-    shipping_cost: Constraints.PositiveNumeric102
+    tracking_number: Constraints.StringOptional_50
+    shipping_cost: Constraints.PositiveNumeric_10_2
 
-    notes: Constraints.String1000Optional
-    internal_notes: Constraints.String1000Optional
+    notes: Constraints.StringOptional_1000
+    internal_notes: Constraints.StringOptional_1000
 
     customer_id: Constraints.PositiveIntegerOptional
     supplier_id: Constraints.PositiveIntegerOptional
@@ -42,21 +42,21 @@ class OrderStrictSchema(BaseStrictSchema):
 
 
 class PurchaseOrderStrictSchema(BaseStrictSchema):
-    number: Constraints.String20
+    number: Constraints.String_20
     is_sales: Constraints.BooleanTrue
 
-    total_net: Constraints.PositiveNumeric102
-    total_vat: Constraints.PositiveNumeric102
-    total_gross: Constraints.PositiveNumeric102
-    total_discount: Constraints.PositiveNumeric102
+    total_net: Constraints.PositiveNumeric_10_2
+    total_vat: Constraints.PositiveNumeric_10_2
+    total_gross: Constraints.PositiveNumeric_10_2
+    total_discount: Constraints.PositiveNumeric_10_2
 
     order_date: date
 
-    tracking_number: Constraints.String50Optional
-    shipping_cost: Constraints.PositiveNumeric102
+    tracking_number: Constraints.StringOptional_50
+    shipping_cost: Constraints.PositiveNumeric_10_2
 
-    notes: Constraints.String1000Optional
-    internal_notes: Constraints.String1000Optional
+    notes: Constraints.StringOptional_1000
+    internal_notes: Constraints.StringOptional_1000
 
     customer_id: Constraints.PositiveIntegerOptional
     supplier_id: Constraints.PositiveInteger
@@ -65,21 +65,21 @@ class PurchaseOrderStrictSchema(BaseStrictSchema):
 
 
 class SalesOrderStrictSchema(BaseStrictSchema):
-    number: Constraints.String20
+    number: Constraints.String_20
     is_sales: Constraints.BooleanTrue
 
-    total_net: Constraints.PositiveNumeric102
-    total_vat: Constraints.PositiveNumeric102
-    total_gross: Constraints.PositiveNumeric102
-    total_discount: Constraints.PositiveNumeric102
+    total_net: Constraints.PositiveNumeric_10_2
+    total_vat: Constraints.PositiveNumeric_10_2
+    total_gross: Constraints.PositiveNumeric_10_2
+    total_discount: Constraints.PositiveNumeric_10_2
 
     order_date: date
 
-    tracking_number: Constraints.String50Optional
-    shipping_cost: Constraints.PositiveNumeric102
+    tracking_number: Constraints.StringOptional_50
+    shipping_cost: Constraints.PositiveNumeric_10_2
 
-    notes: Constraints.String1000Optional
-    internal_notes: Constraints.String1000Optional
+    notes: Constraints.StringOptional_1000
+    internal_notes: Constraints.StringOptional_1000
 
     customer_id: Constraints.PositiveInteger
     supplier_id: Constraints.PositiveIntegerOptional

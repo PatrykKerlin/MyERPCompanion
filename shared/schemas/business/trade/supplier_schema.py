@@ -9,24 +9,24 @@ class SupplierStrictSchema(BaseStrictSchema):
     company_phone: Constraints.PhoneNumberOptional
     company_website: Constraints.WebsiteOptional
 
-    street: Constraints.String50Optional
-    house_number: Constraints.String10
-    apartment_number: Constraints.String10Optional
+    street: Constraints.StringOptional_50
+    house_number: Constraints.String_10
+    apartment_number: Constraints.StringOptional_10
     postal_code: Constraints.PostalCode
-    city: Constraints.String50
-    country: Constraints.String50
+    city: Constraints.String_50
+    country: Constraints.String_50
 
-    contact_person: Constraints.String100
+    contact_person: Constraints.String_100
     contact_phone: Constraints.PhoneNumber
     contact_email: Constraints.Email
 
     bank_account: Constraints.BankAccount
     bank_swift: Constraints.BankSwift
-    bank_name: Constraints.String50
+    bank_name: Constraints.String_50
     tax_id: Constraints.TaxId
     payment_term: Constraints.PaymentTerm
 
-    notes: Constraints.String1000Optional
+    notes: Constraints.StringOptional_1000
 
 
 class SupplierPlainSchema(BasePlainSchema):

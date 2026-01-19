@@ -5,7 +5,7 @@ from schemas.validation.constraints import Constraints
 class UnitStrictSchema(BaseStrictSchema):
     name: Constraints.Name
     symbol: Constraints.Symbol
-    description: Constraints.String1000Optional
+    description: Constraints.StringOptional_1000
 
 
 class UnitPlainSchema(BasePlainSchema):

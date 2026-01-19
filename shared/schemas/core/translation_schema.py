@@ -9,7 +9,7 @@ from schemas.validation.constraints import Constraints
 
 class TranslationStrictSchema(BaseStrictSchema):
     key: Constraints.Key
-    value: Constraints.String1000
+    value: Constraints.String_1000
     language_id: Constraints.PositiveInteger
 
 

@@ -9,7 +9,7 @@ from schemas.validation.constraints import Constraints
 
 
 class ExchangeRateStrictSchema(BaseStrictSchema):
-    rate: Constraints.PositiveNumeric102
+    rate: Constraints.PositiveNumeric_10_2
     valid_from: date
     valid_to: date | None
 
@@ -28,7 +28,7 @@ class ExchangeRateStrictSchema(BaseStrictSchema):
 
 
 class ExchangeRatePlainSchema(BasePlainSchema):
-    rate: Constraints.PositiveNumeric102
+    rate: Constraints.PositiveNumeric_10_2
     valid_from: date
     valid_to: date | None
 

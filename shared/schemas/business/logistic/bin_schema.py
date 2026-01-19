@@ -7,7 +7,7 @@ from schemas.validation.constraints import Constraints
 
 
 class BinStrictSchema(BaseStrictSchema):
-    location: Constraints.String10
+    location: Constraints.String_10
     is_inbound: Constraints.BooleanFalse
     is_outbound: Constraints.BooleanTrue
     max_volume: Constraints.PositiveFloat

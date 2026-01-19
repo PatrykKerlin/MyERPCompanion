@@ -5,8 +5,8 @@ from schemas.validation.constraints import Constraints
 class ImageStrictCreateSchema(BaseStrictSchema):
     is_primary: Constraints.BooleanFalse
     order: Constraints.PositiveInteger
-    description: Constraints.String1000Optional
-    content_type: Constraints.String20
+    description: Constraints.StringOptional_1000
+    content_type: Constraints.String_20
     data: Constraints.Bytes
     item_id: Constraints.PositiveInteger
 

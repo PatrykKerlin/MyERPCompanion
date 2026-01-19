@@ -13,7 +13,7 @@ from utils.auth import Auth
 
 
 class PopulateDatabase:
-    __lock_key = 734982134507  # Arbitrary stable key for advisory lock.
+    __lock_key = 734982134507
 
     def __init__(self, get_session: Callable[..., AbstractAsyncContextManager[AsyncSession]], auth: Auth) -> None:
         self.__get_session = get_session
@@ -103,11 +103,6 @@ class PopulateDatabase:
             self.__superuser.modified_by = self.__superuser.id
             session.add(self.__superuser)
             await session.commit()
-
-    @staticmethod
-    async def __get_model_count(session: AsyncSession, model: type[BaseModel]) -> int:
-        result = await session.execute(select(func.count()).select_from(model))
-        return result.scalar_one()
 
     @staticmethod
     async def __try_acquire_lock(session: AsyncSession) -> bool:

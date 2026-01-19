@@ -24,7 +24,7 @@ class DeliveryMethod(BaseModel):
     max_width: Mapped[float] = Fields.numeric_6_3()
     max_height: Mapped[float] = Fields.numeric_6_3()
     max_length: Mapped[float] = Fields.numeric_6_3()
-    max_weight: Mapped[float] = Fields.numeric_10_3()
+    max_weight: Mapped[float] = Fields.numeric_11_3()
 
     carrier_id: Mapped[int] = Fields.foreign_key(column="carriers.id")
     carrier: Mapped[Carrier] = Fields.relationship(

@@ -9,13 +9,13 @@ from schemas.validation.constraints import Constraints
 
 
 class EmployeeStrictSchema(BaseStrictSchema):
-    first_name: Constraints.String50
-    middle_name: Constraints.String50Optional
-    last_name: Constraints.String50
+    first_name: Constraints.String_50
+    middle_name: Constraints.StringOptional_50
+    last_name: Constraints.String_50
 
     pesel: Constraints.PeselOptional
     birth_date: date
-    birth_place: Constraints.String50
+    birth_place: Constraints.String_50
 
     passport_number: Constraints.IdDocumentOptional
     passport_expiry: date | None
@@ -25,12 +25,12 @@ class EmployeeStrictSchema(BaseStrictSchema):
     email: Constraints.EmailOptional
     phone_number: Constraints.PhoneNumber
 
-    street: Constraints.String50Optional
-    house_number: Constraints.String10
-    apartment_number: Constraints.String10Optional
+    street: Constraints.StringOptional_50
+    house_number: Constraints.String_10
+    apartment_number: Constraints.StringOptional_10
     postal_code: Constraints.PostalCode
-    city: Constraints.String50
-    country: Constraints.String50
+    city: Constraints.String_50
+    country: Constraints.String_50
 
     hire_date: date
     termination_date: date | None
@@ -39,7 +39,7 @@ class EmployeeStrictSchema(BaseStrictSchema):
 
     bank_account: Constraints.BankAccount
     bank_swift: Constraints.BankSwift
-    bank_name: Constraints.String50
+    bank_name: Constraints.String_50
 
     manager_id: Constraints.PositiveIntegerOptional
     department_id: Constraints.PositiveInteger

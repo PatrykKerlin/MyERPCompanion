@@ -348,7 +348,6 @@ class BaseViewController(
         if not self._view:
             return
         response = await self._perform_get_page(self._service, self._endpoint)
-        print(response)
         self._request_data.total = response.total
         self._request_data.page = response.page
         self._request_data.page_size = response.page_size

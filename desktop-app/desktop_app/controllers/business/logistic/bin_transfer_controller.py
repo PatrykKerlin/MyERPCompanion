@@ -47,6 +47,7 @@ class BinTransferController(
             self.on_target_bin_submit,
             self.on_bulk_transfer_save_clicked,
             self.on_bulk_transfer_move_requested,
+            self.on_bulk_transfer_pending_reverted,
         )
 
     def on_source_bin_submit(self, event: ft.Event[ft.TextField]) -> None:
@@ -83,6 +84,10 @@ class BinTransferController(
             return
         max_quantity = source_item[2]
         self._page.run_task(self.__handle_move_with_quantity, item_id, max_quantity)
+
+    def on_bulk_transfer_pending_reverted(self, item_ids: list[int]) -> None:
+        for item_id in item_ids:
+            self.__pending_move_quantities.pop(item_id, None)
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
     async def __perform_create_bin_items(self, items: list[AssocBinItemStrictSchema]) -> None:
@@ -216,7 +221,15 @@ class BinTransferController(
         if not quantity:
             return
         self.__pending_move_quantities[item_id] = quantity
-        self._view.move_source_items([item_id], highlight=True)
+        source_item = self.__source_items.get(item_id)
+        if not source_item:
+            return
+        target_item = self.__target_items.get(item_id)
+        if target_item:
+            display_quantity = target_item[2] + quantity
+            self._view.update_existing_target(item_id, item_id, [source_item[0], str(display_quantity)])
+            return
+        self._view.add_target_rows_from_source([item_id], highlight=True)
 
     async def __show_quantity_dialog(self, max_quantity: int) -> int | None:
         translation = self._state_store.app_state.translation.items
@@ -236,14 +249,14 @@ class BinTransferController(
         translation = self._state_store.app_state.translation.items
         bin_schema = await self.__perform_get_single_bin(self.__source_bin.location)
         if not bin_schema:
-            self._view.set_source_items([])
+            self._view.set_source_rows([])
             self._view.set_source_enabled(False)
             self._view.set_source_error(translation.get("bin_not_found"))
             self.__source_bin = None
             return
         self.__source_bin = bin_schema
         self.__source_items = await self.__perform_fetch_bin_items(bin_schema)
-        self._view.set_source_items([(key, value[0]) for key, value in self.__source_items.items()])
+        self._view.set_source_rows([(key, [value[0], str(value[2])]) for key, value in self.__source_items.items()])
         self._view.set_source_enabled(True)
         self._view.set_source_error(None)
 
@@ -253,14 +266,14 @@ class BinTransferController(
         translation = self._state_store.app_state.translation.items
         bin_schema = await self.__perform_get_single_bin(self.__target_bin.location)
         if not bin_schema:
-            self._view.set_target_items([])
+            self._view.set_target_rows([])
             self._view.set_target_enabled(False)
             self._view.set_target_error(translation.get("bin_not_found"))
             self.__target_bin = None
             return
         self.__target_bin = bin_schema
         self.__target_items = await self.__perform_fetch_bin_items(bin_schema)
-        self._view.set_target_items([(key, value[0]) for key, value in self.__target_items.items()])
+        self._view.set_target_rows([(key, [value[0], str(value[2])]) for key, value in self.__target_items.items()])
         self._view.set_target_enabled(True)
         self._view.set_target_error(None)
 
@@ -286,7 +299,7 @@ class BinTransferController(
         self.__source_bin = bin_schema
         self.__source_items = await self.__perform_fetch_bin_items(bin_schema)
         self._close_loading_dialog()
-        self._view.set_source_items([(key, value[0]) for key, value in self.__source_items.items()])
+        self._view.set_source_rows([(key, [value[0], str(value[2])]) for key, value in self.__source_items.items()])
         self._view.set_source_enabled(True)
 
     async def __validate_enable_and_load_target(self, location: str) -> None:
@@ -311,5 +324,5 @@ class BinTransferController(
         self.__target_bin = bin_schema
         self.__target_items = await self.__perform_fetch_bin_items(bin_schema)
         self._close_loading_dialog()
-        self._view.set_target_items([(key, value[0]) for key, value in self.__target_items.items()])
+        self._view.set_target_rows([(key, [value[0], str(value[2])]) for key, value in self.__target_items.items()])
         self._view.set_target_enabled(True)

@@ -12,24 +12,24 @@ from schemas.validation.normalizers import Normalizers
 
 
 class ItemStrictSchema(BaseStrictSchema):
-    index: Constraints.String10
+    index: Constraints.String_10
     name: Constraints.Name
     ean: Constraints.Ean
-    description: Constraints.String1000Optional
+    description: Constraints.StringOptional_1000
 
-    purchase_price: Constraints.PositiveNumeric102
+    purchase_price: Constraints.PositiveNumeric_10_2
     vat_rate: Constraints.PercentFloat
-    margin: Constraints.PositiveNumeric63
+    margin: Constraints.PositiveNumeric_6_3
 
     is_available: Constraints.BooleanTrue
     is_fragile: Constraints.BooleanFalse
     is_package: Constraints.BooleanFalse
     is_returnable: Constraints.BooleanFalse
 
-    width: Constraints.PositiveNumeric63
-    height: Constraints.PositiveNumeric63
-    length: Constraints.PositiveNumeric63
-    weight: Constraints.PositiveNumeric63
+    width: Constraints.PositiveNumeric_6_3
+    height: Constraints.PositiveNumeric_6_3
+    length: Constraints.PositiveNumeric_6_3
+    weight: Constraints.PositiveNumeric_6_3
     expiration_date: date | None
 
     stock_quantity: Constraints.Quantity

@@ -184,6 +184,8 @@ class CustomerView(BaseView):
             source_label=self._translation.get("discounts"),
             target_label=self._translation.get("customer_discounts"),
             on_delete_clicked=on_discount_delete_clicked,
+            source_columns=[self._translation.get("code")],
+            target_columns=[self._translation.get("code")],
         )
         self.__pending_discount_source_items = discount_source_items
         self.__pending_discount_target_items = discount_target_items

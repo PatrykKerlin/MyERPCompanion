@@ -4,7 +4,7 @@ from schemas.validation.constraints import Constraints
 
 class StatusStrictSchema(BaseStrictSchema):
     name: Constraints.Name
-    description: Constraints.String1000Optional
+    description: Constraints.StringOptional_1000
     step_number: Constraints.PositiveInteger
 
 

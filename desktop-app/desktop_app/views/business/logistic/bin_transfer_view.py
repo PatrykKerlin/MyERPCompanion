@@ -25,6 +25,7 @@ class BinTransferView(BaseView):
         on_target_submitted: Callable[[ft.Event[ft.TextField]], None],
         on_save_clicked: Callable[[ft.Event[ft.IconButton]], None],
         on_move_requested: Callable[[list[int]], None],
+        on_pending_reverted: Callable[[list[int]], None],
     ) -> None:
         super().__init__(controller, translation, mode, key, None, 0, 12)
         self._master_column.scroll = None
@@ -37,6 +38,9 @@ class BinTransferView(BaseView):
             source_label=self._translation.get("source_bin"),
             target_label=self._translation.get("target_bin"),
             on_move_requested=on_move_requested,
+            on_pending_reverted=on_pending_reverted,
+            source_columns=[self._translation.get("index"), self._translation.get("quantity")],
+            target_columns=[self._translation.get("index"), self._translation.get("quantity")],
         )
 
         inputs_row = ft.Row(
@@ -60,23 +64,17 @@ class BinTransferView(BaseView):
     def set_target_enabled(self, enabled: bool) -> None:
         self.__bulk_transfer.set_target_enabled(enabled)
 
-    def set_source_items(self, items: list[tuple[int, str]]) -> None:
-        self.__bulk_transfer.set_source_items(items)
+    def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
+        self.__bulk_transfer.set_source_rows(rows)
 
-    def set_target_items(self, items: list[tuple[int, str]]) -> None:
-        self.__bulk_transfer.set_target_items(items)
+    def set_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
+        self.__bulk_transfer.set_target_rows(rows)
 
-    def prepend_target_items(self, items: list[tuple[int, str]], highlight: bool) -> None:
-        self.__bulk_transfer.prepend_target_items(items, highlight)
+    def add_target_rows_from_source(self, ids: list[int], highlight: bool = True) -> list[int]:
+        return self.__bulk_transfer.add_target_rows_from_source(ids, highlight)
 
-    def remove_source_items(self, ids: list[int]) -> None:
-        self.__bulk_transfer.remove_source_items(ids)
-
-    def get_selected_source_ids(self) -> list[int]:
-        return self.__bulk_transfer.get_selected_source_ids()
-
-    def move_source_items(self, ids: list[int], highlight: bool = True) -> None:
-        self.__bulk_transfer.move_source_items(ids, highlight)
+    def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
+        self.__bulk_transfer.update_existing_target(target_id, source_id, values)
 
     def set_source_error(self, message: str | None) -> None:
         self.__source_input.error = message
