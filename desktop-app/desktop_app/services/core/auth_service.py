@@ -2,6 +2,7 @@ from typing import Any
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.core.user_schema import UserPlainSchema
 from schemas.core.token_schema import TokenPlainSchema
+from schemas.core.param_schema import IdsPayloadSchema
 from services.base.base_service import BaseService
 from schemas.core.module_schema import ModulePlainSchema
 from utils.enums import Endpoint
@@ -20,7 +21,7 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: BaseStrictSchema | list[BaseStrictSchema] | dict[str, Any] | list[dict[str, Any]] | None = None,
+        body_params: BaseStrictSchema | list[BaseStrictSchema] | IdsPayloadSchema | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> list[ModulePlainSchema]:
@@ -44,7 +45,7 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: BaseStrictSchema | list[BaseStrictSchema] | dict[str, Any] | list[dict[str, Any]] | None = None,
+        body_params: BaseStrictSchema | list[BaseStrictSchema] | IdsPayloadSchema | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> UserPlainSchema:

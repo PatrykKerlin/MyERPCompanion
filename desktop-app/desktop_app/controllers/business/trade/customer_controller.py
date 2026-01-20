@@ -8,6 +8,7 @@ from schemas.business.trade.assoc_customer_discount_schema import (
     AssocCustomerDiscountStrictSchema,
 )
 from schemas.business.trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
+from schemas.core.param_schema import IdsPayloadSchema
 
 # from schemas.core.user_schema import UserPlainSchema
 from services.business.trade import AssocCustomerDiscountService, CustomerService, DiscountService
@@ -118,7 +119,7 @@ class CustomerController(BaseViewController[CustomerService, CustomerView, Custo
         assoc_ids = [row.id for row in assoc_rows if row.discount_id in discount_ids]
         if not assoc_ids:
             return
-        body_params = {"ids": assoc_ids}
+        body_params = IdsPayloadSchema(ids=assoc_ids)
         await self.__assoc_customer_discount_service.delete_bulk(
             Endpoint.CUSTOMER_DISCOUNTS_DELETE_BULK, None, None, body_params, self._module_id
         )

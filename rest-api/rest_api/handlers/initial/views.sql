@@ -17,6 +17,7 @@ VALUES
 ('customers', 'Customers view', 2, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('sales_orders', 'Sales orders view', 3, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('purchase_orders', 'Sales orders view', 4, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('statuses', 'Statuses view', 5, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('currencies', 'Currencies view', 1, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('exchange_rates', 'Exchange rates view', 2, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('payment_methods', 'Payment methods view', 3, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id);

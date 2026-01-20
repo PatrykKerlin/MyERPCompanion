@@ -12,3 +12,5 @@ class StatusPlainSchema(BasePlainSchema):
     name: str
     description: str | None
     step_number: int
+
+    order_ids: list[int]

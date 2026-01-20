@@ -31,4 +31,4 @@ class PaginatedResponseSchema(BaseModel, Generic[TResponseSchema]):
 
 
 class IdsPayloadSchema(BaseModel):
-    ids: Annotated[list[int], Field(min_length=1)]
+    ids: list[int] = Field(default_factory=list)

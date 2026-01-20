@@ -1,3 +1,4 @@
+from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -12,7 +13,7 @@ class Database:
     __initialized: bool = False
     __base = Base
 
-    def __new__(cls, settings: Settings) -> "Database":
+    def __new__(cls, _: Settings) -> Database:
         if cls.__instance is None:
             cls.__instance = super().__new__(cls)
             cls.__instance.__initialized = False
@@ -20,7 +21,14 @@ class Database:
 
     def __init__(self, settings: Settings) -> None:
         if not self.__initialized:
-            self.engine: AsyncEngine = create_async_engine(settings.DATABASE_URL)
+            self.engine: AsyncEngine = create_async_engine(
+                settings.DATABASE_URL,
+                pool_size=settings.DB_POOL_SIZE,
+                max_overflow=settings.DB_MAX_OVERFLOW,
+                pool_timeout=settings.DB_POOL_TIMEOUT,
+                pool_recycle=settings.DB_POOL_RECYCLE,
+                pool_pre_ping=settings.DB_POOL_PRE_PING,
+            )
             self.__async_session_maker = async_sessionmaker(
                 bind=self.engine,
                 expire_on_commit=False,

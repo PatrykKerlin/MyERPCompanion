@@ -4,6 +4,7 @@ from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.logistic.bin_schema import BinPlainSchema, BinStrictSchema
 from schemas.business.logistic.item_schema import ItemPlainSchema
+from schemas.core.param_schema import IdsPayloadSchema
 from services.business.logistic import AssocBinItemService, BinService, WarehouseService
 from services.business.logistic import ItemService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
@@ -58,7 +59,7 @@ class BinController(BaseViewController[BinService, BinView, BinPlainSchema, BinS
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_items_for_ids(self, item_ids: list[int]) -> list[ItemPlainSchema]:
-        body_params = {"ids": item_ids}
+        body_params = IdsPayloadSchema(ids=item_ids)
         return await self.__item_service.get_bulk(Endpoint.ITEMS_GET_BULK, None, None, body_params, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)

@@ -14,12 +14,14 @@ from schemas.business.trade.assoc_order_item_schema import (
     AssocOrderItemPlainSchema,
     AssocOrderItemStrictSchema,
 )
+from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusPlainSchema, AssocOrderStatusStrictSchema
 from schemas.business.trade.currency_schema import CurrencyPlainSchema, CurrencyStrictSchema
 from schemas.business.trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
 from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
 from schemas.business.trade.exchange_rate_schema import ExchangeRatePlainSchema, ExchangeRateStrictSchema
 from schemas.business.trade.order_schema import OrderPlainSchema, OrderStrictSchema
 from schemas.business.trade.payment_method_schema import PaymentMethodPlainSchema, PaymentMethodStrictSchema
+from schemas.business.trade.status_schema import StatusPlainSchema, StatusStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
 from utils.service_factory import ServiceFactory
 
@@ -43,6 +45,11 @@ AssocOrderItemService = ServiceFactory.create(
     name_prefix="AssocOrderItem",
     plain_schema_cls=AssocOrderItemPlainSchema,
     strict_schema_cls=AssocOrderItemStrictSchema,
+)
+AssocOrderStatusService = ServiceFactory.create(
+    name_prefix="AssocOrderStatus",
+    plain_schema_cls=AssocOrderStatusPlainSchema,
+    strict_schema_cls=AssocOrderStatusStrictSchema,
 )
 CurrencyService = ServiceFactory.create(
     name_prefix="Currency",
@@ -74,6 +81,11 @@ PaymentMethodService = ServiceFactory.create(
     plain_schema_cls=PaymentMethodPlainSchema,
     strict_schema_cls=PaymentMethodStrictSchema,
 )
+StatusService = ServiceFactory.create(
+    name_prefix="Status",
+    plain_schema_cls=StatusPlainSchema,
+    strict_schema_cls=StatusStrictSchema,
+)
 SupplierService = ServiceFactory.create(
     name_prefix="Supplier",
     plain_schema_cls=SupplierPlainSchema,
@@ -86,11 +98,13 @@ __all__ = [
     "AssocCustomerDiscountService",
     "AssocItemDiscountService",
     "AssocOrderItemService",
+    "AssocOrderStatusService",
     "CurrencyService",
     "CustomerService",
     "DiscountService",
     "ExchangeRateService",
     "OrderService",
     "PaymentMethodService",
+    "StatusService",
     "SupplierService",
 ]

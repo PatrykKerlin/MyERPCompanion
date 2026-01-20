@@ -9,6 +9,7 @@ from models.business.trade.customer import Customer
 from models.business.trade.discount import Discount
 from models.business.trade.exchange_rate import ExchangeRate
 from models.business.trade.payment_method import PaymentMethod
+from models.business.trade.status import Status
 from models.business.trade.supplier import Supplier
 from schemas.business.trade.assoc_category_discount_schema import (
     AssocCategoryDiscountPlainSchema,
@@ -29,6 +30,7 @@ from schemas.business.trade.customer_schema import CustomerPlainSchema, Customer
 from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
 from schemas.business.trade.exchange_rate_schema import ExchangeRatePlainSchema, ExchangeRateStrictSchema
 from schemas.business.trade.payment_method_schema import PaymentMethodPlainSchema, PaymentMethodStrictSchema
+from schemas.business.trade.status_schema import StatusPlainSchema, StatusStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
 from services.business.trade import (
     AssocCategoryDiscountService,
@@ -41,6 +43,7 @@ from services.business.trade import (
     DiscountService,
     ExchangeRateService,
     PaymentMethodService,
+    StatusService,
     SupplierService,
 )
 from utils.controller_factory import ControllerFactory
@@ -169,6 +172,20 @@ PaymentMethodController = ControllerFactory.create(
     input_schema_cls=PaymentMethodStrictSchema,
     output_schema_cls=PaymentMethodPlainSchema,
 )
+StatusController = ControllerFactory.create(
+    model_cls=Status,
+    service_cls=StatusService,
+    input_schema_cls=StatusStrictSchema,
+    output_schema_cls=StatusPlainSchema,
+    include={
+        Action.GET_ALL: True,
+        Action.GET_BULK: True,
+        Action.GET_ONE: True,
+        Action.CREATE: True,
+        Action.UPDATE: True,
+        Action.DELETE: True,
+    },
+)
 SupplierController = ControllerFactory.create(
     model_cls=Supplier,
     service_cls=SupplierService,
@@ -188,5 +205,6 @@ __all__ = [
     "DiscountController",
     "PaymentMethodController",
     "OrderController",
+    "StatusController",
     "SupplierController",
 ]

@@ -4,6 +4,7 @@ from controllers.business.trade.discount_controller import DiscountController
 from controllers.business.trade.exchange_rate_controller import ExchangeRateController
 from controllers.business.trade.purchase_order_controller import PurchaseOrderController
 from controllers.business.trade.payment_method_controller import PaymentMethodController
+from controllers.business.trade.status_controller import StatusController
 
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "ExchangeRateController",
     "PaymentMethodController",
     "PurchaseOrderController",
+    "StatusController",
 ]

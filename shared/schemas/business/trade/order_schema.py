@@ -12,15 +12,15 @@ class OrderStrictSchema(BaseStrictSchema):
     number: Constraints.String_20
     is_sales: Constraints.BooleanTrue
 
-    total_net: Constraints.PositiveNumeric_10_2
-    total_vat: Constraints.PositiveNumeric_10_2
-    total_gross: Constraints.PositiveNumeric_10_2
-    total_discount: Constraints.PositiveNumeric_10_2
+    total_net: Constraints.NonNegativeNumeric_10_2
+    total_vat: Constraints.NonNegativeNumeric_10_2
+    total_gross: Constraints.NonNegativeNumeric_10_2
+    total_discount: Constraints.NonNegativeNumeric_10_2
 
     order_date: date
 
     tracking_number: Constraints.StringOptional_50
-    shipping_cost: Constraints.PositiveNumeric_10_2
+    shipping_cost: Constraints.NonNegativeNumeric_10_2
 
     notes: Constraints.StringOptional_1000
     internal_notes: Constraints.StringOptional_1000
@@ -45,15 +45,15 @@ class PurchaseOrderStrictSchema(BaseStrictSchema):
     number: Constraints.String_20
     is_sales: Constraints.BooleanTrue
 
-    total_net: Constraints.PositiveNumeric_10_2
-    total_vat: Constraints.PositiveNumeric_10_2
-    total_gross: Constraints.PositiveNumeric_10_2
-    total_discount: Constraints.PositiveNumeric_10_2
+    total_net: Constraints.NonNegativeNumeric_10_2
+    total_vat: Constraints.NonNegativeNumeric_10_2
+    total_gross: Constraints.NonNegativeNumeric_10_2
+    total_discount: Constraints.NonNegativeNumeric_10_2
 
     order_date: date
 
     tracking_number: Constraints.StringOptional_50
-    shipping_cost: Constraints.PositiveNumeric_10_2
+    shipping_cost: Constraints.NonNegativeNumeric_10_2
 
     notes: Constraints.StringOptional_1000
     internal_notes: Constraints.StringOptional_1000
@@ -68,15 +68,15 @@ class SalesOrderStrictSchema(BaseStrictSchema):
     number: Constraints.String_20
     is_sales: Constraints.BooleanTrue
 
-    total_net: Constraints.PositiveNumeric_10_2
-    total_vat: Constraints.PositiveNumeric_10_2
-    total_gross: Constraints.PositiveNumeric_10_2
-    total_discount: Constraints.PositiveNumeric_10_2
+    total_net: Constraints.NonNegativeNumeric_10_2
+    total_vat: Constraints.NonNegativeNumeric_10_2
+    total_gross: Constraints.NonNegativeNumeric_10_2
+    total_discount: Constraints.NonNegativeNumeric_10_2
 
     order_date: date
 
     tracking_number: Constraints.StringOptional_50
-    shipping_cost: Constraints.PositiveNumeric_10_2
+    shipping_cost: Constraints.NonNegativeNumeric_10_2
 
     notes: Constraints.StringOptional_1000
     internal_notes: Constraints.StringOptional_1000

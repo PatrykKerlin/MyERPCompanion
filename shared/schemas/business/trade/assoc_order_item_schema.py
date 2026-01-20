@@ -7,7 +7,7 @@ class AssocOrderItemStrictSchema(BaseStrictSchema):
     total_net: Constraints.PositiveNumeric_10_2
     total_vat: Constraints.PositiveNumeric_10_2
     total_gross: Constraints.PositiveNumeric_10_2
-    total_discount: Constraints.PositiveNumeric_10_2
+    total_discount: Constraints.NonNegativeNumeric_10_2
 
     order_id: Constraints.PositiveInteger
     item_id: Constraints.PositiveInteger

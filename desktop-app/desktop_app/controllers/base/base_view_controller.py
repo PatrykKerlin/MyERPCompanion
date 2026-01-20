@@ -377,25 +377,26 @@ class BaseViewController(
                 response = await self._perform_update(
                     self._request_data.input_values["id"], self._service, self._endpoint, payload
                 )
-            if response and not self._view.is_dialog:
-                await self._event_bus.publish(
-                    TabRequested(
-                        module_id=self._module_id,
-                        view_key=self._view_key,
-                        record_id=response.id,
-                        record_data=response.model_dump(),
-                        save_succeeded=True,
+            if response:
+                if not self._view.is_dialog:
+                    await self._event_bus.publish(
+                        TabRequested(
+                            module_id=self._module_id,
+                            view_key=self._view_key,
+                            record_id=response.id,
+                            record_data=response.model_dump(),
+                            save_succeeded=True,
+                        )
                     )
-                )
-            self._request_data = RequestData()
-            if self._view and self._view.mode == ViewMode.SEARCH:
-                self._view.clear_inputs()
-            if self._view.caller_view_key:
-                await self._event_bus.publish(
-                    RecordSaved(
-                        view_key=self._view.caller_view_key,
+                self._request_data = RequestData()
+                if self._view and self._view.mode == ViewMode.SEARCH:
+                    self._view.clear_inputs()
+                if self._view.caller_view_key:
+                    await self._event_bus.publish(
+                        RecordSaved(
+                            view_key=self._view.caller_view_key,
+                        )
                     )
-                )
         except ValidationError as validation_error:
             translate_state = self._state_store.app_state.translation
             error_message = [translate_state.items.get("validation_errors")]

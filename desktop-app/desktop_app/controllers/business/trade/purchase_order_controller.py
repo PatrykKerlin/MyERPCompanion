@@ -9,12 +9,23 @@ from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.trade.assoc_order_item_schema import AssocOrderItemPlainSchema, AssocOrderItemStrictSchema
+from schemas.business.trade.assoc_order_status_schema import (
+    AssocOrderStatusPlainSchema,
+    AssocOrderStatusStrictSchema,
+)
 from schemas.business.trade.order_schema import OrderPlainSchema, PurchaseOrderStrictSchema
 from services.base.base_service import BaseService
 from services.business.logistic import DeliveryMethodService, ItemService
 from schemas.business.logistic.item_schema import ItemPlainSchema
-from services.business.trade import AssocOrderItemService, CurrencyService, OrderService, SupplierService
-from schemas.core.param_schema import PaginatedResponseSchema
+from services.business.trade import (
+    AssocOrderItemService,
+    AssocOrderStatusService,
+    CurrencyService,
+    OrderService,
+    StatusService,
+    SupplierService,
+)
+from schemas.core.param_schema import IdsPayloadSchema, PaginatedResponseSchema
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from events.events import ViewRequested
@@ -37,39 +48,53 @@ class PurchaseOrderController(
         self.__supplier_service = SupplierService(self._settings, self._logger, self._tokens_accessor)
         self.__currency_service = CurrencyService(self._settings, self._logger, self._tokens_accessor)
         self.__delivery_method_service = DeliveryMethodService(self._settings, self._logger, self._tokens_accessor)
+        self.__status_service = StatusService(self._settings, self._logger, self._tokens_accessor)
         self.__item_service = ItemService(self._settings, self._logger, self._tokens_accessor)
         self.__order_item_service = AssocOrderItemService(self._settings, self._logger, self._tokens_accessor)
+        self.__order_status_service = AssocOrderStatusService(self._settings, self._logger, self._tokens_accessor)
         self.__order_items: dict[int, tuple[int, int]] = {}
         self.__order_item_by_item_id: dict[int, int] = {}
         self.__pending_move_quantities: dict[int, int] = {}
         self.__source_item_rows: dict[int, list[str]] = {}
+        self.__item_pricing: dict[int, tuple[float, float]] = {}
+        self.__default_status_id: int | None = None
+        self.__current_status_id: int | None = None
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> PurchaseOrderView:
-        suppliers, currencies, delivery_methods = await asyncio.gather(
+        suppliers, currencies, delivery_methods, statuses = await asyncio.gather(
             self.__perform_get_all_suppliers(),
             self.__perform_get_all_currencies(),
             self.__perform_get_all_delivery_methods(),
+            self.__perform_get_all_statuses(),
         )
         self.__order_items = {}
         self.__order_item_by_item_id = {}
         self.__pending_move_quantities.clear()
         self.__source_item_rows.clear()
+        self.__item_pricing.clear()
+        self.__current_status_id = None
         source_items: list[tuple[int, list[str]]] = []
         target_items: list[tuple[int, list[str]]] = []
+        order_id = 0
+        supplier_id = 0
         if mode == ViewMode.READ and event.data:
             order_id = event.data["id"]
             supplier_id = event.data["supplier_id"]
-            target_items = await self.__build_target_items(order_id)
-            source_items = await self.__perform_get_items_for_supplier(supplier_id, set())
-        return PurchaseOrderView(
+            current_status_id = await self.__resolve_current_status_id(order_id)
+            if current_status_id is None:
+                current_status_id = self.__default_status_id
+            if current_status_id is not None:
+                event.data["status_id"] = current_status_id
+                self.__current_status_id = current_status_id
+        view = PurchaseOrderView(
             self,
             translation,
             mode,
             event.view_key,
             event.data,
-            None,
             suppliers,
             currencies,
+            statuses,
             delivery_methods,
             source_items,
             target_items,
@@ -78,6 +103,12 @@ class PurchaseOrderController(
             self.on_order_items_delete_clicked,
             self.on_order_items_pending_reverted,
         )
+        if mode == ViewMode.READ:
+            totals = self.__compute_order_totals([])
+            view.set_order_totals(*totals)
+            if event.data:
+                self._page.run_task(self.__load_order_item_lists, order_id, supplier_id)
+        return view
 
     def on_order_items_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         if not self._view:
@@ -98,6 +129,7 @@ class PurchaseOrderController(
     def on_order_items_pending_reverted(self, target_ids: list[int]) -> None:
         for target_id in target_ids:
             self.__pending_move_quantities.pop(target_id, None)
+        self.__recalculate_order_totals()
 
     async def _perform_get_page(
         self, service: BaseService[OrderPlainSchema, PurchaseOrderStrictSchema], endpoint: Endpoint
@@ -128,11 +160,22 @@ class PurchaseOrderController(
         return [(schema.id, schema.code) for schema in schemas]
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_all_statuses(self) -> list[tuple[int, str]]:
+        schemas = await self.__status_service.get_all(Endpoint.STATUSES, None, None, None, self._module_id)
+        sorted_schemas = sorted(schemas, key=lambda status: status.step_number)
+        if sorted_schemas:
+            self.__default_status_id = sorted_schemas[0].id
+        return [(schema.id, schema.name) for schema in sorted_schemas]
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_items_by_ids(self, item_ids: list[int]) -> list[ItemPlainSchema]:
         if not item_ids:
             return []
-        body_params = {"ids": item_ids}
-        return await self.__item_service.get_bulk(Endpoint.ITEMS_GET_BULK, None, None, body_params, self._module_id)
+        body_params = IdsPayloadSchema(ids=item_ids)
+        items = await self.__item_service.get_bulk(Endpoint.ITEMS_GET_BULK, None, None, body_params, self._module_id)
+        for item in items:
+            self.__item_pricing[item.id] = (item.purchase_price, item.vat_rate)
+        return items
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_items_for_supplier(
@@ -146,6 +189,7 @@ class PurchaseOrderController(
                 continue
             row = [item.index, item.name, item.ean]
             self.__source_item_rows[item.id] = row
+            self.__item_pricing[item.id] = (item.purchase_price, item.vat_rate)
             results.append((item.id, row))
         return results
 
@@ -153,6 +197,13 @@ class PurchaseOrderController(
     async def __perform_get_order_items(self, order_id: int) -> list[AssocOrderItemPlainSchema]:
         query_params = {"order_id": order_id}
         return await self.__order_item_service.get_all(Endpoint.ORDER_ITEMS, None, query_params, None, self._module_id)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_order_statuses(self, order_id: int) -> list[AssocOrderStatusPlainSchema]:
+        query_params = {"order_id": order_id}
+        return await self.__order_status_service.get_all(
+            Endpoint.ORDER_STATUSES, None, query_params, None, self._module_id
+        )
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
     async def __perform_create_order_items(self, items: list[AssocOrderItemStrictSchema]) -> None:
@@ -168,10 +219,21 @@ class PurchaseOrderController(
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
     async def __perform_delete_order_items(self, assoc_ids: list[int]) -> None:
-        body_params = {"ids": assoc_ids}
+        body_params = IdsPayloadSchema(ids=assoc_ids)
         await self.__order_item_service.delete_bulk(
             Endpoint.ORDER_ITEMS_DELETE_BULK, None, None, body_params, self._module_id
         )
+
+    @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def __perform_create_order_status(self, payload: AssocOrderStatusStrictSchema) -> None:
+        await self.__order_status_service.create(Endpoint.ORDER_STATUSES, None, None, payload, self._module_id)
+
+    async def __resolve_current_status_id(self, order_id: int) -> int | None:
+        order_statuses = await self.__perform_get_order_statuses(order_id)
+        if not order_statuses:
+            return None
+        oldest_status = min(order_statuses, key=lambda status: status.created_at)
+        return oldest_status.status_id
 
     async def __build_target_items(self, order_id: int) -> list[tuple[int, list[str]]]:
         order_items = await self.__perform_get_order_items(order_id)
@@ -192,6 +254,54 @@ class PurchaseOrderController(
             targets.append((item.id, row))
         return targets
 
+    def __calculate_item_totals(self, item_id: int, quantity: int) -> tuple[float, float, float, float]:
+        purchase_price, vat_rate = self.__item_pricing.get(item_id, (0.0, 0.0))
+        total_net = round(purchase_price * quantity, 2)
+        total_vat = round(total_net * vat_rate, 2)
+        total_gross = round(total_net + total_vat, 2)
+        total_discount = 0.0
+        return total_net, total_vat, total_gross, total_discount
+
+    def __compute_order_totals(self, pending_targets: list[tuple[int, int]]) -> tuple[float, float, float, float]:
+        pending_by_target = {target_id: item_id for target_id, item_id in pending_targets}
+        pending_new_ids = [target_id for target_id in pending_by_target if target_id not in self.__order_items]
+
+        total_net = 0.0
+        total_vat = 0.0
+        total_gross = 0.0
+        total_discount = 0.0
+
+        for target_id, (item_id, base_quantity) in self.__order_items.items():
+            pending_quantity = self.__pending_move_quantities.get(target_id, 0)
+            quantity = base_quantity + pending_quantity
+            net, vat, gross, discount = self.__calculate_item_totals(item_id, quantity)
+            total_net += net
+            total_vat += vat
+            total_gross += gross
+            total_discount += discount
+
+        for target_id in pending_new_ids:
+            item_id = pending_by_target[target_id]
+            quantity = self.__pending_move_quantities.get(target_id, 0)
+            net, vat, gross, discount = self.__calculate_item_totals(item_id, quantity)
+            total_net += net
+            total_vat += vat
+            total_gross += gross
+            total_discount += discount
+
+        return (
+            round(total_net, 2),
+            round(total_vat, 2),
+            round(total_gross, 2),
+            round(total_discount, 2),
+        )
+
+    def __recalculate_order_totals(self) -> None:
+        if not self._view:
+            return
+        totals = self.__compute_order_totals(self._view.get_pending_targets())
+        self._view.set_order_totals(*totals)
+
     async def __handle_move_with_quantity(self, item_id: int) -> None:
         if not self._view:
             return
@@ -208,10 +318,12 @@ class PurchaseOrderController(
             target_row = [row[0], row[1], str(total_quantity)]
             self._view.update_existing_target(existing_target_id, item_id, target_row)
             self.__pending_move_quantities[existing_target_id] = new_pending
+            self.__recalculate_order_totals()
             return
         target_row = [row[0], row[1], str(quantity)]
         target_id = self._view.add_target_row(item_id, target_row, highlight=True)
         self.__pending_move_quantities[target_id] = quantity
+        self.__recalculate_order_totals()
 
     async def __show_quantity_dialog(self) -> int | None:
         translation = self._state_store.app_state.translation.items
@@ -237,29 +349,33 @@ class PurchaseOrderController(
             if target_id in self.__order_items:
                 base_quantity = self.__order_items[target_id][1]
                 total_quantity = base_quantity + quantity
+                total_net, total_vat, total_gross, total_discount = self.__calculate_item_totals(
+                    item_id, total_quantity
+                )
                 updates.append(
                     AssocOrderItemStrictSchema(
                         id=target_id,
                         order_id=order_id,
                         item_id=item_id,
                         quantity=max(1, total_quantity),
-                        total_net=0.01,
-                        total_vat=0.01,
-                        total_gross=0.01,
-                        total_discount=0.01,
+                        total_net=total_net,
+                        total_vat=total_vat,
+                        total_gross=total_gross,
+                        total_discount=total_discount,
                         discount_id=None,
                     )
                 )
             else:
+                total_net, total_vat, total_gross, total_discount = self.__calculate_item_totals(item_id, quantity)
                 payload.append(
                     AssocOrderItemStrictSchema(
                         order_id=order_id,
                         item_id=item_id,
                         quantity=max(1, quantity),
-                        total_net=0.01,
-                        total_vat=0.01,
-                        total_gross=0.01,
-                        total_discount=0.01,
+                        total_net=total_net,
+                        total_vat=total_vat,
+                        total_gross=total_gross,
+                        total_discount=total_discount,
                         discount_id=None,
                     )
                 )
@@ -271,6 +387,7 @@ class PurchaseOrderController(
             await self.__perform_update_order_items(updates)
         await self.__refresh_order_item_lists(order_id, supplier_id)
         self.__pending_move_quantities.clear()
+        self.__recalculate_order_totals()
 
     async def __handle_order_items_delete(self, item_ids: list[int]) -> None:
         if not self._view or not self._view.data_row:
@@ -290,6 +407,10 @@ class PurchaseOrderController(
         source_items = await self.__perform_get_items_for_supplier(supplier_id, set())
         self._view.set_target_rows(target_items)
         self._view.set_source_rows(source_items)
+        self.__recalculate_order_totals()
+
+    async def __load_order_item_lists(self, order_id: int, supplier_id: int) -> None:
+        await self.__refresh_order_item_lists(order_id, supplier_id)
 
     def __build_create_defaults(self) -> dict[str, object]:
         today = date.today()
@@ -298,16 +419,47 @@ class PurchaseOrderController(
         number = f"{date_part}{suffix}"
         tracking_number = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
         shipping_cost = round(random.uniform(1, 1000), 2)
-        return {
+        defaults: dict[str, object] = {
             "number": number,
             "is_sales": False,
-            "total_net": 0.01,
-            "total_vat": 0.01,
-            "total_gross": 0.01,
-            "total_discount": 0.01,
+            "total_net": 0,
+            "total_vat": 0,
+            "total_gross": 0,
+            "total_discount": 0,
             "order_date": today,
             "tracking_number": tracking_number,
             "shipping_cost": shipping_cost,
-            "notes": "",
-            "internal_notes": "",
         }
+        if self.__default_status_id is not None:
+            defaults["status_id"] = self.__default_status_id
+        return defaults
+
+    @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def _perform_create(
+        self,
+        service: BaseService[OrderPlainSchema, PurchaseOrderStrictSchema],
+        endpoint: Endpoint,
+        payload: PurchaseOrderStrictSchema,
+    ) -> OrderPlainSchema:
+        response = await super()._perform_create(service, endpoint, payload)
+        status_id = self._request_data.input_values.get("status_id", self.__default_status_id)
+        if status_id is not None:
+            await self.__perform_create_order_status(
+                AssocOrderStatusStrictSchema(order_id=response.id, status_id=status_id)
+            )
+        return response
+
+    @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def _perform_update(
+        self,
+        id: int,
+        service: BaseService[OrderPlainSchema, PurchaseOrderStrictSchema],
+        endpoint: Endpoint,
+        payload: PurchaseOrderStrictSchema,
+    ) -> OrderPlainSchema:
+        response = await super()._perform_update(id, service, endpoint, payload)
+        status_id = self._request_data.input_values.get("status_id")
+        if status_id is not None and status_id != self.__current_status_id:
+            await self.__perform_create_order_status(AssocOrderStatusStrictSchema(order_id=id, status_id=status_id))
+            self.__current_status_id = status_id
+        return response

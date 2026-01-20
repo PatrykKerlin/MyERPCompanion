@@ -73,7 +73,7 @@ class BaseRepository(Generic[TModel]):
         await session.commit()
 
     @classmethod
-    async def delete_many(cls, session: AsyncSession, models: Sequence[TModel], commit: bool = True) -> None:
+    async def delete_many(cls, session: AsyncSession, models: Sequence[TModel]) -> None:
         if not models:
             return
         for model in models:

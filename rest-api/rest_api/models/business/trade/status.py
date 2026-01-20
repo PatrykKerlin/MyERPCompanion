@@ -26,3 +26,7 @@ class Status(BaseModel):
     @property
     def orders(self) -> list[Order]:
         return [row.order for row in self.status_orders]
+
+    @property
+    def order_ids(self) -> list[int]:
+        return [row.order.id for row in self.status_orders]

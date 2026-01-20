@@ -96,6 +96,7 @@ class App:
             trade.ExchangeRateController(self.__context),
             trade.PaymentMethodController(self.__context),
             trade.PurchaseOrderController(self.__context),
+            trade.StatusController(self.__context),
         ]
         self.__controllers = core_controllers + hr_controllers + logistic_controllers + trade_controllers
         page.window.on_event = self.__on_window_event

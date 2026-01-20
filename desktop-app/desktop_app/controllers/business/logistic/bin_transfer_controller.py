@@ -8,6 +8,7 @@ from controllers.base.base_view_controller import BaseViewController
 from events.events import ViewRequested
 from schemas.business.logistic.assoc_bin_item_schema import AssocBinItemPlainSchema, AssocBinItemStrictSchema
 from schemas.business.logistic.bin_schema import BinPlainSchema
+from schemas.core.param_schema import IdsPayloadSchema
 from services.business.logistic import AssocBinItemService, BinService, ItemService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
@@ -99,7 +100,7 @@ class BinTransferController(
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
     async def __perform_delete_source_items(self, ids: list[int]) -> None:
-        body_params = {"ids": ids}
+        body_params = IdsPayloadSchema(ids=ids)
         await self.__bin_item_service.delete_bulk(
             Endpoint.BIN_ITEMS_DELETE_BULK, None, None, body_params, self._module_id
         )
@@ -118,7 +119,7 @@ class BinTransferController(
     async def __perform_fetch_bin_items(self, bin: BinPlainSchema) -> dict[int, tuple[str, int, int]]:
         if not bin.item_ids:
             return {}
-        body_params = {"ids": bin.item_ids}
+        body_params = IdsPayloadSchema(ids=bin.item_ids)
         item_schemas = await self.__item_service.get_bulk(
             Endpoint.ITEMS_GET_BULK, None, None, body_params, self._module_id
         )

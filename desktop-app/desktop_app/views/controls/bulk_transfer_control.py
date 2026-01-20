@@ -93,6 +93,11 @@ class BulkTransfer(ft.Container):
         self.__render_source_table()
         self.__render_target_table()
 
+    def update(self) -> None:
+        if not self.visible:
+            self.height = 0
+        super().update()
+
     def clear_pending_changes(self) -> None:
         pending_ids = [target_id for target_id in self.__pending_target_map]
         if pending_ids:
@@ -432,8 +437,10 @@ class BulkTransfer(ft.Container):
                 self.__restore_target_row(target_id)
             self.__selected_target_ids.difference_update(moved_existing_ids)
             self.__render_target_table()
-            if self.__on_pending_reverted:
-                self.__on_pending_reverted(moved_existing_ids)
+        if self.__on_pending_reverted:
+            reverted_ids = moved_existing_ids + moved_new_ids
+            if reverted_ids:
+                self.__on_pending_reverted(reverted_ids)
         if persisted_ids:
             if self.__on_delete_clicked:
                 self.__on_delete_clicked(persisted_ids)

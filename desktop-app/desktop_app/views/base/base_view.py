@@ -38,7 +38,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         caller_view_key: View | None = None,
     ) -> None:
         BaseComponent.__init__(self, controller, translation)
-
         self._mode = mode
         self._view_key = view_key
         self._data_row = data_row

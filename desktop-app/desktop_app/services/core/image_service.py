@@ -1,6 +1,7 @@
 from typing import Any, Union
 
 from schemas.core.image_schema import ImagePlainSchema, ImageStrictCreateSchema, ImageStrictUpdateSchema
+from schemas.core.param_schema import IdsPayloadSchema
 from services.base.base_service import BaseService
 from utils.enums import Endpoint
 from schemas.core.token_schema import TokenPlainSchema
@@ -20,9 +21,8 @@ class ImageService(BaseService[ImagePlainSchema, Union[ImageStrictCreateSchema, 
                 ImageStrictCreateSchema,
                 ImageStrictUpdateSchema,
                 list[ImageStrictCreateSchema | ImageStrictUpdateSchema],
+                IdsPayloadSchema,
             ]
-            | dict[str, Any]
-            | list[dict[str, Any]]
             | None
         ) = None,
         tokens: TokenPlainSchema | None = None,
@@ -49,9 +49,8 @@ class ImageService(BaseService[ImagePlainSchema, Union[ImageStrictCreateSchema, 
                 ImageStrictCreateSchema,
                 ImageStrictUpdateSchema,
                 list[ImageStrictCreateSchema | ImageStrictUpdateSchema],
+                IdsPayloadSchema,
             ]
-            | dict[str, Any]
-            | list[dict[str, Any]]
             | None
         ) = None,
         tokens: TokenPlainSchema | None = None,

@@ -10,6 +10,7 @@ from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
+from schemas.core.param_schema import IdsPayloadSchema
 from schemas.core.image_schema import ImageStrictCreateSchema, ImageStrictUpdateSchema
 from services.core.image_service import ImageService
 from services.business.logistic import AssocBinItemService, BinService, CategoryService, ItemService, UnitService
@@ -100,7 +101,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         if not bin_item_schemas:
             return []
         bin_ids = [schema.bin_id for schema in bin_item_schemas]
-        body_params = {"ids": bin_ids}
+        body_params = IdsPayloadSchema(ids=bin_ids)
         bins = await self.__bin_service.get_bulk(Endpoint.BINS_GET_BULK, None, None, body_params, self._module_id)
         quantity_by_bin_id = {schema.bin_id: schema.quantity for schema in bin_item_schemas}
         rows = []

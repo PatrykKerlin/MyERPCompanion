@@ -14,7 +14,7 @@ from schemas.core.param_schema import (
 )
 from services.business.trade.order_service import OrderService
 from utils.auth import Auth
-from utils.enums import Permission
+from utils.enums import Action, Permission
 from utils.parsers import FilterParamsParser
 
 
@@ -40,7 +40,17 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
             status_code=status.HTTP_200_OK,
             dependencies=self._restrict_access(permissions=[Permission.CAN_READ], secured=True),
         )
-        self._register_routes(OrderPlainSchema)
+        self._register_routes(
+            output_schema=OrderPlainSchema,
+            include={
+                Action.GET_ALL: True,
+                Action.GET_BULK: True,
+                Action.GET_ONE: True,
+                Action.CREATE: True,
+                Action.UPDATE: True,
+                Action.DELETE: True,
+            },
+        )
 
     async def get_all_sales(
         self,

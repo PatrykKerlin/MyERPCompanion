@@ -22,9 +22,9 @@ class PurchaseOrderView(BaseView):
         mode: ViewMode,
         key: View,
         data_row: dict[str, Any] | None,
-        create_defaults: dict[str, Any] | None,
         suppliers: list[tuple[int, str]],
         currencies: list[tuple[int, str]],
+        statuses: list[tuple[int, str]],
         delivery_methods: list[tuple[int, str]],
         source_items: list[tuple[int, list[str]]],
         target_items: list[tuple[int, list[str]]],
@@ -34,14 +34,17 @@ class PurchaseOrderView(BaseView):
         on_items_pending_reverted: Callable[[list[int]], None] | None = None,
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
-        self.__create_defaults = create_defaults or {}
+        self.__create_defaults: dict[str, Any] = {}
         self.__editable_keys = {"supplier_id", "delivery_method_id", "currency_id", "notes", "internal_notes"}
         self.__pending_source_items = list(source_items)
         self.__pending_target_items = list(target_items)
+        self.__pending_totals: dict[str, float] = {}
+        self.__is_mounted = False
 
         main_fields_definitions = [
             {"key": "supplier_id", "input": self._get_dropdown, "options": suppliers},
             {"key": "delivery_method_id", "input": self._get_dropdown, "options": delivery_methods},
+            {"key": "status_id", "input": self._get_dropdown, "options": statuses},
             {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
             {"key": "number", "input": self._get_text_input},
             {"key": "order_date", "input": self._get_date_picker},
@@ -92,10 +95,9 @@ class PurchaseOrderView(BaseView):
             ],
         )
         self.__bulk_transfer.visible = mode == ViewMode.READ
+        self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
-        bulk_transfer_row = ft.Row(
-            controls=[ft.Container(content=self.__bulk_transfer, expand=True, height=260)],
-        )
+        bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
         self._master_column.controls.extend(
             [
                 self._columns_row,
@@ -107,17 +109,24 @@ class PurchaseOrderView(BaseView):
         )
 
     def did_mount(self):
+        result = super().did_mount()
+        self.__is_mounted = True
         self.__bulk_transfer.set_source_rows(self.__pending_source_items)
         self.__bulk_transfer.set_target_rows(self.__pending_target_items)
-        return super().did_mount()
+        if self.__pending_totals:
+            self.__apply_order_totals(self.__pending_totals)
+            self.__pending_totals.clear()
+        return result
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
         if mode == ViewMode.CREATE:
             self.__create_defaults = self._controller.get_create_defaults()
             self.__apply_create_defaults()
-        self.__apply_editable_fields(mode)
-        self.__bulk_transfer.visible = mode == ViewMode.READ
+        if mode != ViewMode.READ:
+            self.__apply_editable_fields(mode)
+        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()
 
@@ -135,10 +144,12 @@ class PurchaseOrderView(BaseView):
             self._controller.set_hidden_field_value("is_sales", self.__create_defaults["is_sales"])
 
     def __apply_editable_fields(self, mode: ViewMode) -> None:
-        allow_edit = mode in {ViewMode.CREATE, ViewMode.EDIT}
         for key, field in self._inputs.items():
             input_control = field.input.content
-            editable = allow_edit and key in self.__editable_keys
+            if mode == ViewMode.EDIT:
+                editable = key == "status_id"
+            else:
+                editable = mode == ViewMode.CREATE and key in self.__editable_keys
             if hasattr(input_control, "read_only"):
                 setattr(input_control, "read_only", not editable)
             if hasattr(input_control, "disabled") and not editable:
@@ -164,3 +175,27 @@ class PurchaseOrderView(BaseView):
 
     def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
         self.__bulk_transfer.update_existing_target(target_id, source_id, values)
+
+    def set_order_totals(self, total_net: float, total_vat: float, total_gross: float, total_discount: float) -> None:
+        totals = {
+            "total_net": total_net,
+            "total_vat": total_vat,
+            "total_gross": total_gross,
+            "total_discount": total_discount,
+        }
+        if not self.__is_mounted:
+            self.__pending_totals = totals
+            for key, value in totals.items():
+                self._controller.set_field_value(key, value)
+            return
+        self.__apply_order_totals(totals)
+
+    def __apply_order_totals(self, totals: dict[str, float]) -> None:
+        for key, value in totals.items():
+            if key in self._inputs:
+                input_control = self._inputs[key].input.content
+                if hasattr(input_control, "value"):
+                    setattr(input_control, "value", value)
+                    if input_control:
+                        input_control.update()
+                self._controller.set_field_value(key, value)

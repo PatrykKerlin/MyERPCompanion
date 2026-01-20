@@ -48,10 +48,11 @@ class View(StrEnum):
     PAYMENT_METHODS = "payment_methods"
     SALES_ORDERS = "sales_orders"
     PURCHASE_ORDERS = "purchase_orders"
+    STATUSES = "statuses"
 
 
 class EditDisabledView(StrEnum):
-    PURCHASE_ORDERS = View.PURCHASE_ORDERS
+    pass
 
 
 class Endpoint(StrEnum):
@@ -104,6 +105,7 @@ class Endpoint(StrEnum):
     EXCHANGE_RATES = "exchange-rates"
     PAYMENT_METHODS = "payment-methods"
     ORDERS = "orders"
+    ORDERS_GET_BULK = "orders/get-bulk"
     PURCHASE_ORDERS = "orders/purchase"
     ORDER_ITEMS = "order-items"
     ORDER_ITEMS_GET_BULK = "order-items/get-bulk"
@@ -115,3 +117,5 @@ class Endpoint(StrEnum):
     ORDER_STATUSES_CREATE_BULK = "order-statuses/create-bulk"
     ORDER_STATUSES_UPDATE_BULK = "order-statuses/update-bulk"
     ORDER_STATUSES_DELETE_BULK = "order-statuses/delete-bulk"
+    STATUSES = "statuses"
+    STATUSES_GET_BULK = "statuses/get-bulk"
