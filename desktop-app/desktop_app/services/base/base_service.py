@@ -149,16 +149,13 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> list[TPlainSchema]:
-        print("serwis")
         if isinstance(body_params, IdsPayloadSchema):
             resolved_body_params = body_params.model_dump(mode="json")
-            print("resolved_body_params:", resolved_body_params)
         else:
             resolved_body_params = IdsPayloadSchema().model_dump(mode="json")
         response = await self._post(
             endpoint=endpoint, body_params=resolved_body_params, tokens=tokens, module_id=module_id
         )
-        print("response", response)
         data = response.json()
         return [self._plain_schema_cls(**item) for item in data]
 
@@ -373,7 +370,6 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         headers = self.__prepare_headers(tokens, module_id)
         async with httpx.AsyncClient(base_url=self._settings.API_URL, timeout=self.__build_timeout()) as client:
             response = await client.put(url=endpoint, json=body_params, headers=headers)
-            print(response.json())
             response.raise_for_status()
             await asyncio.sleep(self.__sleep_time)
             return response

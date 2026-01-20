@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Any
 import random
 import string
 import asyncio
@@ -75,12 +76,16 @@ class PurchaseOrderController(
         self.__current_status_id = None
         source_items: list[tuple[int, list[str]]] = []
         target_items: list[tuple[int, list[str]]] = []
+        status_history: list[dict[str, Any]] = []
         order_id = 0
         supplier_id = 0
-        if mode == ViewMode.READ and event.data:
+        if mode in {ViewMode.READ, ViewMode.EDIT} and event.data:
             order_id = event.data["id"]
             supplier_id = event.data["supplier_id"]
-            current_status_id = await self.__resolve_current_status_id(order_id)
+            order_statuses = await self.__perform_get_order_statuses(order_id)
+            status_name_by_id = {status_id: name for status_id, name in statuses}
+            status_history = self.__build_status_history(order_statuses, status_name_by_id)
+            current_status_id = self.__get_oldest_status_id(order_statuses)
             if current_status_id is None:
                 current_status_id = self.__default_status_id
             if current_status_id is not None:
@@ -98,12 +103,13 @@ class PurchaseOrderController(
             delivery_methods,
             source_items,
             target_items,
+            status_history,
             self.on_order_items_save_clicked,
             self.on_order_items_move_requested,
             self.on_order_items_delete_clicked,
             self.on_order_items_pending_reverted,
         )
-        if mode == ViewMode.READ:
+        if mode in {ViewMode.READ, ViewMode.EDIT}:
             totals = self.__compute_order_totals([])
             view.set_order_totals(*totals)
             if event.data:
@@ -142,6 +148,11 @@ class PurchaseOrderController(
     def set_hidden_field_value(self, key: str, value: object) -> None:
         self._request_data.input_values[key] = value
 
+    def set_field_value(self, key: str, value: str | int | float | bool | date | None) -> None:
+        if key == "is_sales":
+            value = False
+        super().set_field_value(key, value)
+
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_suppliers(self) -> list[tuple[int, str]]:
         schemas = await self.__supplier_service.get_all(Endpoint.SUPPLIERS, None, None, None, self._module_id)
@@ -176,6 +187,11 @@ class PurchaseOrderController(
         for item in items:
             self.__item_pricing[item.id] = (item.purchase_price, item.vat_rate)
         return items
+
+    async def __ensure_item_pricing(self, item_ids: list[int]) -> None:
+        missing_ids = [item_id for item_id in item_ids if item_id not in self.__item_pricing]
+        if missing_ids:
+            await self.__perform_get_items_by_ids(missing_ids)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_items_for_supplier(
@@ -228,12 +244,27 @@ class PurchaseOrderController(
     async def __perform_create_order_status(self, payload: AssocOrderStatusStrictSchema) -> None:
         await self.__order_status_service.create(Endpoint.ORDER_STATUSES, None, None, payload, self._module_id)
 
-    async def __resolve_current_status_id(self, order_id: int) -> int | None:
-        order_statuses = await self.__perform_get_order_statuses(order_id)
+    @staticmethod
+    def __get_oldest_status_id(order_statuses: list[AssocOrderStatusPlainSchema]) -> int | None:
         if not order_statuses:
             return None
         oldest_status = min(order_statuses, key=lambda status: status.created_at)
         return oldest_status.status_id
+
+    def __build_status_history(
+        self,
+        order_statuses: list[AssocOrderStatusPlainSchema],
+        status_name_by_id: dict[int, str],
+    ) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        for status in sorted(order_statuses, key=lambda item: item.created_at):
+            rows.append(
+                {
+                    "status": status_name_by_id.get(status.status_id, str(status.status_id)),
+                    "created_at": self._format_datetime(status.created_at),
+                }
+            )
+        return rows
 
     async def __build_target_items(self, order_id: int) -> list[tuple[int, list[str]]]:
         order_items = await self.__perform_get_order_items(order_id)
@@ -305,6 +336,7 @@ class PurchaseOrderController(
     async def __handle_move_with_quantity(self, item_id: int) -> None:
         if not self._view:
             return
+        await self.__ensure_item_pricing([item_id])
         quantity = await self.__show_quantity_dialog()
         if quantity is None:
             return
@@ -342,6 +374,7 @@ class PurchaseOrderController(
         pending_targets = self._view.get_pending_targets()
         if not pending_targets:
             return
+        await self.__ensure_item_pricing([item_id for _, item_id in pending_targets])
         payload: list[AssocOrderItemStrictSchema] = []
         updates: list[AssocOrderItemStrictSchema] = []
         for target_id, item_id in pending_targets:

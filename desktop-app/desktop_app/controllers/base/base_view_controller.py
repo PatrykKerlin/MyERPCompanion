@@ -428,6 +428,9 @@ class BaseViewController(
     def __parse_data_row(self, data_row: dict[str, Any], parse_none: bool = False) -> None:
         for key, value in data_row.items():
             if key in self.__meta_fields and key.endswith("_at") and value is not None:
-                data_row[key] = value.strftime("%Y-%m-%d %H:%M:%S")
+                data_row[key] = self._format_datetime(value)
             if value is None and parse_none:
                 data_row[key] = ""
+
+    def _format_datetime(self, value: datetime, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
+        return value.strftime(fmt)

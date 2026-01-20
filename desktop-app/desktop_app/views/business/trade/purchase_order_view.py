@@ -8,6 +8,7 @@ from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
 from views.controls.bulk_transfer_control import BulkTransfer
+from views.controls.data_table_control import DataTable
 from utils.translation import Translation
 
 if TYPE_CHECKING:
@@ -28,6 +29,7 @@ class PurchaseOrderView(BaseView):
         delivery_methods: list[tuple[int, str]],
         source_items: list[tuple[int, list[str]]],
         target_items: list[tuple[int, list[str]]],
+        status_history: list[dict[str, Any]],
         on_items_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
         on_items_move_requested: Callable[[list[int]], None] | None = None,
         on_items_delete_clicked: Callable[[list[int]], None] | None = None,
@@ -94,15 +96,27 @@ class PurchaseOrderView(BaseView):
                 self._translation.get("quantity"),
             ],
         )
-        self.__bulk_transfer.visible = mode == ViewMode.READ
+        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
         self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
+        self.__status_history_table = DataTable(
+            columns=["status", "created_at"],
+            rows=status_history,
+            translation=self._translation,
+            height=180,
+            with_button=False,
+            on_row_clicked=None,
+            read_only=True,
+            visible=mode in {ViewMode.READ, ViewMode.EDIT},
+        )
         self._master_column.controls.extend(
             [
                 self._columns_row,
                 ft.Row(height=25),
                 bulk_transfer_row,
+                ft.Row(height=15),
+                self.__status_history_table,
                 ft.Row(height=25),
                 self._buttons_row,
             ]
@@ -129,6 +143,10 @@ class PurchaseOrderView(BaseView):
         self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()
+        self.__status_history_table.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__status_history_table.read_only = True
+        if self.__status_history_table.page:
+            self.__status_history_table.update()
 
     def __apply_create_defaults(self) -> None:
         for key, value in self.__create_defaults.items():
