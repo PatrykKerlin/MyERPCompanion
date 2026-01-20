@@ -48,6 +48,7 @@ class View(StrEnum):
     PAYMENT_METHODS = "payment_methods"
     SALES_ORDERS = "sales_orders"
     PURCHASE_ORDERS = "purchase_orders"
+    STOCK_RECEIVING = "stock_receiving"
     STATUSES = "statuses"
 
 

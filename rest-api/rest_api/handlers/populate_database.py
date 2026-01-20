@@ -30,6 +30,9 @@ class PopulateDatabase:
                 await self.__populate_superuser(session)
                 await self.__populate_from_sql(session)
                 await self.__update_superuser(session)
+            except Exception:
+                await session.rollback()
+                raise
             finally:
                 await PopulateDatabase.__release_lock(session)
 

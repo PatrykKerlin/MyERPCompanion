@@ -7,6 +7,7 @@ from controllers.business.logistic.delivery_method_controller import DeliveryMet
 from controllers.business.logistic.unit_controller import UnitController
 from controllers.business.logistic.category_controller import CategoryController
 
+
 __all__ = [
     "BinController",
     "BinTransferController",

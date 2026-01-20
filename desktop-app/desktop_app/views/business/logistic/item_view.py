@@ -171,6 +171,7 @@ class ItemView(BaseView):
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
+        self.__apply_stock_quantity_rules(mode)
         if self._mode not in {ViewMode.READ, ViewMode.EDIT}:
             self.__gallery_column.visible = False
             self.__add_image_button.visible = False
@@ -191,6 +192,24 @@ class ItemView(BaseView):
             self.__bins_table.read_only = False
         self.__gallery_column.update()
 
+    def __apply_stock_quantity_rules(self, mode: ViewMode) -> None:
+        field = self._inputs.get("stock_quantity")
+        if not field:
+            return
+        input_control = field.input.content
+        if mode == ViewMode.CREATE:
+            if hasattr(input_control, "value"):
+                setattr(input_control, "value", 0)
+                if input_control:
+                    input_control.update()
+            self._controller.set_field_value("stock_quantity", 0)
+        if mode in {ViewMode.CREATE, ViewMode.EDIT}:
+            if hasattr(input_control, "read_only"):
+                setattr(input_control, "read_only", True)
+            if hasattr(input_control, "disabled"):
+                setattr(input_control, "disabled", True)
+            if input_control:
+                input_control.update()
     def __build_image_control(self, image: dict[str, Any]) -> ft.Control:
         url = image["url"]
         is_primary = image["is_primary"]

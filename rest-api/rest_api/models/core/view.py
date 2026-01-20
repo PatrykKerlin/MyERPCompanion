@@ -16,7 +16,7 @@ class View(BaseModel):
     __tablename__ = "views"
     __table_args__ = (UniqueConstraint("order", "module_id", name="uq_view_module_order"),)
 
-    key: Mapped[str] = Fields.key()
+    key: Mapped[str] = Fields.key(unique=False)
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
     order: Mapped[int] = Fields.integer()
 

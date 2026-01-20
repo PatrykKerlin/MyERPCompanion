@@ -3,12 +3,6 @@ from typing import Annotated
 from pydantic import BeforeValidator, EmailStr, Field, HttpUrl
 
 
-def _none_to_zero(value: object) -> object:
-    if value is None:
-        return 0
-    return value
-
-
 class Constraints:
     __digits_only_regex = r"^\d+$"
     __phone_number_regex = r"^\+?\d[\d\s]*$"
