@@ -53,6 +53,7 @@ class PurchaseOrderController(
         self.__supplier_currency_map: dict[int, int] = {}
         self.__default_status_id: int | None = None
         self.__current_status_id: int | None = None
+        self.__default_currency_id: int | None = None
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> PurchaseOrderView:
         order_id = event.data.get("id") if event.data else None
@@ -60,8 +61,10 @@ class PurchaseOrderController(
         suppliers = [(item.id, item.label) for item in view_data.suppliers]
         self.__supplier_currency_map = {item.id: item.currency_id for item in view_data.suppliers}
         currencies = [(item.id, item.label) for item in view_data.currencies]
-        delivery_methods = [(item.id, item.label) for item in view_data.delivery_methods]
-        statuses = [(item.id, item.label) for item in view_data.statuses]
+        self.__default_currency_id = (
+            min((item.id for item in view_data.currencies), default=None) if view_data.currencies else None
+        )
+        statuses = [(item.id, translation.get(item.label)) for item in view_data.statuses]
         status_steps = {item.id: item.status_number for item in view_data.statuses}
         self.__order_items = {}
         self.__order_item_by_item_id = {}
@@ -77,6 +80,7 @@ class PurchaseOrderController(
         order_data = event.data
         if view_data.order:
             order_data = view_data.order.model_dump()
+        self._request_data.input_values["delivery_method_id"] = None
         if mode in {ViewMode.READ, ViewMode.EDIT} and order_data:
             current_status_id = self.__get_latest_status_id(view_data.status_history)
             if current_status_id is None:
@@ -84,6 +88,7 @@ class PurchaseOrderController(
             if current_status_id is not None:
                 order_data["status_id"] = current_status_id
                 self.__current_status_id = current_status_id
+            order_data["delivery_method_id"] = None
         bulk_transfer_enabled = False
         if mode == ViewMode.READ:
             bulk_transfer_enabled = self.__is_bulk_transfer_enabled(self.__current_status_id, status_steps)
@@ -96,7 +101,6 @@ class PurchaseOrderController(
             suppliers,
             currencies,
             statuses,
-            delivery_methods,
             source_items,
             target_items,
             status_history,
@@ -408,6 +412,8 @@ class PurchaseOrderController(
         defaults: dict[str, object] = {
             "number": number,
             "is_sales": False,
+            "currency_id": self.__default_currency_id,
+            "delivery_method_id": None,
             "total_net": 0,
             "total_vat": 0,
             "total_gross": 0,

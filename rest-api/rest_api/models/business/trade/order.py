@@ -49,8 +49,8 @@ class Order(BaseModel):
         argument="Supplier", back_populates="orders", foreign_keys=[supplier_id]
     )
 
-    delivery_method_id: Mapped[int] = Fields.foreign_key(column="delivery_methods.id")
-    delivery_method: Mapped[DeliveryMethod] = Fields.relationship(
+    delivery_method_id: Mapped[int | None] = Fields.foreign_key(column="delivery_methods.id", nullable=True)
+    delivery_method: Mapped[DeliveryMethod | None] = Fields.relationship(
         argument="DeliveryMethod", back_populates="orders", foreign_keys=[delivery_method_id]
     )
 

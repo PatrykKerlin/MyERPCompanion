@@ -189,10 +189,7 @@ class StockReceivingController(
 
     async def __load_eligible_orders(self) -> list[OrderPlainSchema]:
         statuses = await self.__perform_get_all_statuses()
-        step_numbers = sorted({status.step_number for status in statuses})
-        if len(step_numbers) < 3:
-            return []
-        third_highest_step = step_numbers[-3]
+        status_by_id = {status.id: status for status in statuses}
         response = await self.__perform_get_purchase_orders()
         orders = response.items
         eligible: list[OrderPlainSchema] = []
@@ -200,9 +197,9 @@ class StockReceivingController(
             order_statuses = await self.__perform_get_order_statuses(order.id)
             if not order_statuses:
                 continue
-            oldest_status = max(order_statuses, key=lambda status: status.created_at)
-            status = next((status for status in statuses if status.id == oldest_status.status_id), None)
-            if status and status.step_number == third_highest_step:
+            latest_status = max(order_statuses, key=lambda status: status.created_at)
+            status = status_by_id.get(latest_status.status_id)
+            if status and status.order == 6:
                 eligible.append(order)
         return eligible
 
@@ -450,11 +447,7 @@ class StockReceivingController(
         if any(item.to_process > 0 for item in order_items):
             return
         statuses = await self.__perform_get_all_statuses()
-        step_numbers = sorted({status.step_number for status in statuses})
-        if len(step_numbers) < 2:
-            return
-        second_highest_step = step_numbers[-2]
-        target_status = next((status for status in statuses if status.step_number == second_highest_step), None)
+        target_status = next((status for status in statuses if status.order == 7), None)
         if not target_status:
             return
         order_statuses = await self.__perform_get_order_statuses(order_id)

@@ -47,6 +47,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__order_item_by_item_id: dict[int, int] = {}
         self.__pending_move_quantities: dict[int, int] = {}
         self.__source_item_rows: dict[int, list[str]] = {}
+        self.__source_item_category_map: dict[int, int | None] = {}
         self.__item_pricing: dict[int, tuple[float, float]] = {}
         self.__default_status_id: int | None = None
         self.__current_status_id: int | None = None
@@ -56,18 +57,20 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         view_data = await self.__perform_get_sales_view(order_id)
         customers = [(item.id, item.label) for item in view_data.customers]
         currencies = [(item.id, item.label) for item in view_data.currencies]
+        categories = [(item.id, item.label) for item in view_data.categories]
         delivery_methods = [(item.id, item.label) for item in view_data.delivery_methods]
-        statuses = [(item.id, item.label) for item in view_data.statuses]
-        status_steps = {item.id: item.order for item in view_data.statuses}
+        statuses = [(item.id, translation.get(item.label)) for item in view_data.statuses]
+        status_steps = {item.id: item.status_number for item in view_data.statuses}
         self.__order_items = {}
         self.__order_item_by_item_id = {}
         self.__pending_move_quantities.clear()
         self.__source_item_rows.clear()
+        self.__source_item_category_map.clear()
         self.__item_pricing.clear()
         self.__current_status_id = None
-        if statuses:
-            self.__default_status_id = statuses[0][0]
-        source_items = self.__build_source_item_rows(view_data.source_items)
+        default_status = next((item for item in view_data.statuses if item.status_number == 1), None)
+        self.__default_status_id = default_status.id if default_status else None
+        source_items, source_item_categories = self.__build_source_item_rows(view_data.source_items)
         target_items = self.__build_target_item_rows(view_data.target_items)
         status_history = self.__build_status_history(view_data.status_history)
         order_data = event.data
@@ -93,7 +96,9 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             currencies,
             statuses,
             delivery_methods,
+            categories,
             source_items,
+            source_item_categories,
             target_items,
             status_history,
             bulk_transfer_enabled,
@@ -204,14 +209,19 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         if missing_ids:
             await self.__perform_get_items_by_ids(missing_ids)
 
-    def __build_source_item_rows(self, items: list[OrderViewSourceItemSchema]) -> list[tuple[int, list[str]]]:
+    def __build_source_item_rows(
+        self, items: list[OrderViewSourceItemSchema]
+    ) -> tuple[list[tuple[int, list[str]]], dict[int, int | None]]:
         results: list[tuple[int, list[str]]] = []
+        category_map: dict[int, int | None] = {}
         for item in items:
             row = [item.index, item.name, item.ean]
             self.__source_item_rows[item.id] = row
+            category_map[item.id] = item.category_id
             self.__item_pricing[item.id] = (item.purchase_price, item.vat_rate)
             results.append((item.id, row))
-        return results
+        self.__source_item_category_map = category_map
+        return results, category_map
 
     def __build_target_item_rows(self, items: list[OrderViewTargetItemSchema]) -> list[tuple[int, list[str]]]:
         self.__order_items = {item.id: (item.item_id, item.quantity) for item in items}
@@ -224,11 +234,12 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         return results
 
     def __build_status_history(self, order_statuses: list[OrderViewStatusHistorySchema]) -> list[dict[str, Any]]:
+        translation = self._state_store.app_state.translation.items
         rows: list[dict[str, Any]] = []
         for status in sorted(order_statuses, key=lambda item: item.created_at):
             rows.append(
                 {
-                    "status": status.name,
+                    "status": translation.get(status.key),
                     "created_at": self._format_datetime(status.created_at),
                 }
             )
@@ -387,9 +398,9 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             return
         view_data = await self.__perform_get_sales_view(order_id)
         target_items = self.__build_target_item_rows(view_data.target_items)
-        source_items = self.__build_source_item_rows(view_data.source_items)
+        source_items, source_item_categories = self.__build_source_item_rows(view_data.source_items)
         self._view.set_target_rows(target_items)
-        self._view.set_source_rows(source_items)
+        self._view.set_source_data(source_items, source_item_categories)
         self.__recalculate_order_totals()
 
     def __build_create_defaults(self) -> dict[str, object]:
@@ -398,10 +409,11 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         suffix = "".join(random.choices(string.ascii_uppercase + string.digits, k=7))
         number = f"{date_part}{suffix}"
         tracking_number = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
-        shipping_cost = round(random.uniform(1, 1000), 2)
+        shipping_cost = 0.0
         defaults: dict[str, object] = {
             "number": number,
             "is_sales": True,
+            "currency_id": None,
             "total_net": 0,
             "total_vat": 0,
             "total_gross": 0,

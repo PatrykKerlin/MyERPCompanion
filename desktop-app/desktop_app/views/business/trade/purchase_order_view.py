@@ -26,7 +26,6 @@ class PurchaseOrderView(BaseView):
         suppliers: list[tuple[int, str]],
         currencies: list[tuple[int, str]],
         statuses: list[tuple[int, str]],
-        delivery_methods: list[tuple[int, str]],
         source_items: list[tuple[int, list[str]]],
         target_items: list[tuple[int, list[str]]],
         status_history: list[dict[str, Any]],
@@ -39,7 +38,7 @@ class PurchaseOrderView(BaseView):
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
         self.__create_defaults: dict[str, Any] = {}
-        self.__editable_keys = {"supplier_id", "delivery_method_id", "notes", "internal_notes"}
+        self.__editable_keys = {"supplier_id", "notes", "internal_notes"}
         self.__pending_source_items = list(source_items)
         self.__pending_target_items = list(target_items)
         self.__pending_totals: dict[str, float] = {}
@@ -54,7 +53,6 @@ class PurchaseOrderView(BaseView):
                 "options": suppliers,
                 "callbacks": [self.__handle_supplier_changed],
             },
-            {"key": "delivery_method_id", "input": self._get_dropdown, "options": delivery_methods},
             {"key": "status_id", "input": self._get_dropdown, "options": statuses},
             {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
             {"key": "number", "input": self._get_text_input},
@@ -172,6 +170,8 @@ class PurchaseOrderView(BaseView):
                 self._controller.set_field_value(key, value)
         if "is_sales" in self.__create_defaults:
             self._controller.set_hidden_field_value("is_sales", self.__create_defaults["is_sales"])
+        if "delivery_method_id" in self.__create_defaults:
+            self._controller.set_hidden_field_value("delivery_method_id", self.__create_defaults["delivery_method_id"])
 
     def __apply_editable_fields(self, mode: ViewMode) -> None:
         for key, field in self._inputs.items():
@@ -196,7 +196,9 @@ class PurchaseOrderView(BaseView):
 
     def __apply_supplier_currency(self) -> None:
         supplier_id = self.__get_selected_supplier_id()
-        currency_id = self.__supplier_currency_by_id.get(supplier_id) if supplier_id is not None else None
+        if supplier_id is None:
+            return
+        currency_id = self.__supplier_currency_by_id.get(supplier_id)
         self.__set_currency_value(currency_id)
 
     def __get_selected_supplier_id(self) -> int | None:

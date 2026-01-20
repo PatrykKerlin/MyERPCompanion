@@ -3,6 +3,8 @@ VALUES
 ('side_menu', 'Side menu view', 1, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('current_user', 'Current user view', 2, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 
+('statuses', 'Statuses view', 1, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+
 ('departments', 'Departments view', 1, 3, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('positions', 'Positions view', 2, 3, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('employees', 'Employees view', 3, 3, TRUE, CURRENT_TIMESTAMP, :superuser_id),
@@ -19,11 +21,9 @@ VALUES
 ('discounts', 'Discounts view', 1, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('customers', 'Customers view', 2, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('sales_orders', 'Sales orders view', 3, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('statuses', 'Statuses view for sales', 4, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 
 ('purchase_orders', 'Sales orders view', 1, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('stock_receiving', 'Stock receiving view', 2, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('statuses', 'Statuses view for purchase', 3, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 
 ('currencies', 'Currencies view', 1, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('exchange_rates', 'Exchange rates view', 2, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),

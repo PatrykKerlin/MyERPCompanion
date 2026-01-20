@@ -22,7 +22,9 @@ class OrderViewService:
     async def get_view(
         self, session: AsyncSession, is_sales: bool, order_id: int | None = None
     ) -> OrderViewResponseSchema:
-        suppliers, customers, currencies, delivery_methods, statuses = await OrderViewRepository.get_lookups(session)
+        suppliers, customers, currencies, delivery_methods, statuses, categories = await OrderViewRepository.get_lookups(
+            session
+        )
 
         order: Order | None = None
         if order_id is not None:
@@ -57,6 +59,7 @@ class OrderViewService:
             source_items=self._build_source_items(source_items),
             target_items=self._build_target_items(order_items),
             status_history=self._build_status_history(order_statuses),
+            categories=[OrderViewLookupSchema(id=row.id, label=row.name, status_number=None) for row in categories],
         )
         return response
 
@@ -70,6 +73,7 @@ class OrderViewService:
                 ean=item.ean,
                 purchase_price=item.purchase_price,
                 vat_rate=item.vat_rate,
+                category_id=item.category_id,
             )
             for item in items
         ]

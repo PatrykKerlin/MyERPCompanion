@@ -9,7 +9,7 @@ class StatusStrictSchema(BaseStrictSchema):
 
 
 class StatusPlainSchema(BasePlainSchema):
-    nakeyme: str
+    key: str
     description: str | None
     order: int
 

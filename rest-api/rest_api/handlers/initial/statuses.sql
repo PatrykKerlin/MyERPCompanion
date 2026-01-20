@@ -1,9 +1,10 @@
 INSERT INTO statuses (key, description, "order", is_active, created_at, created_by) VALUES
-('new', 'Zamówienie utworzone, oczekuje na dalsze przetwarzanie', 1, TRUE, NOW(), :superuser_id),
-('in_progress', 'Zamówienie jest w trakcie przetwarzania', 2, TRUE, NOW(), :superuser_id),
-('packed', 'Zamówienie zostało skompletowane i spakowane', 3, TRUE, NOW(), :superuser_id),
-('shipped', 'Zamówienie zostało wysłane do klienta', 4, TRUE, NOW(), :superuser_id),
-('delivered', 'Zamówienie zostało dostarczone do klienta', 5, TRUE, NOW(), :superuser_id),
-('completed', 'Zamówienie zostało zakończone', 6, TRUE, NOW(), :superuser_id),
-('on_hold', 'Zamówienie tymczasowo wstrzymane, oczekuje na decyzję', 7, TRUE, NOW(), :superuser_id),
-('cancelled', 'Zamówienie zostało anulowane', 8, TRUE, NOW(), :superuser_id);
+('new', 'Order created, awaiting approval', 1, TRUE, NOW(), :superuser_id),
+('approved', 'Order approved and ready for processing', 2, TRUE, NOW(), :superuser_id),
+('in_progress', 'Order is being processed', 3, TRUE, NOW(), :superuser_id),
+('packed', 'Order has been picked and packed', 4, TRUE, NOW(), :superuser_id),
+('shipped', 'Order has been shipped to the customer', 5, TRUE, NOW(), :superuser_id),
+('delivered', 'Order has been delivered to the customer', 6, TRUE, NOW(), :superuser_id),
+('completed', 'Order has been completed', 7, TRUE, NOW(), :superuser_id),
+('on_hold', 'Order is temporarily on hold awaiting decision', 8, TRUE, NOW(), :superuser_id),
+('cancelled', 'Order has been cancelled', 9, TRUE, NOW(), :superuser_id);

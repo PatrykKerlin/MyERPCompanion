@@ -27,7 +27,9 @@ class SalesOrderView(BaseView):
         currencies: list[tuple[int, str]],
         statuses: list[tuple[int, str]],
         delivery_methods: list[tuple[int, str]],
+        categories: list[tuple[int, str]],
         source_items: list[tuple[int, list[str]]],
+        source_item_categories: dict[int, int | None],
         target_items: list[tuple[int, list[str]]],
         status_history: list[dict[str, Any]],
         bulk_transfer_enabled: bool,
@@ -39,7 +41,10 @@ class SalesOrderView(BaseView):
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
         self.__create_defaults: dict[str, Any] = {}
         self.__editable_keys = {"customer_id", "delivery_method_id", "currency_id", "notes", "internal_notes"}
-        self.__pending_source_items = list(source_items)
+        self.__all_source_items = list(source_items)
+        self.__source_item_category_map = dict(source_item_categories)
+        self.__selected_category_id: int | None = None
+        self.__pending_source_items: list[tuple[int, list[str]]] = []
         self.__pending_target_items = list(target_items)
         self.__pending_totals: dict[str, float] = {}
         self.__is_mounted = False
@@ -73,6 +78,26 @@ class SalesOrderView(BaseView):
         main_grid = self._build_grid(main_fields)
         notes_grid = self._build_grid(notes_fields)
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
+
+        category_options = [ft.dropdown.Option("all", self._translation.get("all"))]
+        category_options.extend(ft.dropdown.Option(str(category_id), label) for category_id, label in categories)
+        self.__category_filter = ft.Dropdown(
+            options=category_options,
+            value="all",
+            on_select=self.__on_category_filter_changed,
+            expand=True,
+        )
+        self.__category_filter.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__category_filter.disabled = mode == ViewMode.EDIT
+        self.__category_filter_row = ft.Row(
+            controls=[
+                ft.Text(self._translation.get("category")),
+                self.__category_filter,
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+        self.__category_filter_row.visible = self.__category_filter.visible
 
         columns = [
             ft.Column(
@@ -119,7 +144,9 @@ class SalesOrderView(BaseView):
         self._master_column.controls.extend(
             [
                 self._columns_row,
-                ft.Row(height=25),
+                ft.Row(height=10),
+                self.__category_filter_row,
+                ft.Row(height=15),
                 bulk_transfer_row,
                 ft.Row(height=15),
                 self.__status_history_table,
@@ -127,6 +154,7 @@ class SalesOrderView(BaseView):
                 self._buttons_row,
             ]
         )
+        self.__pending_source_items = self.__get_filtered_source_items()
 
     def did_mount(self):
         result = super().did_mount()
@@ -151,6 +179,13 @@ class SalesOrderView(BaseView):
         self.__bulk_transfer.clear_pending_changes()
         self.__status_history_table.visible = mode in {ViewMode.READ, ViewMode.EDIT}
         self.__status_history_table.read_only = True
+        self.__category_filter.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__category_filter.disabled = mode == ViewMode.EDIT
+        self.__category_filter_row.visible = self.__category_filter.visible
+        if self.__category_filter.page:
+            self.__category_filter.update()
+        if self.__category_filter_row.page:
+            self.__category_filter_row.update()
         if self.__status_history_table.page:
             self.__status_history_table.update()
 
@@ -189,7 +224,13 @@ class SalesOrderView(BaseView):
         return self.__bulk_transfer.get_pending_targets()
 
     def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
-        self.__bulk_transfer.set_source_rows(rows)
+        self.__all_source_items = list(rows)
+        self.__apply_category_filter()
+
+    def set_source_data(self, rows: list[tuple[int, list[str]]], category_map: dict[int, int | None]) -> None:
+        self.__all_source_items = list(rows)
+        self.__source_item_category_map = dict(category_map)
+        self.__apply_category_filter()
 
     def set_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
         self.__bulk_transfer.set_target_rows(rows)
@@ -223,3 +264,30 @@ class SalesOrderView(BaseView):
                     if input_control:
                         input_control.update()
                 self._controller.set_field_value(key, value)
+
+    def __on_category_filter_changed(self, event: ft.Event[ft.Dropdown]) -> None:
+        value = event.control.value
+        if not value or value == "all":
+            self.__selected_category_id = None
+        else:
+            try:
+                self.__selected_category_id = int(value)
+            except ValueError:
+                self.__selected_category_id = None
+        self.__apply_category_filter()
+
+    def __apply_category_filter(self) -> None:
+        rows = self.__get_filtered_source_items()
+        if not self.__is_mounted:
+            self.__pending_source_items = rows
+            return
+        self.__bulk_transfer.set_source_rows(rows)
+
+    def __get_filtered_source_items(self) -> list[tuple[int, list[str]]]:
+        if self.__selected_category_id is None:
+            return list(self.__all_source_items)
+        return [
+            (item_id, values)
+            for item_id, values in self.__all_source_items
+            if self.__source_item_category_map.get(item_id) == self.__selected_category_id
+        ]

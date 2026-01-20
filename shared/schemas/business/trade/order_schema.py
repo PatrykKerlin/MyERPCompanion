@@ -27,7 +27,7 @@ class OrderStrictSchema(BaseStrictSchema):
 
     customer_id: Constraints.PositiveIntegerOptional
     supplier_id: Constraints.PositiveIntegerOptional
-    delivery_method_id: Constraints.PositiveInteger
+    delivery_method_id: Constraints.PositiveIntegerOptional
     currency_id: Constraints.PositiveInteger
 
     @model_validator(mode="after")
@@ -66,7 +66,7 @@ class PurchaseOrderStrictSchema(BaseStrictSchema):
 
     customer_id: Constraints.PositiveIntegerOptional
     supplier_id: Constraints.PositiveInteger
-    delivery_method_id: Constraints.PositiveInteger
+    delivery_method_id: Constraints.PositiveIntegerOptional
     currency_id: Constraints.PositiveInteger
 
 
@@ -111,7 +111,7 @@ class OrderPlainSchema(BasePlainSchema):
 
     customer_id: int | None
     supplier_id: int | None
-    delivery_method_id: int
+    delivery_method_id: int | None
     currency_id: int
     invoice_id: int | None
 

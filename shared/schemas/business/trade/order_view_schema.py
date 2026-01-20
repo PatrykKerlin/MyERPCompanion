@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from pydantic import Field
+
 from schemas.base.base_schema import BaseSchema
 from schemas.business.trade.order_schema import OrderPlainSchema
 
@@ -25,6 +27,7 @@ class OrderViewSourceItemSchema(BaseSchema):
     ean: str
     purchase_price: float
     vat_rate: float
+    category_id: int | None = None
 
 
 class OrderViewTargetItemSchema(BaseSchema):
@@ -53,3 +56,4 @@ class OrderViewResponseSchema(BaseSchema):
     source_items: list[OrderViewSourceItemSchema]
     target_items: list[OrderViewTargetItemSchema]
     status_history: list[OrderViewStatusHistorySchema]
+    categories: list[OrderViewLookupSchema] = Field(default_factory=list)

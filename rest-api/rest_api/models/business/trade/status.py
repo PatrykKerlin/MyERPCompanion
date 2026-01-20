@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class Status(BaseModel):
     __tablename__ = "statuses"
     __table_args__ = (
-        CheckConstraint('"order" <= 8', name="ck_statuses_order_max_8"),
+        CheckConstraint('"order" <= 9', name="ck_statuses_order_max_9"),
         Index(
             "ux_statuses_order_active_true",
             "order",
