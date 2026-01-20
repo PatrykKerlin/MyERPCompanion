@@ -11,7 +11,7 @@ from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
 from schemas.core.param_schema import IdsPayloadSchema
-from schemas.core.image_schema import ImageStrictCreateSchema, ImageStrictUpdateSchema
+from schemas.core.image_schema import ImageMultipartPayloadSchema, ImageStrictCreateSchema, ImageStrictUpdateSchema
 from services.core.image_service import ImageService
 from services.business.logistic import AssocBinItemService, BinService, CategoryService, ItemService, UnitService
 from services.business.trade import CurrencyService, SupplierService
@@ -34,7 +34,6 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         self.__category_service = CategoryService(self._settings, self._logger, self._tokens_accessor)
         self.__unit_service = UnitService(self._settings, self._logger, self._tokens_accessor)
         self.__supplier_service = SupplierService(self._settings, self._logger, self._tokens_accessor)
-        self.__currency_service = CurrencyService(self._settings, self._logger, self._tokens_accessor)
         self.__image_service = ImageService(self._settings, self._logger, self._tokens_accessor)
         self.__bin_service = BinService(self._settings, self._logger, self._tokens_accessor)
         self.__bin_item_service = AssocBinItemService(self._settings, self._logger, self._tokens_accessor)
@@ -58,19 +57,16 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         )
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> ItemView:
-        categories, units, suppliers, currencies = await asyncio.gather(
+        categories, units, suppliers = await asyncio.gather(
             self.__perform_get_all_categories(),
             self.__perform_get_all_units(),
             self.__perform_get_all_suppliers(),
-            self.__perform_get_all_currencies(),
         )
         if event.data:
             bins = await self.__perform_get_bins_for_item(event.data["id"])
         else:
             bins = []
-        return ItemView(
-            self, translation, mode, event.view_key, event.data, categories, units, suppliers, currencies, bins
-        )
+        return ItemView(self, translation, mode, event.view_key, event.data, categories, units, suppliers, bins)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_categories(self) -> list[tuple[int, str]]:
@@ -86,11 +82,6 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
     async def __perform_get_all_suppliers(self) -> list[tuple[int, str]]:
         schemas = await self.__supplier_service.get_all(Endpoint.SUPPLIERS, None, None, None, self._module_id)
         return [(schema.id, schema.company_name) for schema in schemas]
-
-    @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_get_all_currencies(self) -> list[tuple[int, str]]:
-        schemas = await self.__currency_service.get_all(Endpoint.CURRENCIES, None, None, None, self._module_id)
-        return [(schema.id, schema.code) for schema in schemas]
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_bins_for_item(self, item_id: int) -> list[dict[str, Any]]:
@@ -120,7 +111,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         is_primary = not self.__has_primary_image(images)
         max_order = max((image["order"] for image in images), default=0)
         next_order = max_order + 1
-        content_type = mimetypes.guess_type(file_path)[0]
+        content_type = mimetypes.guess_type(file_path)[0] or "image/unknown"
         file_name = os.path.basename(file_path)
         with open(file_path, "rb") as file:
             data = file.read()
@@ -130,7 +121,10 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
             "content_type": content_type,
             "item_id": str(item_id),
         }
-        body_params = {"data": form_data, "files": {"data": (file_name, data, content_type)}}
+        body_params = ImageMultipartPayloadSchema(
+            data=form_data,
+            files={"data": (file_name, data, content_type)},
+        )
         response = await self.__image_service.create_multipart(
             Endpoint.IMAGES, None, None, body_params, self._module_id
         )
@@ -148,11 +142,15 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
             cleared = [
                 ImageStrictUpdateSchema(id=update.id, order=update.order, is_primary=False) for update in updates
             ]
-            body_params = cast(list[ImageStrictCreateSchema | ImageStrictUpdateSchema], cleared)
+            body_params = cast(
+                list[ImageStrictCreateSchema | ImageStrictUpdateSchema | ImageMultipartPayloadSchema], cleared
+            )
             await self.__image_service.update_bulk(
                 Endpoint.IMAGES_UPDATE_BULK, None, None, body_params, self._module_id
             )
-        body_params = cast(list[ImageStrictCreateSchema | ImageStrictUpdateSchema], updates)
+        body_params = cast(
+            list[ImageStrictCreateSchema | ImageStrictUpdateSchema | ImageMultipartPayloadSchema], updates
+        )
         response = await self.__image_service.update_bulk(
             Endpoint.IMAGES_UPDATE_BULK, None, None, body_params, self._module_id
         )

@@ -38,6 +38,12 @@ class OrderStrictSchema(BaseStrictSchema):
         if self.customer_id and self.supplier_id:
             raise ValueError("customer_id and supplier_id are mutually exclusive")
 
+        if self.supplier_id and self.is_sales:
+            raise ValueError("purchase orders must have is_sales set to False")
+
+        if self.customer_id and not self.is_sales:
+            raise ValueError("sales orders must have is_sales set to True")
+
         return self
 
 

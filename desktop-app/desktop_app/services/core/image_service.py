@@ -1,13 +1,20 @@
 from typing import Any, Union
 
-from schemas.core.image_schema import ImagePlainSchema, ImageStrictCreateSchema, ImageStrictUpdateSchema
+from schemas.core.image_schema import (
+    ImageMultipartPayloadSchema,
+    ImagePlainSchema,
+    ImageStrictCreateSchema,
+    ImageStrictUpdateSchema,
+)
 from schemas.core.param_schema import IdsPayloadSchema
 from services.base.base_service import BaseService
 from utils.enums import Endpoint
 from schemas.core.token_schema import TokenPlainSchema
 
 
-class ImageService(BaseService[ImagePlainSchema, Union[ImageStrictCreateSchema, ImageStrictUpdateSchema]]):
+class ImageService(
+    BaseService[ImagePlainSchema, Union[ImageStrictCreateSchema, ImageStrictUpdateSchema, ImageMultipartPayloadSchema]]
+):
     _plain_schema_cls = ImagePlainSchema
 
     @BaseService.handle_token_refresh
@@ -20,6 +27,7 @@ class ImageService(BaseService[ImagePlainSchema, Union[ImageStrictCreateSchema, 
             Union[
                 ImageStrictCreateSchema,
                 ImageStrictUpdateSchema,
+                ImageMultipartPayloadSchema,
                 list[ImageStrictCreateSchema | ImageStrictUpdateSchema],
                 IdsPayloadSchema,
             ]
@@ -48,6 +56,7 @@ class ImageService(BaseService[ImagePlainSchema, Union[ImageStrictCreateSchema, 
             Union[
                 ImageStrictCreateSchema,
                 ImageStrictUpdateSchema,
+                ImageMultipartPayloadSchema,
                 list[ImageStrictCreateSchema | ImageStrictUpdateSchema],
                 IdsPayloadSchema,
             ]

@@ -414,6 +414,11 @@ class BaseViewController(
     def __validate_field(self, key: str) -> str | None:
         if not self._view or self._view.mode not in {ViewMode.CREATE, ViewMode.EDIT}:
             return
+        field = self._view.inputs.get(key)
+        if field:
+            input_control = field.input.content
+            if hasattr(input_control, "disabled") and getattr(input_control, "disabled"):
+                return None
         self._view.set_save_button_state(True)
         if self._view.mode == ViewMode.CREATE:
             self._request_data.input_values["id"] = 1

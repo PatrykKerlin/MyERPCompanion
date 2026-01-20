@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import CheckConstraint, Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -14,10 +15,19 @@ if TYPE_CHECKING:
 
 class Status(BaseModel):
     __tablename__ = "statuses"
+    __table_args__ = (
+        CheckConstraint('"order" <= 8', name="ck_statuses_order_max_8"),
+        Index(
+            "ux_statuses_order_active_true",
+            "order",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
+    )
 
-    name: Mapped[str] = Fields.name()
+    key: Mapped[str] = Fields.key()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
-    step_number: Mapped[int] = Fields.integer(unique=True)
+    order: Mapped[int] = Fields.integer()
 
     status_orders: Mapped[list[AssocOrderStatus]] = Fields.relationship(
         argument="AssocOrderStatus", back_populates="status", foreign_keys="AssocOrderStatus.status_id"

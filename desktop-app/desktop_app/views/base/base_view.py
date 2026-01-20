@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar, cast
+from datetime import date, datetime
 
 import flet as ft
 
@@ -470,6 +471,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                             value = False
                         elif isinstance(input, NumericField):
                             value = 0
+                        elif isinstance(input, DateField):
+                            value = None
+                    if isinstance(input, DateField):
+                        value = self.__normalize_date_value(value)
                     setattr(input, "value", value)
             if hasattr(input, "read_only"):
                 setattr(input, "read_only", not is_selected)
@@ -537,7 +542,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             if hasattr(marker, "width"):
                 setattr(marker, "width", 0)
             if self._data_row and hasattr(input, "value"):
-                setattr(input, "value", self._data_row[key])
+                value = self._data_row[key]
+                if isinstance(input, DateField):
+                    value = self.__normalize_date_value(value)
+                setattr(input, "value", value)
             if input:
                 input.update()
             if marker:
@@ -559,6 +567,23 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 self._controller.set_field_value(key, getattr(input, "value", ""))
             if input:
                 input.update()
+
+    def __normalize_date_value(self, value: Any) -> date | None:
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                return None
+            try:
+                return datetime.fromisoformat(value).date()
+            except ValueError:
+                return None
+        return None
 
     def __limit_dropdown_options(self, input: ft.Dropdown, key: str) -> None:
         if not self._data_row:

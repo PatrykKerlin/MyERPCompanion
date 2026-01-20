@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from models.business.logistic.unit import Unit
     from models.business.trade.assoc_item_discount import AssocItemDiscount
     from models.business.trade.assoc_order_item import AssocOrderItem
-    from models.business.trade.currency import Currency
     from models.business.trade.discount import Discount
     from models.business.trade.order import Order
     from models.business.trade.supplier import Supplier
@@ -51,11 +50,6 @@ class Item(BaseModel):
     min_stock_level: Mapped[int] = Fields.integer()
     max_stock_level: Mapped[int | None] = Fields.integer(nullable=True)
     moq: Mapped[int] = Fields.integer()
-
-    currency_id: Mapped[int] = Fields.foreign_key(column="currencies.id")
-    currency: Mapped[Currency] = Fields.relationship(
-        argument="Currency", back_populates="items", foreign_keys=[currency_id]
-    )
 
     category_id: Mapped[int] = Fields.foreign_key(column="categories.id")
     category: Mapped[Category] = Fields.relationship(

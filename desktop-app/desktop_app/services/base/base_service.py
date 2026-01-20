@@ -8,14 +8,14 @@ from fastapi import HTTPException, status
 
 import httpx
 
-from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.base.base_schema import BaseSchema, BasePlainSchema, BaseStrictSchema
 from schemas.core.param_schema import IdsPayloadSchema, PaginatedResponseSchema
 from utils.enums import Endpoint
 from schemas.core.token_schema import TokenPlainSchema
 from utils.tokens_accessor import TokensAccessor
 from config.settings import Settings
 
-TPlainSchema = TypeVar("TPlainSchema", bound=BasePlainSchema)
+TPlainSchema = TypeVar("TPlainSchema", bound=BaseSchema)
 TStrictSchema = TypeVar("TStrictSchema", bound=BaseStrictSchema)
 TServiceSelf = TypeVar("TServiceSelf", bound="BaseService[Any, Any]")
 TReturn = TypeVar("TReturn")
@@ -189,7 +189,11 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> TPlainSchema:
-        if isinstance(body_params, dict):
+        if isinstance(body_params, BaseStrictSchema):
+            payload = body_params.model_dump()
+            data = payload.get("data")
+            files = payload.get("files")
+        elif isinstance(body_params, dict):
             data = body_params.get("data")
             files = body_params.get("files")
         else:

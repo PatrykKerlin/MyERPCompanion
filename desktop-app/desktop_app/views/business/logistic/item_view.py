@@ -25,7 +25,6 @@ class ItemView(BaseView):
         categories: list[tuple[int, str]],
         units: list[tuple[int, str]],
         suppliers: list[tuple[int, str]],
-        currencies: list[tuple[int, str]],
         bins: list[dict[str, Any]],
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
@@ -42,7 +41,6 @@ class ItemView(BaseView):
         ]
         financial_fields_definitions = [
             {"key": "supplier_id", "input": self._get_dropdown, "options": suppliers},
-            {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
             {"key": "purchase_price", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "vat_rate", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "margin", "input": self._get_numeric_input, "is_float": True, "step": 0.001, "precision": 3},
@@ -210,6 +208,7 @@ class ItemView(BaseView):
                 setattr(input_control, "disabled", True)
             if input_control:
                 input_control.update()
+
     def __build_image_control(self, image: dict[str, Any]) -> ft.Control:
         url = image["url"]
         is_primary = image["is_primary"]

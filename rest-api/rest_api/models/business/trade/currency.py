@@ -10,10 +10,10 @@ from models.base.fields import Fields
 if TYPE_CHECKING:
     from models.business.hr.position import Position
     from models.business.logistic.carrier import Carrier
-    from models.business.logistic.item import Item
     from models.business.trade.exchange_rate import ExchangeRate
     from models.business.trade.invoice import Invoice
     from models.business.trade.order import Order
+    from models.business.trade.supplier import Supplier
 
 
 class Currency(BaseModel):
@@ -38,8 +38,8 @@ class Currency(BaseModel):
     carriers: Mapped[list[Carrier]] = Fields.relationship(
         argument="Carrier", back_populates="currency", foreign_keys="Carrier.currency_id"
     )
-    items: Mapped[list[Item]] = Fields.relationship(
-        argument="Item", back_populates="currency", foreign_keys="Item.currency_id"
+    suppliers: Mapped[list[Supplier]] = Fields.relationship(
+        argument="Supplier", back_populates="currency", foreign_keys="Supplier.currency_id"
     )
     positions: Mapped[list[Position]] = Fields.relationship(
         argument="Position", back_populates="currency", foreign_keys="Position.currency_id"

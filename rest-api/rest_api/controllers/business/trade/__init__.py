@@ -1,4 +1,5 @@
 from controllers.business.trade.order_controller import OrderController
+from controllers.business.trade.order_view_controller import OrderViewController
 from models.business.trade.assoc_category_discount import AssocCategoryDiscount
 from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
 from models.business.trade.assoc_item_discount import AssocItemDiscount
@@ -205,6 +206,7 @@ __all__ = [
     "DiscountController",
     "PaymentMethodController",
     "OrderController",
+    "OrderViewController",
     "StatusController",
     "SupplierController",
 ]

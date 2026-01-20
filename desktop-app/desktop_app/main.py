@@ -96,6 +96,7 @@ class App:
             trade.ExchangeRateController(self.__context),
             trade.PaymentMethodController(self.__context),
             trade.PurchaseOrderController(self.__context),
+            trade.SalesOrderController(self.__context),
             trade.StatusController(self.__context),
             trade.StockReceivingController(self.__context),
         ]

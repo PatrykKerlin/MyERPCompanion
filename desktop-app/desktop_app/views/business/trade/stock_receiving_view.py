@@ -93,6 +93,9 @@ class StockReceivingView(BaseView):
     def set_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
         self.__bulk_transfer.set_target_rows(rows)
 
+    def mark_source_items_as_moved(self, ids: list[int]) -> None:
+        self.__bulk_transfer.mark_source_items_as_moved(ids)
+
     def get_pending_targets(self) -> list[tuple[int, int]]:
         return self.__bulk_transfer.get_pending_targets()
 

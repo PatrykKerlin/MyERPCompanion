@@ -8,6 +8,7 @@ class AssocOrderItemStrictSchema(BaseStrictSchema):
     total_vat: Constraints.PositiveNumeric_10_2
     total_gross: Constraints.PositiveNumeric_10_2
     total_discount: Constraints.NonNegativeNumeric_10_2
+    to_process: Constraints.NonNegativeInteger
 
     order_id: Constraints.PositiveInteger
     item_id: Constraints.PositiveInteger
@@ -20,6 +21,7 @@ class AssocOrderItemPlainSchema(BasePlainSchema):
     total_vat: float
     total_gross: float
     total_discount: float
+    to_process: int
 
     order_id: int
     item_id: int

@@ -20,7 +20,7 @@ class Customer(BaseModel):
     first_name: Mapped[str] = Fields.string_50(nullable=True)
     last_name: Mapped[str] = Fields.string_50(nullable=True)
 
-    company_name: Mapped[str | None] = Fields.name()
+    company_name: Mapped[str] = Fields.name()
 
     payment_term: Mapped[int] = Fields.integer()
     tax_id: Mapped[str] = Fields.string_10()

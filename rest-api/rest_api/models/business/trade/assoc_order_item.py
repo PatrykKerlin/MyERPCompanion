@@ -21,6 +21,7 @@ class AssocOrderItem(BaseModel):
     total_vat: Mapped[float] = Fields.numeric_10_2()
     total_gross: Mapped[float] = Fields.numeric_10_2()
     total_discount: Mapped[float] = Fields.numeric_10_2()
+    to_process: Mapped[bool] = Fields.integer()
 
     order_id: Mapped[int] = Fields.foreign_key(column="orders.id", primary_key=True)
     order: Mapped[Order] = Fields.relationship(

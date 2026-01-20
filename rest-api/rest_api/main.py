@@ -68,6 +68,7 @@ class App:
             {"router": logistic.WarehouseController(self.__context, self.__auth).router, "prefix": "/warehouses"},
         ]
         business_trade_endpoints = [
+            {"router": trade.OrderViewController(self.__context, self.__auth).router, "prefix": "/orders/view"},
             {
                 "router": trade.AssocCategoryDiscountController(self.__context, self.__auth).router,
                 "prefix": "/category-discounts",

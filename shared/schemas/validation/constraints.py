@@ -16,6 +16,7 @@ class Constraints:
     BooleanFalse = Annotated[bool, Field(default=False)]
     BooleanTrue = Annotated[bool, Field(default=True)]
     PositiveFloat = Annotated[float, Field(gt=0)]
+    NonNegativeInteger = Annotated[int, BeforeValidator(__none_to_zero), Field(ge=0, default=0)]
     PositiveInteger = Annotated[int, Field(ge=1)]
     PositiveIntegerOptional = Annotated[int | None, Field(ge=1, default=None)]
     PositiveIntegerList = Annotated[list[Annotated[int, Field(ge=1)]], Field(min_length=1)]

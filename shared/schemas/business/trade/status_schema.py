@@ -3,14 +3,14 @@ from schemas.validation.constraints import Constraints
 
 
 class StatusStrictSchema(BaseStrictSchema):
-    name: Constraints.Name
+    key: Constraints.Name
     description: Constraints.StringOptional_1000
-    step_number: Constraints.PositiveInteger
+    order: Constraints.PositiveInteger
 
 
 class StatusPlainSchema(BasePlainSchema):
-    name: str
+    nakeyme: str
     description: str | None
-    step_number: int
+    order: int
 
     order_ids: list[int]

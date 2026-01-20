@@ -23,6 +23,7 @@ from schemas.business.trade.order_schema import OrderPlainSchema, OrderStrictSch
 from schemas.business.trade.payment_method_schema import PaymentMethodPlainSchema, PaymentMethodStrictSchema
 from schemas.business.trade.status_schema import StatusPlainSchema, StatusStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
+from services.business.trade.order_view_service import OrderViewService
 from utils.service_factory import ServiceFactory
 
 
@@ -104,6 +105,7 @@ __all__ = [
     "DiscountService",
     "ExchangeRateService",
     "OrderService",
+    "OrderViewService",
     "PaymentMethodService",
     "StatusService",
     "SupplierService",

@@ -1,0 +1,105 @@
+from collections.abc import Sequence
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from models.business.logistic.item import Item
+from models.business.trade.assoc_order_item import AssocOrderItem
+from models.business.trade.assoc_order_status import AssocOrderStatus
+from models.business.trade.order import Order
+from repositories.business.trade.order_view_repository import OrderViewRepository
+from schemas.business.trade.order_schema import OrderPlainSchema
+from schemas.business.trade.order_view_schema import (
+    OrderViewLookupSchema,
+    OrderViewResponseSchema,
+    OrderViewSourceItemSchema,
+    OrderViewStatusHistorySchema,
+    OrderViewSupplierSchema,
+    OrderViewTargetItemSchema,
+)
+
+
+class OrderViewService:
+    async def get_view(
+        self, session: AsyncSession, is_sales: bool, order_id: int | None = None
+    ) -> OrderViewResponseSchema:
+        suppliers, customers, currencies, delivery_methods, statuses = await OrderViewRepository.get_lookups(session)
+
+        order: Order | None = None
+        if order_id is not None:
+            order = await OrderViewRepository.get_order_with_relations(session, order_id, is_sales)
+
+        source_items: Sequence[Item] = []
+        order_items: Sequence[AssocOrderItem] = []
+        order_statuses: Sequence[AssocOrderStatus] = []
+
+        if order:
+            order_items = order.order_items
+            order_statuses = order.order_statuses
+            if not is_sales and order.supplier_id:
+                source_items = await OrderViewRepository.get_items_for_supplier(session, order.supplier_id)
+            elif is_sales:
+                source_items = await OrderViewRepository.get_all_items(session)
+
+        response = OrderViewResponseSchema(
+            order=OrderPlainSchema.model_validate(order) if order else None,
+            suppliers=[
+                OrderViewSupplierSchema(id=row.id, label=row.company_name, currency_id=row.currency_id)
+                for row in suppliers
+            ],
+            customers=[
+                OrderViewLookupSchema(id=row.id, label=row.company_name, status_number=None) for row in customers
+            ],
+            currencies=[OrderViewLookupSchema(id=row.id, label=row.code, status_number=None) for row in currencies],
+            delivery_methods=[
+                OrderViewLookupSchema(id=row.id, label=row.name, status_number=None) for row in delivery_methods
+            ],
+            statuses=[OrderViewLookupSchema(id=row.id, label=row.key, status_number=row.order) for row in statuses],
+            source_items=self._build_source_items(source_items),
+            target_items=self._build_target_items(order_items),
+            status_history=self._build_status_history(order_statuses),
+        )
+        return response
+
+    @staticmethod
+    def _build_source_items(items: Sequence[Item]) -> list[OrderViewSourceItemSchema]:
+        return [
+            OrderViewSourceItemSchema(
+                id=item.id,
+                index=item.index,
+                name=item.name,
+                ean=item.ean,
+                purchase_price=item.purchase_price,
+                vat_rate=item.vat_rate,
+            )
+            for item in items
+        ]
+
+    @staticmethod
+    def _build_target_items(items: Sequence[AssocOrderItem]) -> list[OrderViewTargetItemSchema]:
+        results: list[OrderViewTargetItemSchema] = []
+        for assoc in items:
+            item = assoc.item
+            results.append(
+                OrderViewTargetItemSchema(
+                    id=assoc.id,
+                    item_id=assoc.item_id,
+                    index=item.index if item else str(assoc.item_id),
+                    name=item.name if item else "",
+                    quantity=assoc.quantity,
+                    purchase_price=item.purchase_price if item else 0.0,
+                    vat_rate=item.vat_rate if item else 0.0,
+                )
+            )
+        return results
+
+    @staticmethod
+    def _build_status_history(items: Sequence[AssocOrderStatus]) -> list[OrderViewStatusHistorySchema]:
+        sorted_items = sorted(items, key=lambda row: row.created_at)
+        return [
+            OrderViewStatusHistorySchema(
+                status_id=row.status_id,
+                key=row.status.key if row.status else str(row.status_id),
+                created_at=row.created_at,
+            )
+            for row in sorted_items
+        ]

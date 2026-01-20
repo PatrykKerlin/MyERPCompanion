@@ -12,18 +12,18 @@ from views.controls.data_table_control import DataTable
 from utils.translation import Translation
 
 if TYPE_CHECKING:
-    from controllers.business.trade.purchase_order_controller import PurchaseOrderController
+    from controllers.business.trade.sales_order_controller import SalesOrderController
 
 
-class PurchaseOrderView(BaseView):
+class SalesOrderView(BaseView):
     def __init__(
         self,
-        controller: PurchaseOrderController,
+        controller: SalesOrderController,
         translation: Translation,
         mode: ViewMode,
         key: View,
         data_row: dict[str, Any] | None,
-        suppliers: list[tuple[int, str]],
+        customers: list[tuple[int, str]],
         currencies: list[tuple[int, str]],
         statuses: list[tuple[int, str]],
         delivery_methods: list[tuple[int, str]],
@@ -31,7 +31,6 @@ class PurchaseOrderView(BaseView):
         target_items: list[tuple[int, list[str]]],
         status_history: list[dict[str, Any]],
         bulk_transfer_enabled: bool,
-        supplier_currency_by_id: dict[int, int],
         on_items_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
         on_items_move_requested: Callable[[list[int]], None] | None = None,
         on_items_delete_clicked: Callable[[list[int]], None] | None = None,
@@ -39,20 +38,18 @@ class PurchaseOrderView(BaseView):
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
         self.__create_defaults: dict[str, Any] = {}
-        self.__editable_keys = {"supplier_id", "delivery_method_id", "notes", "internal_notes"}
+        self.__editable_keys = {"customer_id", "delivery_method_id", "currency_id", "notes", "internal_notes"}
         self.__pending_source_items = list(source_items)
         self.__pending_target_items = list(target_items)
         self.__pending_totals: dict[str, float] = {}
         self.__is_mounted = False
         self.__bulk_transfer_enabled_in_read = bulk_transfer_enabled
-        self.__supplier_currency_by_id = supplier_currency_by_id
 
         main_fields_definitions = [
             {
-                "key": "supplier_id",
+                "key": "customer_id",
                 "input": self._get_dropdown,
-                "options": suppliers,
-                "callbacks": [self.__handle_supplier_changed],
+                "options": customers,
             },
             {"key": "delivery_method_id", "input": self._get_dropdown, "options": delivery_methods},
             {"key": "status_id", "input": self._get_dropdown, "options": statuses},
@@ -134,8 +131,6 @@ class PurchaseOrderView(BaseView):
     def did_mount(self):
         result = super().did_mount()
         self.__is_mounted = True
-        if self._mode == ViewMode.CREATE:
-            self.__apply_supplier_currency()
         self.__bulk_transfer.set_source_rows(self.__pending_source_items)
         self.__bulk_transfer.set_target_rows(self.__pending_target_items)
         if self.__pending_totals:
@@ -148,7 +143,6 @@ class PurchaseOrderView(BaseView):
         if mode == ViewMode.CREATE:
             self.__create_defaults = self._controller.get_create_defaults()
             self.__apply_create_defaults()
-            self.__apply_supplier_currency()
         if mode != ViewMode.READ:
             self.__apply_editable_fields(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
@@ -190,45 +184,6 @@ class PurchaseOrderView(BaseView):
     def __set_bulk_transfer_state(self, mode: ViewMode) -> None:
         enabled = mode == ViewMode.READ and self.__bulk_transfer_enabled_in_read
         self.__bulk_transfer.set_enabled_states(enabled, enabled, enabled)
-
-    def __handle_supplier_changed(self) -> None:
-        self.__apply_supplier_currency()
-
-    def __apply_supplier_currency(self) -> None:
-        supplier_id = self.__get_selected_supplier_id()
-        currency_id = self.__supplier_currency_by_id.get(supplier_id) if supplier_id is not None else None
-        self.__set_currency_value(currency_id)
-
-    def __get_selected_supplier_id(self) -> int | None:
-        field = self._inputs.get("supplier_id")
-        if not field:
-            return None
-        input_control = field.input.content
-        if not isinstance(input_control, ft.Dropdown):
-            return None
-        value = input_control.value
-        if value is None:
-            return None
-        value = value.strip()
-        if value in {"", "0"}:
-            return None
-        return int(value) if value.isdigit() else None
-
-    def __set_currency_value(self, currency_id: int | None) -> None:
-        field = self._inputs.get("currency_id")
-        if not field:
-            return
-        input_control = field.input.content
-        if not isinstance(input_control, ft.Dropdown):
-            return
-        if currency_id is None:
-            input_control.value = "0"
-            self._controller.set_field_value("currency_id", None)
-        else:
-            input_control.value = str(currency_id)
-            self._controller.set_field_value("currency_id", currency_id)
-        if input_control:
-            input_control.update()
 
     def get_pending_targets(self) -> list[tuple[int, int]]:
         return self.__bulk_transfer.get_pending_targets()

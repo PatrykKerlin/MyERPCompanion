@@ -16,6 +16,11 @@ class ImageStrictUpdateSchema(BaseStrictSchema):
     order: Constraints.PositiveInteger
 
 
+class ImageMultipartPayloadSchema(BaseStrictSchema):
+    data: dict[str, str]
+    files: dict[str, tuple[str, bytes, str]]
+
+
 class ImageModelSchema(BaseStrictSchema):
     url: str
     is_primary: bool

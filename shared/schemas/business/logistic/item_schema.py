@@ -37,7 +37,6 @@ class ItemStrictSchema(BaseStrictSchema):
     max_stock_level: Constraints.PositiveIntegerOptional
     moq: Constraints.PositiveInteger
 
-    currency_id: Constraints.PositiveInteger
     category_id: Constraints.PositiveInteger
     unit_id: Constraints.PositiveInteger
     supplier_id: Constraints.PositiveInteger
@@ -81,7 +80,6 @@ class ItemPlainSchema(BasePlainSchema):
     max_stock_level: int | None
     moq: int
 
-    currency_id: int
     category_id: int
     unit_id: int
     supplier_id: int

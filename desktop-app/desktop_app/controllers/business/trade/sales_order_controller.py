@@ -10,7 +10,7 @@ from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.trade.assoc_order_item_schema import AssocOrderItemStrictSchema
 from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusStrictSchema
-from schemas.business.trade.order_schema import OrderPlainSchema, PurchaseOrderStrictSchema
+from schemas.business.trade.order_schema import OrderPlainSchema, SalesOrderStrictSchema
 from schemas.business.trade.order_view_schema import (
     OrderViewResponseSchema,
     OrderViewSourceItemSchema,
@@ -25,19 +25,17 @@ from schemas.core.param_schema import IdsPayloadSchema, PaginatedResponseSchema
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from events.events import ViewRequested
-from views.business.trade.purchase_order_view import PurchaseOrderView
+from views.business.trade.sales_order_view import SalesOrderView
 from views.components.quantity_dialog_component import QuantityDialogComponent
 
 
-class PurchaseOrderController(
-    BaseViewController[OrderService, PurchaseOrderView, OrderPlainSchema, PurchaseOrderStrictSchema]
-):
+class SalesOrderController(BaseViewController[OrderService, SalesOrderView, OrderPlainSchema, SalesOrderStrictSchema]):
     _plain_schema_cls = OrderPlainSchema
-    _strict_schema_cls = PurchaseOrderStrictSchema
+    _strict_schema_cls = SalesOrderStrictSchema
     _service_cls = OrderService
-    _view_cls = PurchaseOrderView
+    _view_cls = SalesOrderView
     _endpoint = Endpoint.ORDERS
-    _view_key = View.PURCHASE_ORDERS
+    _view_key = View.SALES_ORDERS
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
@@ -50,27 +48,25 @@ class PurchaseOrderController(
         self.__pending_move_quantities: dict[int, int] = {}
         self.__source_item_rows: dict[int, list[str]] = {}
         self.__item_pricing: dict[int, tuple[float, float]] = {}
-        self.__supplier_currency_map: dict[int, int] = {}
         self.__default_status_id: int | None = None
         self.__current_status_id: int | None = None
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> PurchaseOrderView:
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> SalesOrderView:
         order_id = event.data.get("id") if event.data else None
-        view_data = await self.__perform_get_purchase_view(order_id)
-        suppliers = [(item.id, item.label) for item in view_data.suppliers]
-        self.__supplier_currency_map = {item.id: item.currency_id for item in view_data.suppliers}
+        view_data = await self.__perform_get_sales_view(order_id)
+        customers = [(item.id, item.label) for item in view_data.customers]
         currencies = [(item.id, item.label) for item in view_data.currencies]
         delivery_methods = [(item.id, item.label) for item in view_data.delivery_methods]
         statuses = [(item.id, item.label) for item in view_data.statuses]
-        status_steps = {item.id: item.status_number for item in view_data.statuses}
+        status_steps = {item.id: item.order for item in view_data.statuses}
         self.__order_items = {}
         self.__order_item_by_item_id = {}
         self.__pending_move_quantities.clear()
         self.__source_item_rows.clear()
         self.__item_pricing.clear()
         self.__current_status_id = None
-        default_status = next((item for item in view_data.statuses if item.status_number == 1), None)
-        self.__default_status_id = default_status.id if default_status else None
+        if statuses:
+            self.__default_status_id = statuses[0][0]
         source_items = self.__build_source_item_rows(view_data.source_items)
         target_items = self.__build_target_item_rows(view_data.target_items)
         status_history = self.__build_status_history(view_data.status_history)
@@ -87,13 +83,13 @@ class PurchaseOrderController(
         bulk_transfer_enabled = False
         if mode == ViewMode.READ:
             bulk_transfer_enabled = self.__is_bulk_transfer_enabled(self.__current_status_id, status_steps)
-        view = PurchaseOrderView(
+        view = SalesOrderView(
             self,
             translation,
             mode,
             event.view_key,
             order_data,
-            suppliers,
+            customers,
             currencies,
             statuses,
             delivery_methods,
@@ -101,7 +97,6 @@ class PurchaseOrderController(
             target_items,
             status_history,
             bulk_transfer_enabled,
-            self.__supplier_currency_map,
             self.on_order_items_save_clicked,
             self.on_order_items_move_requested,
             self.on_order_items_delete_clicked,
@@ -139,9 +134,9 @@ class PurchaseOrderController(
         self.__recalculate_order_totals()
 
     async def _perform_get_page(
-        self, service: BaseService[OrderPlainSchema, PurchaseOrderStrictSchema], endpoint: Endpoint
+        self, service: BaseService[OrderPlainSchema, SalesOrderStrictSchema], endpoint: Endpoint
     ) -> PaginatedResponseSchema[OrderPlainSchema]:
-        return await super()._perform_get_page(service, Endpoint.PURCHASE_ORDERS)
+        return await super()._perform_get_page(service, Endpoint.SALES_ORDERS)
 
     def get_create_defaults(self) -> dict[str, object]:
         return self.__build_create_defaults()
@@ -151,13 +146,13 @@ class PurchaseOrderController(
 
     def set_field_value(self, key: str, value: str | int | float | bool | date | None) -> None:
         if key == "is_sales":
-            value = False
+            value = True
         super().set_field_value(key, value)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_get_purchase_view(self, order_id: int | None) -> OrderViewResponseSchema:
+    async def __perform_get_sales_view(self, order_id: int | None) -> OrderViewResponseSchema:
         return await self.__order_view_service.get_view(
-            Endpoint.ORDER_VIEW_PURCHASE, order_id, None, None, self._module_id
+            Endpoint.ORDER_VIEW_SALES, order_id, None, None, self._module_id
         )
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
@@ -229,12 +224,11 @@ class PurchaseOrderController(
         return results
 
     def __build_status_history(self, order_statuses: list[OrderViewStatusHistorySchema]) -> list[dict[str, Any]]:
-        translation = self._state_store.app_state.translation.items
         rows: list[dict[str, Any]] = []
         for status in sorted(order_statuses, key=lambda item: item.created_at):
             rows.append(
                 {
-                    "status": translation.get(status.key),
+                    "status": status.name,
                     "created_at": self._format_datetime(status.created_at),
                 }
             )
@@ -391,7 +385,7 @@ class PurchaseOrderController(
     async def __refresh_order_item_lists(self, order_id: int) -> None:
         if not self._view:
             return
-        view_data = await self.__perform_get_purchase_view(order_id)
+        view_data = await self.__perform_get_sales_view(order_id)
         target_items = self.__build_target_item_rows(view_data.target_items)
         source_items = self.__build_source_item_rows(view_data.source_items)
         self._view.set_target_rows(target_items)
@@ -407,7 +401,7 @@ class PurchaseOrderController(
         shipping_cost = round(random.uniform(1, 1000), 2)
         defaults: dict[str, object] = {
             "number": number,
-            "is_sales": False,
+            "is_sales": True,
             "total_net": 0,
             "total_vat": 0,
             "total_gross": 0,
@@ -423,11 +417,11 @@ class PurchaseOrderController(
     @BaseController.handle_api_action(ApiActionError.SAVE)
     async def _perform_create(
         self,
-        service: BaseService[OrderPlainSchema, PurchaseOrderStrictSchema],
+        service: BaseService[OrderPlainSchema, SalesOrderStrictSchema],
         endpoint: Endpoint,
-        payload: PurchaseOrderStrictSchema,
+        payload: SalesOrderStrictSchema,
     ) -> OrderPlainSchema:
-        payload = payload.model_copy(update={"is_sales": False})
+        payload = payload.model_copy(update={"is_sales": True})
         response = await super()._perform_create(service, endpoint, payload)
         status_id = self._request_data.input_values.get("status_id", self.__default_status_id)
         if status_id is not None:
@@ -440,11 +434,11 @@ class PurchaseOrderController(
     async def _perform_update(
         self,
         id: int,
-        service: BaseService[OrderPlainSchema, PurchaseOrderStrictSchema],
+        service: BaseService[OrderPlainSchema, SalesOrderStrictSchema],
         endpoint: Endpoint,
-        payload: PurchaseOrderStrictSchema,
+        payload: SalesOrderStrictSchema,
     ) -> OrderPlainSchema:
-        payload = payload.model_copy(update={"is_sales": False})
+        payload = payload.model_copy(update={"is_sales": True})
         response = await super()._perform_update(id, service, endpoint, payload)
         status_id = self._request_data.input_values.get("status_id")
         if status_id is not None and status_id != self.__current_status_id:

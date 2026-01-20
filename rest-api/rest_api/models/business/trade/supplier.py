@@ -9,6 +9,7 @@ from models.base.fields import Fields
 
 if TYPE_CHECKING:
     from models.business.logistic.item import Item
+    from models.business.trade.currency import Currency
     from models.business.trade.order import Order
 
 
@@ -39,6 +40,11 @@ class Supplier(BaseModel):
     payment_term: Mapped[int] = Fields.integer()
 
     notes: Mapped[str | None] = Fields.string_1000(nullable=True)
+
+    currency_id: Mapped[int] = Fields.foreign_key(column="currencies.id")
+    currency: Mapped[Currency] = Fields.relationship(
+        argument="Currency", back_populates="suppliers", foreign_keys=[currency_id]
+    )
 
     items: Mapped[list[Item]] = Fields.relationship(
         argument="Item", back_populates="supplier", foreign_keys="Item.supplier_id"

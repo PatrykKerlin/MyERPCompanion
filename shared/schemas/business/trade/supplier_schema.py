@@ -28,6 +28,8 @@ class SupplierStrictSchema(BaseStrictSchema):
 
     notes: Constraints.StringOptional_1000
 
+    currency_id: Constraints.PositiveInteger
+
 
 class SupplierPlainSchema(BasePlainSchema):
     company_name: str
@@ -54,3 +56,5 @@ class SupplierPlainSchema(BasePlainSchema):
     payment_term: int
 
     notes: str
+
+    currency_id: int
