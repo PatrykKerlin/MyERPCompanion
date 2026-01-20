@@ -1,4 +1,5 @@
 import importlib
+import logging
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 
@@ -116,9 +117,14 @@ class App:
 
 
 def create_app() -> FastAPI:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    )
+    logger = logging.getLogger("api")
     settings = Settings()  # type: ignore
     database = Database(settings)
-    context = Context(settings=settings, get_session=database.get_session)
+    context = Context(settings=settings, get_session=database.get_session, logger=logger)
     auth = Auth(context)
 
     def load_all_models() -> None:

@@ -19,7 +19,6 @@ from utils.enums import Permission
 
 class Auth:
     def __init__(self, context: Context) -> None:
-        self.__get_session = context.get_session
         self.__settings = context.settings
         self.__pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
         self.__user_service = UserService()

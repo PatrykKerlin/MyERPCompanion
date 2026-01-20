@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from jose.exceptions import JWTError
@@ -10,6 +12,7 @@ from utils.auth import Auth
 class AuthController:
     def __init__(self, auth: Auth) -> None:
         self.__auth = auth
+        self.__logger = logging.getLogger("api")
         self.router = APIRouter()
         self.router.add_api_route("/token", self.auth, methods=["POST"])
         self.router.add_api_route("/refresh", self.refresh, methods=["GET"])
@@ -24,6 +27,7 @@ class AuthController:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
             return JSONResponse(response)
         except SQLAlchemyError as err:
+            self.__logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.auth.__qualname__}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
     async def refresh(self, request: Request) -> JSONResponse:
@@ -41,6 +45,8 @@ class AuthController:
             )
             return JSONResponse(content={"access": new_access_token})
         except (JWTError, KeyError, NoResultFound):
+            self.__logger.exception(f"AuthError in {self.__class__.__name__}.{self.refresh.__qualname__}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
         except SQLAlchemyError as err:
+            self.__logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.refresh.__qualname__}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))

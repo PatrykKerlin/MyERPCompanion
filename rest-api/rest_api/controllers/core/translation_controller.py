@@ -50,6 +50,12 @@ class TranslationController(BaseController[TranslationService, TranslationStrict
                 has_prev=has_prev,
             )
         except HTTPException:
+            self._logger.exception(
+                f"HTTPException in {self.__class__.__name__}.{self.get_all_by_language.__qualname__}"
+            )
             raise
         except SQLAlchemyError as err:
+            self._logger.exception(
+                f"SQLAlchemyError in {self.__class__.__name__}.{self.get_all_by_language.__qualname__}"
+            )
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))

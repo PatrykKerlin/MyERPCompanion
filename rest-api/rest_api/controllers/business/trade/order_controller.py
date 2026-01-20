@@ -80,8 +80,10 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
                 has_prev=has_prev,
             )
         except HTTPException:
+            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.get_all_sales.__qualname__}")
             raise
         except SQLAlchemyError as err:
+            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.get_all_sales.__qualname__}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
     async def get_all_purchase(
@@ -112,6 +114,8 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
                 has_prev=has_prev,
             )
         except HTTPException:
+            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.get_all_purchase.__qualname__}")
             raise
         except SQLAlchemyError as err:
+            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.get_all_purchase.__qualname__}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
