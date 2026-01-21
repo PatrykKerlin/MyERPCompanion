@@ -8,7 +8,9 @@ from views.controls.numeric_field_control import NumericField
 
 
 class QuantityDialogComponent(BaseDialog):
-    def __init__(self, translation: Translation, max_value: int, default_value: int | None = None, min_value: int = 1) -> None:
+    def __init__(
+        self, translation: Translation, max_value: int, default_value: int | None = None, min_value: int = 1
+    ) -> None:
         self.__future: asyncio.Future[int | None] = asyncio.get_running_loop().create_future()
         resolved_default = max_value if default_value is None else default_value
         self.__quantity_field = NumericField(
@@ -45,11 +47,8 @@ class QuantityDialogComponent(BaseDialog):
     def __read_quantity(self) -> int:
         value = self.__quantity_field.value
         if value is None:
-            return self.__quantity_field.min_value or 0
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return self.__quantity_field.min_value or 0
+            return 0
+        return int(value)
 
     def __set_result(self, result: int | None) -> None:
         if not self.__future.done():

@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 
 import httpx
 
-from schemas.base.base_schema import BaseSchema, BasePlainSchema, BaseStrictSchema
+from schemas.base.base_schema import BaseSchema, BaseStrictSchema
 from schemas.core.param_schema import IdsPayloadSchema, PaginatedResponseSchema
 from utils.enums import Endpoint
 from schemas.core.token_schema import TokenPlainSchema

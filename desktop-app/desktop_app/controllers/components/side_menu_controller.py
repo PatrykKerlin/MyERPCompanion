@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from controllers.base.base_component_controller import BaseComponentController
+from utils.enums import View
 from views.components.side_menu_component import SideMenuComponent
 from events.events import SideMenuReady, SideMenuRequested, SideMenuToggleRequested, TabRequested
 
@@ -22,7 +23,7 @@ class SideMenuController(BaseComponentController[SideMenuComponent, SideMenuRequ
             }
         )
 
-    def on_item_clicked(self, module_id: int, view_key: str) -> None:
+    def on_item_clicked(self, module_id: int, view_key: View) -> None:
         self._page.run_task(self._event_bus.publish, TabRequested(module_id=module_id, view_key=view_key))
 
     async def _component_requested_handler(self, _: SideMenuRequested) -> None:

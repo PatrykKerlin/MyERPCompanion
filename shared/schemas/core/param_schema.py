@@ -2,9 +2,9 @@ from typing import Annotated, Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
-from schemas.base.base_schema import BasePlainSchema
+from schemas.base.base_schema import BaseSchema
 
-TResponseSchema = TypeVar("TResponseSchema", bound=BasePlainSchema)
+TResponseSchema = TypeVar("TResponseSchema", bound=BaseSchema)
 
 
 class PaginationParamsSchema(BaseModel):
