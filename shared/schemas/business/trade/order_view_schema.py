@@ -32,10 +32,11 @@ class OrderViewSourceItemSchema(BaseSchema):
     height: float
     length: float
     weight: float
-    stock_quantity: int
-    reserved_quantity: int
-    moq: int
-    is_package: bool
+    stock_quantity: int = 0
+    reserved_quantity: int = 0
+    moq: int = 1
+    is_package: bool = False
+    supplier_currency_id: int | None = None
 
 
 class OrderViewTargetItemSchema(BaseSchema):
@@ -66,6 +67,13 @@ class OrderViewDeliveryMethodSchema(BaseSchema):
     max_height: float
     max_length: float
     max_weight: float
+    carrier_currency_id: int | None = None
+
+
+class OrderViewExchangeRateSchema(BaseSchema):
+    rate: float | None = None
+    base_currency_id: int
+    quote_currency_id: int
 
 
 class OrderViewResponseSchema(BaseSchema):
@@ -79,3 +87,4 @@ class OrderViewResponseSchema(BaseSchema):
     target_items: list[OrderViewTargetItemSchema]
     status_history: list[OrderViewStatusHistorySchema]
     categories: list[OrderViewLookupSchema] = Field(default_factory=list)
+    exchange_rates: list[OrderViewExchangeRateSchema] | None = None

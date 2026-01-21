@@ -10,6 +10,7 @@ from repositories.business.trade.order_view_repository import OrderViewRepositor
 from schemas.business.trade.order_schema import OrderPlainSchema
 from schemas.business.trade.order_view_schema import (
     OrderViewDeliveryMethodSchema,
+    OrderViewExchangeRateSchema,
     OrderViewLookupSchema,
     OrderViewResponseSchema,
     OrderViewSourceItemSchema,
@@ -23,9 +24,15 @@ class OrderViewService:
     async def get_view(
         self, session: AsyncSession, is_sales: bool, order_id: int | None = None
     ) -> OrderViewResponseSchema:
-        suppliers, customers, currencies, delivery_methods, statuses, categories = await OrderViewRepository.get_lookups(
-            session
-        )
+        (
+            suppliers,
+            customers,
+            currencies,
+            delivery_methods,
+            statuses,
+            categories,
+            exchange_rates,
+        ) = await OrderViewRepository.get_lookups(session)
 
         order: Order | None = None
         if order_id is not None:
@@ -62,6 +69,7 @@ class OrderViewService:
                     max_height=row.max_height,
                     max_length=row.max_length,
                     max_weight=row.max_weight,
+                    carrier_currency_id=row.carrier.currency_id if row.carrier else None,
                 )
                 for row in delivery_methods
             ],
@@ -70,6 +78,18 @@ class OrderViewService:
             target_items=self._build_target_items(order_items),
             status_history=self._build_status_history(order_statuses),
             categories=[OrderViewLookupSchema(id=row.id, label=row.name, status_number=None) for row in categories],
+            exchange_rates=(
+                [
+                    OrderViewExchangeRateSchema(
+                        rate=row.rate,
+                        base_currency_id=row.base_currency_id,
+                        quote_currency_id=row.quote_currency_id,
+                    )
+                    for row in exchange_rates
+                ]
+                if exchange_rates
+                else None
+            ),
         )
         return response
 
@@ -92,6 +112,7 @@ class OrderViewService:
                 reserved_quantity=getattr(item, "reserved_quantity", 0),
                 moq=item.moq,
                 is_package=item.is_package,
+                supplier_currency_id=item.supplier.currency_id if item.supplier else None,
             )
             for item in items
         ]

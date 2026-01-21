@@ -15,6 +15,7 @@ from schemas.business.trade.order_schema import OrderPlainSchema, SalesOrderStri
 from pydantic import ValidationError
 from schemas.business.trade.order_view_schema import (
     OrderViewResponseSchema,
+    OrderViewExchangeRateSchema,
     OrderViewSourceItemSchema,
     OrderViewStatusHistorySchema,
     OrderViewTargetItemSchema,
@@ -52,7 +53,10 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__source_item_category_map: dict[int, int | None] = {}
         self.__item_stock_map: dict[int, tuple[int, int, int]] = {}
         self.__item_dimensions: dict[int, tuple[float, float, float, float]] = {}
-        self.__delivery_method_map: dict[int, tuple[float, float, float, float, float]] = {}
+        self.__delivery_method_map: dict[int, tuple[float, float, float, float, float, int | None]] = {}
+        self.__exchange_rate_map: dict[tuple[int, int], float] = {}
+        self.__item_currency_map: dict[int, int] = {}
+        self.__exchange_rate_missing_notified = False
         self.__item_pricing: dict[int, tuple[float, float]] = {}
         self.__default_status_id: int | None = None
         self.__current_status_id: int | None = None
@@ -64,9 +68,17 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         currencies = [(item.id, item.label) for item in view_data.currencies]
         categories = [(item.id, item.label) for item in view_data.categories]
         self.__delivery_method_map = {
-            item.id: (item.price_per_unit, item.max_width, item.max_height, item.max_length, item.max_weight)
+            item.id: (
+                item.price_per_unit,
+                item.max_width,
+                item.max_height,
+                item.max_length,
+                item.max_weight,
+                item.carrier_currency_id,
+            )
             for item in view_data.delivery_methods
         }
+        self.__load_exchange_rates(view_data.exchange_rates)
         delivery_methods = [(item.id, item.label) for item in view_data.delivery_methods]
         statuses = [(item.id, translation.get(item.label)) for item in view_data.statuses]
         status_steps = {item.id: item.status_number for item in view_data.statuses}
@@ -77,8 +89,10 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__source_item_category_map.clear()
         self.__item_stock_map.clear()
         self.__item_dimensions.clear()
+        self.__item_currency_map.clear()
         self.__item_pricing.clear()
         self.__current_status_id = None
+        self.__exchange_rate_missing_notified = False
         default_status = next((item for item in view_data.statuses if item.status_number == 1), None)
         self.__default_status_id = default_status.id if default_status else None
         source_items, source_item_categories = self.__build_source_item_rows(view_data.source_items)
@@ -166,6 +180,8 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         super().set_field_value(key, value)
         if key == "delivery_method_id":
             self.__recalculate_shipping_cost()
+        if key == "currency_id":
+            self.__recalculate_order_totals()
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_sales_view(self, order_id: int | None) -> OrderViewResponseSchema:
@@ -232,6 +248,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             category_map[item.id] = item.category_id
             self.__item_stock_map[item.id] = (item.stock_quantity, item.reserved_quantity, item.moq)
             self.__item_dimensions[item.id] = (item.width, item.height, item.length, item.weight)
+            self.__item_currency_map[item.id] = item.supplier_currency_id
             self.__item_pricing[item.id] = (item.purchase_price, item.vat_rate)
             results.append((item.id, row))
         self.__source_item_category_map = category_map
@@ -262,6 +279,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
 
     def __calculate_item_totals(self, item_id: int, quantity: int) -> tuple[float, float, float, float]:
         purchase_price, vat_rate = self.__item_pricing.get(item_id, (0.0, 0.0))
+        purchase_price = self.__convert_to_order_currency(purchase_price, self.__item_currency_map.get(item_id))
         total_net = round(purchase_price * quantity, 2)
         total_vat = round(total_net * vat_rate, 2)
         total_gross = round(total_net + total_vat, 2)
@@ -326,7 +344,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         if not delivery_method:
             return 0.0
 
-        price_per_unit, max_width, max_height, max_length, max_weight = delivery_method
+        price_per_unit, max_width, max_height, max_length, max_weight, carrier_currency_id = delivery_method
         pending_by_target = {target_id: item_id for target_id, item_id in pending_targets}
         pending_new_ids = [target_id for target_id in pending_by_target if target_id not in self.__order_items]
 
@@ -377,7 +395,40 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         if max_weight > 0:
             units = max(units, math.ceil(total_weight / max_weight))
 
-        return round(price_per_unit * units, 2)
+        cost = price_per_unit * units
+        cost = self.__convert_to_order_currency(cost, carrier_currency_id)
+        return round(cost, 2)
+
+    def __convert_to_order_currency(self, amount: float, source_currency_id: int | None) -> float:
+        order_currency_id = self._request_data.input_values.get("currency_id")
+        if not isinstance(order_currency_id, int) or not source_currency_id:
+            return amount
+        if source_currency_id == order_currency_id:
+            return amount
+        rate = self.__exchange_rate_map.get((source_currency_id, order_currency_id))
+        if rate is None:
+            return amount
+        return amount * rate
+
+    def __load_exchange_rates(self, exchange_rates: list[OrderViewExchangeRateSchema] | None) -> None:
+        self.__exchange_rate_map = {}
+        if not exchange_rates:
+            self.__notify_missing_exchange_rate()
+            return
+        missing_rate = False
+        for rate in exchange_rates:
+            if rate.rate is None:
+                missing_rate = True
+                continue
+            self.__exchange_rate_map[(rate.base_currency_id, rate.quote_currency_id)] = rate.rate
+        if missing_rate:
+            self.__notify_missing_exchange_rate()
+
+    def __notify_missing_exchange_rate(self) -> None:
+        if self.__exchange_rate_missing_notified:
+            return
+        self.__exchange_rate_missing_notified = True
+        self._open_error_dialog(message="Missing exchange rate for currency conversion.")
 
     async def __handle_move_with_quantity(self, item_id: int) -> None:
         if not self._view:
@@ -496,9 +547,17 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             return
         view_data = await self.__perform_get_sales_view(order_id)
         self.__delivery_method_map = {
-            item.id: (item.price_per_unit, item.max_width, item.max_height, item.max_length, item.max_weight)
+            item.id: (
+                item.price_per_unit,
+                item.max_width,
+                item.max_height,
+                item.max_length,
+                item.max_weight,
+                item.carrier_currency_id,
+            )
             for item in view_data.delivery_methods
         }
+        self.__load_exchange_rates(view_data.exchange_rates)
         target_items = self.__build_target_item_rows(view_data.target_items)
         source_items, source_item_categories = self.__build_source_item_rows(view_data.source_items)
         self._view.set_target_rows(target_items)

@@ -1,5 +1,7 @@
 from collections.abc import Sequence
 
+from datetime import date
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
@@ -12,6 +14,7 @@ from models.business.trade.assoc_order_item import AssocOrderItem
 from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.currency import Currency
 from models.business.trade.customer import Customer
+from models.business.trade.exchange_rate import ExchangeRate
 from models.business.trade.order import Order
 from models.business.trade.status import Status
 from models.business.trade.supplier import Supplier
@@ -29,6 +32,7 @@ class OrderViewRepository(ReservedQuantityMixin):
         Sequence[DeliveryMethod],
         Sequence[Status],
         Sequence[Category],
+        Sequence[ExchangeRate],
     ]:
         suppliers_result = await session.execute(
             select(Supplier).where(Supplier.is_active.is_(True)).order_by(Supplier.company_name)
@@ -44,10 +48,26 @@ class OrderViewRepository(ReservedQuantityMixin):
             .join(Carrier)
             .where(DeliveryMethod.is_active.is_(True), Carrier.is_active.is_(True))
             .order_by(Carrier.name, DeliveryMethod.name)
+            .options(selectinload(DeliveryMethod.carrier))
         )
         statuses_result = await session.execute(select(Status).where(Status.is_active.is_(True)).order_by(Status.order))
         categories_result = await session.execute(
             select(Category).where(Category.is_active.is_(True)).order_by(Category.name)
+        )
+        today = date.today()
+        exchange_rates_result = await session.execute(
+            select(ExchangeRate)
+            .where(
+                ExchangeRate.is_active.is_(True),
+                ExchangeRate.valid_from <= today,
+                (ExchangeRate.valid_to.is_(None) | (ExchangeRate.valid_to >= today)),
+            )
+            .order_by(ExchangeRate.valid_from.desc())
+            .options(
+                selectinload(ExchangeRate.base_currency),
+                selectinload(ExchangeRate.quote_currency),
+                with_loader_criteria(Currency, Currency.is_active.is_(True), include_aliases=True),
+            )
         )
         return (
             suppliers_result.scalars().all(),
@@ -56,6 +76,7 @@ class OrderViewRepository(ReservedQuantityMixin):
             delivery_result.scalars().all(),
             statuses_result.scalars().all(),
             categories_result.scalars().all(),
+            exchange_rates_result.scalars().all(),
         )
 
     @staticmethod
@@ -64,11 +85,12 @@ class OrderViewRepository(ReservedQuantityMixin):
             select(Order)
             .where(Order.id == order_id, Order.is_active.is_(True), Order.is_sales.is_(is_sales))
             .options(
-                selectinload(Order.order_items).selectinload(AssocOrderItem.item),
-                selectinload(Order.order_statuses).selectinload(AssocOrderStatus.status),
-                with_loader_criteria(AssocOrderItem, AssocOrderItem.is_active.is_(True), include_aliases=True),
-                with_loader_criteria(AssocOrderStatus, AssocOrderStatus.is_active.is_(True), include_aliases=True),
-            )
+            selectinload(Order.order_items).selectinload(AssocOrderItem.item),
+            selectinload(Order.order_statuses).selectinload(AssocOrderStatus.status),
+            with_loader_criteria(AssocOrderItem, AssocOrderItem.is_active.is_(True), include_aliases=True),
+            with_loader_criteria(AssocOrderStatus, AssocOrderStatus.is_active.is_(True), include_aliases=True),
+            with_loader_criteria(Item, Item.is_active.is_(True), include_aliases=True),
+        )
             .execution_options(populate_existing=True)
         )
         result = await session.execute(query)
@@ -79,7 +101,11 @@ class OrderViewRepository(ReservedQuantityMixin):
         result = await session.execute(
             select(Item)
             .where(Item.is_active.is_(True), Item.supplier_id == supplier_id)
-            .options(with_loader_criteria(Item, Item.is_active.is_(True)))
+            .options(
+                selectinload(Item.supplier),
+                with_loader_criteria(Item, Item.is_active.is_(True)),
+                with_loader_criteria(Supplier, Supplier.is_active.is_(True)),
+            )
             .order_by(Item.index)
         )
         items = result.scalars().all()
@@ -88,7 +114,12 @@ class OrderViewRepository(ReservedQuantityMixin):
 
     @staticmethod
     async def get_all_items(session: AsyncSession) -> Sequence[Item]:
-        result = await session.execute(select(Item).where(Item.is_active.is_(True)).order_by(Item.index))
+        result = await session.execute(
+            select(Item)
+            .where(Item.is_active.is_(True))
+            .options(selectinload(Item.supplier), with_loader_criteria(Supplier, Supplier.is_active.is_(True)))
+            .order_by(Item.index)
+        )
         items = result.scalars().all()
         await OrderViewRepository._attach_reserved_quantities(session, items)
         return items
