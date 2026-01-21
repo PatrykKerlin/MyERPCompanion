@@ -16,6 +16,7 @@ from pydantic import ValidationError
 from schemas.business.trade.order_view_schema import (
     OrderViewResponseSchema,
     OrderViewExchangeRateSchema,
+    OrderViewDiscountSchema,
     OrderViewSourceItemSchema,
     OrderViewStatusHistorySchema,
     OrderViewTargetItemSchema,
@@ -58,6 +59,14 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__item_currency_map: dict[int, int] = {}
         self.__exchange_rate_missing_notified = False
         self.__item_pricing: dict[int, tuple[float, float]] = {}
+        self.__customer_discount_map: dict[int, list[OrderViewDiscountSchema]] = {}
+        self.__category_discount_map: dict[int, list[OrderViewDiscountSchema]] = {}
+        self.__item_discount_map: dict[int, list[OrderViewDiscountSchema]] = {}
+        self.__discount_percent_map: dict[int, float] = {}
+        self.__selected_customer_discount_id: int | None = None
+        self.__selected_category_discount_id: int | None = None
+        self.__selected_category_id: int | None = None
+        self.__selected_item_discount_ids: dict[int, int | None] = {}
         self.__default_status_id: int | None = None
         self.__current_status_id: int | None = None
 
@@ -82,6 +91,19 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         delivery_methods = [(item.id, item.label) for item in view_data.delivery_methods]
         statuses = [(item.id, translation.get(item.label)) for item in view_data.statuses]
         status_steps = {item.id: item.status_number for item in view_data.statuses}
+        self.__customer_discount_map = {item.id: item.discounts for item in view_data.customers}
+        self.__category_discount_map = {item.id: item.discounts for item in view_data.categories}
+        self.__item_discount_map = {item.id: item.discounts for item in view_data.source_items}
+        self.__discount_percent_map = {}
+        for discounts in (
+            self.__customer_discount_map.values(),
+            self.__category_discount_map.values(),
+            self.__item_discount_map.values(),
+        ):
+            for discount_list in discounts:
+                for discount in discount_list:
+                    if discount.percent is not None:
+                        self.__discount_percent_map[discount.id] = discount.percent
         self.__order_items = {}
         self.__order_item_by_item_id = {}
         self.__pending_move_quantities.clear()
@@ -93,6 +115,10 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__item_pricing.clear()
         self.__current_status_id = None
         self.__exchange_rate_missing_notified = False
+        self.__selected_customer_discount_id = None
+        self.__selected_category_discount_id = None
+        self.__selected_category_id = None
+        self.__selected_item_discount_ids.clear()
         default_status = next((item for item in view_data.statuses if item.status_number == 1), None)
         self.__default_status_id = default_status.id if default_status else None
         source_items, source_item_categories = self.__build_source_item_rows(view_data.source_items)
@@ -124,6 +150,10 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             categories,
             source_items,
             source_item_categories,
+            self.__customer_discount_map,
+            self.__category_discount_map,
+            self.__item_discount_map,
+            self.__selected_item_discount_ids,
             target_items,
             status_history,
             bulk_transfer_enabled,
@@ -182,6 +212,25 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             self.__recalculate_shipping_cost()
         if key == "currency_id":
             self.__recalculate_order_totals()
+
+    def set_customer_discount_id(self, discount_id: int | None) -> None:
+        self.__selected_customer_discount_id = discount_id
+        self.__recalculate_order_totals()
+
+    def set_category_discount_id(self, category_id: int | None, discount_id: int | None) -> None:
+        self.__selected_category_id = category_id
+        self.__selected_category_discount_id = discount_id
+        self.__recalculate_order_totals()
+
+    def set_selected_category_id(self, category_id: int | None) -> None:
+        self.__selected_category_id = category_id
+        if self.__selected_category_discount_id is not None and category_id is None:
+            self.__selected_category_discount_id = None
+        self.__recalculate_order_totals()
+
+    def set_item_discount_id(self, item_id: int, discount_id: int | None) -> None:
+        self.__selected_item_discount_ids[item_id] = discount_id
+        self.__recalculate_order_totals()
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_sales_view(self, order_id: int | None) -> OrderViewResponseSchema:
@@ -250,6 +299,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             self.__item_dimensions[item.id] = (item.width, item.height, item.length, item.weight)
             self.__item_currency_map[item.id] = item.supplier_currency_id
             self.__item_pricing[item.id] = (item.purchase_price, item.vat_rate)
+            self.__selected_item_discount_ids.setdefault(item.id, None)
             results.append((item.id, row))
         self.__source_item_category_map = category_map
         return results, category_map
@@ -262,6 +312,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             row = [item.index, item.name, str(item.quantity)]
             self.__item_dimensions[item.item_id] = (item.width, item.height, item.length, item.weight)
             self.__item_pricing[item.item_id] = (item.purchase_price, item.vat_rate)
+            self.__selected_item_discount_ids[item.item_id] = item.discount_id
             results.append((item.id, row))
         return results
 
@@ -280,11 +331,52 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
     def __calculate_item_totals(self, item_id: int, quantity: int) -> tuple[float, float, float, float]:
         purchase_price, vat_rate = self.__item_pricing.get(item_id, (0.0, 0.0))
         purchase_price = self.__convert_to_order_currency(purchase_price, self.__item_currency_map.get(item_id))
-        total_net = round(purchase_price * quantity, 2)
+        base_net = purchase_price * quantity
+        discount_percent = self.__get_discount_percent(item_id)
+        total_discount = round(base_net * (discount_percent / 100.0), 2) if discount_percent else 0.0
+        total_net = round(base_net - total_discount, 2)
         total_vat = round(total_net * vat_rate, 2)
         total_gross = round(total_net + total_vat, 2)
-        total_discount = 0.0
         return total_net, total_vat, total_gross, total_discount
+
+    def __get_discount_percent(self, item_id: int) -> float:
+        discount_id = self.__get_discount_id_for_item(item_id)
+        if discount_id is None:
+            return 0.0
+        return self.__discount_percent_map.get(discount_id, 0.0)
+
+    def __get_discount_id_for_item(self, item_id: int) -> int | None:
+        item_discount_id = self.__selected_item_discount_ids.get(item_id)
+        if item_discount_id and self.__is_discount_allowed(self.__item_discount_map.get(item_id, []), item_discount_id):
+            return item_discount_id
+
+        category_id = self.__source_item_category_map.get(item_id)
+        if (
+            self.__selected_category_id is not None
+            and self.__selected_category_discount_id
+            and category_id == self.__selected_category_id
+            and self.__is_discount_allowed(
+                self.__category_discount_map.get(self.__selected_category_id, []),
+                self.__selected_category_discount_id,
+            )
+        ):
+            return self.__selected_category_discount_id
+
+        if self.__selected_customer_discount_id and self.__is_discount_allowed(
+            self.__customer_discount_map.get(self.__request_customer_id(), []),
+            self.__selected_customer_discount_id,
+        ):
+            return self.__selected_customer_discount_id
+
+        return None
+
+    @staticmethod
+    def __is_discount_allowed(discounts: list[OrderViewDiscountSchema], discount_id: int) -> bool:
+        return any(discount.id == discount_id for discount in discounts)
+
+    def __request_customer_id(self) -> int | None:
+        customer_id = self._request_data.input_values.get("customer_id")
+        return customer_id if isinstance(customer_id, int) else None
 
     def __compute_order_totals(self, pending_targets: list[tuple[int, int]]) -> tuple[float, float, float, float]:
         pending_by_target = {target_id: item_id for target_id, item_id in pending_targets}
@@ -485,6 +577,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         updates: list[AssocOrderItemStrictSchema] = []
         for target_id, item_id in pending_targets:
             quantity = self.__pending_move_quantities.get(target_id, 1)
+            discount_id = self.__get_discount_id_for_item(item_id)
             if target_id in self.__order_items:
                 base_quantity = self.__order_items[target_id][1]
                 total_quantity = base_quantity + quantity
@@ -502,7 +595,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
                         total_vat=total_vat,
                         total_gross=total_gross,
                         total_discount=total_discount,
-                        discount_id=None,
+                        discount_id=discount_id,
                     )
                 )
             else:
@@ -517,7 +610,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
                         total_vat=total_vat,
                         total_gross=total_gross,
                         total_discount=total_discount,
-                        discount_id=None,
+                        discount_id=discount_id,
                     )
                 )
         if not payload and not updates:
@@ -558,10 +651,28 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             for item in view_data.delivery_methods
         }
         self.__load_exchange_rates(view_data.exchange_rates)
+        self.__customer_discount_map = {item.id: item.discounts for item in view_data.customers}
+        self.__category_discount_map = {item.id: item.discounts for item in view_data.categories}
+        self.__item_discount_map = {item.id: item.discounts for item in view_data.source_items}
+        self.__discount_percent_map = {}
+        for discounts in (
+            self.__customer_discount_map.values(),
+            self.__category_discount_map.values(),
+            self.__item_discount_map.values(),
+        ):
+            for discount_list in discounts:
+                for discount in discount_list:
+                    if discount.percent is not None:
+                        self.__discount_percent_map[discount.id] = discount.percent
         target_items = self.__build_target_item_rows(view_data.target_items)
         source_items, source_item_categories = self.__build_source_item_rows(view_data.source_items)
         self._view.set_target_rows(target_items)
-        self._view.set_source_data(source_items, source_item_categories)
+        self._view.set_source_data(
+            source_items,
+            source_item_categories,
+            self.__item_discount_map,
+            self.__selected_item_discount_ids,
+        )
         self.__recalculate_order_totals()
 
     async def __update_order_shipping_cost(self, order_id: int) -> None:

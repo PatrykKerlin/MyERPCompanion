@@ -12,8 +12,12 @@ from models.business.logistic.delivery_method import DeliveryMethod
 from models.business.logistic.item import Item
 from models.business.trade.assoc_order_item import AssocOrderItem
 from models.business.trade.assoc_order_status import AssocOrderStatus
+from models.business.trade.assoc_category_discount import AssocCategoryDiscount
+from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
+from models.business.trade.assoc_item_discount import AssocItemDiscount
 from models.business.trade.currency import Currency
 from models.business.trade.customer import Customer
+from models.business.trade.discount import Discount
 from models.business.trade.exchange_rate import ExchangeRate
 from models.business.trade.order import Order
 from models.business.trade.status import Status
@@ -38,7 +42,14 @@ class OrderViewRepository(ReservedQuantityMixin):
             select(Supplier).where(Supplier.is_active.is_(True)).order_by(Supplier.company_name)
         )
         customers_result = await session.execute(
-            select(Customer).where(Customer.is_active.is_(True)).order_by(Customer.company_name)
+            select(Customer)
+            .where(Customer.is_active.is_(True))
+            .order_by(Customer.company_name)
+            .options(
+                selectinload(Customer.customer_discounts).selectinload(AssocCustomerDiscount.discount),
+                with_loader_criteria(AssocCustomerDiscount, AssocCustomerDiscount.is_active.is_(True), include_aliases=True),
+                with_loader_criteria(Discount, Discount.is_active.is_(True), include_aliases=True),
+            )
         )
         currencies_result = await session.execute(
             select(Currency).where(Currency.is_active.is_(True)).order_by(Currency.code)
@@ -52,7 +63,14 @@ class OrderViewRepository(ReservedQuantityMixin):
         )
         statuses_result = await session.execute(select(Status).where(Status.is_active.is_(True)).order_by(Status.order))
         categories_result = await session.execute(
-            select(Category).where(Category.is_active.is_(True)).order_by(Category.name)
+            select(Category)
+            .where(Category.is_active.is_(True))
+            .order_by(Category.name)
+            .options(
+                selectinload(Category.category_discounts).selectinload(AssocCategoryDiscount.discount),
+                with_loader_criteria(AssocCategoryDiscount, AssocCategoryDiscount.is_active.is_(True), include_aliases=True),
+                with_loader_criteria(Discount, Discount.is_active.is_(True), include_aliases=True),
+            )
         )
         today = date.today()
         exchange_rates_result = await session.execute(
@@ -85,12 +103,14 @@ class OrderViewRepository(ReservedQuantityMixin):
             select(Order)
             .where(Order.id == order_id, Order.is_active.is_(True), Order.is_sales.is_(is_sales))
             .options(
-            selectinload(Order.order_items).selectinload(AssocOrderItem.item),
-            selectinload(Order.order_statuses).selectinload(AssocOrderStatus.status),
-            with_loader_criteria(AssocOrderItem, AssocOrderItem.is_active.is_(True), include_aliases=True),
-            with_loader_criteria(AssocOrderStatus, AssocOrderStatus.is_active.is_(True), include_aliases=True),
-            with_loader_criteria(Item, Item.is_active.is_(True), include_aliases=True),
-        )
+                selectinload(Order.order_items).selectinload(AssocOrderItem.item),
+                selectinload(Order.order_items).selectinload(AssocOrderItem.discount),
+                selectinload(Order.order_statuses).selectinload(AssocOrderStatus.status),
+                with_loader_criteria(AssocOrderItem, AssocOrderItem.is_active.is_(True), include_aliases=True),
+                with_loader_criteria(AssocOrderStatus, AssocOrderStatus.is_active.is_(True), include_aliases=True),
+                with_loader_criteria(Item, Item.is_active.is_(True), include_aliases=True),
+                with_loader_criteria(Discount, Discount.is_active.is_(True), include_aliases=True),
+            )
             .execution_options(populate_existing=True)
         )
         result = await session.execute(query)
@@ -103,8 +123,11 @@ class OrderViewRepository(ReservedQuantityMixin):
             .where(Item.is_active.is_(True), Item.supplier_id == supplier_id)
             .options(
                 selectinload(Item.supplier),
+                selectinload(Item.item_discounts).selectinload(AssocItemDiscount.discount),
                 with_loader_criteria(Item, Item.is_active.is_(True)),
                 with_loader_criteria(Supplier, Supplier.is_active.is_(True)),
+                with_loader_criteria(AssocItemDiscount, AssocItemDiscount.is_active.is_(True), include_aliases=True),
+                with_loader_criteria(Discount, Discount.is_active.is_(True), include_aliases=True),
             )
             .order_by(Item.index)
         )
@@ -117,7 +140,13 @@ class OrderViewRepository(ReservedQuantityMixin):
         result = await session.execute(
             select(Item)
             .where(Item.is_active.is_(True))
-            .options(selectinload(Item.supplier), with_loader_criteria(Supplier, Supplier.is_active.is_(True)))
+            .options(
+                selectinload(Item.supplier),
+                selectinload(Item.item_discounts).selectinload(AssocItemDiscount.discount),
+                with_loader_criteria(Supplier, Supplier.is_active.is_(True)),
+                with_loader_criteria(AssocItemDiscount, AssocItemDiscount.is_active.is_(True), include_aliases=True),
+                with_loader_criteria(Discount, Discount.is_active.is_(True), include_aliases=True),
+            )
             .order_by(Item.index)
         )
         items = result.scalars().all()

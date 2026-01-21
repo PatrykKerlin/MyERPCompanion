@@ -54,15 +54,17 @@ class Item(BaseModel):
 
     category_id: Mapped[int] = Fields.foreign_key(column="categories.id")
     category: Mapped[Category] = Fields.relationship(
-        argument="Category", back_populates="items", foreign_keys=[category_id]
+        argument="Category", back_populates="items", foreign_keys=[category_id], cascade_soft_delete=False
     )
 
     unit_id: Mapped[int] = Fields.foreign_key(column="units.id")
-    unit: Mapped[Unit] = Fields.relationship(argument="Unit", back_populates="items", foreign_keys=[unit_id])
+    unit: Mapped[Unit] = Fields.relationship(
+        argument="Unit", back_populates="items", foreign_keys=[unit_id], cascade_soft_delete=False
+    )
 
     supplier_id: Mapped[int] = Fields.foreign_key(column="suppliers.id")
     supplier: Mapped[Supplier] = Fields.relationship(
-        argument="Supplier", back_populates="items", foreign_keys=[supplier_id]
+        argument="Supplier", back_populates="items", foreign_keys=[supplier_id], cascade_soft_delete=False
     )
 
     images: Mapped[list[Image]] = Fields.relationship(

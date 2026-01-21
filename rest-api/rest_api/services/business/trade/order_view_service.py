@@ -10,7 +10,10 @@ from repositories.business.trade.order_view_repository import OrderViewRepositor
 from schemas.business.trade.order_schema import OrderPlainSchema
 from schemas.business.trade.order_view_schema import (
     OrderViewDeliveryMethodSchema,
+    OrderViewDiscountSchema,
     OrderViewExchangeRateSchema,
+    OrderViewCustomerSchema,
+    OrderViewCategorySchema,
     OrderViewLookupSchema,
     OrderViewResponseSchema,
     OrderViewSourceItemSchema,
@@ -57,7 +60,20 @@ class OrderViewService:
                 for row in suppliers
             ],
             customers=[
-                OrderViewLookupSchema(id=row.id, label=row.company_name, status_number=None) for row in customers
+                OrderViewCustomerSchema(
+                    id=row.id,
+                    label=row.company_name,
+                    discounts=[
+                        OrderViewDiscountSchema(
+                            id=discount.id,
+                            code=discount.code,
+                            percent=discount.percent,
+                        )
+                        for discount in row.discounts
+                        if discount.is_active
+                    ],
+                )
+                for row in customers
             ],
             currencies=[OrderViewLookupSchema(id=row.id, label=row.code, status_number=None) for row in currencies],
             delivery_methods=[
@@ -77,7 +93,22 @@ class OrderViewService:
             source_items=self._build_source_items(source_items),
             target_items=self._build_target_items(order_items),
             status_history=self._build_status_history(order_statuses),
-            categories=[OrderViewLookupSchema(id=row.id, label=row.name, status_number=None) for row in categories],
+            categories=[
+                OrderViewCategorySchema(
+                    id=row.id,
+                    label=row.name,
+                    discounts=[
+                        OrderViewDiscountSchema(
+                            id=discount.id,
+                            code=discount.code,
+                            percent=discount.percent,
+                        )
+                        for discount in row.discounts
+                        if discount.is_active
+                    ],
+                )
+                for row in categories
+            ],
             exchange_rates=(
                 [
                     OrderViewExchangeRateSchema(
@@ -113,6 +144,15 @@ class OrderViewService:
                 moq=item.moq,
                 is_package=item.is_package,
                 supplier_currency_id=item.supplier.currency_id if item.supplier else None,
+                discounts=[
+                    OrderViewDiscountSchema(
+                        id=discount.id,
+                        code=discount.code,
+                        percent=discount.percent,
+                    )
+                    for discount in item.discounts
+                    if discount.is_active
+                ],
             )
             for item in items
         ]
@@ -135,6 +175,7 @@ class OrderViewService:
                     height=item.height,
                     length=item.length,
                     weight=item.weight,
+                    discount_id=assoc.discount_id if assoc.discount else None,
                 )
             )
         return results

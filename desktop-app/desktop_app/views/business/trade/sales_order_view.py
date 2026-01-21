@@ -10,6 +10,7 @@ from views.base.base_view import BaseView
 from views.controls.bulk_transfer_control import BulkTransfer
 from views.controls.data_table_control import DataTable
 from utils.translation import Translation
+from schemas.business.trade.order_view_schema import OrderViewDiscountSchema
 
 if TYPE_CHECKING:
     from controllers.business.trade.sales_order_controller import SalesOrderController
@@ -30,6 +31,10 @@ class SalesOrderView(BaseView):
         categories: list[tuple[int, str]],
         source_items: list[tuple[int, list[str]]],
         source_item_categories: dict[int, int | None],
+        customer_discounts: dict[int, list[OrderViewDiscountSchema]],
+        category_discounts: dict[int, list[OrderViewDiscountSchema]],
+        item_discounts: dict[int, list[OrderViewDiscountSchema]],
+        selected_item_discounts: dict[int, int | None],
         target_items: list[tuple[int, list[str]]],
         status_history: list[dict[str, Any]],
         bulk_transfer_enabled: bool,
@@ -43,6 +48,12 @@ class SalesOrderView(BaseView):
         self.__editable_keys = {"customer_id", "delivery_method_id", "currency_id", "notes", "internal_notes"}
         self.__all_source_items = list(source_items)
         self.__source_item_category_map = dict(source_item_categories)
+        self.__customer_discount_map = dict(customer_discounts)
+        self.__category_discount_map = dict(category_discounts)
+        self.__item_discount_map = dict(item_discounts)
+        self.__selected_customer_discount_id: int | None = None
+        self.__selected_category_discount_id: int | None = None
+        self.__selected_item_discount_ids: dict[int, int | None] = dict(selected_item_discounts)
         self.__selected_category_id: int | None = None
         self.__pending_source_items: list[tuple[int, list[str]]] = []
         self.__pending_target_items = list(target_items)
@@ -55,6 +66,7 @@ class SalesOrderView(BaseView):
                 "key": "customer_id",
                 "input": self._get_dropdown,
                 "options": customers,
+                "callbacks": [self.__on_customer_changed],
             },
             {"key": "delivery_method_id", "input": self._get_dropdown, "options": delivery_methods},
             {"key": "status_id", "input": self._get_dropdown, "options": statuses},
@@ -79,6 +91,30 @@ class SalesOrderView(BaseView):
         notes_grid = self._build_grid(notes_fields)
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
 
+        self.__customer_discount = ft.Dropdown(
+            options=self.__get_customer_discount_options(self.__get_selected_customer_id()),
+            value="0",
+            on_select=self.__on_customer_discount_changed,
+            expand=True,
+        )
+        self.__customer_discount_row = ft.ResponsiveRow(
+            columns=12,
+            controls=[
+                self._get_label("discount", 4, colon=True)[0],
+                ft.Container(
+                    content=self.__customer_discount,
+                    col={"sm": 8.0},
+                    alignment=self._base_alignment,
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            vertical_alignment=ft.CrossAxisAlignment.START,
+        )
+        self.__customer_discount_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__customer_discount.disabled = mode == ViewMode.EDIT
+
+        main_grid.append(self.__customer_discount_row)
+
         category_options = [ft.dropdown.Option("all", self._translation.get("all"))]
         category_options.extend(ft.dropdown.Option(str(category_id), label) for category_id, label in categories)
         self.__category_filter = ft.Dropdown(
@@ -89,10 +125,20 @@ class SalesOrderView(BaseView):
         )
         self.__category_filter.visible = mode in {ViewMode.READ, ViewMode.EDIT}
         self.__category_filter.disabled = mode == ViewMode.EDIT
+        self.__category_discount = ft.Dropdown(
+            options=self.__get_category_discount_options(None),
+            value="0",
+            on_select=self.__on_category_discount_changed,
+            expand=True,
+        )
+        self.__category_discount.visible = self.__category_filter.visible
+        self.__category_discount.disabled = self.__category_filter.disabled
         self.__category_filter_row = ft.Row(
             controls=[
                 ft.Text(self._translation.get("category")),
                 self.__category_filter,
+                ft.Text(self._translation.get("discount")),
+                self.__category_discount,
             ],
             alignment=ft.MainAxisAlignment.START,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -121,6 +167,7 @@ class SalesOrderView(BaseView):
                 self._translation.get("name"),
                 self._translation.get("stock_quantity"),
                 self._translation.get("reserved_quantity"),
+                self._translation.get("discount"),
             ],
             target_columns=[
                 self._translation.get("index"),
@@ -162,6 +209,8 @@ class SalesOrderView(BaseView):
         self.__is_mounted = True
         self.__bulk_transfer.set_source_rows(self.__pending_source_items)
         self.__bulk_transfer.set_target_rows(self.__pending_target_items)
+        self.__apply_customer_discount_options()
+        self.__apply_category_discount_options()
         if self.__pending_totals:
             self.__apply_order_totals(self.__pending_totals)
             self.__pending_totals.clear()
@@ -183,10 +232,20 @@ class SalesOrderView(BaseView):
         self.__category_filter.visible = mode in {ViewMode.READ, ViewMode.EDIT}
         self.__category_filter.disabled = mode == ViewMode.EDIT
         self.__category_filter_row.visible = self.__category_filter.visible
+        self.__category_discount.visible = self.__category_filter.visible
+        self.__category_discount.disabled = self.__category_filter.disabled
+        self.__customer_discount_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__customer_discount.disabled = mode == ViewMode.EDIT
+        if self.__bulk_transfer.visible:
+            self.__apply_category_filter()
         if self.__category_filter.page:
             self.__category_filter.update()
         if self.__category_filter_row.page:
             self.__category_filter_row.update()
+        if self.__category_discount.page:
+            self.__category_discount.update()
+        if self.__customer_discount_row.page:
+            self.__customer_discount_row.update()
         if self.__status_history_table.page:
             self.__status_history_table.update()
 
@@ -224,13 +283,23 @@ class SalesOrderView(BaseView):
     def get_pending_targets(self) -> list[tuple[int, int]]:
         return self.__bulk_transfer.get_pending_targets()
 
-    def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
+    def set_source_rows(self, rows: list[tuple[int, list[object]]]) -> None:
         self.__all_source_items = list(rows)
         self.__apply_category_filter()
 
-    def set_source_data(self, rows: list[tuple[int, list[str]]], category_map: dict[int, int | None]) -> None:
+    def set_source_data(
+        self,
+        rows: list[tuple[int, list[str]]],
+        category_map: dict[int, int | None],
+        item_discounts: dict[int, list[OrderViewDiscountSchema]] | None = None,
+        selected_item_discounts: dict[int, int | None] | None = None,
+    ) -> None:
         self.__all_source_items = list(rows)
         self.__source_item_category_map = dict(category_map)
+        if item_discounts is not None:
+            self.__item_discount_map = dict(item_discounts)
+        if selected_item_discounts is not None:
+            self.__selected_item_discount_ids = dict(selected_item_discounts)
         self.__apply_category_filter()
 
     def set_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
@@ -284,7 +353,22 @@ class SalesOrderView(BaseView):
                 self.__selected_category_id = int(value)
             except ValueError:
                 self.__selected_category_id = None
+        self._controller.set_selected_category_id(self.__selected_category_id)
+        self.__apply_category_discount_options()
         self.__apply_category_filter()
+
+    def __on_category_discount_changed(self, event: ft.Event[ft.Dropdown]) -> None:
+        self.__selected_category_discount_id = self.__parse_dropdown_value(event.control.value)
+        self._controller.set_category_discount_id(self.__selected_category_id, self.__selected_category_discount_id)
+
+    def __on_customer_changed(self) -> None:
+        self.__apply_customer_discount_options()
+        self.__selected_customer_discount_id = None
+        self._controller.set_customer_discount_id(None)
+
+    def __on_customer_discount_changed(self, event: ft.Event[ft.Dropdown]) -> None:
+        self.__selected_customer_discount_id = self.__parse_dropdown_value(event.control.value)
+        self._controller.set_customer_discount_id(self.__selected_customer_discount_id)
 
     def __apply_category_filter(self) -> None:
         rows = self.__get_filtered_source_items()
@@ -295,9 +379,86 @@ class SalesOrderView(BaseView):
 
     def __get_filtered_source_items(self) -> list[tuple[int, list[str]]]:
         if self.__selected_category_id is None:
-            return list(self.__all_source_items)
-        return [
+            return self.__build_source_rows_with_discounts(self.__all_source_items)
+        filtered = [
             (item_id, values)
             for item_id, values in self.__all_source_items
             if self.__source_item_category_map.get(item_id) == self.__selected_category_id
         ]
+        return self.__build_source_rows_with_discounts(filtered)
+
+    def __build_source_rows_with_discounts(
+        self, rows: list[tuple[int, list[str]]]
+    ) -> list[tuple[int, list[object]]]:
+        results: list[tuple[int, list[object]]] = []
+        for item_id, values in rows:
+            discount_dropdown = self.__build_item_discount_dropdown(item_id)
+            results.append((item_id, list(values) + [discount_dropdown]))
+        return results
+
+    def __build_item_discount_dropdown(self, item_id: int) -> ft.Dropdown:
+        options = self.__get_item_discount_options(item_id)
+        selected = self.__selected_item_discount_ids.get(item_id)
+        dropdown = ft.Dropdown(
+            options=options,
+            value="0" if selected is None else str(selected),
+            on_select=lambda event, item_id=item_id: self.__on_item_discount_changed(event, item_id),
+            expand=True,
+            disabled=self._mode == ViewMode.EDIT or not self.__bulk_transfer_enabled_in_read,
+        )
+        return dropdown
+
+    def __on_item_discount_changed(self, event: ft.Event[ft.Dropdown], item_id: int) -> None:
+        discount_id = self.__parse_dropdown_value(event.control.value)
+        self.__selected_item_discount_ids[item_id] = discount_id
+        self._controller.set_item_discount_id(item_id, discount_id)
+
+    def __apply_customer_discount_options(self) -> None:
+        customer_id = self.__get_selected_customer_id()
+        self.__customer_discount.options = self.__get_customer_discount_options(customer_id)
+        self.__customer_discount.value = "0"
+        if self.__customer_discount.page:
+            self.__customer_discount.update()
+
+    def __apply_category_discount_options(self) -> None:
+        self.__category_discount.options = self.__get_category_discount_options(self.__selected_category_id)
+        self.__category_discount.value = "0"
+        self.__selected_category_discount_id = None
+        self._controller.set_category_discount_id(self.__selected_category_id, None)
+        if self.__category_discount.page:
+            self.__category_discount.update()
+
+    def __get_customer_discount_options(self, customer_id: int | None) -> list[ft.dropdown.Option]:
+        discounts = self.__customer_discount_map.get(customer_id or -1, [])
+        options = [ft.dropdown.Option("0", "")]
+        options.extend(ft.dropdown.Option(str(discount.id), discount.code) for discount in discounts)
+        return options
+
+    def __get_category_discount_options(self, category_id: int | None) -> list[ft.dropdown.Option]:
+        discounts = self.__category_discount_map.get(category_id or -1, [])
+        options = [ft.dropdown.Option("0", "")]
+        options.extend(ft.dropdown.Option(str(discount.id), discount.code) for discount in discounts)
+        return options
+
+    def __get_item_discount_options(self, item_id: int) -> list[ft.dropdown.Option]:
+        discounts = self.__item_discount_map.get(item_id, [])
+        options = [ft.dropdown.Option("0", "")]
+        options.extend(ft.dropdown.Option(str(discount.id), discount.code) for discount in discounts)
+        return options
+
+    def __get_selected_customer_id(self) -> int | None:
+        if "customer_id" not in self._inputs:
+            return None
+        input_control = self._inputs["customer_id"].input.content
+        if hasattr(input_control, "value"):
+            return self.__parse_dropdown_value(getattr(input_control, "value", None))
+        return None
+
+    @staticmethod
+    def __parse_dropdown_value(value: str | None) -> int | None:
+        if not value or value == "0":
+            return None
+        try:
+            return int(value)
+        except ValueError:
+            return None

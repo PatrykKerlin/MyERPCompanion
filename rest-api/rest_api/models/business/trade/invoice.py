@@ -32,12 +32,12 @@ class Invoice(BaseModel):
 
     currency_id: Mapped[int] = Fields.foreign_key(column="currencies.id")
     currency: Mapped[Currency] = Fields.relationship(
-        argument="Currency", back_populates="invoices", foreign_keys=[currency_id]
+        argument="Currency", back_populates="invoices", foreign_keys=[currency_id], cascade_soft_delete=False
     )
 
     payment_method_id: Mapped[int] = Fields.foreign_key(column="payment_methods.id")
     payment_method: Mapped[PaymentMethod] = Fields.relationship(
-        argument="PaymentMethod", back_populates="invoices", foreign_keys=[payment_method_id]
+        argument="PaymentMethod", back_populates="invoices", foreign_keys=[payment_method_id], cascade_soft_delete=False
     )
 
     orders: Mapped[list[Order]] = Fields.relationship(

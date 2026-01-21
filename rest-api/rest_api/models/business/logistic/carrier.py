@@ -42,7 +42,7 @@ class Carrier(BaseModel):
 
     currency_id: Mapped[int] = Fields.foreign_key(column="currencies.id")
     currency: Mapped[Currency] = Fields.relationship(
-        argument="Currency", back_populates="carriers", foreign_keys=[currency_id]
+        argument="Currency", back_populates="carriers", foreign_keys=[currency_id], cascade_soft_delete=False
     )
 
     delivery_methods: Mapped[list[DeliveryMethod]] = Fields.relationship(

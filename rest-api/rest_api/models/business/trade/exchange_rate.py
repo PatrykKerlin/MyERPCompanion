@@ -25,10 +25,10 @@ class ExchangeRate(BaseModel):
 
     base_currency_id: Mapped[int] = Fields.foreign_key(column="currencies.id")
     base_currency: Mapped[Currency] = Fields.relationship(
-        argument="Currency", back_populates="base_rates", foreign_keys=[base_currency_id]
+        argument="Currency", back_populates="base_rates", foreign_keys=[base_currency_id], cascade_soft_delete=False
     )
 
     quote_currency_id: Mapped[int] = Fields.foreign_key(column="currencies.id")
     quote_currency: Mapped[Currency] = Fields.relationship(
-        argument="Currency", back_populates="quote_rates", foreign_keys=[quote_currency_id]
+        argument="Currency", back_populates="quote_rates", foreign_keys=[quote_currency_id], cascade_soft_delete=False
     )

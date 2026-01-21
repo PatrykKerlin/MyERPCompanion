@@ -25,7 +25,7 @@ class Bin(BaseModel):
 
     warehouse_id: Mapped[int] = Fields.foreign_key(column="warehouses.id")
     warehouse: Mapped[Warehouse] = Fields.relationship(
-        argument="Warehouse", back_populates="bins", foreign_keys=[warehouse_id]
+        argument="Warehouse", back_populates="bins", foreign_keys=[warehouse_id], cascade_soft_delete=False
     )
 
     bin_items: Mapped[list[AssocBinItem]] = Fields.relationship(

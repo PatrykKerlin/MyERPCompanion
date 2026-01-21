@@ -14,6 +14,24 @@ class OrderViewLookupSchema(BaseSchema):
     status_number: int | None = None
 
 
+class OrderViewDiscountSchema(BaseSchema):
+    id: int
+    code: str
+    percent: float | None = None
+
+
+class OrderViewCustomerSchema(BaseSchema):
+    id: int
+    label: str
+    discounts: list[OrderViewDiscountSchema]
+
+
+class OrderViewCategorySchema(BaseSchema):
+    id: int
+    label: str
+    discounts: list[OrderViewDiscountSchema]
+
+
 class OrderViewSupplierSchema(BaseSchema):
     id: int
     label: str
@@ -37,6 +55,7 @@ class OrderViewSourceItemSchema(BaseSchema):
     moq: int = 1
     is_package: bool = False
     supplier_currency_id: int | None = None
+    discounts: list[OrderViewDiscountSchema]
 
 
 class OrderViewTargetItemSchema(BaseSchema):
@@ -51,6 +70,7 @@ class OrderViewTargetItemSchema(BaseSchema):
     height: float
     length: float
     weight: float
+    discount_id: int | None = None
 
 
 class OrderViewStatusHistorySchema(BaseSchema):
@@ -79,12 +99,12 @@ class OrderViewExchangeRateSchema(BaseSchema):
 class OrderViewResponseSchema(BaseSchema):
     order: OrderPlainSchema | None
     suppliers: list[OrderViewSupplierSchema]
-    customers: list[OrderViewLookupSchema]
+    customers: list[OrderViewCustomerSchema]
     currencies: list[OrderViewLookupSchema]
     delivery_methods: list[OrderViewDeliveryMethodSchema]
     statuses: list[OrderViewLookupSchema]
     source_items: list[OrderViewSourceItemSchema]
     target_items: list[OrderViewTargetItemSchema]
     status_history: list[OrderViewStatusHistorySchema]
-    categories: list[OrderViewLookupSchema] = Field(default_factory=list)
+    categories: list[OrderViewCategorySchema] = Field(default_factory=list)
     exchange_rates: list[OrderViewExchangeRateSchema] | None = None

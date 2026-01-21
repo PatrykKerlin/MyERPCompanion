@@ -26,5 +26,4 @@ class OrderViewService(BaseService[OrderViewResponseSchema, BaseStrictSchema]):
         resolved_endpoint = f"{endpoint}/{path_param}" if path_param is not None else str(endpoint)
         response = await self._get(endpoint=resolved_endpoint, tokens=tokens, module_id=module_id)
         data = response.json()
-        print(data)
         return self._plain_schema_cls(**data)

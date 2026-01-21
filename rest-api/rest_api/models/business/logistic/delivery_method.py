@@ -28,11 +28,13 @@ class DeliveryMethod(BaseModel):
 
     carrier_id: Mapped[int] = Fields.foreign_key(column="carriers.id")
     carrier: Mapped[Carrier] = Fields.relationship(
-        argument="Carrier", back_populates="delivery_methods", foreign_keys=[carrier_id]
+        argument="Carrier", back_populates="delivery_methods", foreign_keys=[carrier_id], cascade_soft_delete=False
     )
 
     unit_id: Mapped[int] = Fields.foreign_key(column="units.id")
-    unit: Mapped[Unit] = Fields.relationship(argument="Unit", back_populates="delivery_methods", foreign_keys=[unit_id])
+    unit: Mapped[Unit] = Fields.relationship(
+        argument="Unit", back_populates="delivery_methods", foreign_keys=[unit_id], cascade_soft_delete=False
+    )
 
     orders: Mapped[list[Order]] = Fields.relationship(
         argument="Order", back_populates="delivery_method", foreign_keys="Order.delivery_method_id"

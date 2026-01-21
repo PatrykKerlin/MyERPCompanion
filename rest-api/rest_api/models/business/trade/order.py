@@ -56,7 +56,7 @@ class Order(BaseModel):
 
     currency_id: Mapped[int] = Fields.foreign_key(column="currencies.id")
     currency: Mapped[Currency] = Fields.relationship(
-        argument="Currency", back_populates="orders", foreign_keys=[currency_id]
+        argument="Currency", back_populates="orders", foreign_keys=[currency_id], cascade_soft_delete=False
     )
 
     invoice_id: Mapped[int | None] = Fields.foreign_key(column="invoices.id", nullable=True)

@@ -43,7 +43,7 @@ class Supplier(BaseModel):
 
     currency_id: Mapped[int] = Fields.foreign_key(column="currencies.id")
     currency: Mapped[Currency] = Fields.relationship(
-        argument="Currency", back_populates="suppliers", foreign_keys=[currency_id]
+        argument="Currency", back_populates="suppliers", foreign_keys=[currency_id], cascade_soft_delete=False
     )
 
     items: Mapped[list[Item]] = Fields.relationship(

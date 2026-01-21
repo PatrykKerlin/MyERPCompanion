@@ -14,6 +14,7 @@ class BulkTransfer(ft.Container):
         allow_duplicate_targets: bool = False,
         source_columns: list[str] | None = None,
         target_columns: list[str] | None = None,
+        height: int | None = None,
     ) -> None:
         super().__init__(expand=True)
         self.__source_enabled = False
@@ -22,12 +23,15 @@ class BulkTransfer(ft.Container):
         self.__allow_duplicate_targets = allow_duplicate_targets
         self.__source_columns = source_columns or [source_label]
         self.__target_columns = target_columns or [target_label]
+        self.__base_height = height
+        if height is not None:
+            self.height = height
 
-        self.__source_rows: list[tuple[int, list[str]]] = []
-        self.__target_rows: list[tuple[int, list[str]]] = []
+        self.__source_rows: list[tuple[int, list[object]]] = []
+        self.__target_rows: list[tuple[int, list[object]]] = []
         self.__target_ids: set[int] = set()
         self.__initial_target_ids: set[int] = set()
-        self.__initial_target_rows: dict[int, list[str]] = {}
+        self.__initial_target_rows: dict[int, list[object]] = {}
 
         self.__selected_source_ids: set[int] = set()
         self.__selected_target_ids: set[int] = set()
@@ -96,6 +100,8 @@ class BulkTransfer(ft.Container):
     def update(self) -> None:
         if not self.visible:
             self.height = 0
+        elif self.__base_height is not None:
+            self.height = self.__base_height
         super().update()
 
     def clear_pending_changes(self) -> None:
@@ -131,14 +137,14 @@ class BulkTransfer(ft.Container):
     def set_target_items(self, items: list[tuple[int, str]]) -> None:
         self.set_target_rows([(item_id, [label]) for item_id, label in items])
 
-    def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
+    def set_source_rows(self, rows: list[tuple[int, list[object]]]) -> None:
         self.__source_rows = rows
         self.__selected_source_ids.clear()
         self.__moved_source_ids.clear()
         self.__render_source_table()
         self.__update_save_button_state()
 
-    def set_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
+    def set_target_rows(self, rows: list[tuple[int, list[object]]]) -> None:
         self.__target_rows = rows
         self.__target_ids = {item_id for item_id, _ in rows}
         self.__initial_target_ids = set(self.__target_ids)
@@ -221,7 +227,9 @@ class BulkTransfer(ft.Container):
 
     def remove_target_items(self, ids: list[int]) -> None:
         ids_set = set(ids)
-        pending_source_ids = {self.__pending_target_map[target_id] for target_id in ids_set if target_id in self.__pending_target_map}
+        pending_source_ids = {
+            self.__pending_target_map[target_id] for target_id in ids_set if target_id in self.__pending_target_map
+        }
         self.__target_rows = [(item_id, label) for item_id, label in self.__target_rows if item_id not in ids_set]
         self.__target_ids.difference_update(ids_set)
         self.__selected_target_ids.difference_update(ids_set)
@@ -268,7 +276,11 @@ class BulkTransfer(ft.Container):
     def __render_source_table(self) -> None:
         if not self.__source_container:
             return
-        selectable_ids = {item_id for item_id, _ in self.__source_rows} if (self.__buttons_enabled and self.__source_enabled) else set()
+        selectable_ids = (
+            {item_id for item_id, _ in self.__source_rows}
+            if (self.__buttons_enabled and self.__source_enabled)
+            else set()
+        )
         table = self.__build_table(
             columns=self.__source_columns,
             rows=self.__source_rows,
@@ -303,7 +315,7 @@ class BulkTransfer(ft.Container):
         self.__update_action_buttons()
         self.__safe_update()
 
-    def __normalize_row_values(self, values: list[str], column_count: int) -> list[str]:
+    def __normalize_row_values(self, values: list[object], column_count: int) -> list[object]:
         if len(values) >= column_count:
             return values[:column_count]
         return values + [""] * (column_count - len(values))
@@ -311,7 +323,7 @@ class BulkTransfer(ft.Container):
     def __build_table(
         self,
         columns: list[str],
-        rows: list[tuple[int, list[str]]],
+        rows: list[tuple[int, list[object]]],
         selected_ids: set[int],
         highlighted_ids: set[int],
         selectable_ids: set[int],
@@ -328,17 +340,22 @@ class BulkTransfer(ft.Container):
                 ft.Checkbox(
                     value=is_selected,
                     disabled=item_id not in selectable_ids,
-                    on_change=(lambda _, item_id=item_id: on_row_selected(item_id))
-                    if item_id in selectable_ids
-                    else None,
+                    on_change=(
+                        (lambda _, item_id=item_id: on_row_selected(item_id)) if item_id in selectable_ids else None
+                    ),
                 )
             )
-            cells = [
-                ft.DataCell(
-                    ft.Text(value, no_wrap=True, color=ft.Colors.ERROR if is_highlighted else None)
-                )
-                for value in row_values
-            ]
+            cells: list[ft.DataCell] = []
+            for value in row_values:
+                if isinstance(value, ft.Control):
+                    cells.append(ft.DataCell(value))
+                else:
+                    text_value = "" if value is None else str(value)
+                    cells.append(
+                        ft.DataCell(
+                            ft.Text(text_value, no_wrap=True, color=ft.Colors.ERROR if is_highlighted else None)
+                        )
+                    )
             table_rows.append(ft.DataRow(cells=[selection_cell] + cells))
         data_table = ft.DataTable(
             columns=table_columns,

@@ -45,10 +45,6 @@ class CustomerView(BaseView):
             {"key": "email", "input": self._get_text_input},
             {"key": "phone_number", "input": self._get_text_input},
         ]
-        address_field_definition = [
-            {"key": "use_one_address", "input": self._get_checkbox},
-        ]
-
         street_field_definition = [
             {"key": "street", "input": self._get_text_input},
         ]
@@ -110,7 +106,6 @@ class CustomerView(BaseView):
         company_fields = self._build_field_groups(company_fields_definitions)
         financial_fields = self._build_field_groups(financial_fields_definitions)
         contact_fields = self._build_field_groups(contact_fields_definitions)
-        address_field = self._build_field_groups(address_field_definition)
         street_field = self._build_field_groups(street_field_definition)
         house_fields = self._build_field_groups(house_fields_definitions)
         city_fields = self._build_field_groups(city_fields_definitions)
@@ -125,7 +120,6 @@ class CustomerView(BaseView):
             company_fields,
             financial_fields,
             contact_fields,
-            address_field,
             street_field,
             house_fields,
             city_fields,
@@ -140,7 +134,6 @@ class CustomerView(BaseView):
         company_grid = self._build_grid(company_fields)
         financial_grid = self._build_grid(financial_fields)
         contact_grid = self._build_grid(contact_fields)
-        address_grid = self._build_grid(address_field)
         street_grid = self._build_grid(street_field)
         house_grid = self._build_grid(house_fields, inline=True)
         city_grid = self._build_grid(city_fields, inline=True)
@@ -156,14 +149,7 @@ class CustomerView(BaseView):
             ft.Column(
                 controls=
                 # user_grid
-                company_grid
-                + financial_grid
-                + contact_grid
-                + address_grid
-                + street_grid
-                + house_grid
-                + city_grid
-                + country_grid,
+                company_grid + financial_grid + contact_grid + street_grid + house_grid + city_grid + country_grid,
                 expand=3,
             ),
             self._spacing_column,
@@ -186,6 +172,7 @@ class CustomerView(BaseView):
             on_delete_clicked=on_discount_delete_clicked,
             source_columns=[self._translation.get("code")],
             target_columns=[self._translation.get("code")],
+            height=250,
         )
         self.__pending_discount_source_items = discount_source_items
         self.__pending_discount_target_items = discount_target_items
@@ -193,7 +180,7 @@ class CustomerView(BaseView):
         self.__set_bulk_transfer_state(mode)
 
         bulk_transfer_row = ft.Row(
-            controls=[ft.Container(content=self.__bulk_transfer, expand=True, height=260)],
+            controls=[ft.Container(content=self.__bulk_transfer, expand=True)],
         )
         self._master_column.controls.extend(
             [
