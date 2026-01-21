@@ -225,6 +225,8 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         results: list[tuple[int, list[str]]] = []
         category_map: dict[int, int | None] = {}
         for item in items:
+            if item.is_package:
+                continue
             row = [item.index, item.name, str(item.stock_quantity), str(item.reserved_quantity)]
             self.__source_item_rows[item.id] = row
             category_map[item.id] = item.category_id

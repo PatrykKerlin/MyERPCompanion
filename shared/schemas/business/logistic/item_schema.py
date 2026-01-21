@@ -46,10 +46,13 @@ class ItemStrictSchema(BaseStrictSchema):
         today = date.today()
 
         if self.expiration_date is not None and self.expiration_date < today:
-            raise ValueError("expiration_date must be today or later")
+            raise ValueError("Expiration_date must be today or later.")
 
         if self.max_stock_level is not None and self.stock_quantity > self.max_stock_level:
-            raise ValueError("stock_quantity cannot exceed max_stock_level")
+            raise ValueError("'Stock_quantity' cannot exceed 'max_stock_level'.")
+
+        if self.is_returnable and not self.is_package:
+            raise ValueError("Only 'package' items can be returnable.")
 
         return self
 

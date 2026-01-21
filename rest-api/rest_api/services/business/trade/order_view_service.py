@@ -91,6 +91,7 @@ class OrderViewService:
                 stock_quantity=item.stock_quantity,
                 reserved_quantity=getattr(item, "reserved_quantity", 0),
                 moq=item.moq,
+                is_package=item.is_package,
             )
             for item in items
         ]

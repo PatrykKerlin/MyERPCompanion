@@ -35,6 +35,7 @@ class OrderViewSourceItemSchema(BaseSchema):
     stock_quantity: int
     reserved_quantity: int
     moq: int
+    is_package: bool
 
 
 class OrderViewTargetItemSchema(BaseSchema):
