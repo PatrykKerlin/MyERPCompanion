@@ -61,6 +61,7 @@ class ItemView(BaseView):
         ]
         stock_fields_definitions = [
             {"key": "stock_quantity", "input": self._get_numeric_input},
+            {"key": "reserved_quantity", "input": self._get_numeric_input},
             {"key": "min_stock_level", "input": self._get_numeric_input},
             {"key": "max_stock_level", "input": self._get_numeric_input},
         ]

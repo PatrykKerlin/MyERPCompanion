@@ -9,6 +9,7 @@ from models.business.trade.order import Order
 from repositories.business.trade.order_view_repository import OrderViewRepository
 from schemas.business.trade.order_schema import OrderPlainSchema
 from schemas.business.trade.order_view_schema import (
+    OrderViewDeliveryMethodSchema,
     OrderViewLookupSchema,
     OrderViewResponseSchema,
     OrderViewSourceItemSchema,
@@ -53,7 +54,16 @@ class OrderViewService:
             ],
             currencies=[OrderViewLookupSchema(id=row.id, label=row.code, status_number=None) for row in currencies],
             delivery_methods=[
-                OrderViewLookupSchema(id=row.id, label=row.name, status_number=None) for row in delivery_methods
+                OrderViewDeliveryMethodSchema(
+                    id=row.id,
+                    label=row.name,
+                    price_per_unit=row.price_per_unit,
+                    max_width=row.max_width,
+                    max_height=row.max_height,
+                    max_length=row.max_length,
+                    max_weight=row.max_weight,
+                )
+                for row in delivery_methods
             ],
             statuses=[OrderViewLookupSchema(id=row.id, label=row.key, status_number=row.order) for row in statuses],
             source_items=self._build_source_items(source_items),
@@ -74,6 +84,13 @@ class OrderViewService:
                 purchase_price=item.purchase_price,
                 vat_rate=item.vat_rate,
                 category_id=item.category_id,
+                width=item.width,
+                height=item.height,
+                length=item.length,
+                weight=item.weight,
+                stock_quantity=item.stock_quantity,
+                reserved_quantity=getattr(item, "reserved_quantity", 0),
+                moq=item.moq,
             )
             for item in items
         ]
@@ -87,11 +104,15 @@ class OrderViewService:
                 OrderViewTargetItemSchema(
                     id=assoc.id,
                     item_id=assoc.item_id,
-                    index=item.index if item else str(assoc.item_id),
-                    name=item.name if item else "",
+                    index=item.index,
+                    name=item.name,
                     quantity=assoc.quantity,
-                    purchase_price=item.purchase_price if item else 0.0,
-                    vat_rate=item.vat_rate if item else 0.0,
+                    purchase_price=item.purchase_price,
+                    vat_rate=item.vat_rate,
+                    width=item.width,
+                    height=item.height,
+                    length=item.length,
+                    weight=item.weight,
                 )
             )
         return results

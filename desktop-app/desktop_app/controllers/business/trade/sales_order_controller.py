@@ -1,5 +1,6 @@
 from datetime import date
 from typing import Any
+import math
 import random
 import string
 
@@ -11,6 +12,7 @@ from controllers.base.base_view_controller import BaseViewController
 from schemas.business.trade.assoc_order_item_schema import AssocOrderItemStrictSchema
 from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusStrictSchema
 from schemas.business.trade.order_schema import OrderPlainSchema, SalesOrderStrictSchema
+from pydantic import ValidationError
 from schemas.business.trade.order_view_schema import (
     OrderViewResponseSchema,
     OrderViewSourceItemSchema,
@@ -48,6 +50,9 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__pending_move_quantities: dict[int, int] = {}
         self.__source_item_rows: dict[int, list[str]] = {}
         self.__source_item_category_map: dict[int, int | None] = {}
+        self.__item_stock_map: dict[int, tuple[int, int, int]] = {}
+        self.__item_dimensions: dict[int, tuple[float, float, float, float]] = {}
+        self.__delivery_method_map: dict[int, tuple[float, float, float, float, float]] = {}
         self.__item_pricing: dict[int, tuple[float, float]] = {}
         self.__default_status_id: int | None = None
         self.__current_status_id: int | None = None
@@ -58,6 +63,10 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         customers = [(item.id, item.label) for item in view_data.customers]
         currencies = [(item.id, item.label) for item in view_data.currencies]
         categories = [(item.id, item.label) for item in view_data.categories]
+        self.__delivery_method_map = {
+            item.id: (item.price_per_unit, item.max_width, item.max_height, item.max_length, item.max_weight)
+            for item in view_data.delivery_methods
+        }
         delivery_methods = [(item.id, item.label) for item in view_data.delivery_methods]
         statuses = [(item.id, translation.get(item.label)) for item in view_data.statuses]
         status_steps = {item.id: item.status_number for item in view_data.statuses}
@@ -66,6 +75,8 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__pending_move_quantities.clear()
         self.__source_item_rows.clear()
         self.__source_item_category_map.clear()
+        self.__item_stock_map.clear()
+        self.__item_dimensions.clear()
         self.__item_pricing.clear()
         self.__current_status_id = None
         default_status = next((item for item in view_data.statuses if item.status_number == 1), None)
@@ -153,6 +164,8 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         if key == "is_sales":
             value = True
         super().set_field_value(key, value)
+        if key == "delivery_method_id":
+            self.__recalculate_shipping_cost()
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_sales_view(self, order_id: int | None) -> OrderViewResponseSchema:
@@ -196,13 +209,10 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
     def __is_bulk_transfer_enabled(self, status_id: int | None, status_steps: dict[int, int | None]) -> bool:
         if status_id is None or not status_steps:
             return False
-        valid_steps = [step for step in status_steps.values() if step is not None]
-        if not valid_steps:
-            return False
         current_step = status_steps.get(status_id)
         if current_step is None:
             return False
-        return current_step == min(valid_steps)
+        return current_step == 1
 
     async def __ensure_item_pricing(self, item_ids: list[int]) -> None:
         missing_ids = [item_id for item_id in item_ids if item_id not in self.__item_pricing]
@@ -215,9 +225,11 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         results: list[tuple[int, list[str]]] = []
         category_map: dict[int, int | None] = {}
         for item in items:
-            row = [item.index, item.name, item.ean]
+            row = [item.index, item.name, str(item.stock_quantity), str(item.reserved_quantity)]
             self.__source_item_rows[item.id] = row
             category_map[item.id] = item.category_id
+            self.__item_stock_map[item.id] = (item.stock_quantity, item.reserved_quantity, item.moq)
+            self.__item_dimensions[item.id] = (item.width, item.height, item.length, item.weight)
             self.__item_pricing[item.id] = (item.purchase_price, item.vat_rate)
             results.append((item.id, row))
         self.__source_item_category_map = category_map
@@ -229,6 +241,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         results: list[tuple[int, list[str]]] = []
         for item in items:
             row = [item.index, item.name, str(item.quantity)]
+            self.__item_dimensions[item.item_id] = (item.width, item.height, item.length, item.weight)
             self.__item_pricing[item.item_id] = (item.purchase_price, item.vat_rate)
             results.append((item.id, row))
         return results
@@ -290,14 +303,85 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
     def __recalculate_order_totals(self) -> None:
         if not self._view:
             return
-        totals = self.__compute_order_totals(self._view.get_pending_targets())
+        pending_targets = self._view.get_pending_targets()
+        totals = self.__compute_order_totals(pending_targets)
         self._view.set_order_totals(*totals)
+        self.__recalculate_shipping_cost(pending_targets)
+
+    def __recalculate_shipping_cost(self, pending_targets: list[tuple[int, int]] | None = None) -> None:
+        if not self._view:
+            return
+        if pending_targets is None:
+            pending_targets = self._view.get_pending_targets()
+        shipping_cost = self.__compute_shipping_cost(pending_targets)
+        self._view.set_shipping_cost(shipping_cost)
+
+    def __compute_shipping_cost(self, pending_targets: list[tuple[int, int]]) -> float:
+        delivery_method_id = self._request_data.input_values.get("delivery_method_id")
+        if not isinstance(delivery_method_id, int):
+            return 0.0
+        delivery_method = self.__delivery_method_map.get(delivery_method_id)
+        if not delivery_method:
+            return 0.0
+
+        price_per_unit, max_width, max_height, max_length, max_weight = delivery_method
+        pending_by_target = {target_id: item_id for target_id, item_id in pending_targets}
+        pending_new_ids = [target_id for target_id in pending_by_target if target_id not in self.__order_items]
+
+        total_width = 0.0
+        total_height = 0.0
+        total_length = 0.0
+        total_weight = 0.0
+        has_items = False
+
+        for target_id, (item_id, base_quantity) in self.__order_items.items():
+            pending_quantity = self.__pending_move_quantities.get(target_id, 0)
+            quantity = base_quantity + pending_quantity
+            if quantity <= 0:
+                continue
+            dimensions = self.__item_dimensions.get(item_id)
+            if not dimensions:
+                continue
+            width, height, length, weight = dimensions
+            total_width += width * quantity
+            total_height += height * quantity
+            total_length += length * quantity
+            total_weight += weight * quantity
+            has_items = True
+
+        for target_id in pending_new_ids:
+            item_id = pending_by_target[target_id]
+            quantity = self.__pending_move_quantities.get(target_id, 0)
+            if quantity <= 0:
+                continue
+            dimensions = self.__item_dimensions.get(item_id)
+            if not dimensions:
+                continue
+            width, height, length, weight = dimensions
+            total_width += width * quantity
+            total_height += height * quantity
+            total_length += length * quantity
+            total_weight += weight * quantity
+            has_items = True
+
+        if not has_items:
+            return 0.0
+
+        units = 1
+        max_dimension_sum = max_width + max_height + max_length
+        total_dimension_sum = total_width + total_height + total_length
+        if max_dimension_sum > 0:
+            units = max(units, math.ceil(total_dimension_sum / max_dimension_sum))
+        if max_weight > 0:
+            units = max(units, math.ceil(total_weight / max_weight))
+
+        return round(price_per_unit * units, 2)
 
     async def __handle_move_with_quantity(self, item_id: int) -> None:
         if not self._view:
             return
         await self.__ensure_item_pricing([item_id])
-        quantity = await self.__show_quantity_dialog()
+        quantity = await self.__show_quantity_dialog(item_id)
         if quantity is None:
             return
         row = self.__source_item_rows.get(item_id, [str(item_id), "", ""])
@@ -317,9 +401,19 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__pending_move_quantities[target_id] = quantity
         self.__recalculate_order_totals()
 
-    async def __show_quantity_dialog(self) -> int | None:
+    async def __show_quantity_dialog(self, item_id: int) -> int | None:
+        stock_info = self.__item_stock_map.get(item_id)
+        moq = 1
+        available = 0
+        if stock_info:
+            stock_quantity, reserved_quantity, moq = stock_info
+            moq = max(moq, 1)
+            available = max(stock_quantity - reserved_quantity, 0)
+        max_value = max(available, 0)
+        if max_value < moq:
+            return None
         translation = self._state_store.app_state.translation.items
-        dialog = QuantityDialogComponent(translation, 1000000, default_value=1, min_value=1)
+        dialog = QuantityDialogComponent(translation, max_value, default_value=moq, min_value=moq, step=moq)
         self._page.show_dialog(dialog)
         try:
             return await dialog.future
@@ -382,6 +476,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         await self.__refresh_order_item_lists(order_id)
         self.__pending_move_quantities.clear()
         self.__recalculate_order_totals()
+        await self.__update_order_shipping_cost(order_id)
 
     async def __handle_order_items_delete(self, item_ids: list[int]) -> None:
         if not self._view or not self._view.data_row:
@@ -392,16 +487,32 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             return
         await self.__perform_delete_order_items(assoc_ids)
         await self.__refresh_order_item_lists(order_id)
+        await self.__update_order_shipping_cost(order_id)
 
     async def __refresh_order_item_lists(self, order_id: int) -> None:
         if not self._view:
             return
         view_data = await self.__perform_get_sales_view(order_id)
+        self.__delivery_method_map = {
+            item.id: (item.price_per_unit, item.max_width, item.max_height, item.max_length, item.max_weight)
+            for item in view_data.delivery_methods
+        }
         target_items = self.__build_target_item_rows(view_data.target_items)
         source_items, source_item_categories = self.__build_source_item_rows(view_data.source_items)
         self._view.set_target_rows(target_items)
         self._view.set_source_data(source_items, source_item_categories)
         self.__recalculate_order_totals()
+
+    async def __update_order_shipping_cost(self, order_id: int) -> None:
+        input_values = dict(self._request_data.input_values)
+        input_values["is_sales"] = True
+        if input_values.get("shipping_cost") is None:
+            return
+        try:
+            payload = SalesOrderStrictSchema(**input_values)
+        except ValidationError:
+            return
+        await self._perform_update(order_id, self._service, self._endpoint, payload)
 
     def __build_create_defaults(self) -> dict[str, object]:
         today = date.today()

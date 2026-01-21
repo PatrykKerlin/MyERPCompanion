@@ -119,7 +119,8 @@ class SalesOrderView(BaseView):
             source_columns=[
                 self._translation.get("index"),
                 self._translation.get("name"),
-                self._translation.get("ean"),
+                self._translation.get("stock_quantity"),
+                self._translation.get("reserved_quantity"),
             ],
             target_columns=[
                 self._translation.get("index"),
@@ -254,6 +255,15 @@ class SalesOrderView(BaseView):
                 self._controller.set_field_value(key, value)
             return
         self.__apply_order_totals(totals)
+
+    def set_shipping_cost(self, shipping_cost: float) -> None:
+        if "shipping_cost" in self._inputs:
+            input_control = self._inputs["shipping_cost"].input.content
+            if hasattr(input_control, "value"):
+                setattr(input_control, "value", shipping_cost)
+                if input_control:
+                    input_control.update()
+        self._controller.set_field_value("shipping_cost", shipping_cost)
 
     def __apply_order_totals(self, totals: dict[str, float]) -> None:
         for key, value in totals.items():

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
 
-from pydantic import model_validator
+from pydantic import Field, field_validator, model_validator
 
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
+from schemas.validation.normalizers import Normalizers
 
 
 class OrderStrictSchema(BaseStrictSchema):
@@ -115,5 +117,15 @@ class OrderPlainSchema(BasePlainSchema):
     currency_id: int
     invoice_id: int | None
 
-    item_ids: list[int]
-    status_ids: list[int]
+    item_ids: list[int] = Field(alias="items")
+    status_ids: list[int] = Field(alias="statuses")
+
+    @field_validator("item_ids", mode="before")
+    @classmethod
+    def _normalize_items(cls, values: list[Any]) -> list[int]:
+        return Normalizers.normalize_related_ids(values)
+
+    @field_validator("status_ids", mode="before")
+    @classmethod
+    def _normalize_statuses(cls, values: list[Any]) -> list[int]:
+        return Normalizers.normalize_related_ids(values)

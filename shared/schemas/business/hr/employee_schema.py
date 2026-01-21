@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
 
-from pydantic import ValidationInfo, model_validator
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
+from schemas.validation.normalizers import Normalizers
 
 
 class EmployeeStrictSchema(BaseStrictSchema):
@@ -116,4 +118,9 @@ class EmployeePlainSchema(BasePlainSchema):
     department_id: int
     user_id: int | None
 
-    subordinate_ids: list[int]
+    subordinate_ids: list[int] = Field(alias="subordinates")
+
+    @field_validator("subordinate_ids", mode="before")
+    @classmethod
+    def _normalize_subordinates(cls, values: list[Any]) -> list[int]:
+        return Normalizers.normalize_related_ids(values)

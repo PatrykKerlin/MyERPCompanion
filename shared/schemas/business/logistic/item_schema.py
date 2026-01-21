@@ -76,6 +76,7 @@ class ItemPlainSchema(BasePlainSchema):
     expiration_date: date | None
 
     stock_quantity: int
+    reserved_quantity: int
     min_stock_level: int
     max_stock_level: int | None
     moq: int

@@ -3,7 +3,8 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy.orm import Mapped
+from sqlalchemy import func, select
+from sqlalchemy.orm import Mapped, object_session
 
 from models.base.base_model import BaseModel
 from models.base.fields import Fields

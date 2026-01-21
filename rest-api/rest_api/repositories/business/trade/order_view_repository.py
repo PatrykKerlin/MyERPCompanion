@@ -2,21 +2,23 @@ from collections.abc import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import with_loader_criteria
+from sqlalchemy.orm import selectinload, with_loader_criteria
 
 from models.business.logistic.carrier import Carrier
 from models.business.logistic.category import Category
 from models.business.logistic.delivery_method import DeliveryMethod
 from models.business.logistic.item import Item
+from models.business.trade.assoc_order_item import AssocOrderItem
+from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.currency import Currency
 from models.business.trade.customer import Customer
 from models.business.trade.order import Order
 from models.business.trade.status import Status
 from models.business.trade.supplier import Supplier
-from repositories.business.trade.order_repository import OrderRepository
+from repositories.base.reserved_quantity_mixin import ReservedQuantityMixin
 
 
-class OrderViewRepository:
+class OrderViewRepository(ReservedQuantityMixin):
     @staticmethod
     async def get_lookups(
         session: AsyncSession,
@@ -58,10 +60,19 @@ class OrderViewRepository:
 
     @staticmethod
     async def get_order_with_relations(session: AsyncSession, order_id: int, is_sales: bool) -> Order | None:
-        order = await OrderRepository.get_one_by_id(session, order_id)
-        if not order or order.is_sales != is_sales:
-            return None
-        return order
+        query = (
+            select(Order)
+            .where(Order.id == order_id, Order.is_active.is_(True), Order.is_sales.is_(is_sales))
+            .options(
+                selectinload(Order.order_items).selectinload(AssocOrderItem.item),
+                selectinload(Order.order_statuses).selectinload(AssocOrderStatus.status),
+                with_loader_criteria(AssocOrderItem, AssocOrderItem.is_active.is_(True), include_aliases=True),
+                with_loader_criteria(AssocOrderStatus, AssocOrderStatus.is_active.is_(True), include_aliases=True),
+            )
+            .execution_options(populate_existing=True)
+        )
+        result = await session.execute(query)
+        return result.scalars().first()
 
     @staticmethod
     async def get_items_for_supplier(session: AsyncSession, supplier_id: int) -> Sequence[Item]:
@@ -71,9 +82,13 @@ class OrderViewRepository:
             .options(with_loader_criteria(Item, Item.is_active.is_(True)))
             .order_by(Item.index)
         )
-        return result.scalars().all()
+        items = result.scalars().all()
+        await OrderViewRepository._attach_reserved_quantities(session, items)
+        return items
 
     @staticmethod
     async def get_all_items(session: AsyncSession) -> Sequence[Item]:
         result = await session.execute(select(Item).where(Item.is_active.is_(True)).order_by(Item.index))
-        return result.scalars().all()
+        items = result.scalars().all()
+        await OrderViewRepository._attach_reserved_quantities(session, items)
+        return items

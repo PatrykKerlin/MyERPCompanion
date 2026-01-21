@@ -28,6 +28,13 @@ class OrderViewSourceItemSchema(BaseSchema):
     purchase_price: float
     vat_rate: float
     category_id: int | None = None
+    width: float
+    height: float
+    length: float
+    weight: float
+    stock_quantity: int
+    reserved_quantity: int
+    moq: int
 
 
 class OrderViewTargetItemSchema(BaseSchema):
@@ -38,6 +45,10 @@ class OrderViewTargetItemSchema(BaseSchema):
     quantity: int
     purchase_price: float
     vat_rate: float
+    width: float
+    height: float
+    length: float
+    weight: float
 
 
 class OrderViewStatusHistorySchema(BaseSchema):
@@ -46,12 +57,22 @@ class OrderViewStatusHistorySchema(BaseSchema):
     created_at: datetime
 
 
+class OrderViewDeliveryMethodSchema(BaseSchema):
+    id: int
+    label: str
+    price_per_unit: float
+    max_width: float
+    max_height: float
+    max_length: float
+    max_weight: float
+
+
 class OrderViewResponseSchema(BaseSchema):
     order: OrderPlainSchema | None
     suppliers: list[OrderViewSupplierSchema]
     customers: list[OrderViewLookupSchema]
     currencies: list[OrderViewLookupSchema]
-    delivery_methods: list[OrderViewLookupSchema]
+    delivery_methods: list[OrderViewDeliveryMethodSchema]
     statuses: list[OrderViewLookupSchema]
     source_items: list[OrderViewSourceItemSchema]
     target_items: list[OrderViewTargetItemSchema]

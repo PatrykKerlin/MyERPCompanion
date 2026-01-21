@@ -77,7 +77,3 @@ class Employee(BaseModel):
     user: Mapped[User | None] = Fields.relationship(
         argument="User", back_populates="employee", foreign_keys="User.employee_id", uselist=False
     )
-
-    @property
-    def subordinate_ids(self) -> list[int]:
-        return [row.id for row in self.subordinates]
