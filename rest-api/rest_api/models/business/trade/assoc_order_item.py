@@ -33,7 +33,26 @@ class AssocOrderItem(BaseModel):
         argument="Item", back_populates="item_orders", foreign_keys=[item_id], cascade_soft_delete=False
     )
 
-    discount_id: Mapped[int | None] = Fields.foreign_key(column="discounts.id", nullable=True)
-    discount: Mapped[Discount | None] = Fields.relationship(
-        argument="Discount", back_populates="order_items", foreign_keys=[discount_id]
+    category_discount_id: Mapped[int | None] = Fields.foreign_key(column="discounts.id", nullable=True)
+    category_discount: Mapped[Discount | None] = Fields.relationship(
+        argument="Discount",
+        back_populates="category_order_items",
+        foreign_keys=[category_discount_id],
+        cascade_soft_delete=False,
+    )
+
+    customer_discount_id: Mapped[int | None] = Fields.foreign_key(column="discounts.id", nullable=True)
+    customer_discount: Mapped[Discount | None] = Fields.relationship(
+        argument="Discount",
+        back_populates="customer_order_items",
+        foreign_keys=[customer_discount_id],
+        cascade_soft_delete=False,
+    )
+
+    item_discount_id: Mapped[int | None] = Fields.foreign_key(column="discounts.id", nullable=True)
+    item_discount: Mapped[Discount | None] = Fields.relationship(
+        argument="Discount",
+        back_populates="item_order_items",
+        foreign_keys=[item_discount_id],
+        cascade_soft_delete=False,
     )

@@ -53,8 +53,23 @@ class Discount(BaseModel):
         argument="AssocItemDiscount", back_populates="discount", foreign_keys="AssocItemDiscount.discount_id"
     )
 
-    order_items: Mapped[list[AssocOrderItem]] = Fields.relationship(
-        argument="AssocOrderItem", back_populates="discount", foreign_keys="AssocOrderItem.discount_id"
+    category_order_items: Mapped[list[AssocOrderItem]] = Fields.relationship(
+        argument="AssocOrderItem",
+        back_populates="category_discount",
+        foreign_keys="AssocOrderItem.category_discount_id",
+        cascade_soft_delete=False,
+    )
+    customer_order_items: Mapped[list[AssocOrderItem]] = Fields.relationship(
+        argument="AssocOrderItem",
+        back_populates="customer_discount",
+        foreign_keys="AssocOrderItem.customer_discount_id",
+        cascade_soft_delete=False,
+    )
+    item_order_items: Mapped[list[AssocOrderItem]] = Fields.relationship(
+        argument="AssocOrderItem",
+        back_populates="item_discount",
+        foreign_keys="AssocOrderItem.item_discount_id",
+        cascade_soft_delete=False,
     )
 
     @property

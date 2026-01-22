@@ -196,6 +196,14 @@ class BulkTransfer(ft.Container):
         self.__render_target_table()
         self.__update_save_button_state()
 
+    def update_target_row_values(self, target_id: int, values: list[object]) -> None:
+        for index, (item_id, _) in enumerate(self.__target_rows):
+            if item_id == target_id:
+                self.__target_rows[index] = (item_id, values)
+                break
+        self.__render_target_table()
+        self.__update_action_buttons()
+
     def __restore_target_row(self, target_id: int) -> None:
         initial_values = self.__initial_target_rows.get(target_id)
         if initial_values is None:

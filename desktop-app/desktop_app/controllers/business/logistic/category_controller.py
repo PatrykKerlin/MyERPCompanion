@@ -1,7 +1,20 @@
+from typing import Any
+
+import flet as ft
+
+from config.context import Context
+from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from schemas.business.trade.assoc_category_discount_schema import (
+    AssocCategoryDiscountPlainSchema,
+    AssocCategoryDiscountStrictSchema,
+)
+from schemas.business.trade.discount_schema import DiscountPlainSchema
+from schemas.core.param_schema import IdsPayloadSchema
+from services.business.trade import AssocCategoryDiscountService, DiscountService
 from schemas.business.logistic.category_schema import CategoryPlainSchema, CategoryStrictSchema
 from services.business.logistic import CategoryService
-from utils.enums import Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.category_view import CategoryView
 from events.events import ViewRequested
@@ -15,5 +28,126 @@ class CategoryController(BaseViewController[CategoryService, CategoryView, Categ
     _endpoint = Endpoint.CATEGORIES
     _view_key = View.CATEGORIES
 
+    def __init__(self, context: Context) -> None:
+        super().__init__(context)
+        self.__discount_service = DiscountService(self._settings, self._logger, self._tokens_accessor)
+        self.__assoc_category_discount_service = AssocCategoryDiscountService(
+            self._settings, self._logger, self._tokens_accessor
+        )
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> CategoryView:
-        return CategoryView(self, translation, mode, event.view_key, event.data)
+        discount_source_items: list[tuple[int, str]] = []
+        discount_target_items: list[tuple[int, str]] = []
+        if mode != ViewMode.SEARCH:
+            discount_target_items = await self.__extract_category_discounts(event.data)
+            target_ids = {item_id for item_id, _ in discount_target_items}
+            discount_source_items = await self.__perform_get_category_discount_options(target_ids)
+        return CategoryView(
+            self,
+            translation,
+            mode,
+            event.view_key,
+            event.data,
+            discount_source_items,
+            discount_target_items,
+            self.on_discount_save_clicked,
+            self.on_discount_delete_clicked,
+        )
+
+    def on_discount_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
+        if not self._view:
+            return
+        self._page.run_task(self.__handle_discount_save)
+
+    def on_discount_delete_clicked(self, discount_ids: list[int]) -> None:
+        if not self._view or not discount_ids:
+            return
+        self._page.run_task(self.__handle_discount_delete, discount_ids)
+
+    async def __handle_discount_save(self) -> None:
+        if not self._view or not self._view.data_row:
+            return
+        category_id = self._view.data_row["id"]
+        pending_ids = self._view.get_pending_discount_ids()
+        if not pending_ids:
+            return
+        payload = [
+            AssocCategoryDiscountStrictSchema(category_id=category_id, discount_id=discount_id)
+            for discount_id in pending_ids
+        ]
+        await self.__perform_create_category_discounts(payload)
+        await self.__refresh_category_discount_lists(category_id)
+
+    async def __handle_discount_delete(self, discount_ids: list[int]) -> None:
+        if not self._view or not self._view.data_row:
+            return
+        category_id = self._view.data_row["id"]
+        await self.__perform_delete_category_discounts(category_id, discount_ids)
+        await self.__refresh_category_discount_lists(category_id)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_category_discount_options(self, exclude_ids: set[int]) -> list[tuple[int, str]]:
+        discounts = await self.__discount_service.get_all(Endpoint.DISCOUNTS, None, None, None, self._module_id)
+        options: list[tuple[int, str]] = []
+        for discount in discounts:
+            if not discount.for_categories:
+                continue
+            if discount.id in exclude_ids:
+                continue
+            options.append((discount.id, discount.code))
+        return options
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_category_discounts(self, category_id: int) -> list[AssocCategoryDiscountPlainSchema]:
+        return await self.__assoc_category_discount_service.get_all(
+            Endpoint.CATEGORY_DISCOUNTS, None, {"category_id": category_id}, None, self._module_id
+        )
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_discounts_by_ids(self, discount_ids: list[int]) -> list[DiscountPlainSchema]:
+        if not discount_ids:
+            return []
+        body_params = IdsPayloadSchema(ids=discount_ids)
+        return await self.__discount_service.get_bulk(
+            Endpoint.DISCOUNTS_GET_BULK, None, None, body_params, self._module_id
+        )
+
+    @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def __perform_create_category_discounts(self, payload: list[AssocCategoryDiscountStrictSchema]) -> None:
+        await self._perform_create_bulk(
+            self.__assoc_category_discount_service, Endpoint.CATEGORY_DISCOUNTS_CREATE_BULK, payload
+        )
+
+    @BaseController.handle_api_action(ApiActionError.DELETE)
+    async def __perform_delete_category_discounts(self, category_id: int, discount_ids: list[int]) -> None:
+        assoc_rows = await self.__perform_get_category_discounts(category_id)
+        assoc_ids = [row.id for row in assoc_rows if row.discount_id in discount_ids]
+        if not assoc_ids:
+            return
+        body_params = IdsPayloadSchema(ids=assoc_ids)
+        await self.__assoc_category_discount_service.delete_bulk(
+            Endpoint.CATEGORY_DISCOUNTS_DELETE_BULK, None, None, body_params, self._module_id
+        )
+
+    async def __extract_category_discounts(self, data: dict[str, Any] | None) -> list[tuple[int, str]]:
+        if not data:
+            return []
+        category_id = data.get("id")
+        if not isinstance(category_id, int):
+            return []
+        assoc_rows = await self.__perform_get_category_discounts(category_id)
+        discount_ids = [row.discount_id for row in assoc_rows]
+        discounts = await self.__perform_get_discounts_by_ids(discount_ids)
+        return [(discount.id, discount.code) for discount in discounts]
+
+    async def __refresh_category_discount_lists(self, category_id: int) -> None:
+        if not self._view:
+            return
+        assoc_rows = await self.__perform_get_category_discounts(category_id)
+        discount_ids = [row.discount_id for row in assoc_rows]
+        discounts = await self.__perform_get_discounts_by_ids(discount_ids)
+        target_items = [(discount.id, discount.code) for discount in discounts]
+        target_ids = {item_id for item_id, _ in target_items}
+        source_items = await self.__perform_get_category_discount_options(target_ids)
+        self._view.set_discount_target_items(target_items)
+        self._view.set_discount_source_items(source_items)

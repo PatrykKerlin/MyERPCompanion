@@ -175,7 +175,9 @@ class OrderViewService:
                     height=item.height,
                     length=item.length,
                     weight=item.weight,
-                    discount_id=assoc.discount_id if assoc.discount else None,
+                    category_discount_id=assoc.category_discount_id,
+                    customer_discount_id=assoc.customer_discount_id,
+                    item_discount_id=assoc.item_discount_id,
                 )
             )
         return results

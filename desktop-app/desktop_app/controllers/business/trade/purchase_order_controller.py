@@ -354,7 +354,9 @@ class PurchaseOrderController(
                         total_vat=total_vat,
                         total_gross=total_gross,
                         total_discount=total_discount,
-                        discount_id=None,
+                        category_discount_id=None,
+                        customer_discount_id=None,
+                        item_discount_id=None,
                     )
                 )
             else:
@@ -369,7 +371,9 @@ class PurchaseOrderController(
                         total_vat=total_vat,
                         total_gross=total_gross,
                         total_discount=total_discount,
-                        discount_id=None,
+                        category_discount_id=None,
+                        customer_discount_id=None,
+                        item_discount_id=None,
                     )
                 )
         if not payload and not updates:

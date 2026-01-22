@@ -6,6 +6,7 @@ import flet as ft
 
 from utils.enums import View, ViewMode
 from utils.translation import Translation
+from utils.field_group import FieldGroup
 from views.base.base_view import BaseView
 from views.controls.bulk_transfer_control import BulkTransfer
 
@@ -21,7 +22,6 @@ class OrderPickingView(BaseView):
         mode: ViewMode,
         key: View,
         orders: list[tuple[int, str]],
-        on_source_bin_submitted: Callable[[ft.Event[ft.TextField]], None],
         on_save_clicked: Callable[[ft.Event[ft.IconButton]], None],
         on_move_requested: Callable[[list[int]], None],
         on_pending_reverted: Callable[[list[int]], None],
@@ -33,24 +33,28 @@ class OrderPickingView(BaseView):
         self.__order_input = cast(ft.Dropdown, order_container.content)
         self.__order_input.label = self._translation.get("order")
         order_container.expand = True
-        self.__source_bin_input = ft.TextField(
-            label=self._translation.get("source_bin"), on_submit=on_source_bin_submitted
+        self._inputs["order_id"] = FieldGroup(
+            label=self._get_label("order", 0, colon=False),
+            input=(order_container, 12),
+            marker=self._get_marker("order_id", 0),
         )
 
         self.__bulk_transfer = BulkTransfer(
             on_save_clicked=on_save_clicked,
-            source_label=self._translation.get("order_items"),
-            target_label=self._translation.get("source_bin"),
+            source_label=self._translation.get("source_bin"),
+            target_label=self._translation.get("order_items"),
             on_move_requested=on_move_requested,
             on_pending_reverted=on_pending_reverted,
             source_columns=[
                 self._translation.get("index"),
                 self._translation.get("name"),
+                self._translation.get("source_bin"),
                 self._translation.get("quantity"),
             ],
             target_columns=[
                 self._translation.get("index"),
                 self._translation.get("name"),
+                self._translation.get("source_bin"),
                 self._translation.get("quantity"),
             ],
         )
@@ -59,8 +63,6 @@ class OrderPickingView(BaseView):
         inputs_row = ft.Row(
             controls=[
                 order_container,
-                ft.Container(expand=True),
-                ft.Container(content=self.__source_bin_input, expand=True),
             ],
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
@@ -83,11 +85,6 @@ class OrderPickingView(BaseView):
 
     def __handle_order_changed(self) -> None:
         self._controller.on_order_changed(self.__order_input.value)
-
-    def set_source_bin_error(self, message: str | None) -> None:
-        self.__source_bin_input.error = message
-        if self.__source_bin_input.page:
-            self.__source_bin_input.update()
 
     def set_source_rows(self, rows: list[tuple[int, list[object]]]) -> None:
         self.__bulk_transfer.set_source_rows(rows)

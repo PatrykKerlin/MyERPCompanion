@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
 
@@ -9,12 +9,13 @@ from utils.enums import View, ViewMode
 from views.base.base_view import BaseView
 from views.controls.data_table_control import DataTable
 from utils.translation import Translation
+from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin
 
 if TYPE_CHECKING:
     from controllers.business.logistic.item_controller import ItemController
 
 
-class ItemView(BaseView):
+class ItemView(BaseView, DiscountBulkTransferMixin):
     def __init__(
         self,
         controller: ItemController,
@@ -26,6 +27,10 @@ class ItemView(BaseView):
         units: list[tuple[int, str]],
         suppliers: list[tuple[int, str]],
         bins: list[dict[str, Any]],
+        discount_source_items: list[tuple[int, str]],
+        discount_target_items: list[tuple[int, str]],
+        on_discount_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
+        on_discount_delete_clicked: Callable[[list[int]], None] | None = None,
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
         self.__GALLERY_HEIGHT = 140
@@ -155,12 +160,31 @@ class ItemView(BaseView):
             ],
             expand=True,
         )
-        self._rows = [self._columns_row, self.__gallery_column, self._spacing_row, self._buttons_row]
+        self._init_discount_bulk_transfer(
+            mode,
+            discount_source_items,
+            discount_target_items,
+            self._translation.get("discounts"),
+            self._translation.get("item_discounts"),
+            on_discount_save_clicked,
+            on_discount_delete_clicked,
+            height=250,
+        )
+        bulk_transfer_row = self._build_discount_bulk_transfer_row()
+        self._rows = [
+            self._columns_row,
+            self.__gallery_column,
+            ft.Row(height=25),
+            bulk_transfer_row,
+            self._spacing_row,
+            self._buttons_row,
+        ]
         self._master_column.controls.extend(self._rows)
 
     def did_mount(self):
         if self._data_row and self._data_row["images"]:
             self.set_images(self._data_row["images"])
+        self._mount_discount_bulk_transfer()
         return super().did_mount()
 
     def set_images(self, images: list[dict[str, Any]]) -> None:
@@ -171,6 +195,7 @@ class ItemView(BaseView):
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
         self.__apply_stock_quantity_rules(mode)
+        self._update_discount_bulk_transfer_mode(mode)
         if self._mode not in {ViewMode.READ, ViewMode.EDIT}:
             self.__gallery_column.visible = False
             self.__add_image_button.visible = False

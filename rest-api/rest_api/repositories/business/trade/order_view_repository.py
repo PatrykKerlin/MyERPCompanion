@@ -22,7 +22,7 @@ from models.business.trade.exchange_rate import ExchangeRate
 from models.business.trade.order import Order
 from models.business.trade.status import Status
 from models.business.trade.supplier import Supplier
-from repositories.base.reserved_quantity_mixin import ReservedQuantityMixin
+from repositories.mixins.reserved_quantity_mixin import ReservedQuantityMixin
 
 
 class OrderViewRepository(ReservedQuantityMixin):
@@ -104,7 +104,9 @@ class OrderViewRepository(ReservedQuantityMixin):
             .where(Order.id == order_id, Order.is_active.is_(True), Order.is_sales.is_(is_sales))
             .options(
                 selectinload(Order.order_items).selectinload(AssocOrderItem.item),
-                selectinload(Order.order_items).selectinload(AssocOrderItem.discount),
+                selectinload(Order.order_items).selectinload(AssocOrderItem.category_discount),
+                selectinload(Order.order_items).selectinload(AssocOrderItem.customer_discount),
+                selectinload(Order.order_items).selectinload(AssocOrderItem.item_discount),
                 selectinload(Order.order_statuses).selectinload(AssocOrderStatus.status),
                 with_loader_criteria(AssocOrderItem, AssocOrderItem.is_active.is_(True), include_aliases=True),
                 with_loader_criteria(AssocOrderStatus, AssocOrderStatus.is_active.is_(True), include_aliases=True),

@@ -73,7 +73,9 @@ class OrderViewTargetItemSchema(BaseSchema):
     height: float
     length: float
     weight: float
-    discount_id: int | None = None
+    category_discount_id: int | None = None
+    customer_discount_id: int | None = None
+    item_discount_id: int | None = None
 
 
 class OrderViewStatusHistorySchema(BaseSchema):

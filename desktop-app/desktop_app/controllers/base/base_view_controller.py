@@ -51,6 +51,7 @@ class BaseViewController(
         self._service = self._service_cls(self._settings, self._logger, self._tokens_accessor)
         self._view: TView | None = None
         self._request_data = RequestData()
+        self._request_data_by_view: dict[int, RequestData] = {}
         self._page_size_list = [5, 10, 25, 50, 100]
         self.__meta_fields = {"id", "created_by_username", "created_at", "modified_by_username", "modified_at"}
         self._subscribe_event_handlers(
@@ -251,9 +252,12 @@ class BaseViewController(
             mode = ViewMode.READ
         else:
             mode = ViewMode.SEARCH
+        self._request_data = RequestData()
         if event.data:
             self._request_data.input_values = dict(event.data)
         self._view = await self._build_view(translation, mode, event)
+        if self._view:
+            self._request_data_by_view[id(self._view)] = self._request_data
         await self._event_bus.publish(
             ViewReady(
                 view_key=event.view_key,
@@ -285,7 +289,10 @@ class BaseViewController(
     async def __tab_closed_handler(self, event: TabClosed) -> None:
         if event.view.view_key != self._view_key:
             return
-        self._request_data = RequestData()
+        self._request_data_by_view.pop(id(event.view), None)
+        if self._view is event.view:
+            self._view = None
+            self._request_data = RequestData()
 
     async def __record_delete_requested_handler(self, event: RecordDeleteRequested) -> None:
         if event.view_key != self._view_key:
@@ -322,6 +329,11 @@ class BaseViewController(
             self._view = None
         elif isinstance(state.view, self._view_cls) and state.view.view_key == self._view_key:
             self._view = cast(TView, state.view)
+            request_data = self._request_data_by_view.get(id(self._view))
+            if request_data is None:
+                request_data = RequestData()
+                self._request_data_by_view[id(self._view)] = request_data
+            self._request_data = request_data
             if self._view.mode != state.mode:
                 self._view.set_mode(state.mode)
 
@@ -389,6 +401,8 @@ class BaseViewController(
                         )
                     )
                 self._request_data = RequestData()
+                if self._view:
+                    self._request_data_by_view[id(self._view)] = self._request_data
                 if self._view and self._view.mode == ViewMode.SEARCH:
                     self._view.clear_inputs()
                 if self._view.caller_view_key:

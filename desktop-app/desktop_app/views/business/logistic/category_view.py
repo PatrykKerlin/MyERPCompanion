@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
 
@@ -8,12 +8,13 @@ from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
 from utils.translation import Translation
+from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin
 
 if TYPE_CHECKING:
     from controllers.business.logistic.category_controller import CategoryController
 
 
-class CategoryView(BaseView):
+class CategoryView(BaseView, DiscountBulkTransferMixin):
     def __init__(
         self,
         controller: CategoryController,
@@ -21,6 +22,10 @@ class CategoryView(BaseView):
         mode: ViewMode,
         key: View,
         data_row: dict[str, Any] | None,
+        discount_source_items: list[tuple[int, str]],
+        discount_target_items: list[tuple[int, str]],
+        on_discount_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
+        on_discount_delete_clicked: Callable[[list[int]], None] | None = None,
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
         main_fields_definitions = [
@@ -42,4 +47,31 @@ class CategoryView(BaseView):
             ft.Column(controls=meta_grid, expand=2),
         ]
         self._columns_row.controls.extend(columns)
-        self._master_column.controls.extend(self._rows)
+        self._init_discount_bulk_transfer(
+            mode,
+            discount_source_items,
+            discount_target_items,
+            self._translation.get("discounts"),
+            self._translation.get("category_discounts"),
+            on_discount_save_clicked,
+            on_discount_delete_clicked,
+            height=250,
+        )
+        bulk_transfer_row = self._build_discount_bulk_transfer_row()
+        self._master_column.controls.extend(
+            [
+                self._columns_row,
+                ft.Row(height=25),
+                bulk_transfer_row,
+                ft.Row(height=25),
+                self._buttons_row,
+            ]
+        )
+
+    def did_mount(self):
+        self._mount_discount_bulk_transfer()
+        return super().did_mount()
+
+    def set_mode(self, mode: ViewMode) -> None:
+        super().set_mode(mode)
+        self._update_discount_bulk_transfer_mode(mode)

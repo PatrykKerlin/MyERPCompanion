@@ -8,7 +8,7 @@ from sqlalchemy.sql.elements import ColumnElement
 from models.business.logistic.item import Item
 from models.core.image import Image
 from repositories.base.base_repository import BaseRepository
-from repositories.base.reserved_quantity_mixin import ReservedQuantityMixin
+from repositories.mixins.reserved_quantity_mixin import ReservedQuantityMixin
 
 
 class ItemRepository(ReservedQuantityMixin, BaseRepository[Item]):
