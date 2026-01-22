@@ -1,11 +1,11 @@
-INSERT INTO discounts (name, code, description, start_date, end_date, percent, min_value, min_quantity, for_categories, for_customers, for_items, is_active, created_at, created_by)
+INSERT INTO discounts (name, code, description, start_date, end_date, percent, min_value, min_quantity, for_categories, for_customers, for_items, currency_id, is_active, created_at, created_by)
 VALUES
-('Category discount 10%', 'CATD001', '10% off for selected categories', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', 0.10, NULL, NULL, TRUE, FALSE, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('Category discount 15% min value', 'CATD002', '15% off for selected categories with min cart value 100', CURRENT_DATE, CURRENT_DATE + INTERVAL '45 days', 0.15, 100.00, NULL, TRUE, FALSE, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('Category discount 20% min qty', 'CATD003', '20% off for selected categories with min quantity 3', CURRENT_DATE, CURRENT_DATE + INTERVAL '60 days', 0.20, NULL, 3, TRUE, FALSE, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('Item discount 5%', 'ITEMD001', '5% off for selected items', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', 0.05, NULL, NULL, FALSE, FALSE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('Item discount 25%', 'ITEMD002', '25 currency units off for selected items', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', 0.25, NULL, NULL, FALSE, FALSE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('Item discount 12% min qty 2', 'ITEMD003', '12% off for selected items with min quantity 2', CURRENT_DATE, CURRENT_DATE + INTERVAL '45 days', 0.12, NULL, 2, FALSE, FALSE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('Customer discount 7%', 'CUSD001', '7% off for selected customers', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', 0.07, NULL, NULL, FALSE, TRUE, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('Customer discount 33% min 300', 'CUSD002', '50 off for selected customers with min cart value 300', CURRENT_DATE, CURRENT_DATE + INTERVAL '60 days', 0.33, 300.00, NULL, FALSE, TRUE, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('Customer discount 18% VIP', 'CUSD003', '18% off for VIP customers', CURRENT_DATE, CURRENT_DATE + INTERVAL '90 days', 0.18, NULL, NULL, FALSE, TRUE, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id);
+('Category discount 10%', 'CATD001', '10% off for selected categories', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', 0.10, NULL, NULL, TRUE, FALSE, FALSE, NULL, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('Category discount 15% min value', 'CATD002', '15% off for selected categories with min cart value 100', CURRENT_DATE, CURRENT_DATE + INTERVAL '45 days', 0.15, 100.00, NULL, TRUE, FALSE, FALSE, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('Category discount 20% min qty', 'CATD003', '20% off for selected categories with min quantity 3', CURRENT_DATE, CURRENT_DATE + INTERVAL '60 days', 0.20, NULL, 3, TRUE, FALSE, FALSE, NULL, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('Item discount 5%', 'ITEMD001', '5% off for selected items', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', 0.05, NULL, NULL, FALSE, FALSE, TRUE, NULL, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('Item discount 25%', 'ITEMD002', '25% off for selected items', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', 0.25, NULL, NULL, FALSE, FALSE, TRUE, NULL, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('Item discount 12% min qty 2', 'ITEMD003', '12% off for selected items with min quantity 2', CURRENT_DATE, CURRENT_DATE + INTERVAL '45 days', 0.12, NULL, 2, FALSE, FALSE, TRUE, NULL, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('Customer discount 7%', 'CUSD001', '7% off for selected customers', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', 0.07, NULL, NULL, FALSE, TRUE, FALSE, NULL, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('Customer discount 33% min 300', 'CUSD002', '33% off for selected customers with min cart value 300', CURRENT_DATE, CURRENT_DATE + INTERVAL '60 days', 0.33, 300.00, NULL, FALSE, TRUE, FALSE, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('Customer discount 18% VIP', 'CUSD003', '18% off for VIP customers', CURRENT_DATE, CURRENT_DATE + INTERVAL '90 days', 0.18, NULL, NULL, FALSE, TRUE, FALSE, NULL, TRUE, CURRENT_TIMESTAMP, :superuser_id);

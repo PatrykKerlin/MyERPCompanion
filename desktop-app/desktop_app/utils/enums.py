@@ -49,6 +49,7 @@ class View(StrEnum):
     SALES_ORDERS = "sales_orders"
     PURCHASE_ORDERS = "purchase_orders"
     STOCK_RECEIVING = "stock_receiving"
+    ORDER_PICKING = "order_picking"
     STATUSES = "statuses"
 
 

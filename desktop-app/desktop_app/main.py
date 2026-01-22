@@ -99,6 +99,7 @@ class App:
             trade.SalesOrderController(self.__context),
             trade.StatusController(self.__context),
             trade.StockReceivingController(self.__context),
+            trade.OrderPickingController(self.__context),
         ]
         self.__controllers = core_controllers + hr_controllers + logistic_controllers + trade_controllers
         page.window.on_event = self.__on_window_event

@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
     from models.business.trade.assoc_item_discount import AssocItemDiscount
     from models.business.trade.assoc_order_item import AssocOrderItem
+    from models.business.trade.currency import Currency
     from models.business.trade.customer import Customer
 
 
@@ -36,6 +37,11 @@ class Discount(BaseModel):
     for_categories: Mapped[bool] = Fields.boolean(default=False)
     for_customers: Mapped[bool] = Fields.boolean(default=False)
     for_items: Mapped[bool] = Fields.boolean(default=False)
+
+    currency_id: Mapped[int | None] = Fields.foreign_key(column="currencies.id", nullable=True)
+    currency: Mapped[Currency | None] = Fields.relationship(
+        argument="Currency", back_populates="discounts", foreign_keys=[currency_id], cascade_soft_delete=False
+    )
 
     discount_categories: Mapped[list[AssocCategoryDiscount]] = Fields.relationship(
         argument="AssocCategoryDiscount", back_populates="discount", foreign_keys="AssocCategoryDiscount.discount_id"

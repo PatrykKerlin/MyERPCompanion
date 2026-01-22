@@ -9,5 +9,5 @@ class MenuStyles:
     flat = ft.MenuStyle(
         elevation=0,
         bgcolor=ft.Colors.SURFACE,
-        alignment=ft.alignment.top_left,
+        alignment=ft.Alignment.TOP_LEFT,
     )

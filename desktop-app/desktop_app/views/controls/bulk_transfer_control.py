@@ -1,5 +1,5 @@
 import flet as ft
-from typing import Callable
+from typing import Callable, cast
 
 
 class BulkTransfer(ft.Container):
@@ -132,10 +132,12 @@ class BulkTransfer(ft.Container):
         self.set_enabled_states(self.__source_enabled, enabled, self.__source_enabled and enabled)
 
     def set_source_items(self, items: list[tuple[int, str]]) -> None:
-        self.set_source_rows([(item_id, [label]) for item_id, label in items])
+        rows = [(item_id, [label]) for item_id, label in items]
+        self.set_source_rows(cast(list[tuple[int, list[object]]], rows))
 
     def set_target_items(self, items: list[tuple[int, str]]) -> None:
-        self.set_target_rows([(item_id, [label]) for item_id, label in items])
+        rows = [(item_id, [label]) for item_id, label in items]
+        self.set_target_rows(cast(list[tuple[int, list[object]]], rows))
 
     def set_source_rows(self, rows: list[tuple[int, list[object]]]) -> None:
         self.__source_rows = rows
@@ -155,7 +157,7 @@ class BulkTransfer(ft.Container):
         self.__render_target_table()
         self.__update_save_button_state()
 
-    def add_target_row(self, source_id: int, values: list[str], highlight: bool = True) -> int:
+    def add_target_row(self, source_id: int, values: list[object], highlight: bool = True) -> int:
         target_id = self.__next_pending_target_id
         self.__next_pending_target_id -= 1
         self.__pending_target_map[target_id] = source_id
@@ -180,7 +182,7 @@ class BulkTransfer(ft.Container):
             created_target_ids.append(self.add_target_row(source_id, values, highlight=highlight))
         return created_target_ids
 
-    def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
+    def update_existing_target(self, target_id: int, source_id: int, values: list[object]) -> None:
         for index, (item_id, _) in enumerate(self.__target_rows):
             if item_id == target_id:
                 self.__target_rows[index] = (item_id, values)
@@ -203,7 +205,7 @@ class BulkTransfer(ft.Container):
                 self.__target_rows[index] = (item_id, initial_values[:])
                 return
 
-    def prepend_target_items(self, items: list[tuple[int, list[str]]], highlight: bool) -> None:
+    def prepend_target_items(self, items: list[tuple[int, list[object]]], highlight: bool) -> None:
         if not items:
             return
         new_items = [(item_id, label) for item_id, label in items if item_id not in self.__target_ids]
@@ -248,7 +250,7 @@ class BulkTransfer(ft.Container):
     def get_selected_target_ids(self) -> list[int]:
         return list(self.__selected_target_ids)
 
-    def get_source_items_by_ids(self, ids: list[int]) -> list[tuple[int, list[str]]]:
+    def get_source_items_by_ids(self, ids: list[int]) -> list[tuple[int, list[object]]]:
         ids_set = set(ids)
         return [(item_id, label) for item_id, label in self.__source_rows if item_id in ids_set]
 

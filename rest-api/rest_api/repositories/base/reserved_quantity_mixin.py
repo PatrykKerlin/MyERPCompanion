@@ -14,7 +14,7 @@ class ReservedQuantityMixin:
             return
         item_ids = [item.id for item in items]
         result = await session.execute(
-            select(AssocOrderItem.item_id, func.coalesce(func.sum(AssocOrderItem.quantity), 0))
+            select(AssocOrderItem.item_id, func.coalesce(func.sum(AssocOrderItem.to_process), 0))
             .where(AssocOrderItem.is_active.is_(True), AssocOrderItem.item_id.in_(item_ids))
             .group_by(AssocOrderItem.item_id)
         )

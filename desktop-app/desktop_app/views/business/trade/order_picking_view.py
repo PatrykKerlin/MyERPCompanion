@@ -10,18 +10,18 @@ from views.base.base_view import BaseView
 from views.controls.bulk_transfer_control import BulkTransfer
 
 if TYPE_CHECKING:
-    from controllers.business.trade.stock_receiving_controller import StockReceivingController
+    from controllers.business.trade.order_picking_controller import OrderPickingController
 
 
-class StockReceivingView(BaseView):
+class OrderPickingView(BaseView):
     def __init__(
         self,
-        controller: StockReceivingController,
+        controller: OrderPickingController,
         translation: Translation,
         mode: ViewMode,
         key: View,
         orders: list[tuple[int, str]],
-        on_target_submitted: Callable[[ft.Event[ft.TextField]], None],
+        on_source_bin_submitted: Callable[[ft.Event[ft.TextField]], None],
         on_save_clicked: Callable[[ft.Event[ft.IconButton]], None],
         on_move_requested: Callable[[list[int]], None],
         on_pending_reverted: Callable[[list[int]], None],
@@ -33,12 +33,14 @@ class StockReceivingView(BaseView):
         self.__order_input = cast(ft.Dropdown, order_container.content)
         self.__order_input.label = self._translation.get("order")
         order_container.expand = True
-        self.__target_input = ft.TextField(label=self._translation.get("target_bin"), on_submit=on_target_submitted)
+        self.__source_bin_input = ft.TextField(
+            label=self._translation.get("source_bin"), on_submit=on_source_bin_submitted
+        )
 
         self.__bulk_transfer = BulkTransfer(
             on_save_clicked=on_save_clicked,
             source_label=self._translation.get("order_items"),
-            target_label=self._translation.get("target_bin"),
+            target_label=self._translation.get("source_bin"),
             on_move_requested=on_move_requested,
             on_pending_reverted=on_pending_reverted,
             source_columns=[
@@ -58,7 +60,7 @@ class StockReceivingView(BaseView):
             controls=[
                 order_container,
                 ft.Container(expand=True),
-                ft.Container(content=self.__target_input, expand=True),
+                ft.Container(content=self.__source_bin_input, expand=True),
             ],
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
@@ -82,16 +84,16 @@ class StockReceivingView(BaseView):
     def __handle_order_changed(self) -> None:
         self._controller.on_order_changed(self.__order_input.value)
 
-    def set_target_error(self, message: str | None) -> None:
-        self.__target_input.error = message
-        if self.__target_input.page:
-            self.__target_input.update()
+    def set_source_bin_error(self, message: str | None) -> None:
+        self.__source_bin_input.error = message
+        if self.__source_bin_input.page:
+            self.__source_bin_input.update()
 
-    def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
-        self.__bulk_transfer.set_source_rows(cast(list[tuple[int, list[object]]], rows))
+    def set_source_rows(self, rows: list[tuple[int, list[object]]]) -> None:
+        self.__bulk_transfer.set_source_rows(rows)
 
-    def set_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
-        self.__bulk_transfer.set_target_rows(cast(list[tuple[int, list[object]]], rows))
+    def set_target_rows(self, rows: list[tuple[int, list[object]]]) -> None:
+        self.__bulk_transfer.set_target_rows(rows)
 
     def mark_source_items_as_moved(self, ids: list[int]) -> None:
         self.__bulk_transfer.mark_source_items_as_moved(ids)

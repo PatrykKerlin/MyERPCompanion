@@ -92,6 +92,9 @@ class SearchResultsComponent(BaseComponent, ft.Column):
                 if event.control.value is not None
                 else None
             ),
+            editable=True,
+            enable_search=True,
+            enable_filter=True,
         )
 
         back_button = ft.Button(

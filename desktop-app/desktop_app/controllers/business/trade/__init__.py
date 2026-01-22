@@ -7,6 +7,7 @@ from controllers.business.trade.sales_order_controller import SalesOrderControll
 from controllers.business.trade.payment_method_controller import PaymentMethodController
 from controllers.business.trade.status_controller import StatusController
 from controllers.business.trade.stock_receiving_controller import StockReceivingController
+from controllers.business.trade.order_picking_controller import OrderPickingController
 
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "SalesOrderController",
     "StatusController",
     "StockReceivingController",
+    "OrderPickingController",
 ]

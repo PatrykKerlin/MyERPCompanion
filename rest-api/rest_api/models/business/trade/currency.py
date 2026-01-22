@@ -10,6 +10,7 @@ from models.base.fields import Fields
 if TYPE_CHECKING:
     from models.business.hr.position import Position
     from models.business.logistic.carrier import Carrier
+    from models.business.trade.discount import Discount
     from models.business.trade.exchange_rate import ExchangeRate
     from models.business.trade.invoice import Invoice
     from models.business.trade.order import Order
@@ -43,4 +44,7 @@ class Currency(BaseModel):
     )
     positions: Mapped[list[Position]] = Fields.relationship(
         argument="Position", back_populates="currency", foreign_keys="Position.currency_id"
+    )
+    discounts: Mapped[list[Discount]] = Fields.relationship(
+        argument="Discount", back_populates="currency", foreign_keys="Discount.currency_id"
     )

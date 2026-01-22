@@ -25,10 +25,17 @@ class DiscountStrictSchema(BaseStrictSchema):
     for_customers: Constraints.BooleanFalse
     for_items: Constraints.BooleanFalse
 
+    currency_id: Constraints.PositiveIntegerOptional
+
     @model_validator(mode="after")
     def _validate_data(self) -> DiscountStrictSchema:
         if self.end_date and self.end_date <= self.start_date:
             raise ValueError("End date must be greater than start date.")
+
+        has_min_value = self.min_value is not None
+        has_currency_id = self.currency_id is not None
+        if has_min_value != has_currency_id:
+            raise ValueError("'Min_value' and 'currency_id' must be provided together or both be empty.")
 
         return self
 
@@ -49,3 +56,5 @@ class DiscountPlainSchema(BasePlainSchema):
     for_categories: bool
     for_customers: bool
     for_items: bool
+
+    currency_id: int | None

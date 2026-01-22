@@ -21,6 +21,7 @@ VALUES
 ('discounts', 'Discounts view', 1, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('customers', 'Customers view', 2, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('sales_orders', 'Sales orders view', 3, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('order_picking', 'Sales orders view', 4, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 
 ('purchase_orders', 'Sales orders view', 1, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('stock_receiving', 'Stock receiving view', 2, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),

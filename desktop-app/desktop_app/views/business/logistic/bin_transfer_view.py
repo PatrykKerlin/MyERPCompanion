@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, cast
 
 import flet as ft
 
@@ -65,16 +65,16 @@ class BinTransferView(BaseView):
         self.__bulk_transfer.set_target_enabled(enabled)
 
     def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
-        self.__bulk_transfer.set_source_rows(rows)
+        self.__bulk_transfer.set_source_rows(cast(list[tuple[int, list[object]]], rows))
 
     def set_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
-        self.__bulk_transfer.set_target_rows(rows)
+        self.__bulk_transfer.set_target_rows(cast(list[tuple[int, list[object]]], rows))
 
     def add_target_rows_from_source(self, ids: list[int], highlight: bool = True) -> list[int]:
         return self.__bulk_transfer.add_target_rows_from_source(ids, highlight)
 
     def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
-        self.__bulk_transfer.update_existing_target(target_id, source_id, values)
+        self.__bulk_transfer.update_existing_target(target_id, source_id, cast(list[object], values))
 
     def set_source_error(self, message: str | None) -> None:
         self.__source_input.error = message

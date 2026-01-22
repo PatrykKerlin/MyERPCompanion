@@ -18,6 +18,9 @@ class OrderViewDiscountSchema(BaseSchema):
     id: int
     code: str
     percent: float | None = None
+    min_value: float | None = None
+    min_quantity: int | None = None
+    currency_id: int | None = None
 
 
 class OrderViewCustomerSchema(BaseSchema):

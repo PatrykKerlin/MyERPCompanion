@@ -21,6 +21,7 @@ class DiscountView(BaseView):
         mode: ViewMode,
         key: View,
         data_row: dict[str, Any] | None,
+        currencies: list[tuple[int, str]],
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
         main_fields_definitions = [
@@ -30,8 +31,9 @@ class DiscountView(BaseView):
             {"key": "start_date", "input": self._get_date_picker},
             {"key": "end_date", "input": self._get_date_picker},
             {"key": "percent", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
-            {"key": "min_value", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "min_quantity", "input": self._get_numeric_input},
+            {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
+            {"key": "min_value", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "for_categories", "input": self._get_checkbox, "input_size": 2},
             {"key": "for_customers", "input": self._get_checkbox, "input_size": 2},
             {"key": "for_items", "input": self._get_checkbox, "input_size": 2},
