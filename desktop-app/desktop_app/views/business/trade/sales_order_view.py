@@ -50,6 +50,7 @@ class SalesOrderView(BaseView):
         self.__editable_keys = {"customer_id", "delivery_method_id", "currency_id", "notes", "internal_notes"}
         self.__all_source_items = cast(list[tuple[int, list[object]]], list(source_items))
         self.__source_item_category_map = dict(source_item_categories)
+        self.__source_selectable_ids: set[int] | None = None
         self.__customer_discount_map = dict(customer_discounts)
         self.__category_discount_map = dict(category_discounts)
         self.__item_discount_map = dict(item_discounts)
@@ -59,6 +60,7 @@ class SalesOrderView(BaseView):
         self.__selected_category_id: int | None = None
         self.__pending_customer_discount_id: int | None = None
         self.__pending_source_items: list[tuple[int, list[object]]] = []
+        self.__pending_source_selectable_ids: set[int] | None = None
         self.__pending_target_items_raw = list(target_items)
         self.__target_item_ids: dict[int, int] = dict(target_item_ids)
         self.__target_row_values = self.__build_target_row_values(target_items, self.__target_item_ids)
@@ -166,7 +168,7 @@ class SalesOrderView(BaseView):
             source_columns=[
                 self._translation.get("index"),
                 self._translation.get("name"),
-                self._translation.get("stock_quantity"),
+                self._translation.get("outbound_quantity"),
                 self._translation.get("reserved_quantity"),
             ],
             target_columns=[
@@ -210,6 +212,7 @@ class SalesOrderView(BaseView):
         result = super().did_mount()
         self.__is_mounted = True
         self.__bulk_transfer.set_source_rows(self.__pending_source_items)
+        self.__apply_source_selectable_ids(self.__pending_source_items)
         self.__bulk_transfer.set_target_rows(
             self.__build_target_rows_with_discounts(self.__pending_target_items_raw, self.__target_item_ids)
         )
@@ -295,6 +298,7 @@ class SalesOrderView(BaseView):
         category_map: dict[int, int | None],
         item_discounts: dict[int, list[OrderViewDiscountSchema]] | None = None,
         selected_item_discounts: dict[int, int | None] | None = None,
+        selectable_ids: set[int] | None = None,
     ) -> None:
         self.__all_source_items = cast(list[tuple[int, list[object]]], list(rows))
         self.__source_item_category_map = dict(category_map)
@@ -302,6 +306,11 @@ class SalesOrderView(BaseView):
             self.__item_discount_map = dict(item_discounts)
         if selected_item_discounts is not None:
             self.__selected_item_discount_ids = dict(selected_item_discounts)
+        self.__source_selectable_ids = selectable_ids
+        self.__apply_category_filter()
+
+    def set_source_selectable_ids(self, selectable_ids: set[int] | None) -> None:
+        self.__source_selectable_ids = selectable_ids
         self.__apply_category_filter()
 
     def update_discount_options(
@@ -324,6 +333,19 @@ class SalesOrderView(BaseView):
         if self.__customer_discount.page:
             self.__customer_discount.update()
         self.__refresh_target_category_discounts()
+
+    def update_category_options(self, categories: list[tuple[int, str]]) -> None:
+        options = [ft.dropdown.Option("all", self._translation.get("all"))]
+        options.extend(ft.dropdown.Option(str(category_id), label) for category_id, label in categories)
+        self.__category_filter.options = options
+        if self.__selected_category_id is not None:
+            option_keys = {option.key for option in options}
+            if str(self.__selected_category_id) not in option_keys:
+                self.__selected_category_id = None
+                self.__category_filter.value = "all"
+                self.__apply_category_filter()
+        if self.__category_filter.page:
+            self.__category_filter.update()
 
     def set_selected_customer_discount_id(self, discount_id: int | None) -> None:
         if not self.__is_mounted:
@@ -361,8 +383,8 @@ class SalesOrderView(BaseView):
 
     def add_target_row(self, source_id: int, values: list[str], highlight: bool = True) -> int:
         self.__target_row_values[source_id] = list(values)
-        category_dropdown = self.__build_category_discount_dropdown(source_id)
-        item_dropdown = self.__build_item_discount_dropdown(source_id)
+        category_dropdown = self.__build_category_discount_dropdown(source_id, True)
+        item_dropdown = self.__build_item_discount_dropdown(source_id, True)
         target_id = self.__bulk_transfer.add_target_row(
             source_id, cast(list[object], list(values) + [category_dropdown, item_dropdown]), highlight=highlight
         )
@@ -371,8 +393,9 @@ class SalesOrderView(BaseView):
 
     def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
         self.__target_row_values[source_id] = list(values)
-        category_dropdown = self.__build_category_discount_dropdown(source_id)
-        item_dropdown = self.__build_item_discount_dropdown(source_id)
+        editable = target_id < 0
+        category_dropdown = self.__build_category_discount_dropdown(source_id, editable)
+        item_dropdown = self.__build_item_discount_dropdown(source_id, editable)
         self.__bulk_transfer.update_existing_target(
             target_id, source_id, cast(list[object], list(values) + [category_dropdown, item_dropdown])
         )
@@ -435,8 +458,20 @@ class SalesOrderView(BaseView):
         rows = self.__get_filtered_source_items()
         if not self.__is_mounted:
             self.__pending_source_items = rows
+            self.__pending_source_selectable_ids = self.__source_selectable_ids
             return
         self.__bulk_transfer.set_source_rows(rows)
+        self.__apply_source_selectable_ids(rows)
+
+    def __apply_source_selectable_ids(self, rows: list[tuple[int, list[object]]]) -> None:
+        if not self.__is_mounted:
+            self.__pending_source_selectable_ids = self.__source_selectable_ids
+            return
+        if self.__source_selectable_ids is None:
+            self.__bulk_transfer.set_source_selectable_ids(None)
+            return
+        visible_ids = {item_id for item_id, _ in rows}
+        self.__bulk_transfer.set_source_selectable_ids(visible_ids & self.__source_selectable_ids)
 
     def __get_filtered_source_items(self) -> list[tuple[int, list[object]]]:
         if self.__selected_category_id is None:
@@ -468,12 +503,13 @@ class SalesOrderView(BaseView):
             if item_id is None:
                 results.append((target_id, cast(list[object], list(values) + ["", ""])))
                 continue
-            category_dropdown = self.__build_category_discount_dropdown(item_id)
-            item_dropdown = self.__build_item_discount_dropdown(item_id)
+            editable = target_id < 0
+            category_dropdown = self.__build_category_discount_dropdown(item_id, editable)
+            item_dropdown = self.__build_item_discount_dropdown(item_id, editable)
             results.append((target_id, cast(list[object], list(values) + [category_dropdown, item_dropdown])))
         return results
 
-    def __build_category_discount_dropdown(self, item_id: int) -> ft.Dropdown:
+    def __build_category_discount_dropdown(self, item_id: int, editable: bool) -> ft.Dropdown:
         category_id = self.__source_item_category_map.get(item_id)
         options = self.__get_category_discount_options(category_id)
         selected = self.__selected_category_discount_ids_by_item.get(item_id)
@@ -496,14 +532,14 @@ class SalesOrderView(BaseView):
             value="0" if selected is None else str(selected),
             on_select=lambda event, item_id=item_id: self.__on_category_discount_changed(event, item_id),
             expand=True,
-            disabled=self._mode == ViewMode.EDIT or not self.__bulk_transfer_enabled_in_read,
+            disabled=self._mode == ViewMode.EDIT or not self.__bulk_transfer_enabled_in_read or not editable,
             editable=True,
             enable_search=True,
             enable_filter=True,
         )
         return dropdown
 
-    def __build_item_discount_dropdown(self, item_id: int) -> ft.Dropdown:
+    def __build_item_discount_dropdown(self, item_id: int, editable: bool) -> ft.Dropdown:
         options = self.__get_item_discount_options(item_id)
         selected = self.__selected_item_discount_ids.get(item_id)
         dropdown = ft.Dropdown(
@@ -511,7 +547,7 @@ class SalesOrderView(BaseView):
             value="0" if selected is None else str(selected),
             on_select=lambda event, item_id=item_id: self.__on_item_discount_changed(event, item_id),
             expand=True,
-            disabled=self._mode == ViewMode.EDIT or not self.__bulk_transfer_enabled_in_read,
+            disabled=self._mode == ViewMode.EDIT or not self.__bulk_transfer_enabled_in_read or not editable,
             editable=True,
             enable_search=True,
             enable_filter=True,
@@ -574,8 +610,9 @@ class SalesOrderView(BaseView):
             base_values = self.__target_row_values.get(item_id)
             if not base_values:
                 continue
-            category_dropdown = self.__build_category_discount_dropdown(item_id)
-            item_dropdown = self.__build_item_discount_dropdown(item_id)
+            editable = target_id < 0
+            category_dropdown = self.__build_category_discount_dropdown(item_id, editable)
+            item_dropdown = self.__build_item_discount_dropdown(item_id, editable)
             self.__bulk_transfer.update_target_row_values(
                 target_id, cast(list[object], list(base_values) + [category_dropdown, item_dropdown])
             )

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -14,13 +15,20 @@ if TYPE_CHECKING:
 
 class AssocCustomerDiscount(BaseModel):
     __tablename__ = "customer_discounts"
+    __table_args__ = (
+        UniqueConstraint(
+            "customer_id",
+            "discount_id",
+            name="uq_customer_discounts_customer_discount",
+        ),
+    )
 
-    customer_id: Mapped[int] = Fields.foreign_key(column="customers.id", primary_key=True)
+    customer_id: Mapped[int] = Fields.foreign_key(column="customers.id")
     customer: Mapped[Customer] = Fields.relationship(
         argument="Customer", back_populates="customer_discounts", foreign_keys=[customer_id], cascade_soft_delete=False
     )
 
-    discount_id: Mapped[int] = Fields.foreign_key(column="discounts.id", primary_key=True)
+    discount_id: Mapped[int] = Fields.foreign_key(column="discounts.id")
     discount: Mapped[Discount] = Fields.relationship(
         argument="Discount", back_populates="discount_customers", foreign_keys=[discount_id], cascade_soft_delete=False
     )

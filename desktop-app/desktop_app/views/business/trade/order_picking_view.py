@@ -41,14 +41,14 @@ class OrderPickingView(BaseView):
 
         self.__bulk_transfer = BulkTransfer(
             on_save_clicked=on_save_clicked,
-            source_label=self._translation.get("source_bin"),
+            source_label=self._translation.get("order_items"),
             target_label=self._translation.get("order_items"),
             on_move_requested=on_move_requested,
             on_pending_reverted=on_pending_reverted,
+            allow_duplicate_targets=True,
             source_columns=[
                 self._translation.get("index"),
                 self._translation.get("name"),
-                self._translation.get("source_bin"),
                 self._translation.get("quantity"),
             ],
             target_columns=[

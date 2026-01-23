@@ -54,7 +54,8 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
 
         self.__source_item_rows: dict[int, list[str]] = {}
         self.__source_item_category_map: dict[int, int | None] = {}
-        self.__item_stock_map: dict[int, tuple[int, int, int]] = {}
+        self.__source_selectable_ids: set[int] = set()
+        self.__item_stock_map: dict[int, tuple[int, int]] = {}
         self.__item_dimensions: dict[int, tuple[float, float, float, float]] = {}
         self.__item_pricing: dict[int, tuple[float, float]] = {}
         self.__item_currency_map: dict[int, int | None] = {}
@@ -71,6 +72,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__selected_item_discount_ids: dict[int, int | None] = {}
         self.__target_category_discount_ids: dict[int, int | None] = {}
         self.__target_customer_discount_ids: dict[int, int | None] = {}
+        self.__pending_category_discount_item_ids: set[int] = set()
 
         self.__default_status_id: int | None = None
         self.__current_status_id: int | None = None
@@ -114,6 +116,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__pending_move_quantities.clear()
         self.__source_item_rows.clear()
         self.__source_item_category_map.clear()
+        self.__source_selectable_ids.clear()
         self.__item_stock_map.clear()
         self.__item_dimensions.clear()
         self.__item_currency_map.clear()
@@ -124,9 +127,12 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__selected_item_discount_ids.clear()
         self.__target_category_discount_ids.clear()
         self.__target_customer_discount_ids.clear()
+        self.__pending_category_discount_item_ids.clear()
         default_status = next((item for item in view_data.statuses if item.status_number == 1), None)
         self.__default_status_id = default_status.id if default_status else None
         source_items, source_item_categories = self.__build_source_item_rows(view_data.source_items)
+        available_category_ids = {category_id for category_id in source_item_categories.values() if category_id is not None}
+        categories = [item for item in categories if item[0] in available_category_ids]
         target_items, target_item_ids = self.__build_target_item_rows(view_data.target_items)
         status_history = self.__build_status_history(view_data.status_history)
         order_data = event.data
@@ -269,6 +275,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             return
         for item_id in item_ids:
             self.__target_category_discount_ids[item_id] = discount_id
+        self.__pending_category_discount_item_ids.update(item_ids)
         self.__recalculate_order_totals()
 
     async def __auto_save_customer_discount(self, order_id: int) -> None:
@@ -301,6 +308,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             "category_discount_id": category_discount_id,
             "customer_discount_id": customer_discount_id,
             "item_discount_id": item_discount_id,
+            "bin_id": None,
         }
         if assoc_id is not None:
             data["id"] = assoc_id
@@ -363,19 +371,26 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
     ) -> tuple[list[tuple[int, list[str]]], dict[int, int | None]]:
         results: list[tuple[int, list[str]]] = []
         category_map: dict[int, int | None] = {}
+        selectable_ids: set[int] = set()
         for item in items:
             if item.is_package:
                 continue
-            row = [item.index, item.name, str(item.stock_quantity), str(item.reserved_quantity)]
+            if item.outbound_quantity <= 0:
+                continue
+            available_quantity = max(item.outbound_quantity - item.reserved_quantity, 0)
+            row = [item.index, item.name, str(item.outbound_quantity), str(item.reserved_quantity)]
             self.__source_item_rows[item.id] = row
             category_map[item.id] = item.category_id
-            self.__item_stock_map[item.id] = (item.stock_quantity, item.reserved_quantity, item.moq)
+            self.__item_stock_map[item.id] = (available_quantity, item.moq)
+            if available_quantity > 0:
+                selectable_ids.add(item.id)
             self.__item_dimensions[item.id] = (item.width, item.height, item.length, item.weight)
             self.__item_currency_map[item.id] = item.supplier_currency_id
             self.__item_pricing[item.id] = (item.purchase_price, item.vat_rate)
             self.__selected_item_discount_ids.setdefault(item.id, None)
             results.append((item.id, row))
         self.__source_item_category_map = category_map
+        self.__source_selectable_ids = selectable_ids
         return results, category_map
 
     def __build_target_item_rows(
@@ -820,9 +835,9 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         moq = 1
         available = 0
         if stock_info:
-            stock_quantity, reserved_quantity, moq = stock_info
+            outbound_quantity, moq = stock_info
             moq = max(moq, 1)
-            available = max(stock_quantity - reserved_quantity, 0)
+            available = max(outbound_quantity, 0)
         max_value = max(available, 0)
         if max_value < moq:
             return None
@@ -839,9 +854,11 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             return
         order_id = self._view.data_row["id"]
         pending_targets = self._view.get_pending_targets()
-        if not pending_targets:
+        if not pending_targets and not self.__pending_category_discount_item_ids:
             return
-        await self.__ensure_item_pricing([item_id for _, item_id in pending_targets])
+        await self.__ensure_item_pricing(
+            [item_id for _, item_id in pending_targets] + list(self.__pending_category_discount_item_ids)
+        )
         payload: list[AssocOrderItemStrictSchema] = []
         updates: list[AssocOrderItemStrictSchema] = []
         for target_id, item_id in pending_targets:
@@ -852,6 +869,12 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
                 updates.append(self.__build_order_item_schema(order_id, item_id, total_quantity, target_id))
             else:
                 payload.append(self.__build_order_item_schema(order_id, item_id, quantity, None))
+        if self.__pending_category_discount_item_ids:
+            updated_assoc_ids = {update.id for update in updates if update.id is not None}
+            for assoc_id, (item_id, quantity) in self.__order_items.items():
+                if item_id not in self.__pending_category_discount_item_ids or assoc_id in updated_assoc_ids:
+                    continue
+                updates.append(self.__build_order_item_schema(order_id, item_id, quantity, assoc_id))
         if not payload and not updates:
             return
         if payload:
@@ -860,6 +883,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             await self.__perform_update_order_items(updates)
         await self.__refresh_order_item_lists(order_id)
         self.__pending_move_quantities.clear()
+        self.__pending_category_discount_item_ids.clear()
         self.__recalculate_order_totals()
         await self.__update_order(order_id, require_shipping_cost=True)
 
@@ -905,6 +929,10 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
                         self.__discount_percent_map[discount.id] = discount.percent
         target_items, target_item_ids = self.__build_target_item_rows(view_data.target_items)
         source_items, source_item_categories = self.__build_source_item_rows(view_data.source_items)
+        available_category_ids = {category_id for category_id in source_item_categories.values() if category_id is not None}
+        category_pairs = [(item.id, item.label) for item in view_data.categories if item.id in available_category_ids]
+        if category_pairs:
+            self._view.update_category_options(category_pairs)
         self._view.set_target_data(target_items, target_item_ids, dict(self.__target_category_discount_ids))
         (
             customer_discounts,
@@ -917,6 +945,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             source_item_categories,
             item_discounts,
             selected_item_discounts,
+            set(self.__source_selectable_ids),
         )
         self._view.update_discount_options(customer_discounts, category_discounts)
         customer_discount_id = self.__resolve_target_customer_discount_selection()

@@ -382,6 +382,7 @@ class StockReceivingController(
                     total_gross=order_item.total_gross,
                     total_discount=order_item.total_discount,
                     to_process=new_to_process,
+                    bin_id=order_item.bin_id,
                     category_discount_id=order_item.category_discount_id,
                     customer_discount_id=order_item.customer_discount_id,
                     item_discount_id=order_item.item_discount_id,

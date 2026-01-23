@@ -55,6 +55,7 @@ class OrderViewSourceItemSchema(BaseSchema):
     weight: float
     stock_quantity: int = 0
     reserved_quantity: int = 0
+    outbound_quantity: int = 0
     moq: int = 1
     is_package: bool = False
     supplier_currency_id: int | None = None
@@ -73,6 +74,7 @@ class OrderViewTargetItemSchema(BaseSchema):
     height: float
     length: float
     weight: float
+    bin_id: int | None = None
     category_discount_id: int | None = None
     customer_discount_id: int | None = None
     item_discount_id: int | None = None

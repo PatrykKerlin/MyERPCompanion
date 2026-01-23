@@ -141,6 +141,7 @@ class OrderViewService:
                 weight=item.weight,
                 stock_quantity=item.stock_quantity,
                 reserved_quantity=getattr(item, "reserved_quantity", 0),
+                outbound_quantity=getattr(item, "outbound_quantity", 0),
                 moq=item.moq,
                 is_package=item.is_package,
                 supplier_currency_id=item.supplier.currency_id if item.supplier else None,

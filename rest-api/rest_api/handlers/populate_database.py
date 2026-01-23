@@ -87,6 +87,7 @@ class PopulateDatabase:
             "customers",
             "payment_methods",
             "statuses",
+            "assoc_customer_discounts"
         ]
         for file_name in sql_files:
             file_path = self.__base_path / f"{file_name}.sql"

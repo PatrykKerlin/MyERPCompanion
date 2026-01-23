@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
 
 if TYPE_CHECKING:
+    from models.business.logistic.bin import Bin
     from models.business.logistic.item import Item
     from models.business.trade.discount import Discount
     from models.business.trade.order import Order
@@ -15,6 +17,23 @@ if TYPE_CHECKING:
 
 class AssocOrderItem(BaseModel):
     __tablename__ = "order_items"
+    __table_args__ = (
+        Index(
+            "uq_order_items_order_item_null_bin",
+            "order_id",
+            "item_id",
+            unique=True,
+            postgresql_where=text("bin_id IS NULL"),
+        ),
+        Index(
+            "uq_order_items_order_item_bin",
+            "order_id",
+            "item_id",
+            "bin_id",
+            unique=True,
+            postgresql_where=text("bin_id IS NOT NULL"),
+        ),
+    )
 
     quantity: Mapped[int] = Fields.integer()
     total_net: Mapped[float] = Fields.numeric_10_2()
@@ -23,14 +42,19 @@ class AssocOrderItem(BaseModel):
     total_discount: Mapped[float] = Fields.numeric_10_2()
     to_process: Mapped[bool] = Fields.integer()
 
-    order_id: Mapped[int] = Fields.foreign_key(column="orders.id", primary_key=True)
+    order_id: Mapped[int] = Fields.foreign_key(column="orders.id")
     order: Mapped[Order] = Fields.relationship(
         argument="Order", back_populates="order_items", foreign_keys=[order_id], cascade_soft_delete=False
     )
 
-    item_id: Mapped[int] = Fields.foreign_key(column="items.id", primary_key=True)
+    item_id: Mapped[int] = Fields.foreign_key(column="items.id")
     item: Mapped[Item] = Fields.relationship(
         argument="Item", back_populates="item_orders", foreign_keys=[item_id], cascade_soft_delete=False
+    )
+
+    bin_id: Mapped[int | None] = Fields.foreign_key(column="bins.id", nullable=True)
+    bin: Mapped[Bin | None] = Fields.relationship(
+        argument="Bin", back_populates="bin_order_items", foreign_keys=[bin_id], cascade_soft_delete=False
     )
 
     category_discount_id: Mapped[int | None] = Fields.foreign_key(column="discounts.id", nullable=True)

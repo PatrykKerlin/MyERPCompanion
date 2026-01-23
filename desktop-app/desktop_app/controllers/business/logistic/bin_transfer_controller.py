@@ -230,7 +230,7 @@ class BinTransferController(
             display_quantity = target_item[2] + quantity
             self._view.update_existing_target(item_id, item_id, [source_item[0], str(display_quantity)])
             return
-        self._view.add_target_rows_from_source([item_id], highlight=True)
+        self._view.add_target_row(item_id, [source_item[0], str(quantity)], highlight=True)
 
     async def __show_quantity_dialog(self, max_quantity: int) -> int | None:
         translation = self._state_store.app_state.translation.items

@@ -67,6 +67,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         stock_fields_definitions = [
             {"key": "stock_quantity", "input": self._get_numeric_input},
             {"key": "reserved_quantity", "input": self._get_numeric_input},
+            {"key": "outbound_quantity", "input": self._get_numeric_input},
             {"key": "min_stock_level", "input": self._get_numeric_input},
             {"key": "max_stock_level", "input": self._get_numeric_input},
         ]
@@ -217,23 +218,25 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         self.__gallery_column.update()
 
     def __apply_stock_quantity_rules(self, mode: ViewMode) -> None:
-        field = self._inputs.get("stock_quantity")
-        if not field:
-            return
-        input_control = field.input.content
-        if mode == ViewMode.CREATE:
-            if hasattr(input_control, "value"):
-                setattr(input_control, "value", 0)
+        read_only_keys = ("stock_quantity", "reserved_quantity", "outbound_quantity")
+        for key in read_only_keys:
+            field = self._inputs.get(key)
+            if not field:
+                continue
+            input_control = field.input.content
+            if mode == ViewMode.CREATE:
+                if hasattr(input_control, "value"):
+                    setattr(input_control, "value", 0)
+                    if input_control:
+                        input_control.update()
+                self._controller.set_field_value("stock_quantity", 0)
+            if mode in {ViewMode.CREATE, ViewMode.EDIT}:
+                if hasattr(input_control, "read_only"):
+                    setattr(input_control, "read_only", True)
+                if hasattr(input_control, "disabled"):
+                    setattr(input_control, "disabled", True)
                 if input_control:
                     input_control.update()
-            self._controller.set_field_value("stock_quantity", 0)
-        if mode in {ViewMode.CREATE, ViewMode.EDIT}:
-            if hasattr(input_control, "read_only"):
-                setattr(input_control, "read_only", True)
-            if hasattr(input_control, "disabled"):
-                setattr(input_control, "disabled", True)
-            if input_control:
-                input_control.update()
 
     def __build_image_control(self, image: dict[str, Any]) -> ft.Control:
         url = image["url"]

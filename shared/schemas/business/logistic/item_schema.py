@@ -80,6 +80,7 @@ class ItemPlainSchema(BasePlainSchema):
 
     stock_quantity: int
     reserved_quantity: int
+    outbound_quantity: int
     min_stock_level: int
     max_stock_level: int | None
     moq: int

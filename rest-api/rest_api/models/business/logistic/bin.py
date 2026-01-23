@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from models.business.logistic.assoc_bin_item import AssocBinItem
     from models.business.logistic.item import Item
     from models.business.logistic.warehouse import Warehouse
+    from models.business.trade.assoc_order_item import AssocOrderItem
 
 
 class Bin(BaseModel):
@@ -30,6 +31,10 @@ class Bin(BaseModel):
 
     bin_items: Mapped[list[AssocBinItem]] = Fields.relationship(
         argument="AssocBinItem", back_populates="bin", foreign_keys="AssocBinItem.bin_id"
+    )
+
+    bin_order_items: Mapped[list[AssocOrderItem]] = Fields.relationship(
+        argument="AssocOrderItem", back_populates="bin", foreign_keys="AssocOrderItem.bin_id"
     )
 
     @property

@@ -8,10 +8,10 @@ from sqlalchemy.sql.elements import ColumnElement
 from models.business.logistic.item import Item
 from models.core.image import Image
 from repositories.base.base_repository import BaseRepository
-from repositories.mixins.reserved_quantity_mixin import ReservedQuantityMixin
+from repositories.mixins.item_quantity_mixin import ItemQuantityMixin
 
 
-class ItemRepository(ReservedQuantityMixin, BaseRepository[Item]):
+class ItemRepository(BaseRepository[Item], ItemQuantityMixin):
     _model_cls = Item
 
     @classmethod
@@ -47,6 +47,7 @@ class ItemRepository(ReservedQuantityMixin, BaseRepository[Item]):
             sort_order=sort_order,
         )
         await cls._attach_reserved_quantities(session, items)
+        await cls._attach_outbound_quantities(session, items)
         return items
 
     @classmethod
@@ -54,10 +55,12 @@ class ItemRepository(ReservedQuantityMixin, BaseRepository[Item]):
         item = await super().get_one_by_id(session, model_id)
         if item:
             await cls._attach_reserved_quantities(session, [item])
+            await cls._attach_outbound_quantities(session, [item])
         return item
 
     @classmethod
     async def get_many_by_ids(cls, session: AsyncSession, model_ids: list[int]) -> Sequence[Item]:
         items = await super().get_many_by_ids(session, model_ids)
         await cls._attach_reserved_quantities(session, items)
+        await cls._attach_outbound_quantities(session, items)
         return items

@@ -32,6 +32,7 @@ class BulkTransfer(ft.Container):
         self.__target_ids: set[int] = set()
         self.__initial_target_ids: set[int] = set()
         self.__initial_target_rows: dict[int, list[object]] = {}
+        self.__source_selectable_ids: set[int] | None = None
 
         self.__selected_source_ids: set[int] = set()
         self.__selected_target_ids: set[int] = set()
@@ -145,6 +146,10 @@ class BulkTransfer(ft.Container):
         self.__moved_source_ids.clear()
         self.__render_source_table()
         self.__update_save_button_state()
+
+    def set_source_selectable_ids(self, selectable_ids: set[int] | None) -> None:
+        self.__source_selectable_ids = selectable_ids
+        self.__render_source_table()
 
     def set_target_rows(self, rows: list[tuple[int, list[object]]]) -> None:
         self.__target_rows = rows
@@ -291,6 +296,8 @@ class BulkTransfer(ft.Container):
             if (self.__buttons_enabled and self.__source_enabled)
             else set()
         )
+        if self.__source_selectable_ids is not None:
+            selectable_ids &= self.__source_selectable_ids
         table = self.__build_table(
             columns=self.__source_columns,
             rows=self.__source_rows,

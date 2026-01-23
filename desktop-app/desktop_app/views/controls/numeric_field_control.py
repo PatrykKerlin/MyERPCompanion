@@ -91,6 +91,15 @@ class NumericField(ft.Row):
         self.__decrement_button.update()
         self.__increment_button.update()
 
+    def set_limits(self, min_value: int | float | None, max_value: int | float | None) -> None:
+        if self.__is_float:
+            self.__min_value = float(min_value) if min_value is not None else 0.0
+            self.__max_value = float(max_value) if max_value is not None else sys.float_info.max
+        else:
+            self.__min_value = int(min_value) if min_value is not None else 0
+            self.__max_value = int(max_value) if max_value is not None else sys.maxsize
+        self.__set_value(self.__value)
+
     def __emit_value(self, value: int | float | None) -> None:
         if not self.__on_change:
             return

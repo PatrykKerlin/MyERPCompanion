@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -14,13 +15,20 @@ if TYPE_CHECKING:
 
 class AssocUserGroup(BaseModel):
     __tablename__ = "user_groups"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "group_id",
+            name="uq_user_groups_user_group",
+        ),
+    )
 
-    group_id: Mapped[int] = Fields.foreign_key(column="groups.id", primary_key=True)
+    group_id: Mapped[int] = Fields.foreign_key(column="groups.id")
     group: Mapped[Group] = Fields.relationship(
         argument="Group", back_populates="group_users", foreign_keys=[group_id], cascade_soft_delete=False
     )
 
-    user_id: Mapped[int] = Fields.foreign_key(column="users.id", primary_key=True)
+    user_id: Mapped[int] = Fields.foreign_key(column="users.id")
     user: Mapped[User] = Fields.relationship(
         argument="User", back_populates="user_groups", foreign_keys=[user_id], cascade_soft_delete=False
     )

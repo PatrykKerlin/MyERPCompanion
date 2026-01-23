@@ -12,6 +12,7 @@ class AssocOrderItemStrictSchema(BaseStrictSchema):
 
     order_id: Constraints.PositiveInteger
     item_id: Constraints.PositiveInteger
+    bin_id: Constraints.PositiveIntegerOptional
 
     category_discount_id: Constraints.PositiveIntegerOptional
     customer_discount_id: Constraints.PositiveIntegerOptional
@@ -28,6 +29,7 @@ class AssocOrderItemPlainSchema(BasePlainSchema):
 
     order_id: int
     item_id: int
+    bin_id: int | None
     
     category_discount_id: int | None
     customer_discount_id: int | None

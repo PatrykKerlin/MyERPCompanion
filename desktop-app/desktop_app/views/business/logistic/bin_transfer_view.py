@@ -73,6 +73,9 @@ class BinTransferView(BaseView):
     def add_target_rows_from_source(self, ids: list[int], highlight: bool = True) -> list[int]:
         return self.__bulk_transfer.add_target_rows_from_source(ids, highlight)
 
+    def add_target_row(self, source_id: int, values: list[str], highlight: bool = True) -> int:
+        return self.__bulk_transfer.add_target_row(source_id, cast(list[object], values), highlight=highlight)
+
     def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
         self.__bulk_transfer.update_existing_target(target_id, source_id, cast(list[object], values))
 

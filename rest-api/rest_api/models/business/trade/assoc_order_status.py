@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -14,13 +15,20 @@ if TYPE_CHECKING:
 
 class AssocOrderStatus(BaseModel):
     __tablename__ = "order_statuses"
+    __table_args__ = (
+        UniqueConstraint(
+            "order_id",
+            "status_id",
+            name="uq_order_statuses_order_status",
+        ),
+    )
 
-    order_id: Mapped[int] = Fields.foreign_key(column="orders.id", primary_key=True)
+    order_id: Mapped[int] = Fields.foreign_key(column="orders.id")
     order: Mapped[Order] = Fields.relationship(
         argument="Order", back_populates="order_statuses", foreign_keys=[order_id], cascade_soft_delete=False
     )
 
-    status_id: Mapped[int] = Fields.foreign_key(column="statuses.id", primary_key=True)
+    status_id: Mapped[int] = Fields.foreign_key(column="statuses.id")
     status: Mapped[Status] = Fields.relationship(
         argument="Status", back_populates="status_orders", foreign_keys=[status_id], cascade_soft_delete=False
     )
