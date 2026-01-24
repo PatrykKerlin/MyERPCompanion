@@ -85,7 +85,6 @@ class PopulateDatabase:
             "assoc_bin_items",
             "assoc_item_discounts",
             "customers",
-            "payment_methods",
             "statuses",
             "assoc_customer_discounts"
         ]

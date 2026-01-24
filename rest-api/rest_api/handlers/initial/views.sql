@@ -23,9 +23,9 @@ VALUES
 ('sales_orders', 'Sales orders view', 3, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('order_picking', 'Sales orders view', 4, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 
-('purchase_orders', 'Sales orders view', 1, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('stock_receiving', 'Stock receiving view', 2, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('suppliers', 'Suppliers view', 1, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('purchase_orders', 'Sales orders view', 2, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('stock_receiving', 'Stock receiving view', 3, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 
 ('currencies', 'Currencies view', 1, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('exchange_rates', 'Exchange rates view', 2, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('payment_methods', 'Payment methods view', 3, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id);
+('exchange_rates', 'Exchange rates view', 2, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id);

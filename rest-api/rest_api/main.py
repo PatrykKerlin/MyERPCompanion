@@ -93,7 +93,6 @@ class App:
             {"router": trade.CustomerController(self.__context, self.__auth).router, "prefix": "/customers"},
             {"router": trade.DiscountController(self.__context, self.__auth).router, "prefix": "/discounts"},
             {"router": trade.ExchangeRateController(self.__context, self.__auth).router, "prefix": "/exchange-rates"},
-            {"router": trade.PaymentMethodController(self.__context, self.__auth).router, "prefix": "/payment-methods"},
             {"router": trade.StatusController(self.__context, self.__auth).router, "prefix": "/statuses"},
             {"router": trade.SupplierController(self.__context, self.__auth).router, "prefix": "/suppliers"},
             {"router": trade.OrderController(self.__context, self.__auth).router, "prefix": "/orders"},

@@ -4,7 +4,6 @@ from models.business.trade.assoc_item_discount import AssocItemDiscount
 from models.business.trade.assoc_order_item import AssocOrderItem
 from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.currency import Currency
-from models.business.trade.payment_method import PaymentMethod
 from models.business.trade.supplier import Supplier
 from utils.repository_factory import RepositoryFactory
 from repositories.business.trade.customer_repository import CustomerRepository
@@ -20,7 +19,6 @@ AssocItemDiscountRepository = RepositoryFactory.create(AssocItemDiscount)
 AssocOrderItemRepository = RepositoryFactory.create(AssocOrderItem)
 AssocOrderStatusRepository = RepositoryFactory.create(AssocOrderStatus)
 CurrencyRepository = RepositoryFactory.create(Currency)
-PaymentMethodRepository = RepositoryFactory.create(PaymentMethod)
 SupplierRepository = RepositoryFactory.create(Supplier)
 
 
@@ -35,7 +33,6 @@ __all__ = [
     "DiscountRepository",
     "ExchangeRateRepository",
     "OrderRepository",
-    "PaymentMethodRepository",
     "StatusRepository",
     "SupplierRepository",
 ]

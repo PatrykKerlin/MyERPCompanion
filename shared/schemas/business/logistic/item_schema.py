@@ -20,6 +20,7 @@ class ItemStrictSchema(BaseStrictSchema):
     purchase_price: Constraints.PositiveNumeric_10_2
     vat_rate: Constraints.PercentFloat
     margin: Constraints.PositiveNumeric_6_3
+    lead_time: Constraints.PositiveInteger
 
     is_available: Constraints.BooleanTrue
     is_fragile: Constraints.BooleanFalse
@@ -66,6 +67,7 @@ class ItemPlainSchema(BasePlainSchema):
     purchase_price: float
     vat_rate: float
     margin: float
+    lead_time: int
 
     is_available: bool
     is_fragile: bool

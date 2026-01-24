@@ -50,6 +50,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             {"key": "vat_rate", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "margin", "input": self._get_numeric_input, "is_float": True, "step": 0.001, "precision": 3},
             {"key": "moq", "input": self._get_numeric_input},
+            {"key": "lead_time", "input": self._get_numeric_input},
         ]
         param_fields_definitions = [
             {"key": "is_available", "input": self._get_checkbox, "value": True, "input_size": 1},

@@ -20,7 +20,6 @@ from schemas.business.trade.customer_schema import CustomerPlainSchema, Customer
 from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
 from schemas.business.trade.exchange_rate_schema import ExchangeRatePlainSchema, ExchangeRateStrictSchema
 from schemas.business.trade.order_schema import OrderPlainSchema, OrderStrictSchema
-from schemas.business.trade.payment_method_schema import PaymentMethodPlainSchema, PaymentMethodStrictSchema
 from schemas.business.trade.status_schema import StatusPlainSchema, StatusStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
 from services.business.trade.order_view_service import OrderViewService
@@ -77,11 +76,6 @@ OrderService = ServiceFactory.create(
     plain_schema_cls=OrderPlainSchema,
     strict_schema_cls=OrderStrictSchema,
 )
-PaymentMethodService = ServiceFactory.create(
-    name_prefix="PaymentMethod",
-    plain_schema_cls=PaymentMethodPlainSchema,
-    strict_schema_cls=PaymentMethodStrictSchema,
-)
 StatusService = ServiceFactory.create(
     name_prefix="Status",
     plain_schema_cls=StatusPlainSchema,
@@ -106,7 +100,6 @@ __all__ = [
     "ExchangeRateService",
     "OrderService",
     "OrderViewService",
-    "PaymentMethodService",
     "StatusService",
     "SupplierService",
 ]

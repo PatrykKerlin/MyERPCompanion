@@ -131,7 +131,9 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         default_status = next((item for item in view_data.statuses if item.status_number == 1), None)
         self.__default_status_id = default_status.id if default_status else None
         source_items, source_item_categories = self.__build_source_item_rows(view_data.source_items)
-        available_category_ids = {category_id for category_id in source_item_categories.values() if category_id is not None}
+        available_category_ids = {
+            category_id for category_id in source_item_categories.values() if category_id is not None
+        }
         categories = [item for item in categories if item[0] in available_category_ids]
         target_items, target_item_ids = self.__build_target_item_rows(view_data.target_items)
         status_history = self.__build_status_history(view_data.status_history)
@@ -247,9 +249,8 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         if self._view:
             pending_item_ids.update(item_id for _, item_id in self._view.get_pending_targets())
         all_item_ids = persisted_item_ids | pending_item_ids
-        if (
-            discount_id == self.__selected_customer_discount_id
-            and all(self.__target_customer_discount_ids.get(item_id) == discount_id for item_id in all_item_ids)
+        if discount_id == self.__selected_customer_discount_id and all(
+            self.__target_customer_discount_ids.get(item_id) == discount_id for item_id in all_item_ids
         ):
             return
         should_auto_save = any(
@@ -453,11 +454,15 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
 
         category_id = self.__source_item_category_map.get(item_id)
         category_discount_id = self.__target_category_discount_ids.get(item_id)
-        if category_id is not None and category_discount_id and self.__is_discount_allowed(
-            self.__category_discount_map.get(category_id, []),
-            category_discount_id,
-            quantity,
-            base_net,
+        if (
+            category_id is not None
+            and category_discount_id
+            and self.__is_discount_allowed(
+                self.__category_discount_map.get(category_id, []),
+                category_discount_id,
+                quantity,
+                base_net,
+            )
         ):
             discount_ids.append(category_discount_id)
 
@@ -804,7 +809,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         if self.__exchange_rate_missing_notified:
             return
         self.__exchange_rate_missing_notified = True
-        self._open_error_dialog(message="Missing exchange rate for currency conversion.")
+        self._open_error_dialog(message="missing_exchange_rate")
 
     async def __handle_move_with_quantity(self, item_id: int) -> None:
         if not self._view:
@@ -929,7 +934,9 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
                         self.__discount_percent_map[discount.id] = discount.percent
         target_items, target_item_ids = self.__build_target_item_rows(view_data.target_items)
         source_items, source_item_categories = self.__build_source_item_rows(view_data.source_items)
-        available_category_ids = {category_id for category_id in source_item_categories.values() if category_id is not None}
+        available_category_ids = {
+            category_id for category_id in source_item_categories.values() if category_id is not None
+        }
         category_pairs = [(item.id, item.label) for item in view_data.categories if item.id in available_category_ids]
         if category_pairs:
             self._view.update_category_options(category_pairs)

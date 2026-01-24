@@ -34,6 +34,7 @@ class Item(BaseModel):
     purchase_price: Mapped[float] = Fields.numeric_10_2()
     vat_rate: Mapped[float] = Fields.numeric_3_2()
     margin: Mapped[float] = Fields.numeric_6_3()
+    lead_time: Mapped[int] = Fields.integer()
 
     is_available: Mapped[bool] = Fields.boolean(default=True)
     is_fragile: Mapped[bool] = Fields.boolean(default=False)

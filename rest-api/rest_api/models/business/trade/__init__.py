@@ -9,7 +9,6 @@ from models.business.trade.discount import Discount
 from models.business.trade.exchange_rate import ExchangeRate
 from models.business.trade.invoice import Invoice
 from models.business.trade.order import Order
-from models.business.trade.payment_method import PaymentMethod
 from models.business.trade.status import Status
 from models.business.trade.supplier import Supplier
 
@@ -25,7 +24,6 @@ __all__ = [
     "ExchangeRate",
     "Invoice",
     "Order",
-    "PaymentMethod",
     "Status",
     "Supplier",
 ]
