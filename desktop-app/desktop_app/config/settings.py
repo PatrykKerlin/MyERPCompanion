@@ -5,10 +5,6 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    REDIS_HOST: str
-    REDIS_PORT: int
-    REDIS_DB: int
-    REDIS_PASSWORD: str
     API_URL: str
     # LANGUAGE: str = Field(default_factory=lambda: Settings.__get_system_language())
     LANGUAGE: str = "en"

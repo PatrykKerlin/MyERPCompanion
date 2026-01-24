@@ -32,10 +32,20 @@ class ToolbarComponent(BaseComponent, ft.MenuBar):
             disabled=True,
             on_click=lambda _: self._controller.on_delete_clicked(),
         )
+        self.__refresh_button = ft.IconButton(
+            icon=ft.Icons.REFRESH,
+            tooltip=translation.get("refresh"),
+            on_click=lambda _: self._controller.on_refresh_clicked(),
+        )
         ft.MenuBar.__init__(
             self,
             # style=MenuStyles.flat,
-            controls=[self.__toggle_menu_button, self.__lock_view_button, self.__delete_record_button],
+            controls=[
+                self.__toggle_menu_button,
+                self.__lock_view_button,
+                self.__delete_record_button,
+                self.__refresh_button,
+            ],
         )
 
     def set_lock_view_button_icon(self, unlocked: bool) -> None:

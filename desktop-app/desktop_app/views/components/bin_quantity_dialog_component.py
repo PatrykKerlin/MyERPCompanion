@@ -18,6 +18,7 @@ class BinQuantityDialogComponent(BaseDialog):
         self.__future: asyncio.Future[tuple[int, int] | None] = asyncio.get_running_loop().create_future()
         self.__bin_map = {str(bin_id): max(quantity, 0) for bin_id, _, quantity in bin_options}
         self.__max_total = max(max_total, 0)
+        self.__default_quantity = max(default_quantity, 1)
         sorted_bins = sorted(bin_options, key=lambda item: item[1])
         options = [ft.dropdown.Option(key=str(bin_id), text=label) for bin_id, label, _ in sorted_bins]
         initial_key = options[0].key if options else "0"
@@ -29,7 +30,7 @@ class BinQuantityDialogComponent(BaseDialog):
         )
         max_value = min(self.__bin_map.get(initial_key, 0), self.__max_total)
         self.__quantity_field = NumericField(
-            value=max_value,
+            value=min(max_value, self.__default_quantity),
             min_value=1,
             max_value=max_value,
             step=1,
@@ -67,7 +68,7 @@ class BinQuantityDialogComponent(BaseDialog):
         key = event.control.value or "0"
         max_value = min(self.__bin_map.get(key, 0), self.__max_total)
         self.__quantity_field.set_limits(1, max_value)
-        self.__quantity_field.value = max_value
+        self.__quantity_field.value = min(max_value, self.__default_quantity)
         self.__quantity_field.update()
 
     def __read_values(self) -> tuple[int, int]:

@@ -264,7 +264,7 @@ class BaseViewController(
                 record_id=event.record_id,
                 view=self._view,
                 is_dialog=event.is_dialog,
-                save_succeeded=event.save_succedeed,
+                save_succeeded=event.save_succeeded,
             )
         )
         self._close_loading_dialog()

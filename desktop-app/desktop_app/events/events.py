@@ -119,7 +119,7 @@ class ViewRequested(BaseEvent):
     is_dialog: bool = False
     caller_view_key: View | None = None
     width_ratio: float = 0.5
-    save_succedeed: bool = False
+    save_succeeded: bool = False
 
 
 @dataclass(frozen=True)

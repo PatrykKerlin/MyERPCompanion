@@ -6,7 +6,7 @@ from controllers.base.base_component_controller import BaseComponentController
 from states.states import ViewState
 from utils.enums import EditDisabledView, ViewMode
 from views.components.toolbar_component import ToolbarComponent
-from events.events import RecordDeleteRequested, ToolbarReady, ToolbarRequested, SideMenuToggleRequested
+from events.events import RecordDeleteRequested, ToolbarReady, ToolbarRequested, SideMenuToggleRequested, ViewRequested
 
 
 if TYPE_CHECKING:
@@ -69,6 +69,24 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         self._page.run_task(
             self._event_bus.publish,
             RecordDeleteRequested(view_key=view_state.view.view_key, id=data_row["id"]),
+        )
+
+    def on_refresh_clicked(self) -> None:
+        view_state = self._state_store.app_state.view
+        current_view = view_state.view
+        if not current_view:
+            return
+        data_row = current_view.data_row
+        record_id = data_row.get("id") if data_row else None
+        module_id = current_view._controller._module_id
+        self._page.run_task(
+            self._event_bus.publish,
+            ViewRequested(
+                module_id=module_id,
+                view_key=current_view.view_key,
+                record_id=record_id,
+                data=data_row,
+            ),
         )
 
     def __view_updated_listener(self, state: ViewState) -> None:

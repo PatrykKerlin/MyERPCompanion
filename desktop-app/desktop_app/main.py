@@ -22,6 +22,7 @@ from states.states import (
 from utils.enums import ViewMode
 from utils.translation import Translation
 from config.context import Context
+from services.base.base_service import BaseService
 
 
 class App:
@@ -115,6 +116,7 @@ class App:
         for controller in self.__controllers:
             await controller.dispose()
         self._controllers = ()
+        await BaseService.close_client()
         await self.__event_bus.stop()
 
 

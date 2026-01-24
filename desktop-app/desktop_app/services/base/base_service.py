@@ -23,12 +23,12 @@ TReturn = TypeVar("TReturn")
 
 class BaseService(Generic[TPlainSchema, TStrictSchema]):
     _plain_schema_cls: type[TPlainSchema]
+    _shared_client: httpx.AsyncClient | None = None
 
     def __init__(self, settings: Settings, logger: Logger, tokens_accessor: TokensAccessor) -> None:
         self._settings = settings
         self._logger = logger
         self._tokens_accessor = tokens_accessor
-        self.__sleep_time = 0
 
     @staticmethod
     def handle_token_refresh(
@@ -314,12 +314,11 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
 
     async def refresh_tokens(self, tokens: TokenPlainSchema) -> TokenPlainSchema:
         headers = {"Authorization": f"Bearer {tokens.refresh}"}
-        async with httpx.AsyncClient(base_url=self._settings.API_URL, timeout=self.__build_timeout()) as client:
-            response = await client.get(Endpoint.REFRESH, headers=headers)
-            response.raise_for_status()
-            new_access = response.json()["access"]
-            await asyncio.sleep(self.__sleep_time)
-            return TokenPlainSchema(access=new_access, refresh=tokens.refresh)
+        client = self.__get_client()
+        response = await client.get(Endpoint.REFRESH, headers=headers)
+        response.raise_for_status()
+        new_access = response.json()["access"]
+        return TokenPlainSchema(access=new_access, refresh=tokens.refresh)
 
     async def _get(
         self,
@@ -329,11 +328,10 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         module_id: int | None = None,
     ) -> httpx.Response:
         headers = self.__prepare_headers(tokens, module_id)
-        async with httpx.AsyncClient(base_url=self._settings.API_URL, timeout=self.__build_timeout()) as client:
-            response = await client.get(url=endpoint, params=query_params, headers=headers)
-            response.raise_for_status()
-            await asyncio.sleep(self.__sleep_time)
-            return response
+        client = self.__get_client()
+        response = await client.get(url=endpoint, params=query_params, headers=headers)
+        response.raise_for_status()
+        return response
 
     async def _post(
         self,
@@ -343,11 +341,10 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         module_id: int | None = None,
     ) -> httpx.Response:
         headers = self.__prepare_headers(tokens, module_id)
-        async with httpx.AsyncClient(base_url=self._settings.API_URL, timeout=self.__build_timeout()) as client:
-            response = await client.post(url=endpoint, json=body_params, headers=headers)
-            response.raise_for_status()
-            await asyncio.sleep(self.__sleep_time)
-            return response
+        client = self.__get_client()
+        response = await client.post(url=endpoint, json=body_params, headers=headers)
+        response.raise_for_status()
+        return response
 
     async def _post_multipart(
         self,
@@ -358,11 +355,10 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         module_id: int | None = None,
     ) -> httpx.Response:
         headers = self.__prepare_headers(tokens, module_id)
-        async with httpx.AsyncClient(base_url=self._settings.API_URL, timeout=self.__build_timeout()) as client:
-            response = await client.post(url=endpoint, data=data, files=files, headers=headers)
-            response.raise_for_status()
-            await asyncio.sleep(self.__sleep_time)
-            return response
+        client = self.__get_client()
+        response = await client.post(url=endpoint, data=data, files=files, headers=headers)
+        response.raise_for_status()
+        return response
 
     async def _put(
         self,
@@ -372,11 +368,10 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         module_id: int | None = None,
     ) -> httpx.Response:
         headers = self.__prepare_headers(tokens, module_id)
-        async with httpx.AsyncClient(base_url=self._settings.API_URL, timeout=self.__build_timeout()) as client:
-            response = await client.put(url=endpoint, json=body_params, headers=headers)
-            response.raise_for_status()
-            await asyncio.sleep(self.__sleep_time)
-            return response
+        client = self.__get_client()
+        response = await client.put(url=endpoint, json=body_params, headers=headers)
+        response.raise_for_status()
+        return response
 
     async def _delete(
         self,
@@ -386,11 +381,10 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         module_id: int | None = None,
     ) -> httpx.Response:
         headers = self.__prepare_headers(tokens, module_id)
-        async with httpx.AsyncClient(base_url=self._settings.API_URL, timeout=self.__build_timeout()) as client:
-            response = await client.request("DELETE", url=endpoint, json=body_params, headers=headers)
-            response.raise_for_status()
-            await asyncio.sleep(self.__sleep_time)
-            return response
+        client = self.__get_client()
+        response = await client.request("DELETE", url=endpoint, json=body_params, headers=headers)
+        response.raise_for_status()
+        return response
 
     def __prepare_headers(self, tokens: TokenPlainSchema | None = None, module_id: int | None = None) -> dict[str, str]:
         headers: dict[str, str] = {}
@@ -402,3 +396,17 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
 
     def __build_timeout(self) -> httpx.Timeout:
         return httpx.Timeout(connect=5.0, read=60.0, write=15.0, pool=5.0)
+
+    def __get_client(self) -> httpx.AsyncClient:
+        if BaseService._shared_client is None or BaseService._shared_client.is_closed:
+            BaseService._shared_client = httpx.AsyncClient(
+                base_url=self._settings.API_URL,
+                timeout=self.__build_timeout(),
+            )
+        return BaseService._shared_client
+
+    @classmethod
+    async def close_client(cls) -> None:
+        if cls._shared_client and not cls._shared_client.is_closed:
+            await cls._shared_client.aclose()
+        cls._shared_client = None

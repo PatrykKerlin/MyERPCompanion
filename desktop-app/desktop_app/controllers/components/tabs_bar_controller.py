@@ -63,7 +63,7 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
                     view_key=event.view_key,
                     record_id=event.record_id,
                     data=event.record_data,
-                    save_succedeed=event.save_succeeded,
+                    save_succeeded=event.save_succeeded,
                 ),
             )
         else:

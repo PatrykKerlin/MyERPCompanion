@@ -4,9 +4,9 @@ from schemas.validation.constraints import Constraints
 
 class AssocOrderItemStrictSchema(BaseStrictSchema):
     quantity: Constraints.PositiveInteger
-    total_net: Constraints.PositiveNumeric_10_2
-    total_vat: Constraints.PositiveNumeric_10_2
-    total_gross: Constraints.PositiveNumeric_10_2
+    total_net: Constraints.NonNegativeNumeric_10_2
+    total_vat: Constraints.NonNegativeNumeric_10_2
+    total_gross: Constraints.NonNegativeNumeric_10_2
     total_discount: Constraints.NonNegativeNumeric_10_2
     to_process: Constraints.NonNegativeInteger
 
