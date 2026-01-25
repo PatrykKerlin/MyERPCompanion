@@ -3,7 +3,13 @@ VALUES
 ('side_menu', 'Side menu view', 1, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('current_user', 'Current user view', 2, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 
-('statuses', 'Statuses view', 1, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('languages', 'Languages view', 1, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('translations', 'Translations view', 2, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('modules', 'Modules view', 3, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('views', 'Views view', 4, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('groups', 'Groups view', 5, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('users', 'Users view', 6, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('statuses', 'Statuses view', 7, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 
 ('departments', 'Departments view', 1, 3, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('positions', 'Positions view', 2, 3, TRUE, CURRENT_TIMESTAMP, :superuser_id),

@@ -1,8 +1,12 @@
-from utils.enums import Endpoint
+from schemas.core.translation_schema import TranslationPlainSchema, TranslationStrictSchema
 from services.base.base_service import BaseService
+from utils.enums import Endpoint
 
 
-class TranslationService(BaseService):
+class TranslationService(BaseService[TranslationPlainSchema, TranslationStrictSchema]):
+    _plain_schema_cls = TranslationPlainSchema
+    _strict_schema_cls = TranslationStrictSchema
+
     async def fetch_translation_items(self, path_param: str) -> dict[str, str]:
         page = 1
         translation: dict[str, str] = {}

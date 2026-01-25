@@ -68,6 +68,11 @@ class App:
         core_controllers = [
             app_controller,
             core.TranslationController(self.__context),
+            core.GroupController(self.__context),
+            core.LanguageController(self.__context),
+            core.ModuleController(self.__context),
+            core.ViewController(self.__context),
+            core.UserController(self.__context),
             components.AuthDialogController(self.__context),
             components.MenuBarController(self.__context),
             components.ToolbarController(self.__context),
