@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Any
+from typing import Any, Callable
 import math
 import random
 import string
@@ -76,6 +76,8 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
 
         self.__default_status_id: int | None = None
         self.__current_status_id: int | None = None
+        self.__prefetched_create_number: str | None = None
+        self.__number_request_counter = 0
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> SalesOrderView:
         order_id = event.data.get("id") if event.data else None
@@ -130,6 +132,10 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__pending_category_discount_item_ids.clear()
         default_status = next((item for item in view_data.statuses if item.status_number == 1), None)
         self.__default_status_id = default_status.id if default_status else None
+        if mode == ViewMode.CREATE:
+            self.__prefetched_create_number = await self.__generate_order_number(date.today())
+        else:
+            self.__prefetched_create_number = None
         source_items, source_item_categories = self.__build_source_item_rows(view_data.source_items)
         available_category_ids = {
             category_id for category_id in source_item_categories.values() if category_id is not None
@@ -215,6 +221,11 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         for target_id in target_ids:
             self.__pending_move_quantities.pop(target_id, None)
         self.__recalculate_order_totals()
+
+    def on_value_changed(self, event: ft.ControlEvent, key: str, *after_change: Callable[[], None]) -> None:
+        super().on_value_changed(event, key, *after_change)
+        if key == "order_date" and self._view and self._view.mode == ViewMode.CREATE:
+            self._page.run_task(self.__refresh_order_number_for_date)
 
     async def _perform_get_page(
         self, service: BaseService[OrderPlainSchema, SalesOrderStrictSchema], endpoint: Endpoint
@@ -972,9 +983,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
 
     def __build_create_defaults(self) -> dict[str, object]:
         today = date.today()
-        date_part = today.strftime("%Y%m%d")
-        suffix = "".join(random.choices(string.ascii_uppercase + string.digits, k=7))
-        number = f"{date_part}{suffix}"
+        number = self.__prefetched_create_number or self.__format_order_number(today, 1)
         defaults: dict[str, object] = {
             "number": number,
             "is_sales": True,
@@ -989,6 +998,47 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         if self.__default_status_id is not None:
             defaults["status_id"] = self.__default_status_id
         return defaults
+
+    async def __refresh_order_number_for_date(self) -> None:
+        if not self._view or self._view.mode != ViewMode.CREATE:
+            return
+        order_date = self._request_data.input_values.get("order_date")
+        if isinstance(order_date, str):
+            try:
+                order_date = date.fromisoformat(order_date)
+            except ValueError:
+                return
+        if not isinstance(order_date, date):
+            return
+        self.__number_request_counter += 1
+        request_id = self.__number_request_counter
+        number = await self.__generate_order_number(order_date)
+        if request_id != self.__number_request_counter:
+            return
+        if not self._view or self._view.mode != ViewMode.CREATE:
+            return
+        self._view.set_order_number(number)
+
+    async def __generate_order_number(self, order_date: date) -> str:
+        sequence = await self.__get_next_order_sequence(order_date)
+        return self.__format_order_number(order_date, sequence)
+
+    async def __get_next_order_sequence(self, order_date: date) -> int:
+        try:
+            query_params = {"order_date": order_date.isoformat(), "page": 1, "page_size": 1}
+            response = await self._service.get_page(Endpoint.SALES_ORDERS, None, query_params, None, self._module_id)
+        except Exception:
+            self._logger.exception("Failed to fetch sales order count for date.")
+            return 1
+        if not response:
+            return 1
+        return max(1, response.total + 1)
+
+    @staticmethod
+    def __format_order_number(order_date: date, sequence: int) -> str:
+        date_part = order_date.strftime("%Y/%m/%d")
+        suffix = "".join(random.choices(string.ascii_uppercase, k=3))
+        return f"{date_part}/{suffix}/{sequence:04d}"
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
     async def _perform_create(

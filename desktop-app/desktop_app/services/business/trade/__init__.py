@@ -19,6 +19,7 @@ from schemas.business.trade.currency_schema import CurrencyPlainSchema, Currency
 from schemas.business.trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
 from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
 from schemas.business.trade.exchange_rate_schema import ExchangeRatePlainSchema, ExchangeRateStrictSchema
+from schemas.business.trade.invoice_schema import InvoicePlainSchema, InvoiceStrictSchema
 from schemas.business.trade.order_schema import OrderPlainSchema, OrderStrictSchema
 from schemas.business.trade.status_schema import StatusPlainSchema, StatusStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
@@ -71,6 +72,11 @@ ExchangeRateService = ServiceFactory.create(
     plain_schema_cls=ExchangeRatePlainSchema,
     strict_schema_cls=ExchangeRateStrictSchema,
 )
+InvoiceService = ServiceFactory.create(
+    name_prefix="Invoice",
+    plain_schema_cls=InvoicePlainSchema,
+    strict_schema_cls=InvoiceStrictSchema,
+)
 OrderService = ServiceFactory.create(
     name_prefix="Order",
     plain_schema_cls=OrderPlainSchema,
@@ -98,6 +104,7 @@ __all__ = [
     "CustomerService",
     "DiscountService",
     "ExchangeRateService",
+    "InvoiceService",
     "OrderService",
     "OrderViewService",
     "StatusService",

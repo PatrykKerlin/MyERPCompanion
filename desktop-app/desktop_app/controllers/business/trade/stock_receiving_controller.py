@@ -416,7 +416,7 @@ class StockReceivingController(
         self.__pending_move_item_ids.clear()
         if self.__current_order_id is not None:
             await self.__load_order_items(self.__current_order_id)
-            await self.__maybe_update_order_status(self.__current_order_id)
+            await self.__check_and_update_order_status(self.__current_order_id)
 
     def __refresh_source_rows(self) -> None:
         if not self._view:
@@ -441,14 +441,14 @@ class StockReceivingController(
         self._view.set_source_enabled(bool(source_rows))
         self.__sync_transfer_state()
 
-    async def __maybe_update_order_status(self, order_id: int) -> None:
+    async def __check_and_update_order_status(self, order_id: int) -> None:
         order_items = await self.__perform_get_order_items(order_id)
         if not order_items:
             return
         if any(item.to_process > 0 for item in order_items):
             return
         statuses = await self.__perform_get_all_statuses()
-        target_status = next((status for status in statuses if status.order == 7), None)
+        target_status = next((status for status in statuses if status.order == 8), None)
         if not target_status:
             return
         order_statuses = await self.__perform_get_order_statuses(order_id)
@@ -499,4 +499,5 @@ class StockReceivingController(
             category_id=item.category_id,
             unit_id=item.unit_id,
             supplier_id=item.supplier_id,
+            lead_time=item.lead_time,
         )

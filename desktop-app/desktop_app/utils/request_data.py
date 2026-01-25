@@ -13,3 +13,5 @@ class RequestData:
     total: int = 0
     selected_inputs: set[str] = field(default_factory=set)
     input_values: dict[str, Any] = field(default_factory=dict)
+    undo_stack: list[tuple[str, Any, Any]] = field(default_factory=list)
+    redo_stack: list[tuple[str, Any, Any]] = field(default_factory=list)

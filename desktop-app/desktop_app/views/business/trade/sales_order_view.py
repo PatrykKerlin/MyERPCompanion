@@ -254,6 +254,17 @@ class SalesOrderView(BaseView):
         if self.__status_history_table.page:
             self.__status_history_table.update()
 
+    def set_order_number(self, number: str) -> None:
+        field = self._inputs.get("number")
+        if not field:
+            return
+        input_control = field.input.content
+        if hasattr(input_control, "value"):
+            setattr(input_control, "value", number)
+            if input_control:
+                input_control.update()
+        self._controller.set_field_value("number", number)
+
     def __apply_create_defaults(self) -> None:
         for key, value in self.__create_defaults.items():
             if key in self._inputs:

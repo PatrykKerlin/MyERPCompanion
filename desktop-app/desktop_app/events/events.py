@@ -111,6 +111,16 @@ class MenuBarReady(BaseEvent):
 
 
 @dataclass(frozen=True)
+class ToolbarToggleRequested(BaseEvent):
+    pass
+
+
+@dataclass(frozen=True)
+class TabsBarToggleRequested(BaseEvent):
+    pass
+
+
+@dataclass(frozen=True)
 class ViewRequested(BaseEvent):
     module_id: int
     view_key: View

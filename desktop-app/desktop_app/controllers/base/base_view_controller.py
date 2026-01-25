@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Generic, TypeVar, cast
 from datetime import date, datetime
+import json
 
 import flet as ft
 from pydantic import ValidationError
@@ -24,6 +25,8 @@ from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.request_data import RequestData
 from utils.translation import Translation
 from views.base.base_view import BaseView
+from views.controls.date_field_control import DateField
+from views.controls.numeric_field_control import NumericField
 from config.context import Context
 from views.components.view_dialog_component import ViewDialog
 
@@ -150,17 +153,34 @@ class BaseViewController(
     def on_value_changed(self, event: ft.ControlEvent, key: str, *after_change: Callable[[], None]) -> None:
         if hasattr(event.control, "value"):
             value = getattr(event.control, "value", None)
-            self.set_field_value(key, value)
+            parsed_value = self.__parse_value(value)
+            self.__record_undo_state(key, parsed_value)
+            self.__set_field_value_no_history(key, parsed_value)
         for callback in after_change:
             callback()
 
     def set_field_value(self, key: str, value: str | int | float | bool | date | None) -> None:
-        if not self._view:
+        self.__set_field_value_no_history(key, value)
+
+    def on_undo_clicked(self) -> None:
+        if not self._view or not self._request_data.undo_stack:
             return
-        parsed_value = self.__parse_value(value)
-        self._request_data.input_values[key] = parsed_value
-        error = self.__validate_field(key)
-        self._view.set_field_error(key, error)
+        key, old_value, new_value = self._request_data.undo_stack.pop()
+        self._request_data.redo_stack.append((key, old_value, new_value))
+        self.__apply_field_value(key, old_value)
+
+    def on_redo_clicked(self) -> None:
+        if not self._view or not self._request_data.redo_stack:
+            return
+        key, old_value, new_value = self._request_data.redo_stack.pop()
+        self._request_data.undo_stack.append((key, old_value, new_value))
+        self.__apply_field_value(key, new_value)
+
+    def on_copy_clicked(self) -> None:
+        self._page.run_task(self.__copy_inputs_to_clipboard)
+
+    def on_paste_clicked(self) -> None:
+        self._page.run_task(self.__paste_inputs_from_clipboard)
 
     def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
         return available_fields
@@ -358,6 +378,103 @@ class BaseViewController(
         if value_lower in {"true", "false"}:
             return value_lower == "true"
         return value_stripped
+
+    def __record_undo_state(self, key: str, new_value: Any) -> None:
+        if not self._view:
+            return
+        current_value = self._request_data.input_values.get(key, self.__get_control_value(key))
+        current_value = self.__parse_value(current_value)
+        if current_value == new_value:
+            return
+        self._request_data.undo_stack.append((key, current_value, new_value))
+        if len(self._request_data.undo_stack) > 100:
+            self._request_data.undo_stack.pop(0)
+        self._request_data.redo_stack.clear()
+
+    def __get_control_value(self, key: str) -> Any:
+        if not self._view:
+            return None
+        field = self._view.inputs.get(key)
+        if not field:
+            return None
+        control = field.input.content
+        if control is None:
+            return None
+        return getattr(control, "value", None)
+
+    def __set_field_value_no_history(self, key: str, value: Any) -> None:
+        if not self._view:
+            return
+        parsed_value = self.__parse_value(value)
+        self._request_data.input_values[key] = parsed_value
+        error = self.__validate_field(key)
+        self._view.set_field_error(key, error)
+
+    def __apply_field_value(self, key: str, value: Any) -> None:
+        if not self._view:
+            return
+        field = self._view.inputs.get(key)
+        if not field:
+            return
+        control = field.input.content
+        if control is None:
+            return
+        if isinstance(control, ft.Dropdown):
+            control.value = "0" if value is None else str(value)
+        elif isinstance(control, ft.Checkbox):
+            control.value = bool(value) if value is not None else False
+        elif isinstance(control, NumericField):
+            control.value = 0 if value is None else value
+        elif isinstance(control, DateField):
+            parsed_date: date | None
+            if isinstance(value, str):
+                try:
+                    parsed_date = date.fromisoformat(value)
+                except ValueError:
+                    parsed_date = None
+            elif isinstance(value, date):
+                parsed_date = value
+            else:
+                parsed_date = None
+            control.value = parsed_date
+        elif hasattr(control, "value"):
+            setattr(control, "value", "" if value is None else str(value))
+        control.update()
+        self.__set_field_value_no_history(key, value)
+
+    async def __copy_inputs_to_clipboard(self) -> None:
+        if not self._view:
+            return
+        data: dict[str, Any] = {}
+        for key, field in self._view.inputs.items():
+            control = field.input.content
+            if control is None or not hasattr(control, "value"):
+                continue
+            value = getattr(control, "value", None)
+            if isinstance(value, (date, datetime)):
+                value = value.isoformat()
+            data[key] = value
+        payload = json.dumps(data)
+        await ft.Clipboard().set(payload)
+
+    async def __paste_inputs_from_clipboard(self) -> None:
+        if not self._view:
+            return
+        payload = await ft.Clipboard().get()
+        if not payload:
+            return
+        try:
+            data = json.loads(payload)
+        except json.JSONDecodeError:
+            self._open_error_dialog(message="Invalid clipboard data.")
+            return
+        if not isinstance(data, dict):
+            self._open_error_dialog(message="Invalid clipboard data.")
+            return
+        for key, value in data.items():
+            if key not in self._view.inputs:
+                continue
+            self.__apply_field_value(key, value)
 
     async def __execute_search_clicked(self) -> None:
         if not self._view:

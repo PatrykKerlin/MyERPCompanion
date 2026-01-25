@@ -32,6 +32,10 @@ class OrderStrictSchema(BaseStrictSchema):
     delivery_method_id: Constraints.PositiveIntegerOptional
     currency_id: Constraints.PositiveInteger
 
+
+class OrderInvoiceBulkStrictSchema(BaseStrictSchema):
+    invoice_id: Constraints.PositiveIntegerOptional
+
     @model_validator(mode="after")
     def _validate_data(self) -> OrderStrictSchema:
         if not self.customer_id and not self.supplier_id:

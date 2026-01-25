@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from typing import TYPE_CHECKING
 
 from controllers.base.base_component_controller import BaseComponentController
@@ -49,9 +50,18 @@ class FooterController(BaseComponentController[FooterComponent, FooterRequested]
         if not self._component:
             return
         while True:
-            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            now = self.__get_local_time().strftime("%Y-%m-%d %H:%M:%S")
             self._component.set_time(now)
             await asyncio.sleep(1)
 
     async def __api_status_handler(self, event: ApiStatusChecked) -> None:
         await self.__refresh_status(event.status)
+
+    def __get_local_time(self) -> datetime:
+        timezone_name = getattr(self._settings, "TIMEZONE", None)
+        if timezone_name:
+            try:
+                return datetime.now(ZoneInfo(timezone_name))
+            except Exception:
+                self._logger.exception("Invalid TIMEZONE setting: %s", timezone_name)
+        return datetime.now().astimezone()

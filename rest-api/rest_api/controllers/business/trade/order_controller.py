@@ -48,6 +48,7 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
                 Action.GET_ONE: True,
                 Action.CREATE: True,
                 Action.UPDATE: True,
+                Action.UPDATE_BULK: True,
                 Action.DELETE: True,
             },
         )

@@ -849,7 +849,7 @@ class OrderPickingController(
         self.__pending_moves.clear()
         if self.__current_order_id is not None:
             await self.__load_order_items(self.__current_order_id)
-            await self.__maybe_update_order_status(self.__current_order_id, touched_item_ids)
+            await self.__check_and_update_order_status(self.__current_order_id, touched_item_ids)
 
     async def __handle_package_save(self) -> None:
         if not self._view or self.__current_order_id is None:
@@ -933,7 +933,7 @@ class OrderPickingController(
         )
         await self.__load_order_items(self.__current_order_id)
 
-    async def __maybe_update_order_status(self, order_id: int, touched_item_ids: set[int]) -> None:
+    async def __check_and_update_order_status(self, order_id: int, touched_item_ids: set[int]) -> None:
         statuses = await self.__perform_get_all_statuses()
         status_by_order = {status.order: status for status in statuses}
         order_statuses = await self.__perform_get_order_statuses(order_id)

@@ -26,6 +26,8 @@ from events.events import (
     FooterRequested,
     TabsBarRequested,
     ToolbarRequested,
+    ToolbarToggleRequested,
+    TabsBarToggleRequested,
 )
 from services.core.app_service import AppService
 
@@ -56,6 +58,8 @@ class AppController(BaseController):
                 FooterReady: self.__footer_ready_handler,
                 TabsBarReady: self.__tabs_bar_ready_handler,
                 TabClosed: self.__tab_closed_handler,
+                ToolbarToggleRequested: self.__toolbar_toggle_handler,
+                TabsBarToggleRequested: self.__tabs_bar_toggle_handler,
             }
         )
         self._subscribe_state_listeners(
@@ -135,6 +139,14 @@ class AppController(BaseController):
 
     async def __tab_closed_handler(self, event: TabClosed) -> None:
         self.__view.remove_stack_item(event.view)
+
+    async def __toolbar_toggle_handler(self, _: ToolbarToggleRequested) -> None:
+        self.__view.toggle_toolbar_visible()
+        self._page.update()
+
+    async def __tabs_bar_toggle_handler(self, _: TabsBarToggleRequested) -> None:
+        self.__view.toggle_tabs_bar_visible()
+        self._page.update()
 
     def __shell_updated_listener(self, state: ShellState) -> None:
         if state.is_shell_ready:

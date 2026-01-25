@@ -77,6 +77,12 @@ class AppView:
         self.__tabs_bar_container.content = component
         self.__tabs_bar_container.visible = True
 
+    def toggle_toolbar_visible(self) -> None:
+        self.__toolbar_container.visible = not self.__toolbar_container.visible
+
+    def toggle_tabs_bar_visible(self) -> None:
+        self.__tabs_bar_container.visible = not self.__tabs_bar_container.visible
+
     def _apply_page_settings(self, page: ft.Page) -> None:
         page.title = self.__translation.get("my_erp_companion")
         page.theme_mode = self._resolve_theme_mode(self.__theme)

@@ -34,4 +34,5 @@ VALUES
 ('stock_receiving', 'Stock receiving view', 3, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 
 ('currencies', 'Currencies view', 1, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('exchange_rates', 'Exchange rates view', 2, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id);
+('exchange_rates', 'Exchange rates view', 3, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('invoices', 'Invoices view', 2, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id);

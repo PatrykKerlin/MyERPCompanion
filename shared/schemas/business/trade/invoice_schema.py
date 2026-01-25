@@ -11,10 +11,10 @@ class InvoiceStrictSchema(BaseStrictSchema):
     due_date: date
 
     is_paid: Constraints.BooleanFalse
-    total_net: Constraints.PositiveNumeric_10_2
-    total_vat: Constraints.PositiveNumeric_10_2
-    total_gross: Constraints.PositiveNumeric_10_2
-    total_discount: Constraints.PositiveNumeric_10_2
+    total_net: Constraints.NonNegativeNumeric_10_2
+    total_vat: Constraints.NonNegativeNumeric_10_2
+    total_gross: Constraints.NonNegativeNumeric_10_2
+    total_discount: Constraints.NonNegativeNumeric_10_2
 
     currency_id: Constraints.PositiveInteger
     customer_id: Constraints.PositiveInteger

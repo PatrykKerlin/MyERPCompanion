@@ -100,6 +100,7 @@ class App:
             trade.CustomerController(self.__context),
             trade.DiscountController(self.__context),
             trade.ExchangeRateController(self.__context),
+            trade.InvoiceController(self.__context),
             trade.OrderPickingController(self.__context),
             trade.PurchaseOrderController(self.__context),
             trade.SalesOrderController(self.__context),
