@@ -62,12 +62,12 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
         ]
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> EmployeeView:
-        self.__all_departments, self.__all_positions = await asyncio.gather(
+        self.__all_employees, self.__all_departments, self.__all_positions = await asyncio.gather(
+            self.__perform_get_all_employees(),
             self.__perform_get_all_departments(),
             self.__perform_get_all_positions(),
         )
         self.__positions_by_id = {position.id: position for position in self.__all_positions}
-        self.__all_employees = await self.__perform_get_all_employees()
 
         selected_department_id = self._request_data.input_values.get("department_id")
         selected_position_id = self._request_data.input_values.get("position_id")

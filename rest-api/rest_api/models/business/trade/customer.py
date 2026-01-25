@@ -10,6 +10,7 @@ from models.base.fields import Fields
 if TYPE_CHECKING:
     from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
     from models.business.trade.discount import Discount
+    from models.business.trade.invoice import Invoice
     from models.business.trade.order import Order
     from models.core.user import User
 
@@ -47,6 +48,9 @@ class Customer(BaseModel):
         argument="User", back_populates="customer", foreign_keys=[user_id], uselist=False
     )
 
+    invoices: Mapped[list[Invoice]] = Fields.relationship(
+        argument="Invoice", back_populates="customer", foreign_keys="Invoice.customer_id"
+    )
     orders: Mapped[list[Order]] = Fields.relationship(
         argument="Order", back_populates="customer", foreign_keys="Order.customer_id"
     )

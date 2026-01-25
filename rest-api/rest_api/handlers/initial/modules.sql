@@ -1,9 +1,9 @@
-INSERT INTO modules (key, description, in_side_menu, "order", controllers, is_active, created_at, created_by)
+INSERT INTO modules (key, description, in_side_menu, "order", is_active, created_at, created_by)
 VALUES
-('core', 'Core module', FALSE, 1, ARRAY['ModuleController', 'CurrentUserController'], TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('administration', 'Administration module', TRUE, 1, ARRAY['placeholder'], TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('hr', 'HR module', TRUE, 2, ARRAY['DepartmentController', 'EmployeeController', 'PositionController', 'CurrencyController'], TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('logistic', 'Logistic module', TRUE, 3, ARRAY['AssocBinItemController', 'AssocCategoryDiscountController', 'AssocItemDiscountController', 'BinController', 'CarrierController', 'CategoryController', 'CurrencyController', 'DeliveryMethodController', 'DiscountController', 'ImageController', 'ItemController', 'SupplierController', 'UnitController', 'WarehouseController'], TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('sales', 'Sales module', TRUE, 4, ARRAY['AssocBinItemController', 'AssocCategoryDiscountController', 'AssocCustomerDiscountController', 'AssocItemDiscountController', 'AssocOrderItemController', 'AssocOrderStatusController', 'BinController', 'CurrencyController', 'CustomerController', 'DeliveryMethodController', 'DiscountController', 'ItemController', 'OrderController', 'OrderViewController', 'StatusController', 'SupplierController', 'UserControler'], TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('purchase', 'Sales module', TRUE, 4, ARRAY['AssocBinItemController', 'AssocCategoryDiscountController', 'AssocCustomerDiscountController', 'AssocItemDiscountController', 'AssocOrderItemController', 'AssocOrderStatusController', 'BinController', 'CurrencyController', 'CustomerController', 'DeliveryMethodController', 'DiscountController', 'ItemController', 'OrderController', 'OrderViewController', 'StatusController', 'SupplierController', 'UserControler'], TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('accounting', 'Accounting module', TRUE, 5, ARRAY['CurrencyController', 'ExchangeRateController'], TRUE, CURRENT_TIMESTAMP, :superuser_id);
+('core', 'Core module', FALSE, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('administration', 'Administration module', TRUE, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('hr', 'HR module', TRUE, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('logistic', 'Logistic module', TRUE, 3, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('sales', 'Sales module', TRUE, 4, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('purchase', 'Sales module', TRUE, 4, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('accounting', 'Accounting module', TRUE, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id);

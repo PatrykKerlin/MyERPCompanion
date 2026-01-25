@@ -10,10 +10,9 @@ from services.core.module_service import ModuleService
 
 
 class ModuleMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app: ASGIApp, context: Context) -> None:
+    def __init__(self, app: ASGIApp, module_header: str) -> None:
         super().__init__(app)
-        self.__get_session = context.get_session
-        self.__header = context.settings.MODULE_HEADER
+        self.__header = module_header
         self.__module_service = ModuleService()
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:

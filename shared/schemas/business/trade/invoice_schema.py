@@ -17,6 +17,8 @@ class InvoiceStrictSchema(BaseStrictSchema):
     total_discount: Constraints.PositiveNumeric_10_2
 
     currency_id: Constraints.PositiveInteger
+    customer_id: Constraints.PositiveInteger
+
     orders: Constraints.PositiveIntegerList
 
 
@@ -33,3 +35,4 @@ class InvoicePlainSchema(BasePlainSchema):
     total_discount: float
 
     currency_id: int
+    customer_id: int

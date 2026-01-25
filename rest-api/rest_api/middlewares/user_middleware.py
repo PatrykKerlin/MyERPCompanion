@@ -1,9 +1,7 @@
 from collections.abc import Callable
-from contextlib import AbstractAsyncContextManager
 from typing import Awaitable
 
 from fastapi import Request, Response
-from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
@@ -13,10 +11,9 @@ from utils.auth import Auth
 
 class UserMiddleware(BaseHTTPMiddleware):
     def __init__(
-        self, app: ASGIApp, get_session: Callable[..., AbstractAsyncContextManager[AsyncSession]], auth: Auth
+        self, app: ASGIApp, auth: Auth
     ) -> None:
         super().__init__(app)
-        self.__get_session = get_session
         self.__auth = auth
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:

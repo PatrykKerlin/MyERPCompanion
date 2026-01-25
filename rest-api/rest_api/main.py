@@ -141,8 +141,8 @@ def create_app() -> FastAPI:
         yield
 
     app_instance = App(context=context, database=database, auth=auth, lifespan=lifespan)
-    app_instance.get_app().add_middleware(UserMiddleware, get_session=context.get_session, auth=auth)  # type: ignore
-    app_instance.get_app().add_middleware(ModuleMiddleware, context=context)  # type: ignore
+    app_instance.get_app().add_middleware(UserMiddleware, auth=auth)  # type: ignore
+    app_instance.get_app().add_middleware(ModuleMiddleware, module_header=context.settings.MODULE_HEADER)  # type: ignore
     app_instance.get_app().add_middleware(DbSessionMiddleware, get_session=context.get_session)  # type: ignore
 
     return app_instance.get_app()

@@ -22,10 +22,7 @@ from models.business.trade.exchange_rate import ExchangeRate
 from models.business.trade.order import Order
 from models.business.trade.status import Status
 from models.business.trade.supplier import Supplier
-from repositories.mixins.item_quantity_mixin import ItemQuantityMixin
-
-
-class OrderViewRepository(ItemQuantityMixin):
+class OrderViewRepository:
     @staticmethod
     async def get_lookups(
         session: AsyncSession,
@@ -133,10 +130,7 @@ class OrderViewRepository(ItemQuantityMixin):
             )
             .order_by(Item.index)
         )
-        items = result.scalars().all()
-        await OrderViewRepository._attach_reserved_quantities(session, items)
-        await OrderViewRepository._attach_outbound_quantities(session, items)
-        return items
+        return result.scalars().all()
 
     @staticmethod
     async def get_all_items(session: AsyncSession) -> Sequence[Item]:
@@ -152,7 +146,4 @@ class OrderViewRepository(ItemQuantityMixin):
             )
             .order_by(Item.index)
         )
-        items = result.scalars().all()
-        await OrderViewRepository._attach_reserved_quantities(session, items)
-        await OrderViewRepository._attach_outbound_quantities(session, items)
-        return items
+        return result.scalars().all()

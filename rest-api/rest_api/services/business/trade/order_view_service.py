@@ -7,6 +7,7 @@ from models.business.trade.assoc_order_item import AssocOrderItem
 from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.order import Order
 from repositories.business.trade.order_view_repository import OrderViewRepository
+from repositories.mixins.item_quantity_mixin import ItemQuantityMixin
 from schemas.business.trade.order_schema import OrderPlainSchema
 from schemas.business.trade.order_view_schema import (
     OrderViewDeliveryMethodSchema,
@@ -23,7 +24,7 @@ from schemas.business.trade.order_view_schema import (
 )
 
 
-class OrderViewService:
+class OrderViewService(ItemQuantityMixin):
     async def get_view(
         self, session: AsyncSession, is_sales: bool, order_id: int | None = None
     ) -> OrderViewResponseSchema:
@@ -52,6 +53,9 @@ class OrderViewService:
                 source_items = await OrderViewRepository.get_items_for_supplier(session, order.supplier_id)
             elif is_sales:
                 source_items = await OrderViewRepository.get_all_items(session)
+
+        reserved_by_id = await self._get_reserved_quantities(session, source_items)
+        outbound_by_id = await self._get_outbound_quantities(session, source_items)
 
         response = OrderViewResponseSchema(
             order=OrderPlainSchema.model_validate(order) if order else None,
@@ -90,7 +94,7 @@ class OrderViewService:
                 for row in delivery_methods
             ],
             statuses=[OrderViewLookupSchema(id=row.id, label=row.key, status_number=row.order) for row in statuses],
-            source_items=self._build_source_items(source_items),
+            source_items=self._build_source_items(source_items, reserved_by_id, outbound_by_id),
             target_items=self._build_target_items(order_items),
             status_history=self._build_status_history(order_statuses),
             categories=[
@@ -125,7 +129,9 @@ class OrderViewService:
         return response
 
     @staticmethod
-    def _build_source_items(items: Sequence[Item]) -> list[OrderViewSourceItemSchema]:
+    def _build_source_items(
+        items: Sequence[Item], reserved_by_id: dict[int, int], outbound_by_id: dict[int, int]
+    ) -> list[OrderViewSourceItemSchema]:
         return [
             OrderViewSourceItemSchema(
                 id=item.id,
@@ -140,8 +146,8 @@ class OrderViewService:
                 length=item.length,
                 weight=item.weight,
                 stock_quantity=item.stock_quantity,
-                reserved_quantity=getattr(item, "reserved_quantity", 0),
-                outbound_quantity=getattr(item, "outbound_quantity", 0),
+                reserved_quantity=reserved_by_id.get(item.id, 0),
+                outbound_quantity=outbound_by_id.get(item.id, 0),
                 moq=item.moq,
                 is_package=item.is_package,
                 supplier_currency_id=item.supplier.currency_id if item.supplier else None,

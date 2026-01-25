@@ -64,6 +64,8 @@ class PopulateDatabase:
             "groups",
             "modules",
             "views",
+            "controllers",
+            "assoc_view_controllers",
             "assoc_module_groups",
             "currencies",
             "exchange_rates",

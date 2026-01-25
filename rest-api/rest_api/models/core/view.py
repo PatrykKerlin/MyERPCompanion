@@ -9,6 +9,8 @@ from models.base.base_model import BaseModel
 from models.base.fields import Fields
 
 if TYPE_CHECKING:
+    from models.core.assoc_view_controller import AssocViewController
+    from models.core.controller import Controller
     from models.core.module import Module
 
 
@@ -22,3 +24,11 @@ class View(BaseModel):
 
     module_id: Mapped[int] = Fields.foreign_key(column="modules.id")
     module: Mapped[Module] = Fields.relationship(argument="Module", back_populates="views", foreign_keys=[module_id])
+
+    view_controllers: Mapped[list[AssocViewController]] = Fields.relationship(
+        argument="AssocViewController", back_populates="view", foreign_keys="AssocViewController.view_id"
+    )
+
+    @property
+    def controllers(self) -> list[Controller]:
+        return [row.controller for row in self.view_controllers]

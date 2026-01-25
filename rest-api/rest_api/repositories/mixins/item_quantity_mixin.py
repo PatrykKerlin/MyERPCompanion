@@ -11,23 +11,21 @@ from models.business.trade.assoc_order_item import AssocOrderItem
 
 class ItemQuantityMixin:
     @staticmethod
-    async def _attach_reserved_quantities(session: AsyncSession, items: Sequence[Item]) -> None:
+    async def _get_reserved_quantities(session: AsyncSession, items: Sequence[Item]) -> dict[int, int]:
         if not items:
-            return
+            return {}
         item_ids = [item.id for item in items]
         result = await session.execute(
             select(AssocOrderItem.item_id, func.coalesce(func.sum(AssocOrderItem.to_process), 0))
             .where(AssocOrderItem.is_active.is_(True), AssocOrderItem.item_id.in_(item_ids))
             .group_by(AssocOrderItem.item_id)
         )
-        reserved_by_item_id = {row[0]: int(row[1]) for row in result.all()}
-        for item in items:
-            setattr(item, "reserved_quantity", reserved_by_item_id.get(item.id, 0))
+        return {row[0]: int(row[1]) for row in result.all()}
 
     @staticmethod
-    async def _attach_outbound_quantities(session: AsyncSession, items: Sequence[Item]) -> None:
+    async def _get_outbound_quantities(session: AsyncSession, items: Sequence[Item]) -> dict[int, int]:
         if not items:
-            return
+            return {}
         item_ids = [item.id for item in items]
         result = await session.execute(
             select(AssocBinItem.item_id, func.coalesce(func.sum(AssocBinItem.quantity), 0))
@@ -40,6 +38,4 @@ class ItemQuantityMixin:
             )
             .group_by(AssocBinItem.item_id)
         )
-        outbound_by_item_id = {row[0]: int(row[1]) for row in result.all()}
-        for item in items:
-            setattr(item, "outbound_quantity", outbound_by_item_id.get(item.id, 0))
+        return {row[0]: int(row[1]) for row in result.all()}

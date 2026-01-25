@@ -3,7 +3,6 @@ from models.business.logistic.bin import Bin
 from models.business.logistic.carrier import Carrier
 from models.business.logistic.category import Category
 from models.business.logistic.delivery_method import DeliveryMethod
-from models.business.logistic.item import Item
 from models.business.logistic.unit import Unit
 from models.business.logistic.warehouse import Warehouse
 from repositories.business.logistic import (
@@ -15,15 +14,14 @@ from repositories.business.logistic import (
     UnitRepository,
     WarehouseRepository,
 )
-from repositories.business.logistic.item_repository import ItemRepository
 from schemas.business.logistic.assoc_bin_item_schema import AssocBinItemPlainSchema, AssocBinItemStrictSchema
 from schemas.business.logistic.bin_schema import BinPlainSchema, BinStrictSchema
 from schemas.business.logistic.carrier_schema import CarrierPlainSchema, CarrierStrictSchema
 from schemas.business.logistic.category_schema import CategoryPlainSchema, CategoryStrictSchema
 from schemas.business.logistic.delivery_method_schema import DeliveryMethodPlainSchema, DeliveryMethodStrictSchema
-from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
 from schemas.business.logistic.unit_schema import UnitPlainSchema, UnitStrictSchema
 from schemas.business.logistic.warehouse_schema import WarehousePlainSchema, WarehouseStrictSchema
+from services.business.logistic.item_service import ItemService
 from utils.service_factory import ServiceFactory
 
 AssocBinItemService = ServiceFactory.create(
@@ -55,12 +53,6 @@ DeliveryMethodService = ServiceFactory.create(
     repository_cls=DeliveryMethodRepository,
     input_schema_cls=DeliveryMethodStrictSchema,
     output_schema_cls=DeliveryMethodPlainSchema,
-)
-ItemService = ServiceFactory.create(
-    model_cls=Item,
-    repository_cls=ItemRepository,
-    input_schema_cls=ItemStrictSchema,
-    output_schema_cls=ItemPlainSchema,
 )
 UnitService = ServiceFactory.create(
     model_cls=Unit,

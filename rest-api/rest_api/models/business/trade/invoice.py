@@ -10,6 +10,7 @@ from models.base.fields import Fields
 
 if TYPE_CHECKING:
     from models.business.trade.currency import Currency
+    from models.business.trade.customer import Customer
     from models.business.trade.order import Order
 
 
@@ -28,6 +29,11 @@ class Invoice(BaseModel):
     total_discount: Mapped[float] = Fields.numeric_10_2()
 
     notes: Mapped[str | None] = Fields.string_1000(nullable=True)
+
+    customer_id: Mapped[int] = Fields.foreign_key(column="customers.id")
+    customer: Mapped[Customer] = Fields.relationship(
+        argument="Customer", back_populates="invoices", foreign_keys=[customer_id], cascade_soft_delete=False
+    )
 
     currency_id: Mapped[int] = Fields.foreign_key(column="currencies.id")
     currency: Mapped[Currency] = Fields.relationship(
