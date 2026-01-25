@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import model_validator
 
-from schemas.base.base_schema import BaseStrictSchema
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
 
 
@@ -21,6 +21,8 @@ class AssocModuleGroupStrictSchema(BaseStrictSchema):
         return self
 
 
-class AssocUserGroupStrictSchema(BaseStrictSchema):
-    user_id: Constraints.PositiveInteger
-    group_id: Constraints.PositiveInteger
+class AssocModuleGroupPlainSchema(BasePlainSchema):
+    can_read: bool
+    can_modify: bool
+    group_id: int
+    module_id: int

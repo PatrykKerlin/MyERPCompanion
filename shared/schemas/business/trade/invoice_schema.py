@@ -19,8 +19,6 @@ class InvoiceStrictSchema(BaseStrictSchema):
     currency_id: Constraints.PositiveInteger
     customer_id: Constraints.PositiveInteger
 
-    orders: Constraints.PositiveIntegerList
-
 
 class InvoicePlainSchema(BasePlainSchema):
     number: str

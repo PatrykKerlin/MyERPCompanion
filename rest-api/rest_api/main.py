@@ -42,6 +42,19 @@ class App:
             {"router": core.AuthController(self.__auth).router, "prefix": "/auth"},
             {"router": core.TranslationController(self.__context, self.__auth).router, "prefix": "/translations"},
             {"router": core.ModuleController(self.__context, self.__auth).router, "prefix": "/modules"},
+            {"router": core.ControllerController(self.__context, self.__auth).router, "prefix": "/controllers"},
+            {
+                "router": core.AssocModuleGroupController(self.__context, self.__auth).router,
+                "prefix": "/module-groups",
+            },
+            {
+                "router": core.AssocUserGroupController(self.__context, self.__auth).router,
+                "prefix": "/user-groups",
+            },
+            {
+                "router": core.AssocViewControllerController(self.__context, self.__auth).router,
+                "prefix": "/view-controllers",
+            },
             {"router": core.ViewController(self.__context, self.__auth).router, "prefix": "/views"},
             {"router": core.UserController(self.__context, self.__auth).router, "prefix": "/users"},
             {"router": core.GroupController(self.__context, self.__auth).router, "prefix": "/groups"},
@@ -93,6 +106,7 @@ class App:
             {"router": trade.CustomerController(self.__context, self.__auth).router, "prefix": "/customers"},
             {"router": trade.DiscountController(self.__context, self.__auth).router, "prefix": "/discounts"},
             {"router": trade.ExchangeRateController(self.__context, self.__auth).router, "prefix": "/exchange-rates"},
+            {"router": trade.InvoiceController(self.__context, self.__auth).router, "prefix": "/invoices"},
             {"router": trade.StatusController(self.__context, self.__auth).router, "prefix": "/statuses"},
             {"router": trade.SupplierController(self.__context, self.__auth).router, "prefix": "/suppliers"},
             {"router": trade.OrderController(self.__context, self.__auth).router, "prefix": "/orders"},

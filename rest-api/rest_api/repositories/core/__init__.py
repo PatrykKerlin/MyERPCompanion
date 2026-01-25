@@ -1,5 +1,7 @@
 from models.core.assoc_module_group import AssocModuleGroup
 from models.core.assoc_user_group import AssocUserGroup
+from models.core.assoc_view_controller import AssocViewController
+from models.core.controller import Controller
 from models.core.group import Group
 from models.core.image import Image
 from models.core.language import Language
@@ -12,6 +14,8 @@ from utils.repository_factory import RepositoryFactory
 
 AssocModuleGroupRepository = RepositoryFactory.create(AssocModuleGroup)
 AssocUserGroupRepository = RepositoryFactory.create(AssocUserGroup)
+AssocViewControllerRepository = RepositoryFactory.create(AssocViewController)
+ControllerRepository = RepositoryFactory.create(Controller)
 GroupRepository = RepositoryFactory.create(Group)
 ImageRepository = RepositoryFactory.create(Image)
 LanguageRepository = RepositoryFactory.create(Language)
@@ -21,6 +25,8 @@ ViewRepository = RepositoryFactory.create(View)
 __all__ = [
     "AssocModuleGroupRepository",
     "AssocUserGroupRepository",
+    "AssocViewControllerRepository",
+    "ControllerRepository",
     "GroupRepository",
     "ImageRepository",
     "LanguageRepository",
