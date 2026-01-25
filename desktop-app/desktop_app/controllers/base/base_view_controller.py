@@ -297,6 +297,9 @@ class BaseViewController(
     async def __record_delete_requested_handler(self, event: RecordDeleteRequested) -> None:
         if event.view_key != self._view_key:
             return
+        confirm = await self._show_confirm_dialog("confirm_delete_record")
+        if not confirm:
+            return
         await self._perform_delete(event.id, self._service, self._endpoint)
         tab_title = self._get_tab_title(event.view_key, event.id)
         await self._event_bus.publish(TabCloseRequested(tab_title))

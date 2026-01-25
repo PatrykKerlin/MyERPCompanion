@@ -5,7 +5,7 @@ from typing import Any
 from dataclasses import dataclass
 
 from events.base.base_event import BaseEvent
-from utils.enums import View
+from utils.enums import TabNavigationDirection, View
 from views.base.base_view import BaseView
 from views.components.footer_component import FooterComponent
 from views.components.menu_bar_component import MenuBarComponent
@@ -139,6 +139,26 @@ class TabRequested(BaseEvent):
     record_id: int | None = None
     record_data: dict[str, Any] | None = None
     save_succeeded: bool = False
+
+
+@dataclass(frozen=True)
+class TabNavigateRequested(BaseEvent):
+    direction: TabNavigationDirection
+
+
+@dataclass(frozen=True)
+class TabSearchRequested(BaseEvent):
+    pass
+
+
+@dataclass(frozen=True)
+class TabCloseAllRequested(BaseEvent):
+    pass
+
+
+@dataclass(frozen=True)
+class TabCloseOthersRequested(BaseEvent):
+    pass
 
 
 @dataclass(frozen=True)

@@ -6,7 +6,18 @@ from controllers.base.base_component_controller import BaseComponentController
 from states.states import ViewState
 from utils.enums import EditDisabledView, ViewMode
 from views.components.toolbar_component import ToolbarComponent
-from events.events import RecordDeleteRequested, ToolbarReady, ToolbarRequested, SideMenuToggleRequested, ViewRequested
+from events.events import (
+    RecordDeleteRequested,
+    TabNavigateRequested,
+    TabCloseAllRequested,
+    TabCloseOthersRequested,
+    TabSearchRequested,
+    ToolbarReady,
+    ToolbarRequested,
+    SideMenuToggleRequested,
+    ViewRequested,
+)
+from utils.enums import TabNavigationDirection
 
 
 if TYPE_CHECKING:
@@ -89,6 +100,39 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
             ),
         )
 
+    def on_first_tab_clicked(self) -> None:
+        self._page.run_task(
+            self._event_bus.publish,
+            TabNavigateRequested(direction=TabNavigationDirection.FIRST),
+        )
+
+    def on_previous_tab_clicked(self) -> None:
+        self._page.run_task(
+            self._event_bus.publish,
+            TabNavigateRequested(direction=TabNavigationDirection.PREVIOUS),
+        )
+
+    def on_search_tab_clicked(self) -> None:
+        self._page.run_task(self._event_bus.publish, TabSearchRequested())
+
+    def on_close_all_tabs_clicked(self) -> None:
+        self._page.run_task(self._event_bus.publish, TabCloseAllRequested())
+
+    def on_close_other_tabs_clicked(self) -> None:
+        self._page.run_task(self._event_bus.publish, TabCloseOthersRequested())
+
+    def on_next_tab_clicked(self) -> None:
+        self._page.run_task(
+            self._event_bus.publish,
+            TabNavigateRequested(direction=TabNavigationDirection.NEXT),
+        )
+
+    def on_last_tab_clicked(self) -> None:
+        self._page.run_task(
+            self._event_bus.publish,
+            TabNavigateRequested(direction=TabNavigationDirection.LAST),
+        )
+
     def __view_updated_listener(self, state: ViewState) -> None:
         self.__state_handlers[state.mode]()
 
@@ -98,6 +142,7 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         self._component.set_lock_view_button_icon(unlocked=False)
         self._component.set_lock_view_button_state(disabled=True)
         self._component.set_delete_button_state(disabled=True)
+        self._component.set_navigation_buttons_state(disabled=True)
 
     def __set_search_mode(self) -> None:
         if not self._component:
@@ -105,6 +150,7 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         self._component.set_lock_view_button_icon(unlocked=False)
         self._component.set_lock_view_button_state(disabled=False)
         self._component.set_delete_button_state(disabled=True)
+        self._component.set_navigation_buttons_state(disabled=False)
 
     def __set_list_mode(self) -> None:
         if not self._component:
@@ -112,6 +158,7 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         self._component.set_lock_view_button_icon(unlocked=False)
         self._component.set_lock_view_button_state(disabled=True)
         self._component.set_delete_button_state(disabled=True)
+        self._component.set_navigation_buttons_state(disabled=False)
 
     def __set_read_mode(self) -> None:
         if not self._component:
@@ -121,10 +168,12 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
             self._component.set_lock_view_button_icon(unlocked=False)
             self._component.set_lock_view_button_state(disabled=True)
             self._component.set_delete_button_state(disabled=False)
+            self._component.set_navigation_buttons_state(disabled=False)
             return
         self._component.set_lock_view_button_icon(unlocked=False)
         self._component.set_lock_view_button_state(disabled=False)
         self._component.set_delete_button_state(disabled=False)
+        self._component.set_navigation_buttons_state(disabled=False)
 
     def __set_create_mode(self) -> None:
         if not self._component:
@@ -132,6 +181,7 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         self._component.set_lock_view_button_icon(unlocked=True)
         self._component.set_lock_view_button_state(disabled=False)
         self._component.set_delete_button_state(disabled=True)
+        self._component.set_navigation_buttons_state(disabled=False)
 
     def __set_edit_mode(self) -> None:
         if not self._component:
@@ -139,6 +189,7 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         self._component.set_lock_view_button_icon(unlocked=True)
         self._component.set_lock_view_button_state(disabled=False)
         self._component.set_delete_button_state(disabled=True)
+        self._component.set_navigation_buttons_state(disabled=False)
 
     def __set_static_mode(self) -> None:
         if not self._component:
@@ -146,3 +197,4 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         self._component.set_lock_view_button_icon(unlocked=False)
         self._component.set_lock_view_button_state(disabled=True)
         self._component.set_delete_button_state(disabled=True)
+        self._component.set_navigation_buttons_state(disabled=False)

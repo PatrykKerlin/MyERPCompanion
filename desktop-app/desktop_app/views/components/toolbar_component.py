@@ -32,9 +32,53 @@ class ToolbarComponent(BaseComponent, ft.MenuBar):
             disabled=True,
             on_click=lambda _: self._controller.on_delete_clicked(),
         )
+        self.__nav_spacer = ft.Container(width=12)
+        self.__first_tab_button = ft.IconButton(
+            icon=ft.Icons.FIRST_PAGE,
+            tooltip=translation.get("First tab"),
+            disabled=True,
+            on_click=lambda _: self._controller.on_first_tab_clicked(),
+        )
+        self.__previous_tab_button = ft.IconButton(
+            icon=ft.Icons.CHEVRON_LEFT,
+            tooltip=translation.get("Previous tab"),
+            disabled=True,
+            on_click=lambda _: self._controller.on_previous_tab_clicked(),
+        )
+        self.__search_tab_button = ft.IconButton(
+            icon=ft.Icons.SEARCH,
+            tooltip=translation.get("Find tab"),
+            disabled=True,
+            on_click=lambda _: self._controller.on_search_tab_clicked(),
+        )
+        self.__close_other_tabs_button = ft.IconButton(
+            icon=ft.Icons.CLOSE_FULLSCREEN,
+            tooltip=translation.get("Close other tabs"),
+            disabled=True,
+            on_click=lambda _: self._controller.on_close_other_tabs_clicked(),
+        )
+        self.__close_all_tabs_button = ft.IconButton(
+            icon=ft.Icons.CLOSE,
+            tooltip=translation.get("Close all tabs"),
+            disabled=True,
+            on_click=lambda _: self._controller.on_close_all_tabs_clicked(),
+        )
+        self.__next_tab_button = ft.IconButton(
+            icon=ft.Icons.CHEVRON_RIGHT,
+            tooltip=translation.get("Next tab"),
+            disabled=True,
+            on_click=lambda _: self._controller.on_next_tab_clicked(),
+        )
+        self.__last_tab_button = ft.IconButton(
+            icon=ft.Icons.LAST_PAGE,
+            tooltip=translation.get("Last tab"),
+            disabled=True,
+            on_click=lambda _: self._controller.on_last_tab_clicked(),
+        )
         self.__refresh_button = ft.IconButton(
             icon=ft.Icons.REFRESH,
             tooltip=translation.get("refresh"),
+            disabled=True,
             on_click=lambda _: self._controller.on_refresh_clicked(),
         )
         ft.MenuBar.__init__(
@@ -44,6 +88,14 @@ class ToolbarComponent(BaseComponent, ft.MenuBar):
                 self.__toggle_menu_button,
                 self.__lock_view_button,
                 self.__delete_record_button,
+                self.__nav_spacer,
+                self.__first_tab_button,
+                self.__previous_tab_button,
+                self.__search_tab_button,
+                self.__next_tab_button,
+                self.__last_tab_button,
+                self.__close_other_tabs_button,
+                self.__close_all_tabs_button,
                 self.__refresh_button,
             ],
         )
@@ -70,3 +122,21 @@ class ToolbarComponent(BaseComponent, ft.MenuBar):
         elif not disabled and self.__delete_record_button.disabled:
             self.__delete_record_button.disabled = False
         self.__delete_record_button.update()
+
+    def set_navigation_buttons_state(self, disabled: bool) -> None:
+        buttons = [
+            self.__first_tab_button,
+            self.__previous_tab_button,
+            self.__search_tab_button,
+            self.__close_other_tabs_button,
+            self.__close_all_tabs_button,
+            self.__next_tab_button,
+            self.__last_tab_button,
+            self.__refresh_button,
+        ]
+        for button in buttons:
+            if disabled and not button.disabled:
+                button.disabled = True
+            elif not disabled and button.disabled:
+                button.disabled = False
+            button.update()

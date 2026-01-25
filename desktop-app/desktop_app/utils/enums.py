@@ -11,6 +11,13 @@ class ViewMode(StrEnum):
     STATIC = "static"
 
 
+class TabNavigationDirection(StrEnum):
+    FIRST = "first"
+    PREVIOUS = "previous"
+    NEXT = "next"
+    LAST = "last"
+
+
 class Module(IntEnum):
     CORE = 1
 
