@@ -17,6 +17,8 @@ if TYPE_CHECKING:
 class FooterController(BaseComponentController[FooterComponent, FooterRequested]):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
+        self.__status_task: asyncio.Task[None] | None = None
+        self.__clock_task: asyncio.Task[None] | None = None
         self._subscribe_event_handlers(
             {
                 FooterRequested: self._component_requested_handler,
@@ -36,26 +38,29 @@ class FooterController(BaseComponentController[FooterComponent, FooterRequested]
 
     def __shell_updated_listener(self, state: ShellState) -> None:
         if state.is_shell_ready:
-            asyncio.create_task(self.__refresh_status())
-            asyncio.create_task(self.__refresh_time())
+            self.__ensure_background_tasks()
 
-    async def __refresh_status(self, status: bool = True) -> None:
-        if not self._component:
-            return
-        self._component.set_status(status)
-        await asyncio.sleep(self._settings.API_CHECK_DELAY)
-        await self._event_bus.publish(ApiStatusRequested())
+    def __ensure_background_tasks(self) -> None:
+        if self.__status_task is None or self.__status_task.done():
+            self.__status_task = asyncio.create_task(self.__status_loop())
+        if self.__clock_task is None or self.__clock_task.done():
+            self.__clock_task = asyncio.create_task(self.__clock_loop())
 
-    async def __refresh_time(self) -> None:
-        if not self._component:
-            return
+    async def __status_loop(self) -> None:
         while True:
-            now = self.__get_local_time().strftime("%Y-%m-%d %H:%M:%S")
-            self._component.set_time(now)
+            await self._event_bus.publish(ApiStatusRequested())
+            await asyncio.sleep(self._settings.API_CHECK_DELAY)
+
+    async def __clock_loop(self) -> None:
+        while True:
+            if self._component:
+                now = self.__get_local_time().strftime("%Y-%m-%d %H:%M:%S")
+                self._component.set_time(now)
             await asyncio.sleep(1)
 
     async def __api_status_handler(self, event: ApiStatusChecked) -> None:
-        await self.__refresh_status(event.status)
+        if self._component:
+            self._component.set_status(event.status)
 
     def __get_local_time(self) -> datetime:
         timezone_name = getattr(self._settings, "TIMEZONE", None)
