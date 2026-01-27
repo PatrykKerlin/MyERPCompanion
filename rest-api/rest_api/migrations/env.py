@@ -13,7 +13,7 @@ import models.business.logistic  # noqa: F401
 import models.business.trade  # noqa: F401
 import models.ai  # noqa: F401
 import models.core  # noqa: F401
-from config.database import Database
+from database.engine import Engine
 from config.settings import Settings
 
 # this is the Alembic Config object, which provides
@@ -31,7 +31,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 
 settings = Settings()  # type: ignore
-db = Database(settings)
+db = Engine(settings)
 target_metadata = db.get_base().metadata
 
 

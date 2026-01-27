@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, timedelta
 
-from ai_app.db.repositories.order_repository import OrderRepository
-from ai_app.db.repositories.task_run_repository import TaskRunRepository
+from ai_app.repositories.order_repository import OrderRepository
+from ai_app.repositories.task_run_repository import TaskRunRepository
 
 
 @dataclass(frozen=True)

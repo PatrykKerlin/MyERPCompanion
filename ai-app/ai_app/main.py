@@ -6,9 +6,9 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from ai_app.config.settings import Settings
-from ai_app.db.engine import EngineProvider
-from ai_app.db.repositories.order_repository import OrderRepository
-from ai_app.db.repositories.task_run_repository import TaskRunRepository
+from database.engine import Engine
+from ai_app.repositories.order_repository import OrderRepository
+from ai_app.repositories.task_run_repository import TaskRunRepository
 from ai_app.services.data_window_service import DataWindowService
 from ai_app.tasks.inventory_risk import InventoryRiskTask
 from ai_app.tasks.promo_effects import PromoEffectsTask
@@ -48,7 +48,7 @@ class TaskOrchestrator:
 class AiApp:
     def __init__(self) -> None:
         self._settings = Settings()  # type: ignore
-        self._engine = EngineProvider(self._settings.DATABASE_URL).create()
+        self._engine = Engine(self._settings)
         self._orders = OrderRepository(self._engine)
         self._runs = TaskRunRepository(self._engine)
         self._windows = DataWindowService(self._orders, self._runs)

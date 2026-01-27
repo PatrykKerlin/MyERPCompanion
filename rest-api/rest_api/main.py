@@ -7,7 +7,7 @@ from fastapi import APIRouter, FastAPI
 from starlette.staticfiles import StaticFiles
 
 from config.context import Context
-from config.database import Database
+from database.engine import Engine
 from config.settings import Settings
 from controllers import core
 import models.ai  # noqa: F401
@@ -21,7 +21,7 @@ from utils.auth import Auth
 
 
 class App:
-    def __init__(self, context: Context, database: Database, auth: Auth, lifespan: Any = None) -> None:
+    def __init__(self, context: Context, database: Engine, auth: Auth, lifespan: Any = None) -> None:
         self.__context = context
         self.__database = database
         self.__auth = auth
@@ -124,7 +124,7 @@ class App:
 
     async def startup(self) -> None:
         async with self.__database.engine.begin() as conn:
-            await conn.run_sync(Database.get_base().metadata.create_all)
+            await conn.run_sync(Engine.get_base().metadata.create_all)
 
     def get_app(self) -> FastAPI:
         return self.__app
@@ -137,7 +137,7 @@ def create_app() -> FastAPI:
     )
     logger = logging.getLogger("api")
     settings = Settings()  # type: ignore
-    database = Database(settings)
+    database = Engine(settings)
     context = Context(settings=settings, get_session=database.get_session, logger=logger)
     auth = Auth(context)
 

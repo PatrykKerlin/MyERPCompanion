@@ -25,7 +25,7 @@ services:
       - "8000:8000"
     volumes:
       - ./rest-api/rest_api/:/rest_api
-      - ./shared/models/ai:/rest_api/models/ai
+      - ./shared/models:/rest_api/models
       - ./shared/schemas/business:/rest_api/schemas/business
       - ./shared/schemas/core:/rest_api/schemas/core
       - ./shared/schemas/validation:/rest_api/schemas/validation
@@ -101,9 +101,8 @@ services:
       - project_net
     volumes:
       - ./ai-app:/ai_app
-      - ./shared/models/ai:/ai_app/models/ai
-      - ./rest-api/rest_api/models/base:/ai_app/models/base
-      - ./rest-api/rest_api/models/business:/ai_app/models/business
+      - ./shared/models:/ai_app/models
+      - ./shared/database:/ai_app/database
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:changeme@postgres/MyERPCompanion
     depends_on:

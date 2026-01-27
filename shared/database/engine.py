@@ -4,16 +4,16 @@ from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
-from config.base import Base
+from database.base import Base
 from config.settings import Settings
 
 
-class Database:
+class Engine:
     __instance = None
     __initialized: bool = False
     __base = Base
 
-    def __new__(cls, _: Settings) -> Database:
+    def __new__(cls, _: Settings) -> Engine:
         if cls.__instance is None:
             cls.__instance = super().__new__(cls)
             cls.__instance.__initialized = False
