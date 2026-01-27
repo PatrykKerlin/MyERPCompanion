@@ -5,15 +5,21 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     VIRTUAL_ENV=/project \
     PATH="/project/bin:$PATH" \
-    PYTHONPATH="/rest_api" \
-    NVM_DIR=/root/.nvm \
-    PRISMA_NODEENV_EXTRA_ARGS="--node=system"
+    PYTHONPATH="/desktop_app" \
+    NVM_DIR=/root/.nvm
+
 
 RUN apt-get update && \
-    apt-get install -y curl postgresql-client --no-install-recommends && \
+    apt-get install -y \
+    curl x11-apps libx11-dev libgl1 libegl1 libxkbcommon0 libxcb1 libxcb-cursor0 libxcb-util1 \
+    libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-render0 libxcb-shape0 libxcb-shm0 \
+    libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 libxcomposite1 libxcursor1 \
+    libxdamage1 libxfixes3 libxi6 libxtst6 libnss3 libatk1.0-0 libatk-bridge2.0-0 libgtk-3-0 \
+    qt6-base-dev qtwayland5 tk \
+    --no-install-recommends && \
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash && \
-    . "$NVM_DIR/nvm.sh" && nvm install 24 && \
-    . "$NVM_DIR/nvm.sh" && nvm alias default 24 && \
+    . "$NVM_DIR/nvm.sh" && nvm install 23 && \
+    . "$NVM_DIR/nvm.sh" && nvm alias default 23 && \
     ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/node" /usr/bin/node && \
     ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npm" /usr/bin/npm && \
     ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npx" /usr/bin/npx && \
@@ -26,14 +32,10 @@ RUN python -m venv $VIRTUAL_ENV && \
     pip install -r /tmp/requirements.txt && \
     rm -rf /tmp/requirements.txt
 
-WORKDIR /rest_api
+WORKDIR /desktop_app
 
-RUN useradd -m -d /rest_api -s /bin/bash rest-api && \
-    mkdir -p /media && \
-    touch /media/.keep && \
-    chown -R rest-api:rest-api /rest_api /media && \
-    chmod -R 775 /rest_api /media
+RUN useradd -m -d /desktop_app -s /bin/bash desktop-app && \
+    chown -R desktop-app:desktop-app /desktop_app && \
+    chmod -R 755 /desktop_app
 
-USER rest-api
-
-EXPOSE 8000
+USER desktop-app

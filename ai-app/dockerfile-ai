@@ -1,15 +1,13 @@
-FROM debian:13
+FROM python:3.14-trixie
 LABEL maintainer="Patryk Kerlin"
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    PYTHONUNBUFFERED=1 \
+ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     VIRTUAL_ENV=/project \
-    PYENV_ROOT=/opt/pyenv \
-    PYTHONPATH="/ai_app:/ai_app/models" \
-    PATH="/project/bin:/opt/pyenv/bin:/opt/pyenv/shims:$PATH" \
-    LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8
+    PATH="/project/bin:$PATH" \
+    PYTHONPATH="/rest_api" \
+    NVM_DIR=/root/.nvm \
+    PRISMA_NODEENV_EXTRA_ARGS="--node=system"
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \

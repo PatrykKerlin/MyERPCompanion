@@ -1,9 +1,0 @@
-flet[all]
-pydantic
-pydantic-settings
-pydantic[email]
-httpx
-black
-pyright
-ruff
-isort
