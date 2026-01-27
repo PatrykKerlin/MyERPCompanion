@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 import models.business.hr  # noqa: F401
 import models.business.logistic  # noqa: F401
 import models.business.trade  # noqa: F401
+import models.ai  # noqa: F401
 import models.core  # noqa: F401
 from config.database import Database
 from config.settings import Settings

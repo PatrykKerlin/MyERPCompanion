@@ -25,6 +25,7 @@ services:
       - "8000:8000"
     volumes:
       - ./rest-api/rest_api/:/rest_api
+      - ./shared/models/ai:/rest_api/models/ai
       - ./shared/schemas/business:/rest_api/schemas/business
       - ./shared/schemas/core:/rest_api/schemas/core
       - ./shared/schemas/validation:/rest_api/schemas/validation
@@ -67,6 +68,48 @@ services:
     tty: true
     command:
       sh -c "flet main.py"
+
+  web-app:
+    build:
+      context: ./web-app
+      dockerfile: dockerfile-web
+    networks:
+      - project_net
+    ports:
+      - "8550:8550"
+    volumes:
+      - ./web-app:/web_app
+      - ./desktop-app/desktop_app:/desktop_app
+      - ./shared/schemas/business:/desktop_app/schemas/business
+      - ./shared/schemas/core:/desktop_app/schemas/core
+      - ./shared/schemas/validation:/desktop_app/schemas/validation
+      - ./desktop-app/desktop_app/schemas/base:/desktop_app/schemas/base
+    environment:
+      - API_URL=http://rest-api:8000/api
+      - FLET_SERVER_HOST=0.0.0.0
+      - FLET_SERVER_PORT=8550
+    depends_on:
+      - rest-api
+    command:
+      sh -c "python main.py"
+
+  ai-app:
+    build:
+      context: ./ai-app
+      dockerfile: dockerfile-ai
+    networks:
+      - project_net
+    volumes:
+      - ./ai-app:/ai_app
+      - ./shared/models/ai:/ai_app/models/ai
+      - ./rest-api/rest_api/models/base:/ai_app/models/base
+      - ./rest-api/rest_api/models/business:/ai_app/models/business
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:changeme@postgres/MyERPCompanion
+    depends_on:
+      - postgres
+    command:
+      sh -c "python -m ai_app.main"
 
 volumes:
   postgres-data:

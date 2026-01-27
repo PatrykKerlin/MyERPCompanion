@@ -10,6 +10,7 @@ from config.context import Context
 from config.database import Database
 from config.settings import Settings
 from controllers import core
+import models.ai  # noqa: F401
 from controllers.business import hr, logistic, trade
 from handlers.check_database_state import CheckDatabaseState
 from handlers.populate_database import PopulateDatabase
