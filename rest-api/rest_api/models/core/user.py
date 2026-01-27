@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from models.core.assoc_user_group import AssocUserGroup
     from models.core.group import Group
     from models.core.language import Language
-    from models.core.theme import Theme
 
 
 class User(BaseModel):
@@ -22,6 +21,7 @@ class User(BaseModel):
     username: Mapped[str] = Fields.string_20(unique=True)
     is_superuser: Mapped[bool] = Fields.boolean(default=False)
     password: Mapped[str] = Fields.string_100()
+    theme: Mapped[str] = Fields.string_10()
 
     employee_id: Mapped[int | None] = Fields.foreign_key(column="employees.id", unique=True, nullable=True)
     employee: Mapped[Employee | None] = Fields.relationship(
@@ -36,9 +36,6 @@ class User(BaseModel):
     language: Mapped[Language | None] = Fields.relationship(
         argument="Language", back_populates="users", foreign_keys=[language_id]
     )
-
-    theme_id: Mapped[int | None] = Fields.foreign_key(column="themes.id", nullable=True)
-    theme: Mapped[Theme | None] = Fields.relationship(argument="Theme", back_populates="users", foreign_keys=[theme_id])
 
     user_groups: Mapped[list[AssocUserGroup]] = Fields.relationship(
         argument="AssocUserGroup", back_populates="user", foreign_keys="AssocUserGroup.user_id"

@@ -30,6 +30,7 @@ from events.events import (
     TabsBarToggleRequested,
 )
 from services.core.app_service import AppService
+from utils.enums import ApiActionError
 
 from states.states import ViewState
 from views.core.app_view import AppView
@@ -79,21 +80,21 @@ class AppController(BaseController):
 
     async def __app_started_handler(self, _: AppStarted) -> None:
         self._open_loading_dialog()
-        try:
-            await self.__service.api_health_check()
+        ok = await self.__perform_api_health_check()
+        if ok:
             initial_language = self._settings.LANGUAGE
             await self._event_bus.publish(TranslationRequested(initial_language, False))
-        except Exception:
-            self._logger.exception(f"Unhandled exception in {self.__app_started_handler.__qualname__}")
+        else:
             self._open_error_dialog(message_key="api_not_responding")
 
     async def __api_status_handler(self, _: ApiStatusRequested) -> None:
-        try:
-            await self.__service.api_health_check()
-            await self._event_bus.publish(ApiStatusChecked(status=True))
-        except Exception:
-            self._logger.exception(f"Unhandled exception in {self.__api_status_handler.__qualname__}")
-            await self._event_bus.publish(ApiStatusChecked(status=False))
+        ok = await self.__perform_api_health_check()
+        await self._event_bus.publish(ApiStatusChecked(status=bool(ok)))
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_api_health_check(self) -> bool:
+        await self.__service.api_health_check()
+        return True
 
     async def __translation_ready_handler(self, event: TranslationReady) -> None:
         self._close_loading_dialog()

@@ -5,7 +5,6 @@ from models.core.controller import Controller
 from models.core.group import Group
 from models.core.image import Image
 from models.core.language import Language
-from models.core.theme import Theme
 from models.core.view import View
 from repositories.core.module_repository import ModuleRepository
 from repositories.core.translation_repository import TranslationRepository
@@ -19,7 +18,6 @@ ControllerRepository = RepositoryFactory.create(Controller)
 GroupRepository = RepositoryFactory.create(Group)
 ImageRepository = RepositoryFactory.create(Image)
 LanguageRepository = RepositoryFactory.create(Language)
-ThemeRepository = RepositoryFactory.create(Theme)
 ViewRepository = RepositoryFactory.create(View)
 
 __all__ = [
@@ -31,7 +29,6 @@ __all__ = [
     "ImageRepository",
     "LanguageRepository",
     "ModuleRepository",
-    "ThemeRepository",
     "TranslationRepository",
     "UserRepository",
     "ViewRepository",

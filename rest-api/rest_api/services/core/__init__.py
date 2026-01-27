@@ -4,7 +4,6 @@ from models.core.assoc_view_controller import AssocViewController
 from models.core.controller import Controller
 from models.core.group import Group
 from models.core.language import Language
-from models.core.theme import Theme
 from models.core.view import View
 from repositories.core import (
     AssocModuleGroupRepository,
@@ -13,7 +12,6 @@ from repositories.core import (
     ControllerRepository,
     GroupRepository,
     LanguageRepository,
-    ThemeRepository,
     ViewRepository,
 )
 from schemas.core.assoc_module_group_schema import AssocModuleGroupPlainSchema, AssocModuleGroupStrictSchema
@@ -22,7 +20,6 @@ from schemas.core.assoc_view_controller_schema import AssocViewControllerPlainSc
 from schemas.core.controller_schema import ControllerPlainSchema, ControllerStrictSchema
 from schemas.core.group_schema import GroupPlainSchema, GroupStrictSchema
 from schemas.core.language_schema import LanguagePlainSchema, LanguageStrictSchema
-from schemas.core.theme_schema import ThemePlainSchema, ThemeStrictSchema
 from schemas.core.view_schema import ViewPlainSchema, ViewStrictSchema
 from services.core.image_service import ImageService
 from services.core.module_service import ModuleService
@@ -66,12 +63,6 @@ LanguageService = ServiceFactory.create(
     input_schema_cls=LanguageStrictSchema,
     output_schema_cls=LanguagePlainSchema,
 )
-ThemeService = ServiceFactory.create(
-    model_cls=Theme,
-    repository_cls=ThemeRepository,
-    input_schema_cls=ThemeStrictSchema,
-    output_schema_cls=ThemePlainSchema,
-)
 ViewService = ServiceFactory.create(
     model_cls=View,
     repository_cls=ViewRepository,
@@ -89,7 +80,6 @@ __all__ = [
     "ImageService",
     "LanguageService",
     "ModuleService",
-    "ThemeService",
     "TranslationService",
     "UserService",
     "ViewService",

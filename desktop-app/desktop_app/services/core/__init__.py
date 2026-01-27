@@ -1,7 +1,6 @@
 from schemas.core.group_schema import GroupPlainSchema, GroupStrictSchema
 from schemas.core.language_schema import LanguagePlainSchema, LanguageStrictSchema
 from schemas.core.module_schema import ModulePlainSchema, ModuleStrictSchema
-from schemas.core.theme_schema import ThemePlainSchema, ThemeStrictSchema
 from schemas.core.user_schema import UserPlainSchema, UserStrictUpdateSchema
 from schemas.core.view_schema import ViewPlainSchema, ViewStrictSchema
 from services.core.app_service import AppService
@@ -26,11 +25,6 @@ ModuleService = ServiceFactory.create(
     plain_schema_cls=ModulePlainSchema,
     strict_schema_cls=ModuleStrictSchema,
 )
-ThemeService = ServiceFactory.create(
-    name_prefix="Theme",
-    plain_schema_cls=ThemePlainSchema,
-    strict_schema_cls=ThemeStrictSchema,
-)
 UserService = ServiceFactory.create(
     name_prefix="User",
     plain_schema_cls=UserPlainSchema,
@@ -50,7 +44,6 @@ __all__ = [
     "ImageService",
     "LanguageService",
     "ModuleService",
-    "ThemeService",
     "TranslationService",
     "UserService",
     "ViewService",

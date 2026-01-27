@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BeforeValidator, EmailStr, Field, HttpUrl
 
@@ -60,5 +60,6 @@ class Constraints:
     Symbol = Annotated[str, Field(min_length=1, max_length=3)]
     TaxId = Annotated[str, Field(min_length=10, max_length=10, pattern=__digits_only_regex)]
     TaxIdOptional = Annotated[str | None, Field(min_length=10, max_length=10, pattern=__digits_only_regex)]
+    Theme = Literal["system", "dark", "light"]
     Username = Annotated[str, Field(min_length=5, max_length=20)]
     WebsiteOptional = Annotated[HttpUrl | None, Field(max_length=50)]

@@ -59,7 +59,6 @@ class App:
             {"router": core.UserController(self.__context, self.__auth).router, "prefix": "/users"},
             {"router": core.GroupController(self.__context, self.__auth).router, "prefix": "/groups"},
             {"router": core.LanguageController(self.__context, self.__auth).router, "prefix": "/languages"},
-            {"router": core.ThemeController(self.__context, self.__auth).router, "prefix": "/themes"},
             {"router": core.ImageController(self.__context, self.__auth).router, "prefix": "/images"},
         ]
         business_hr_endpoints = [

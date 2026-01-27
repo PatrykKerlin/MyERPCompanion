@@ -5,7 +5,7 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.core import AssocUserGroup, Group, Language, Theme, User
+from models.core import AssocUserGroup, Group, Language, User
 from repositories.base.base_repository import BaseRepository
 
 
@@ -30,9 +30,7 @@ class UserRepository(BaseRepository[User]):
         return query.options(
             selectinload(cls._model_cls.user_groups).selectinload(AssocUserGroup.group),
             selectinload(cls._model_cls.language),
-            selectinload(cls._model_cls.theme),
             with_loader_criteria(AssocUserGroup, cls._expr(AssocUserGroup.is_active.is_(True))),
             with_loader_criteria(Group, cls._expr(Group.is_active.is_(True))),
             with_loader_criteria(Language, cls._expr(Language.is_active.is_(True))),
-            with_loader_criteria(Theme, cls._expr(Theme.is_active.is_(True))),
         )

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, TypeVar, cast
 from datetime import date, datetime
 
 import flet as ft
@@ -314,7 +314,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self,
         key: str,
         size: int,
-        options: list[tuple[int, str]],
+        options: Sequence[tuple[int | str, str]],
         callbacks: list[Callable[..., None]] | None = None,
     ) -> tuple[ft.Container, int]:
         return (

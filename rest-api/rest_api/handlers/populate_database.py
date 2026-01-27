@@ -45,7 +45,7 @@ class PopulateDatabase:
                 print("Superuser already exists.")
                 return
             hashed_password = await self.__auth.get_password_hash(password)
-            superuser = mc.User(username=username, password=hashed_password, is_superuser=True)
+            superuser = mc.User(username=username, password=hashed_password, theme="system", is_superuser=True)
             session.add(superuser)
             await session.flush()
             superuser.created_by = superuser.id
@@ -60,7 +60,6 @@ class PopulateDatabase:
         sql_files = [
             "languages",
             "translations",
-            "themes",
             "groups",
             "modules",
             "views",
@@ -88,7 +87,7 @@ class PopulateDatabase:
             "assoc_item_discounts",
             "customers",
             "statuses",
-            "assoc_customer_discounts"
+            "assoc_customer_discounts",
         ]
         for file_name in sql_files:
             file_path = self.__base_path / f"{file_name}.sql"
@@ -105,7 +104,6 @@ class PopulateDatabase:
     async def __update_superuser(self, session: AsyncSession) -> None:
         if self.__superuser:
             self.__superuser.language_id = 2
-            self.__superuser.theme_id = 1
             self.__superuser.modified_by = self.__superuser.id
             session.add(self.__superuser)
             await session.commit()

@@ -5,16 +5,13 @@ from pydantic import BaseModel, Field
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.core.group_schema import GroupPlainSchema
 from schemas.core.language_schema import LanguagePlainSchema
-from schemas.core.theme_schema import ThemePlainSchema
 from schemas.validation.constraints import Constraints
 
 
 class UserStrictBaseSchema(BaseModel):
     username: Constraints.Username
-    employee_id: Constraints.PositiveInteger
+    theme: Constraints.Theme
     language_id: Constraints.PositiveInteger
-    theme_id: Constraints.PositiveInteger
-    groups: Constraints.PositiveIntegerList
 
 
 class UserStrictCreateSchema(BaseStrictSchema, UserStrictBaseSchema):
@@ -27,8 +24,8 @@ class UserStrictUpdateSchema(BaseStrictSchema, UserStrictBaseSchema):
 
 class UserPlainSchema(BasePlainSchema):
     username: str
+    theme: str
     language: LanguagePlainSchema
-    theme: ThemePlainSchema
     groups: list[GroupPlainSchema]
     is_superuser: Annotated[bool, Field(exclude=True)]
     password: Annotated[str, Field(exclude=True)]

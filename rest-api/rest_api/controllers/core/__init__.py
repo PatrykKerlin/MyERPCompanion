@@ -11,7 +11,6 @@ from models.core.controller import Controller
 from models.core.group import Group
 from models.core.language import Language
 from models.core.module import Module
-from models.core.theme import Theme
 from models.core.view import View
 from schemas.core.assoc_module_group_schema import AssocModuleGroupPlainSchema, AssocModuleGroupStrictSchema
 from schemas.core.assoc_user_group_schema import AssocUserGroupPlainSchema, AssocUserGroupStrictSchema
@@ -20,7 +19,6 @@ from schemas.core.controller_schema import ControllerPlainSchema, ControllerStri
 from schemas.core.group_schema import GroupPlainSchema, GroupStrictSchema
 from schemas.core.language_schema import LanguagePlainSchema, LanguageStrictSchema
 from schemas.core.module_schema import ModulePlainSchema, ModuleStrictSchema
-from schemas.core.theme_schema import ThemePlainSchema, ThemeStrictSchema
 from schemas.core.view_schema import ViewPlainSchema, ViewStrictSchema
 from services.core import (
     AssocModuleGroupService,
@@ -29,7 +27,6 @@ from services.core import (
     ControllerService,
     GroupService,
     LanguageService,
-    ThemeService,
     ViewService,
 )
 from services.core.module_service import ModuleService
@@ -111,12 +108,6 @@ ModuleController = ControllerFactory.create(
     input_schema_cls=ModuleStrictSchema,
     output_schema_cls=ModulePlainSchema,
 )
-ThemeController = ControllerFactory.create(
-    model_cls=Theme,
-    service_cls=ThemeService,
-    input_schema_cls=ThemeStrictSchema,
-    output_schema_cls=ThemePlainSchema,
-)
 ViewController = ControllerFactory.create(
     model_cls=View,
     service_cls=ViewService,
@@ -137,7 +128,6 @@ __all__ = [
     "ImageController",
     "LanguageController",
     "ModuleController",
-    "ThemeController",
     "TranslationController",
     "UserController",
     "ViewController",

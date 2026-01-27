@@ -1,8 +1,9 @@
+from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.core.module_schema import ModulePlainSchema
 from schemas.core.view_schema import ViewPlainSchema, ViewStrictSchema
 from services.core import ModuleService, ViewService
-from utils.enums import Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.core.view_view import ViewView
 from events.events import ViewRequested
@@ -21,6 +22,10 @@ class ViewController(BaseViewController[ViewService, ViewView, ViewPlainSchema, 
         self.__module_service = ModuleService(self._settings, self._logger, self._tokens_accessor)
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> ViewView:
-        modules = await self.__module_service.get_all(Endpoint.MODULES, None, None, None, self._module_id)
+        modules = await self.__perform_get_all_modules()
         module_pairs = [(module.id, module.key) for module in modules]
         return ViewView(self, translation, mode, event.view_key, event.data, module_pairs)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_all_modules(self) -> list[ModulePlainSchema]:
+        return await self.__module_service.get_all(Endpoint.MODULES, None, None, None, self._module_id)
