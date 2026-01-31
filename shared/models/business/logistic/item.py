@@ -11,12 +11,10 @@ from models.base.fields import Fields
 
 if TYPE_CHECKING:
     from models.business.logistic.assoc_bin_item import AssocBinItem
-    from models.business.logistic.bin import Bin
     from models.business.logistic.category import Category
     from models.business.logistic.unit import Unit
     from models.business.trade.assoc_item_discount import AssocItemDiscount
     from models.business.trade.assoc_order_item import AssocOrderItem
-    from models.business.trade.discount import Discount
     from models.business.trade.order import Order
     from models.business.trade.supplier import Supplier
     from models.core.image import Image
@@ -83,13 +81,9 @@ class Item(BaseModel):
     )
 
     @property
-    def bins(self) -> list[Bin]:
-        return [row.bin for row in self.item_bins]
+    def bin_ids(self) -> list[int]:
+        return [row.bin_id for row in self.item_bins]
 
     @property
-    def discounts(self) -> list[Discount]:
-        return [row.discount for row in self.item_discounts]
-
-    @property
-    def orders(self) -> list[Order]:
-        return [row.order for row in self.item_orders]
+    def discount_ids(self) -> list[int]:
+        return [row.discount_id for row in self.item_discounts]

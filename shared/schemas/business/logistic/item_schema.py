@@ -8,7 +8,6 @@ from pydantic import Field, field_validator, model_validator
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.core.image_schema import ImagePlainSchema
 from schemas.validation.constraints import Constraints
-from schemas.validation.normalizers import Normalizers
 
 
 class ItemStrictSchema(BaseStrictSchema):
@@ -93,15 +92,5 @@ class ItemPlainSchema(BasePlainSchema):
 
     images: list[ImagePlainSchema]
 
-    bin_ids: list[int] = Field(alias="bins")
-    discount_ids: list[int] = Field(alias="discounts")
-
-    @field_validator("bin_ids", mode="before")
-    @classmethod
-    def _normalize_bins(cls, values: list[Any]) -> list[int]:
-        return Normalizers.normalize_related_ids(values)
-
-    @field_validator("discount_ids", mode="before")
-    @classmethod
-    def _normalize_discounts(cls, values: list[Any]) -> list[int]:
-        return Normalizers.normalize_related_ids(values)
+    bin_ids: list[int]
+    discount_ids: list[int]

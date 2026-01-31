@@ -9,7 +9,6 @@ from models.base.fields import Fields
 
 if TYPE_CHECKING:
     from models.business.logistic.assoc_bin_item import AssocBinItem
-    from models.business.logistic.item import Item
     from models.business.logistic.warehouse import Warehouse
     from models.business.trade.assoc_order_item import AssocOrderItem
 
@@ -38,5 +37,5 @@ class Bin(BaseModel):
     )
 
     @property
-    def items(self) -> list[Item]:
-        return [row.item for row in self.bin_items]
+    def item_ids(self) -> list[int]:
+        return [row.item_id for row in self.bin_items]

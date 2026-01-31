@@ -1,6 +1,7 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.core import Translation
+from models.core import Language, Translation
 from repositories.core import TranslationRepository
 from schemas.core.translation_schema import (
     TranslationByLanguagePlainSchema,
@@ -20,7 +21,12 @@ class TranslationService(
     async def get_all_by_language(
         self, session: AsyncSession, language: str, offset: int, limit: int
     ) -> tuple[list[TranslationByLanguagePlainSchema], int]:
-        models = await self._repository_cls.get_all_by_language(session, language, offset, limit)
-        total = await self._repository_cls.count_all_by_language(session, language)
+        language_id = await session.scalar(select(Language.id).where(Language.symbol == language))
+        if language_id is None:
+            language_id = await session.scalar(select(Language.id).where(Language.id == 1))
+        if language_id is None:
+            return [], 0
+        models = await self._repository_cls.get_all_by_language_id(session, language_id, offset, limit)
+        total = await self._repository_cls.count_all_by_language_id(session, language_id)
         schemas = [TranslationByLanguagePlainSchema.model_validate(model) for model in models]
         return schemas, total

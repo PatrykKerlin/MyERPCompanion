@@ -542,7 +542,20 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             if hasattr(marker, "width"):
                 setattr(marker, "width", 0)
             if self._data_row and hasattr(input, "value"):
-                value = self._data_row[key]
+                if key in self._data_row:
+                    value = self._data_row.get(key)
+                else:
+                    # Handle fields omitted from API payloads (e.g., excluded secrets)
+                    if isinstance(input, ft.TextField):
+                        value = ""
+                    elif isinstance(input, NumericField):
+                        value = 0
+                    elif isinstance(input, DateField):
+                        value = None
+                    elif isinstance(input, ft.Checkbox):
+                        value = False
+                    else:
+                        value = None
                 if isinstance(input, DateField):
                     value = self.__normalize_date_value(value)
                 setattr(input, "value", value)
@@ -589,9 +602,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         if not self._data_row:
             return
         options: list[ft.DropdownOption] = []
-        if self._data_row.get(key) is not None:
+        value = self._data_row.get(key)
+        if value is not None:
             for option in input.options:
-                if option.key == str(self._data_row[key]):
+                if option.key == str(value):
                     options.append(option)
                     break
             if len(options) == 0:

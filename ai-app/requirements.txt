@@ -1,7 +1,5 @@
 torch
 numpy
-pandas
-scikit-learn
 sqlalchemy
 asyncpg
 apscheduler

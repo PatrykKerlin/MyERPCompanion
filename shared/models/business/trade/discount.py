@@ -71,15 +71,3 @@ class Discount(BaseModel):
         foreign_keys="AssocOrderItem.item_discount_id",
         cascade_soft_delete=False,
     )
-
-    @property
-    def categories(self) -> list[Category]:
-        return [row.category for row in self.discount_categories]
-
-    @property
-    def customers(self) -> list[Customer]:
-        return [row.customer for row in self.discount_customers]
-
-    @property
-    def items(self) -> list[Item]:
-        return [row.item for row in self.discount_items]

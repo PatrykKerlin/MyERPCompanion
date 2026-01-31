@@ -22,7 +22,3 @@ class Controller(BaseModel):
     controller_views: Mapped[list[AssocViewController]] = Fields.relationship(
         argument="AssocViewController", back_populates="controller", foreign_keys="AssocViewController.controller_id"
     )
-
-    @property
-    def views(self) -> list[View]:
-        return [row.view for row in self.controller_views]

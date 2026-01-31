@@ -25,7 +25,7 @@ class Fields:
         back_populates: str | None,
         foreign_keys: _ORMColCollectionArgument,
         uselist: bool = True,
-        lazy: _LazyLoadArgumentType = "selectin",
+        lazy: _LazyLoadArgumentType = "select",
         cascade_soft_delete: bool = True,
         **kwargs: Any,
     ) -> _RelationshipDeclared[Any]:

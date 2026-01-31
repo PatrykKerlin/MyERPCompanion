@@ -24,12 +24,8 @@ class ModuleRepository(BaseRepository[Module]):
         query = super()._build_query(params_filters, additional_filters, sort_by, sort_order)
         return query.options(
             selectinload(cls._model_cls.module_groups).selectinload(AssocModuleGroup.group),
-            selectinload(cls._model_cls.views)
-            .selectinload(View.view_controllers)
-            .selectinload(AssocViewController.controller),
+            selectinload(cls._model_cls.views),
             with_loader_criteria(AssocModuleGroup, cls._expr(AssocModuleGroup.is_active.is_(True))),
-            with_loader_criteria(AssocViewController, cls._expr(AssocViewController.is_active.is_(True))),
-            with_loader_criteria(Controller, cls._expr(Controller.is_active.is_(True))),
             with_loader_criteria(Group, cls._expr(Group.is_active.is_(True))),
             with_loader_criteria(View, cls._expr(View.is_active.is_(True))),
         )

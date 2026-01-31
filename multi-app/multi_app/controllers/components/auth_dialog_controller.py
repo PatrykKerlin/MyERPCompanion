@@ -32,7 +32,7 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
         self._page.run_task(self._page.window.destroy)
 
     def on_login_click(self, username: str, password: str) -> None:
-        self._page.run_task(self.__handle_login, "user1", "test1234")
+        self._page.run_task(self.__handle_login, "employee001", "test1234")
 
     async def __handle_login(self, username: str, password: str) -> None:
         tokens = await self.__perform_fetch_tokens(username, password)

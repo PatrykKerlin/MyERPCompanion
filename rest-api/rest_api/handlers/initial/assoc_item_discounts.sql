@@ -1,5 +1,22 @@
 INSERT INTO item_discounts (item_id, discount_id, is_active, created_at, created_by)
 VALUES
-(1, 4, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(1, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(2, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (3, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-(4, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id);
+(4, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(5, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(6, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(7, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(8, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(9, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(10, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(11, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(12, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(13, 8, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(14, 8, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(15, 8, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(16, 8, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(17, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(18, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(19, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(20, 8, TRUE, CURRENT_TIMESTAMP, :superuser_id);

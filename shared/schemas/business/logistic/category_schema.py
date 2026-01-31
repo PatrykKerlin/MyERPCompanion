@@ -12,3 +12,5 @@ class CategoryPlainSchema(BasePlainSchema):
     name: str
     code: str
     description: str | None
+
+    discount_ids: list[int]

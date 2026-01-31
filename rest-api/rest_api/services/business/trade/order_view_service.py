@@ -153,12 +153,12 @@ class OrderViewService(ItemQuantityMixin):
                 supplier_currency_id=item.supplier.currency_id if item.supplier else None,
                 discounts=[
                     OrderViewDiscountSchema(
-                        id=discount.id,
-                        code=discount.code,
-                        percent=discount.percent,
+                        id=assoc.discount.id,
+                        code=assoc.discount.code,
+                        percent=assoc.discount.percent,
                     )
-                    for discount in item.discounts
-                    if discount.is_active
+                    for assoc in item.item_discounts
+                    if assoc.discount and assoc.discount.is_active
                 ],
             )
             for item in items

@@ -121,15 +121,5 @@ class OrderPlainSchema(BasePlainSchema):
     currency_id: int
     invoice_id: int | None
 
-    item_ids: list[int] = Field(alias="items")
-    status_ids: list[int] = Field(alias="statuses")
-
-    @field_validator("item_ids", mode="before")
-    @classmethod
-    def _normalize_items(cls, values: list[Any]) -> list[int]:
-        return Normalizers.normalize_related_ids(values)
-
-    @field_validator("status_ids", mode="before")
-    @classmethod
-    def _normalize_statuses(cls, values: list[Any]) -> list[int]:
-        return Normalizers.normalize_related_ids(values)
+    item_ids: list[int]
+    status_ids: list[int]

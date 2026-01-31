@@ -9,7 +9,6 @@ from models.base.fields import Fields
 
 if TYPE_CHECKING:
     from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
-    from models.business.trade.discount import Discount
     from models.business.trade.invoice import Invoice
     from models.business.trade.order import Order
     from models.core.user import User
@@ -59,5 +58,5 @@ class Customer(BaseModel):
     )
 
     @property
-    def discounts(self) -> list[Discount]:
-        return [row.discount for row in self.customer_discounts]
+    def discount_ids(self) -> list[int]:
+        return [row.discount_id for row in self.customer_discounts]

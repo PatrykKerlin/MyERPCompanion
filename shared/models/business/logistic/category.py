@@ -29,5 +29,5 @@ class Category(BaseModel):
     )
 
     @property
-    def discounts(self) -> list[Discount]:
-        return [row.discount for row in self.category_discounts]
+    def discount_ids(self) -> list[int]:
+        return [row.discount_id for row in self.category_discounts]

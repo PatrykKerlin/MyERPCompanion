@@ -27,5 +27,5 @@ class UserPlainSchema(BasePlainSchema):
     theme: str
     language: LanguagePlainSchema
     groups: list[GroupPlainSchema]
-    is_superuser: Annotated[bool, Field(exclude=True)]
-    password: Annotated[str, Field(exclude=True)]
+    is_superuser: Annotated[bool | None, Field(default=None, exclude=True)]
+    password: Annotated[str | None, Field(default=None, exclude=True)]

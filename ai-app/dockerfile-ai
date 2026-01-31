@@ -5,39 +5,33 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     VIRTUAL_ENV=/project \
     PATH="/project/bin:$PATH" \
-    PYTHONPATH="/rest_api" \
+    PYTHONPATH="/ai_app" \
     NVM_DIR=/root/.nvm \
     PRISMA_NODEENV_EXTRA_ARGS="--node=system"
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    ca-certificates curl git \
-    build-essential make \
-    libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev \
-    libffi-dev liblzma-dev tk-dev xz-utils \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN rm -rf "$PYENV_ROOT" && \
-    git clone "https://github.com/pyenv/pyenv.git" "$PYENV_ROOT" && \
-    LATEST_PYTHON_314=$("$PYENV_ROOT/bin/pyenv" install --list | \
-        sed "s/^[[:space:]]*//" | \
-        grep "^3\.14\." | \
-        sort -V | \
-        tail -n 1) && \
-    echo "Installing Python $LATEST_PYTHON_314" && \
-    "$PYENV_ROOT/bin/pyenv" install "$LATEST_PYTHON_314" && \
-    "$PYENV_ROOT/bin/pyenv" global "$LATEST_PYTHON_314" && \
-    python -m venv "$VIRTUAL_ENV" && \
-    python -m pip install --upgrade pip
+    apt-get install -y curl postgresql-client --no-install-recommends && \
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash && \
+    . "$NVM_DIR/nvm.sh" && nvm install 24 && \
+    . "$NVM_DIR/nvm.sh" && nvm alias default 24 && \
+    ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/node" /usr/bin/node && \
+    ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npm" /usr/bin/npm && \
+    ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npx" /usr/bin/npx && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /tmp/requirements.txt
-RUN python -m pip install -r /tmp/requirements.txt && rm -rf /tmp/requirements.txt
+RUN python -m venv $VIRTUAL_ENV && \
+    pip install --upgrade pip && \
+    pip install -r /tmp/requirements.txt && \
+    rm -rf /tmp/requirements.txt
 
 WORKDIR /ai_app
 
 RUN useradd -m -d /ai_app -s /bin/bash ai-app && \
-    chown -R ai-app:ai-app /ai_app && \
-    chmod -R 755 /ai_app && \
-    chmod -R a+rX /opt/pyenv
+    mkdir -p /media && \
+    touch /media/.keep && \
+    chown -R ai-app:ai-app /ai_app /media && \
+    chmod -R 775 /ai_app /media
 
 USER ai-app

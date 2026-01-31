@@ -43,6 +43,7 @@ services:
     volumes:
       - ./rest-api/rest_api/:/rest_api
       - ./shared/models:/rest_api/models
+      - ./shared/database:/rest_api/database
       - ./shared/schemas/business:/rest_api/schemas/business
       - ./shared/schemas/core:/rest_api/schemas/core
       - ./shared/schemas/validation:/rest_api/schemas/validation
@@ -81,10 +82,10 @@ services:
     environment:
       - DISPLAY=${DISPLAY}
       - API_URL=http://rest-api:8000/api
-    stdin_open: true
-    tty: true
+    # stdin_open: true
+    # tty: true
     command:
-      sh -c "python -m multi_app.main_desktop"
+      sh -c "flet run main.py"
 
 volumes:
   postgres-data:

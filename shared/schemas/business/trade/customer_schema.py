@@ -3,7 +3,6 @@ from __future__ import annotations
 from pydantic import model_validator
 
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
-from schemas.business.trade.discount_schema import DiscountPlainSchema
 from schemas.validation.constraints import Constraints
 
 
@@ -92,4 +91,4 @@ class CustomerPlainSchema(BasePlainSchema):
 
     user_id: int
 
-    discounts: list[DiscountPlainSchema]
+    discount_ids: list[int]

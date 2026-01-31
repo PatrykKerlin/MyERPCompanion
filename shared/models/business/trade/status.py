@@ -10,7 +10,6 @@ from models.base.fields import Fields
 
 if TYPE_CHECKING:
     from models.business.trade.assoc_order_status import AssocOrderStatus
-    from models.business.trade.order import Order
 
 
 class Status(BaseModel):
@@ -34,5 +33,5 @@ class Status(BaseModel):
     )
 
     @property
-    def orders(self) -> list[Order]:
-        return [row.order for row in self.status_orders]
+    def order_ids(self) -> list[int]:
+        return [row.order_id for row in self.status_orders]

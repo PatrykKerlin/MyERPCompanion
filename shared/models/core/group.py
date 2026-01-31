@@ -26,11 +26,3 @@ class Group(BaseModel):
     group_users: Mapped[list[AssocUserGroup]] = Fields.relationship(
         argument="AssocUserGroup", back_populates="group", foreign_keys="AssocUserGroup.group_id"
     )
-
-    @property
-    def modules(self) -> list[Module]:
-        return [row.module for row in self.group_modules]
-
-    @property
-    def users(self) -> list[User]:
-        return [row.user for row in self.group_users]

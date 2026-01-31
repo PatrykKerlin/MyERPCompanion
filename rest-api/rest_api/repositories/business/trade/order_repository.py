@@ -5,14 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.business.logistic.delivery_method import DeliveryMethod
 from models.business.trade import Order
 from models.business.trade.assoc_order_item import AssocOrderItem
 from models.business.trade.assoc_order_status import AssocOrderStatus
-from models.business.trade.currency import Currency
-from models.business.trade.customer import Customer
-from models.business.trade.invoice import Invoice
-from models.business.trade.supplier import Supplier
 from repositories.base.base_repository import BaseRepository
 
 
@@ -95,18 +90,8 @@ class OrderRepository(BaseRepository[Order]):
     ) -> Select:
         query = super()._build_query(params_filters, additional_filters, sort_by, sort_order)
         return query.options(
-            selectinload(cls._model_cls.currency),
-            selectinload(cls._model_cls.customer),
-            selectinload(cls._model_cls.delivery_method),
-            selectinload(cls._model_cls.invoice),
-            selectinload(cls._model_cls.supplier),
-            selectinload(cls._model_cls.order_items).selectinload(AssocOrderItem.item),
-            selectinload(cls._model_cls.order_statuses).selectinload(AssocOrderStatus.status),
-            with_loader_criteria(Currency, cls._expr(Currency.is_active.is_(True))),
-            with_loader_criteria(Customer, cls._expr(Customer.is_active.is_(True))),
-            with_loader_criteria(DeliveryMethod, cls._expr(DeliveryMethod.is_active.is_(True))),
-            with_loader_criteria(Invoice, cls._expr(Invoice.is_active.is_(True))),
-            with_loader_criteria(Supplier, cls._expr(Supplier.is_active.is_(True))),
+            selectinload(cls._model_cls.order_items),
+            selectinload(cls._model_cls.order_statuses),
             with_loader_criteria(AssocOrderItem, cls._expr(AssocOrderItem.is_active.is_(True))),
             with_loader_criteria(AssocOrderStatus, cls._expr(AssocOrderStatus.is_active.is_(True))),
         )

@@ -1,10 +1,8 @@
 from collections.abc import Mapping
 
-from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.business.trade.currency import Currency
 from models.business.trade.discount import Discount
 from repositories.base.base_repository import BaseRepository
 
@@ -21,7 +19,4 @@ class DiscountRepository(BaseRepository[Discount]):
         sort_order: str = "asc",
     ) -> Select:
         query = super()._build_query(params_filters, additional_filters, sort_by, sort_order)
-        return query.options(
-            selectinload(cls._model_cls.currency),
-            with_loader_criteria(Currency, cls._expr(Currency.is_active.is_(True))),
-        )
+        return query

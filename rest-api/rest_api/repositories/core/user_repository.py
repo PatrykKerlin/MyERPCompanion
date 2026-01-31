@@ -14,7 +14,7 @@ class UserRepository(BaseRepository[User]):
 
     @classmethod
     async def get_one_by_username(cls, session: AsyncSession, username: str) -> User | None:
-        query = super()._build_query(additional_filters=[cls._expr(cls._model_cls.username == username)])
+        query = cls._build_query(additional_filters=[cls._expr(cls._model_cls.username == username)])
         result = await session.execute(query)
         return result.scalars().first()
 

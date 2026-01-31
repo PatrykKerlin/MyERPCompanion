@@ -5,7 +5,6 @@ from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
 from models.business.trade.assoc_order_status import AssocOrderStatus
-from models.business.trade.order import Order
 from models.business.trade.status import Status
 from repositories.base.base_repository import BaseRepository
 
@@ -23,7 +22,6 @@ class StatusRepository(BaseRepository[Status]):
     ) -> Select:
         query = super()._build_query(params_filters, additional_filters, sort_by, sort_order)
         return query.options(
-            selectinload(cls._model_cls.status_orders).selectinload(AssocOrderStatus.order),
+            selectinload(cls._model_cls.status_orders),
             with_loader_criteria(AssocOrderStatus, cls._expr(AssocOrderStatus.is_active.is_(True))),
-            with_loader_criteria(Order, cls._expr(Order.is_active.is_(True))),
         )

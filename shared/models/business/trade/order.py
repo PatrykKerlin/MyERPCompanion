@@ -10,13 +10,11 @@ from models.base.fields import Fields
 
 if TYPE_CHECKING:
     from models.business.logistic.delivery_method import DeliveryMethod
-    from models.business.logistic.item import Item
     from models.business.trade.assoc_order_item import AssocOrderItem
     from models.business.trade.assoc_order_status import AssocOrderStatus
     from models.business.trade.currency import Currency
     from models.business.trade.customer import Customer
     from models.business.trade.invoice import Invoice
-    from models.business.trade.status import Status
     from models.business.trade.supplier import Supplier
 
 
@@ -72,9 +70,9 @@ class Order(BaseModel):
     )
 
     @property
-    def items(self) -> list[Item]:
-        return [row.item for row in self.order_items]
+    def item_ids(self) -> list[int]:
+        return [row.item_id for row in self.order_items]
 
     @property
-    def statuses(self) -> list[Status]:
-        return [row.status for row in self.order_statuses]
+    def status_ids(self) -> list[int]:
+        return [row.status_id for row in self.order_statuses]

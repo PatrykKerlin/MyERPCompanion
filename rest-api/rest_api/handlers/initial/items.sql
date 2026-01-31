@@ -1,6 +1,62 @@
-INSERT INTO items (index, name, description, ean, purchase_price, vat_rate, margin, lead_time, is_available, is_fragile, is_package, is_returnable, expiration_date, width, height, length, weight, stock_quantity, min_stock_level, max_stock_level, moq, category_id, unit_id, supplier_id, is_active, created_at, created_by)
-VALUES
-('ITM-0001', 'Czujnik temperatury X100', 'Cyfrowy czujnik temperatury do monitoringu magazynu.', '5901234123457', 120.50, 0.23, 0.250, 30, TRUE, FALSE, FALSE, FALSE, '2026-06-30', 4.500, 2.300, 6.800, 0.180, 40, 10, 120, 5, 1, 1, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('ITM-0002', 'Pudełko kartonowe ECO-L', 'Wytrzymałe pudełko z tektury falistej do wysyłek e-commerce.', '5907654321098', 4.20, 0.23, 0.180, 45, TRUE, FALSE, TRUE, FALSE, NULL, 60.000, 40.000, 80.000, 0.750, 800, 200, 2000, 50, 2, 3, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('ITM-0003', 'Zestaw śrub stalowych M6', 'Komplet 500 ocynkowanych śrub M6 z podkładkami.', '5905556667771', 58.75, 0.23, 0.320, 30, TRUE, FALSE, FALSE, FALSE, NULL, 25.000, 15.000, 35.000, 5.200, 150, 30, 600, 10, 3, 2, 3, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('ITM-0004', 'Czujnik wilgotności H200', 'Czujnik wilgotności powietrza do systemów HVAC.', '5901234123464', 98.00, 0.23, 0.220, 90, TRUE, FALSE, FALSE, FALSE, '2026-08-31', 5.200, 2.800, 7.100, 0.210, 35, 10, 100, 5, 1, 1, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id);
+INSERT INTO items (
+    index,
+    name,
+    description,
+    ean,
+    purchase_price,
+    vat_rate,
+    margin,
+    lead_time,
+    is_available,
+    is_fragile,
+    is_package,
+    is_returnable,
+    expiration_date,
+    width,
+    height,
+    length,
+    weight,
+    stock_quantity,
+    min_stock_level,
+    max_stock_level,
+    moq,
+    category_id,
+    unit_id,
+    supplier_id,
+    is_active,
+    created_at,
+    created_by
+)
+SELECT
+    'ITM-' || lpad(i::text, 4, '0') AS index,
+    'Produkt ' || lpad(i::text, 4, '0') AS name,
+    'Opis produktu ' || lpad(i::text, 4, '0') AS description,
+    lpad((5900000000000 + i)::text, 13, '0') AS ean,
+    ROUND((5 + (i % 20) * 3 + (i / 10)::int)::numeric, 2) AS purchase_price,
+    CASE
+        WHEN i % 10 = 0 THEN 0.08
+        WHEN i % 6 = 0 THEN 0.05
+        ELSE 0.23
+    END AS vat_rate,
+    ROUND((0.15 + (i % 10) * 0.01)::numeric, 3) AS margin,
+    (3 + (i % 30)) AS lead_time,
+    TRUE AS is_available,
+    (i % 7 = 0) AS is_fragile,
+    (i % 5 = 0) AS is_package,
+    (i % 9 = 0) AS is_returnable,
+    CASE WHEN i % 12 = 0 THEN CURRENT_DATE + INTERVAL '365 days' ELSE NULL END AS expiration_date,
+    ROUND((0.10 + (i % 10) * 0.05)::numeric, 3) AS width,
+    ROUND((0.10 + (i % 8) * 0.04)::numeric, 3) AS height,
+    ROUND((0.15 + (i % 12) * 0.05)::numeric, 3) AS length,
+    ROUND((0.20 + (i % 15) * 0.10)::numeric, 3) AS weight,
+    (30 + (i % 90)) AS stock_quantity,
+    (10 + (i % 15)) AS min_stock_level,
+    (120 + (i % 120)) AS max_stock_level,
+    (5 + (i % 10)) AS moq,
+    ((i - 1) % 12) + 1 AS category_id,
+    ((i - 1) % 3) + 1 AS unit_id,
+    ((i - 1) % 3) + 1 AS supplier_id,
+    TRUE,
+    CURRENT_TIMESTAMP,
+    :superuser_id
+FROM generate_series(1, 60) AS s(i);

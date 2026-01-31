@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-from models.business.logistic import AssocBinItem, Bin, Item
+from models.business.logistic import AssocBinItem, Bin
 from repositories.base.base_repository import BaseRepository
 
 
@@ -21,8 +21,6 @@ class BinRepository(BaseRepository[Bin]):
     ) -> Select:
         query = super()._build_query(params_filters, additional_filters, sort_by, sort_order)
         return query.options(
-            selectinload(cls._model_cls.bin_items).selectinload(AssocBinItem.item),
-            selectinload(cls._model_cls.warehouse),
+            selectinload(cls._model_cls.bin_items),
             with_loader_criteria(AssocBinItem, cls._expr(AssocBinItem.is_active.is_(True))),
-            with_loader_criteria(Item, cls._expr(Item.is_active.is_(True))),
         )

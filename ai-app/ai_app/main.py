@@ -16,13 +16,13 @@ from ai_app.tasks.sales_forecast import SalesForecastTask
 
 
 class TaskOrchestrator:
-    def __init__(self, data_window: DataWindowService, runs: TaskRunRepository) -> None:
+    def __init__(self, engine: Engine, data_window: DataWindowService, runs: TaskRunRepository) -> None:
         self._data_window = data_window
         self._runs = runs
         self._tasks = [
-            InventoryRiskTask(),
-            SalesForecastTask(),
-            PromoEffectsTask(),
+            InventoryRiskTask(engine),
+            SalesForecastTask(engine),
+            PromoEffectsTask(engine),
         ]
 
     async def run_daily(self) -> None:
@@ -52,7 +52,7 @@ class AiApp:
         self._orders = OrderRepository(self._engine)
         self._runs = TaskRunRepository(self._engine)
         self._windows = DataWindowService(self._orders, self._runs)
-        self._orchestrator = TaskOrchestrator(self._windows, self._runs)
+        self._orchestrator = TaskOrchestrator(self._engine, self._windows, self._runs)
 
     async def run_daily(self) -> None:
         await self._orchestrator.run_daily()
