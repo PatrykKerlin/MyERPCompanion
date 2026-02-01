@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -15,8 +15,13 @@ if TYPE_CHECKING:
 
 class ExchangeRate(BaseModel):
     __tablename__ = "exchange_rates"
-    __table_args__ = (
-        UniqueConstraint("base_currency_id", "quote_currency_id", "valid_from", name="uq_rate_pair_from"),
+    __table_args__ = (Index(
+        "ux_rate_pair_from_active_true",
+        "base_currency_id",
+        "quote_currency_id",
+        "valid_from",
+        unique=True,
+        postgresql_where=text("is_active"),),
     )
 
     rate: Mapped[float] = Fields.numeric_10_2()

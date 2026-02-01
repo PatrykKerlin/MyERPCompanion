@@ -128,6 +128,11 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         try:
             user = request.state.user
             body = await request.json()
+            if not isinstance(body, dict):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Request body must be an object.",
+                )
             schema = self._input_schema_cls(**body)
             session = BaseController._get_request_session(request)
             return await self._service.create(session, user.id, schema)
@@ -168,6 +173,11 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         try:
             user = request.state.user
             body = await request.json()
+            if not isinstance(body, dict):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Request body must be an object.",
+                )
             schema = self._input_schema_cls(**body)
             session = BaseController._get_request_session(request)
             return await self._service.update(session, model_id, user.id, schema)

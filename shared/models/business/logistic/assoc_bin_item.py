@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -15,12 +15,12 @@ if TYPE_CHECKING:
 
 class AssocBinItem(BaseModel):
     __tablename__ = "bin_items"
-    __table_args__ = (
-        UniqueConstraint(
-            "item_id",
-            "bin_id",
-            name="uq_bin_items_item_bin",
-        ),
+    __table_args__ = (Index(
+        "ux_bin_items_item_bin_active_true",
+        "item_id",
+        "bin_id",
+        unique=True,
+        postgresql_where=text("is_active"),),
     )
 
     quantity: Mapped[int] = Fields.integer()

@@ -11,7 +11,10 @@ from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
 from schemas.core.param_schema import IdsPayloadSchema
-from schemas.business.trade.assoc_item_discount_schema import AssocItemDiscountPlainSchema, AssocItemDiscountStrictSchema
+from schemas.business.trade.assoc_item_discount_schema import (
+    AssocItemDiscountPlainSchema,
+    AssocItemDiscountStrictSchema,
+)
 from schemas.business.trade.discount_schema import DiscountPlainSchema
 from schemas.core.image_schema import ImageMultipartPayloadSchema, ImageStrictCreateSchema, ImageStrictUpdateSchema
 from services.core.image_service import ImageService
@@ -189,7 +192,9 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         pending_ids = self._view.get_pending_discount_ids()
         if not pending_ids:
             return
-        payload = [AssocItemDiscountStrictSchema(item_id=item_id, discount_id=discount_id) for discount_id in pending_ids]
+        payload = [
+            AssocItemDiscountStrictSchema(item_id=item_id, discount_id=discount_id) for discount_id in pending_ids
+        ]
         await self.__perform_create_item_discounts(payload)
         await self.__refresh_item_discount_lists(item_id)
 
@@ -323,7 +328,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         cwd = os.getcwd()
         script = (
             "Add-Type -AssemblyName System.Windows.Forms; "
-            "$f = New-Object System.Windows.Forms.OpenFileDialog; "
+            "$f = New-Any System.Windows.Forms.OpenFileDialog; "
             "$f.Multiselect = $false; "
             f"$f.InitialDirectory = '{cwd}'; "
             "$f.Filter = "

@@ -18,6 +18,7 @@ from states.states import (
     TranslationState,
     UserState,
 )
+
 from utils.enums import ViewMode
 from utils.translation import Translation
 from config.context import Context
@@ -70,7 +71,6 @@ class App:
             core.GroupController(self.__context),
             core.LanguageController(self.__context),
             core.ModuleController(self.__context),
-            core.ViewController(self.__context),
             core.UserController(self.__context),
             components.AuthDialogController(self.__context),
             components.MenuBarController(self.__context),
@@ -125,10 +125,10 @@ class App:
         await self.__event_bus.stop()
 
 
-def main() -> None:
+async def main(page: ft.Page) -> None:
     app = App()
-    ft.app(target=app.run, view=ft.AppView.FLET_APP)
+    await app.run(page)
 
 
 if __name__ == "__main__":
-    main()
+    ft.run(main, view=ft.AppView.FLET_APP)

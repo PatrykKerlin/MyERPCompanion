@@ -134,10 +134,10 @@ class InvoiceView(BaseView):
         if self.__is_mounted:
             self.__apply_pending_totals()
 
-    def set_source_rows(self, rows: list[tuple[int, list[object]]]) -> None:
+    def set_source_rows(self, rows: list[tuple[int, list[Any]]]) -> None:
         self.__bulk_transfer.set_source_rows(rows)
 
-    def set_target_rows(self, rows: list[tuple[int, list[object]]]) -> None:
+    def set_target_rows(self, rows: list[tuple[int, list[Any]]]) -> None:
         self.__bulk_transfer.set_target_rows(rows)
 
     def get_pending_targets(self) -> list[tuple[int, int]]:

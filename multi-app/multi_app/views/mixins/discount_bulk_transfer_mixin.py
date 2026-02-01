@@ -1,14 +1,23 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
 import flet as ft
 
 from utils.enums import ViewMode
 from views.controls.bulk_transfer_control import BulkTransfer
 
+if TYPE_CHECKING:
+    from utils.translation import Translation
+
 
 class DiscountBulkTransferMixin:
+    _translation: Translation
+    _discount_bulk_transfer: BulkTransfer
+    _discount_pending_source_items: list[tuple[int, str]]
+    _discount_pending_target_items: list[tuple[int, str]]
+    _discount_visible_modes: set[ViewMode]
+
     def _init_discount_bulk_transfer(
         self,
         mode: ViewMode,

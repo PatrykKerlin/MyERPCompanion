@@ -7,12 +7,13 @@ import flet as ft
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
+from views.mixins.group_bulk_transfer_mixin import GroupBulkTransferMixin
 
 if TYPE_CHECKING:
     from controllers.core.user_controller import UserController
 
 
-class UserView(BaseView):
+class UserView(BaseView, GroupBulkTransferMixin):
     def __init__(
         self,
         controller: UserController,
@@ -22,6 +23,10 @@ class UserView(BaseView):
         data_row: dict[str, Any] | None,
         languages: list[tuple[int, str]],
         themes: list[tuple[str, str]],
+        group_source_rows: list[tuple[int, list[str]]],
+        group_target_rows: list[tuple[int, list[str]]],
+        on_groups_save_clicked=None,
+        on_groups_delete_clicked=None,
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
         main_fields_definitions = [
@@ -41,4 +46,26 @@ class UserView(BaseView):
             ft.Column(controls=meta_grid, expand=2),
         ]
         self._columns_row.controls.extend(columns)
-        self._master_column.controls.extend(self._rows)
+        self._init_group_bulk_transfer(
+            mode=mode,
+            source_rows=group_source_rows,
+            target_rows=group_target_rows,
+            source_label=self._translation.get("available_groups"),
+            target_label=self._translation.get("user_groups"),
+            on_save_clicked=on_groups_save_clicked,
+            on_delete_clicked=on_groups_delete_clicked,
+            height=260,
+            visible_modes={ViewMode.READ, ViewMode.EDIT},
+        )
+        group_row = self._build_group_bulk_transfer_row()
+        self._master_column.controls.extend([
+            self._columns_row,
+            ft.Row(height=25),
+            group_row,
+            ft.Row(height=25),
+            self._buttons_row,
+        ])
+
+    def did_mount(self):
+        self._mount_group_bulk_transfer()
+        return super().did_mount()

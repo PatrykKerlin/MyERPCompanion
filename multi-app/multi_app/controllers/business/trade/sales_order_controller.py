@@ -232,10 +232,10 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
     ) -> PaginatedResponseSchema[OrderPlainSchema]:
         return await super()._perform_get_page(service, Endpoint.SALES_ORDERS)
 
-    def get_create_defaults(self) -> dict[str, object]:
+    def get_create_defaults(self) -> dict[str, Any]:
         return self.__build_create_defaults()
 
-    def set_hidden_field_value(self, key: str, value: object) -> None:
+    def set_hidden_field_value(self, key: str, value: Any) -> None:
         self._request_data.input_values[key] = value
 
     def set_field_value(self, key: str, value: str | int | float | bool | date | None) -> None:
@@ -981,10 +981,10 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             return
         await self._perform_update(order_id, self._service, self._endpoint, payload)
 
-    def __build_create_defaults(self) -> dict[str, object]:
+    def __build_create_defaults(self) -> dict[str, Any]:
         today = date.today()
         number = self.__prefetched_create_number or self.__format_order_number(today, 1)
-        defaults: dict[str, object] = {
+        defaults: dict[str, Any] = {
             "number": number,
             "is_sales": True,
             "currency_id": None,

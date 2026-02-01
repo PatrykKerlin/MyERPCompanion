@@ -25,7 +25,10 @@ class Category(BaseModel):
     )
 
     category_discounts: Mapped[list[AssocCategoryDiscount]] = Fields.relationship(
-        argument="AssocCategoryDiscount", back_populates="category", foreign_keys="AssocCategoryDiscount.category_id"
+        argument="AssocCategoryDiscount",
+        back_populates="category",
+        foreign_keys="AssocCategoryDiscount.category_id",
+        cascade_soft_delete=True,
     )
 
     @property

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -15,12 +15,12 @@ if TYPE_CHECKING:
 
 class AssocViewController(BaseModel):
     __tablename__ = "view_controllers"
-    __table_args__ = (
-        UniqueConstraint(
-            "view_id",
-            "controller_id",
-            name="uq_view_controllers_view_controller",
-        ),
+    __table_args__ = (Index(
+        "ux_view_controllers_view_controller_active_true",
+        "view_id",
+        "controller_id",
+        unique=True,
+        postgresql_where=text("is_active"),),
     )
 
     view_id: Mapped[int] = Fields.foreign_key(column="views.id")

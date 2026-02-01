@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -15,12 +15,12 @@ if TYPE_CHECKING:
 
 class AssocCustomerDiscount(BaseModel):
     __tablename__ = "customer_discounts"
-    __table_args__ = (
-        UniqueConstraint(
-            "customer_id",
-            "discount_id",
-            name="uq_customer_discounts_customer_discount",
-        ),
+    __table_args__ = (Index(
+        "ux_customer_discounts_customer_discount_active_true",
+        "customer_id",
+        "discount_id",
+        unique=True,
+        postgresql_where=text("is_active"),),
     )
 
     customer_id: Mapped[int] = Fields.foreign_key(column="customers.id")

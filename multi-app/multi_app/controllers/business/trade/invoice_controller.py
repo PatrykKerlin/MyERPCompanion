@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from typing import Callable
+from typing import Any, Callable
 
 import flet as ft
 
@@ -44,7 +44,7 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         self.__eligible_status_ids: set[int] = set()
         self.__orders_by_id: dict[int, OrderPlainSchema] = {}
         self.__selected_order_ids: set[int] = set()
-        self.__target_rows: list[tuple[int, list[object]]] = []
+        self.__target_rows: list[tuple[int, list[Any]]] = []
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> InvoiceView:
         currencies = await self.__perform_get_all_currencies()
@@ -124,13 +124,13 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         self._view.mark_source_orders_as_moved(list(self.__selected_order_ids))
         self.__apply_totals_from_selection()
 
-    def get_create_defaults(self) -> dict[str, object]:
+    def get_create_defaults(self) -> dict[str, Any]:
         return self.__build_create_defaults()
 
-    def __build_create_defaults(self) -> dict[str, object]:
+    def __build_create_defaults(self) -> dict[str, Any]:
         today = date.today()
         number = self.__prefetched_create_number or self.__format_invoice_number(today, 1)
-        defaults: dict[str, object] = {
+        defaults: dict[str, Any] = {
             "number": number,
             "issue_date": today,
             "due_date": today,
@@ -189,7 +189,9 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             return
         orders = await self.__load_eligible_orders(customer_id, currency_id)
         self.__orders_by_id = {order.id: order for order in orders}
-        self.__selected_order_ids = {order_id for order_id in self.__selected_order_ids if order_id in self.__orders_by_id}
+        self.__selected_order_ids = {
+            order_id for order_id in self.__selected_order_ids if order_id in self.__orders_by_id
+        }
         source_rows = self.__build_source_rows(orders)
         self._view.set_source_rows(source_rows)
         self._view.set_source_enabled(bool(source_rows))
@@ -213,8 +215,8 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
                 eligible.append(order)
         return eligible
 
-    def __build_source_rows(self, orders: list[OrderPlainSchema]) -> list[tuple[int, list[object]]]:
-        rows: list[tuple[int, list[object]]] = []
+    def __build_source_rows(self, orders: list[OrderPlainSchema]) -> list[tuple[int, list[Any]]]:
+        rows: list[tuple[int, list[Any]]] = []
         for order in orders:
             rows.append(
                 (
@@ -228,8 +230,8 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             )
         return rows
 
-    def __build_target_rows(self) -> list[tuple[int, list[object]]]:
-        rows: list[tuple[int, list[object]]] = []
+    def __build_target_rows(self) -> list[tuple[int, list[Any]]]:
+        rows: list[tuple[int, list[Any]]] = []
         for order_id in self.__selected_order_ids:
             order = self.__orders_by_id.get(order_id)
             if not order:
@@ -247,6 +249,8 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         return rows
 
     def __apply_totals_from_selection(self) -> None:
+        if not self._view:
+            return
         total_net = 0.0
         total_vat = 0.0
         total_gross = 0.0
@@ -308,9 +312,9 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             response = await self._service.get_page(
                 Endpoint.INVOICES,
                 None,
-                query_params={"issue_date": issue_date.isoformat(), "page": 1, "page_size": 1},
-                body_params=None,
-                module_id=self._module_id,
+                {"issue_date": issue_date.isoformat(), "page": 1, "page_size": 1},
+                None,
+                self._module_id,
             )
         except Exception:
             self._logger.exception("Failed to fetch invoice count for date.")
@@ -351,9 +355,6 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         if not self.__selected_order_ids:
             return
         payload = [
-            OrderInvoiceBulkStrictSchema(id=order_id, invoice_id=invoice_id)
-            for order_id in self.__selected_order_ids
+            OrderInvoiceBulkStrictSchema(id=order_id, invoice_id=invoice_id) for order_id in self.__selected_order_ids
         ]
-        await self.__order_service.update_bulk(
-            Endpoint.ORDER_UPDATE_BULK, None, None, payload, self._module_id
-        )
+        await self.__order_service.update_bulk(Endpoint.ORDER_UPDATE_BULK, None, None, payload, self._module_id)

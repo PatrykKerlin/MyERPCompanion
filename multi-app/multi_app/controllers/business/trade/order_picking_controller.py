@@ -1,5 +1,6 @@
 import asyncio
 from datetime import date
+from typing import Any
 import flet as ft
 
 from config.context import Context
@@ -60,10 +61,10 @@ class OrderPickingController(
         self.__package_item_quantities: dict[int, int] = {}
         self.__pending_moves: dict[int, tuple[int, int, int, int, int, str, int]] = {}
         self.__package_pending_moves: dict[int, tuple[int, int, int, int, int, str, int]] = {}
-        self.__saved_target_rows: list[tuple[int, list[object]]] = []
-        self.__target_rows: list[tuple[int, list[object]]] = []
-        self.__package_saved_target_rows: list[tuple[int, list[object]]] = []
-        self.__package_target_rows: list[tuple[int, list[object]]] = []
+        self.__saved_target_rows: list[tuple[int, list[Any]]] = []
+        self.__target_rows: list[tuple[int, list[Any]]] = []
+        self.__package_saved_target_rows: list[tuple[int, list[Any]]] = []
+        self.__package_target_rows: list[tuple[int, list[Any]]] = []
         self.__current_order_id: int | None = None
         self.__selected_order_date: date | None = date.today()
         self.__selected_customer_id: int | None = None
@@ -286,8 +287,8 @@ class OrderPickingController(
             view.set_package_source_enabled(bool(self.__package_item_quantities))
             self.__update_package_transfer_state()
 
-    def __build_package_source_rows(self) -> list[tuple[int, list[object]]]:
-        rows: list[tuple[int, list[object]]] = []
+    def __build_package_source_rows(self) -> list[tuple[int, list[Any]]]:
+        rows: list[tuple[int, list[Any]]] = []
         for item_id, available in self.__package_item_quantities.items():
             if available <= 0:
                 continue
@@ -443,8 +444,8 @@ class OrderPickingController(
 
     def __build_saved_target_rows(
         self, order_items: list[AssocOrderItemPlainSchema], bin_locations: dict[int, str]
-    ) -> list[tuple[int, list[object]]]:
-        rows: list[tuple[int, list[object]]] = []
+    ) -> list[tuple[int, list[Any]]]:
+        rows: list[tuple[int, list[Any]]] = []
         for order_item in order_items:
             if order_item.bin_id is None:
                 continue
@@ -458,8 +459,8 @@ class OrderPickingController(
 
     def __build_package_saved_target_rows(
         self, order_items: list[AssocOrderItemPlainSchema], bin_locations: dict[int, str]
-    ) -> list[tuple[int, list[object]]]:
-        rows: list[tuple[int, list[object]]] = []
+    ) -> list[tuple[int, list[Any]]]:
+        rows: list[tuple[int, list[Any]]] = []
         for order_item in order_items:
             if order_item.bin_id is None:
                 continue
@@ -718,7 +719,7 @@ class OrderPickingController(
                 )
             else:
                 delete_ids.append(bin_item_id)
-        order_item_states: dict[int, dict[str, object]] = {}
+        order_item_states: dict[int, dict[str, Any]] = {}
         for order_item in self.__order_items.values():
             order_item_states[order_item.id] = {
                 "order_id": order_item.order_id,
@@ -958,7 +959,7 @@ class OrderPickingController(
     def __refresh_source_rows(self) -> None:
         if not self._view:
             return
-        source_rows: list[tuple[int, list[object]]] = []
+        source_rows: list[tuple[int, list[Any]]] = []
         for item_id, quantity in self.__order_item_quantities.items():
             pending_quantity = sum(
                 qty for pending_item, _, _, _, qty, _, _ in self.__pending_moves.values() if pending_item == item_id
@@ -993,7 +994,7 @@ class OrderPickingController(
     def __refresh_package_source_rows(self) -> None:
         if not self._view:
             return
-        source_rows: list[tuple[int, list[object]]] = []
+        source_rows: list[tuple[int, list[Any]]] = []
         for item_id, quantity in self.__package_item_quantities.items():
             pending_quantity = sum(
                 qty
@@ -1064,4 +1065,5 @@ class OrderPickingController(
             category_id=item.category_id,
             unit_id=item.unit_id,
             supplier_id=item.supplier_id,
+            lead_time=item.lead_time,
         )

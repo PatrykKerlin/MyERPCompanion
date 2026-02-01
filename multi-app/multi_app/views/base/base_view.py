@@ -123,6 +123,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
     @search_results.setter
     def search_results(self, value: list[dict[str, Any]] | None) -> None:
         self.__search_results = value
+        if self._mode == ViewMode.LIST:
+            self.__toggle_search_results()
 
     def did_mount(self):
         self.set_mode(self._mode)
@@ -545,7 +547,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 if key in self._data_row:
                     value = self._data_row.get(key)
                 else:
-                    # Handle fields omitted from API payloads (e.g., excluded secrets)
                     if isinstance(input, ft.TextField):
                         value = ""
                     elif isinstance(input, NumericField):

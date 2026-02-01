@@ -20,5 +20,8 @@ class Controller(BaseModel):
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     controller_views: Mapped[list[AssocViewController]] = Fields.relationship(
-        argument="AssocViewController", back_populates="controller", foreign_keys="AssocViewController.controller_id"
+        argument="AssocViewController",
+        back_populates="controller",
+        foreign_keys="AssocViewController.controller_id",
+        cascade_soft_delete=True,
     )

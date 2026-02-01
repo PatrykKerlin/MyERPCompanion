@@ -67,10 +67,9 @@ class StockReceivingView(BaseView):
         self.content = ft.Container(content=self._master_column, expand=True)
 
     def set_orders(self, orders: list[tuple[int, str]]) -> None:
-        self.__order_input.options = (
-            [ft.dropdown.Option(key="0", text="")]
-            + [ft.dropdown.Option(key=str(order_id), text=label) for order_id, label in orders]
-        )
+        self.__order_input.options = [ft.dropdown.Option(key="0", text="")] + [
+            ft.dropdown.Option(key=str(order_id), text=label) for order_id, label in orders
+        ]
         if self.__order_input.page:
             self.__order_input.update()
 
@@ -88,10 +87,10 @@ class StockReceivingView(BaseView):
             self.__target_input.update()
 
     def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
-        self.__bulk_transfer.set_source_rows(cast(list[tuple[int, list[object]]], rows))
+        self.__bulk_transfer.set_source_rows(cast(list[tuple[int, list[Any]]], rows))
 
     def set_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
-        self.__bulk_transfer.set_target_rows(cast(list[tuple[int, list[object]]], rows))
+        self.__bulk_transfer.set_target_rows(cast(list[tuple[int, list[Any]]], rows))
 
     def mark_source_items_as_moved(self, ids: list[int]) -> None:
         self.__bulk_transfer.mark_source_items_as_moved(ids)
@@ -100,10 +99,10 @@ class StockReceivingView(BaseView):
         return self.__bulk_transfer.get_pending_targets()
 
     def add_target_row(self, source_id: int, values: list[str]) -> int:
-        return self.__bulk_transfer.add_target_row(source_id, cast(list[object], values), highlight=True)
+        return self.__bulk_transfer.add_target_row(source_id, cast(list[Any], values), highlight=True)
 
     def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
-        self.__bulk_transfer.update_existing_target(target_id, source_id, cast(list[object], values))
+        self.__bulk_transfer.update_existing_target(target_id, source_id, cast(list[Any], values))
 
     def set_source_enabled(self, enabled: bool) -> None:
         self.__bulk_transfer.set_source_enabled(enabled)

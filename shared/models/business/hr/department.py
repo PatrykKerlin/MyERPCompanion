@@ -22,7 +22,10 @@ class Department(BaseModel):
     phone_number: Mapped[str | None] = Fields.string_20()
 
     positions: Mapped[list[Position]] = Fields.relationship(
-        argument="Position", back_populates="department", foreign_keys="Position.department_id"
+        argument="Position",
+        back_populates="department",
+        foreign_keys="Position.department_id",
+        cascade_soft_delete=True,
     )
 
     employees: Mapped[list[Employee]] = Fields.relationship(

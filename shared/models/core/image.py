@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class Image(BaseModel):
     __tablename__ = "images"
     __table_args__ = (
-        Index("uq_item_images_only_one_primary", "item_id", unique=True, postgresql_where=text("is_primary")),
+        Index("uq_item_images_only_one_primary", "item_id", unique=True, postgresql_where=text("is_primary AND is_active")),
     )
 
     url: Mapped[str] = Fields.string_1000(nullable=False)

@@ -1,5 +1,5 @@
 import flet as ft
-from typing import Callable, cast
+from typing import Callable, cast, Any
 
 
 class BulkTransfer(ft.Container):
@@ -27,11 +27,11 @@ class BulkTransfer(ft.Container):
         if height is not None:
             self.height = height
 
-        self.__source_rows: list[tuple[int, list[object]]] = []
-        self.__target_rows: list[tuple[int, list[object]]] = []
+        self.__source_rows: list[tuple[int, list[Any]]] = []
+        self.__target_rows: list[tuple[int, list[Any]]] = []
         self.__target_ids: set[int] = set()
         self.__initial_target_ids: set[int] = set()
-        self.__initial_target_rows: dict[int, list[object]] = {}
+        self.__initial_target_rows: dict[int, list[Any]] = {}
         self.__source_selectable_ids: set[int] | None = None
 
         self.__selected_source_ids: set[int] = set()
@@ -134,13 +134,13 @@ class BulkTransfer(ft.Container):
 
     def set_source_items(self, items: list[tuple[int, str]]) -> None:
         rows = [(item_id, [label]) for item_id, label in items]
-        self.set_source_rows(cast(list[tuple[int, list[object]]], rows))
+        self.set_source_rows(cast(list[tuple[int, list[Any]]], rows))
 
     def set_target_items(self, items: list[tuple[int, str]]) -> None:
         rows = [(item_id, [label]) for item_id, label in items]
-        self.set_target_rows(cast(list[tuple[int, list[object]]], rows))
+        self.set_target_rows(cast(list[tuple[int, list[Any]]], rows))
 
-    def set_source_rows(self, rows: list[tuple[int, list[object]]]) -> None:
+    def set_source_rows(self, rows: list[tuple[int, list[Any]]]) -> None:
         self.__source_rows = rows
         self.__selected_source_ids.clear()
         self.__moved_source_ids.clear()
@@ -151,7 +151,7 @@ class BulkTransfer(ft.Container):
         self.__source_selectable_ids = selectable_ids
         self.__render_source_table()
 
-    def set_target_rows(self, rows: list[tuple[int, list[object]]]) -> None:
+    def set_target_rows(self, rows: list[tuple[int, list[Any]]]) -> None:
         self.__target_rows = rows
         self.__target_ids = {item_id for item_id, _ in rows}
         self.__initial_target_ids = set(self.__target_ids)
@@ -162,7 +162,7 @@ class BulkTransfer(ft.Container):
         self.__render_target_table()
         self.__update_save_button_state()
 
-    def add_target_row(self, source_id: int, values: list[object], highlight: bool = True) -> int:
+    def add_target_row(self, source_id: int, values: list[Any], highlight: bool = True) -> int:
         target_id = self.__next_pending_target_id
         self.__next_pending_target_id -= 1
         self.__pending_target_map[target_id] = source_id
@@ -187,7 +187,7 @@ class BulkTransfer(ft.Container):
             created_target_ids.append(self.add_target_row(source_id, values, highlight=highlight))
         return created_target_ids
 
-    def update_existing_target(self, target_id: int, source_id: int, values: list[object]) -> None:
+    def update_existing_target(self, target_id: int, source_id: int, values: list[Any]) -> None:
         for index, (item_id, _) in enumerate(self.__target_rows):
             if item_id == target_id:
                 self.__target_rows[index] = (item_id, values)
@@ -201,7 +201,7 @@ class BulkTransfer(ft.Container):
         self.__render_target_table()
         self.__update_save_button_state()
 
-    def update_target_row_values(self, target_id: int, values: list[object]) -> None:
+    def update_target_row_values(self, target_id: int, values: list[Any]) -> None:
         for index, (item_id, _) in enumerate(self.__target_rows):
             if item_id == target_id:
                 self.__target_rows[index] = (item_id, values)
@@ -218,7 +218,7 @@ class BulkTransfer(ft.Container):
                 self.__target_rows[index] = (item_id, initial_values[:])
                 return
 
-    def prepend_target_items(self, items: list[tuple[int, list[object]]], highlight: bool) -> None:
+    def prepend_target_items(self, items: list[tuple[int, list[Any]]], highlight: bool) -> None:
         if not items:
             return
         new_items = [(item_id, label) for item_id, label in items if item_id not in self.__target_ids]
@@ -263,7 +263,7 @@ class BulkTransfer(ft.Container):
     def get_selected_target_ids(self) -> list[int]:
         return list(self.__selected_target_ids)
 
-    def get_source_items_by_ids(self, ids: list[int]) -> list[tuple[int, list[object]]]:
+    def get_source_items_by_ids(self, ids: list[int]) -> list[tuple[int, list[Any]]]:
         ids_set = set(ids)
         return [(item_id, label) for item_id, label in self.__source_rows if item_id in ids_set]
 
@@ -332,7 +332,7 @@ class BulkTransfer(ft.Container):
         self.__update_action_buttons()
         self.__safe_update()
 
-    def __normalize_row_values(self, values: list[object], column_count: int) -> list[object]:
+    def __normalize_row_values(self, values: list[Any], column_count: int) -> list[Any]:
         if len(values) >= column_count:
             return values[:column_count]
         return values + [""] * (column_count - len(values))
@@ -340,7 +340,7 @@ class BulkTransfer(ft.Container):
     def __build_table(
         self,
         columns: list[str],
-        rows: list[tuple[int, list[object]]],
+        rows: list[tuple[int, list[Any]]],
         selected_ids: set[int],
         highlighted_ids: set[int],
         selectable_ids: set[int],
@@ -457,6 +457,12 @@ class BulkTransfer(ft.Container):
         selected_ids = self.get_selected_target_ids()
         if not selected_ids:
             return
+        page = getattr(self, "page", None)
+        if page is None:
+            return
+        self.__show_delete_confirm(page, selected_ids)
+
+    def __execute_delete(self, selected_ids: list[int]) -> None:
         moved_ids = [item_id for item_id in selected_ids if self.is_target_item_from_source(item_id)]
         moved_existing_ids = [item_id for item_id in moved_ids if item_id in self.__initial_target_ids]
         moved_new_ids = [item_id for item_id in moved_ids if item_id not in moved_existing_ids]
@@ -480,6 +486,25 @@ class BulkTransfer(ft.Container):
                 self.__on_delete_clicked(persisted_ids)
             self.__selected_target_ids.difference_update(persisted_ids)
             self.__render_target_table()
+
+    def __show_delete_confirm(self, page: ft.Page, selected_ids: list[int]) -> None:
+        def on_cancel(_: ft.ControlEvent) -> None:
+            page.pop_dialog()
+
+        def on_confirm(_: ft.ControlEvent) -> None:
+            page.pop_dialog()
+            self.__execute_delete(selected_ids)
+
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Confirm"),
+            content=ft.Text("Delete selected item(s)?"),
+            actions=[
+                ft.TextButton("Cancel", on_click=on_cancel),
+                ft.TextButton("OK", on_click=on_confirm),
+            ],
+        )
+        page.show_dialog(dialog)
 
     def __handle_save_clicked(self, event: ft.Event[ft.IconButton]) -> None:
         self.__on_save_clicked(event)

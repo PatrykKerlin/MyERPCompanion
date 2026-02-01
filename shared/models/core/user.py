@@ -38,7 +38,10 @@ class User(BaseModel):
     )
 
     user_groups: Mapped[list[AssocUserGroup]] = Fields.relationship(
-        argument="AssocUserGroup", back_populates="user", foreign_keys="AssocUserGroup.user_id"
+        argument="AssocUserGroup",
+        back_populates="user",
+        foreign_keys="AssocUserGroup.user_id",
+        cascade_soft_delete=True,
     )
 
     @property

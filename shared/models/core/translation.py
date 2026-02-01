@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -14,7 +14,13 @@ if TYPE_CHECKING:
 
 class Translation(BaseModel):
     __tablename__ = "translations"
-    __table_args__ = (UniqueConstraint("key", "language_id", name="uq_translations_key_language"),)
+    __table_args__ = (Index(
+        "ux_translations_key_language_active_true",
+        "key",
+        "language_id",
+        unique=True,
+        postgresql_where=text("is_active"),),
+    )
 
     key: Mapped[str] = Fields.key(unique=False)
     value: Mapped[str] = Fields.string_1000()

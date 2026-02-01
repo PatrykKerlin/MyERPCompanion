@@ -113,6 +113,17 @@ ViewController = ControllerFactory.create(
     service_cls=ViewService,
     input_schema_cls=ViewStrictSchema,
     output_schema_cls=ViewPlainSchema,
+    include={
+        Action.GET_ONE: True,
+        Action.GET_ALL: True,
+        Action.GET_BULK: True,
+        Action.CREATE: True,
+        Action.CREATE_BULK: True,
+        Action.UPDATE: True,
+        Action.UPDATE_BULK: True,
+        Action.DELETE: True,
+        Action.DELETE_BULK: True,
+    }
 )
 
 

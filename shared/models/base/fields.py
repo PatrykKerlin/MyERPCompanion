@@ -26,7 +26,7 @@ class Fields:
         foreign_keys: _ORMColCollectionArgument,
         uselist: bool = True,
         lazy: _LazyLoadArgumentType = "select",
-        cascade_soft_delete: bool = True,
+        cascade_soft_delete: bool = False,
         **kwargs: Any,
     ) -> _RelationshipDeclared[Any]:
         info = kwargs.pop("info", {}) or {}

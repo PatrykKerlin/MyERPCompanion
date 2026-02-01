@@ -4,7 +4,7 @@ from typing import Generic, TypeVar, cast
 
 from sqlalchemy import Date, DateTime, String, asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import InstrumentedAttribute, with_loader_criteria
+from sqlalchemy.orm import InstrumentedAttribute, selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ClauseElement, ColumnElement
 from sqlalchemy.sql.schema import Column
@@ -53,8 +53,8 @@ class BaseRepository(Generic[TModel]):
     async def save(cls, session: AsyncSession, model: TModel) -> TModel:
         session.add(model)
         await session.commit()
-        await session.refresh(model)
-        return model
+        loaded = await cls.get_one_by_id(session, model.id)
+        return loaded if loaded is not None else model
 
     @classmethod
     async def save_many(cls, session: AsyncSession, models: Sequence[TModel]) -> Sequence[TModel]:
@@ -62,21 +62,27 @@ class BaseRepository(Generic[TModel]):
             return []
         session.add_all(list(models))
         await session.commit()
-        for model in models:
-            await session.refresh(model)
-        return models
+        ids = [model.id for model in models]
+        loaded_models = await cls.get_many_by_ids(session, ids)
+        loaded_by_id = {model.id: model for model in loaded_models}
+        return [loaded_by_id.get(model_id, model) for model_id, model in zip(ids, models, strict=False)]
 
     @classmethod
     async def delete(cls, session: AsyncSession, model: TModel) -> None:
-        setattr(model, "is_active", False)
-        await cls.__cascade_soft_delete(model)
+        loaded_model = await cls.__get_with_cascade(session, model.id)
+        if loaded_model is None:
+            return
+        setattr(loaded_model, "is_active", False)
+        await cls.__cascade_soft_delete(loaded_model)
         await session.commit()
 
     @classmethod
     async def delete_many(cls, session: AsyncSession, models: Sequence[TModel]) -> None:
         if not models:
             return
-        for model in models:
+        ids = [model.id for model in models]
+        loaded_models = await cls.__get_many_with_cascade(session, ids)
+        for model in loaded_models:
             setattr(model, "is_active", False)
             await cls.__cascade_soft_delete(model)
         await session.commit()
@@ -149,6 +155,32 @@ class BaseRepository(Generic[TModel]):
             for item in related_items:
                 setattr(item, "is_active", False)
                 setattr(item, "modified_by", model.modified_by)
+
+    @classmethod
+    def __cascade_load_options(cls) -> list:
+        options = []
+        for relation in cls._model_cls.__mapper__.relationships:
+            if relation.info.get("cascade_soft_delete", False):
+                options.append(selectinload(getattr(cls._model_cls, relation.key)))
+        return options
+
+    @classmethod
+    async def __get_with_cascade(cls, session: AsyncSession, model_id: int) -> TModel | None:
+        query = select(cls._model_cls).filter(cls._model_cls.id == model_id).options(*cls.__cascade_load_options())
+        result = await session.execute(query)
+        return result.scalars().first()
+
+    @classmethod
+    async def __get_many_with_cascade(cls, session: AsyncSession, model_ids: list[int]) -> Sequence[TModel]:
+        if not model_ids:
+            return []
+        query = (
+            select(cls._model_cls)
+            .filter(cls._model_cls.id.in_(list(set(model_ids))))
+            .options(*cls.__cascade_load_options())
+        )
+        result = await session.execute(query)
+        return result.scalars().all()
 
     @classmethod
     def __build_filter_expressions(

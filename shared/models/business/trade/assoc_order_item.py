@@ -23,7 +23,7 @@ class AssocOrderItem(BaseModel):
             "order_id",
             "item_id",
             unique=True,
-            postgresql_where=text("bin_id IS NULL"),
+            postgresql_where=text("bin_id IS NULL AND is_active"),
         ),
         Index(
             "uq_order_items_order_item_bin",
@@ -31,7 +31,7 @@ class AssocOrderItem(BaseModel):
             "item_id",
             "bin_id",
             unique=True,
-            postgresql_where=text("bin_id IS NOT NULL"),
+            postgresql_where=text("bin_id IS NOT NULL AND is_active"),
         ),
     )
 

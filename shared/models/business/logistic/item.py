@@ -67,14 +67,23 @@ class Item(BaseModel):
     )
 
     images: Mapped[list[Image]] = Fields.relationship(
-        argument="Image", back_populates="item", foreign_keys="Image.item_id"
+        argument="Image",
+        back_populates="item",
+        foreign_keys="Image.item_id",
+        cascade_soft_delete=True,
     )
 
     item_bins: Mapped[list[AssocBinItem]] = Fields.relationship(
-        argument="AssocBinItem", back_populates="item", foreign_keys="AssocBinItem.item_id"
+        argument="AssocBinItem",
+        back_populates="item",
+        foreign_keys="AssocBinItem.item_id",
+        cascade_soft_delete=True,
     )
     item_discounts: Mapped[list[AssocItemDiscount]] = Fields.relationship(
-        argument="AssocItemDiscount", back_populates="item", foreign_keys="AssocItemDiscount.item_id"
+        argument="AssocItemDiscount",
+        back_populates="item",
+        foreign_keys="AssocItemDiscount.item_id",
+        cascade_soft_delete=True,
     )
     item_orders: Mapped[list[AssocOrderItem]] = Fields.relationship(
         argument="AssocOrderItem", back_populates="item", foreign_keys="AssocOrderItem.item_id"

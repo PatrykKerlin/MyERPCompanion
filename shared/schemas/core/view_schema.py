@@ -14,3 +14,5 @@ class ViewPlainSchema(BasePlainSchema):
     description: str | None
     order: int
     module_id: int
+
+    controller_ids: list[int]

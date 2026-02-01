@@ -20,7 +20,10 @@ class Language(BaseModel):
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     translations: Mapped[list[Translation]] = Fields.relationship(
-        argument="Translation", back_populates="language", foreign_keys="Translation.language_id"
+        argument="Translation",
+        back_populates="language",
+        foreign_keys="Translation.language_id",
+        cascade_soft_delete=True,
     )
     users: Mapped[list[User]] = Fields.relationship(
         argument="User", back_populates="language", foreign_keys="User.language_id"

@@ -65,19 +65,19 @@ class BinTransferView(BaseView):
         self.__bulk_transfer.set_target_enabled(enabled)
 
     def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
-        self.__bulk_transfer.set_source_rows(cast(list[tuple[int, list[object]]], rows))
+        self.__bulk_transfer.set_source_rows(cast(list[tuple[int, list[Any]]], rows))
 
     def set_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
-        self.__bulk_transfer.set_target_rows(cast(list[tuple[int, list[object]]], rows))
+        self.__bulk_transfer.set_target_rows(cast(list[tuple[int, list[Any]]], rows))
 
     def add_target_rows_from_source(self, ids: list[int], highlight: bool = True) -> list[int]:
         return self.__bulk_transfer.add_target_rows_from_source(ids, highlight)
 
     def add_target_row(self, source_id: int, values: list[str], highlight: bool = True) -> int:
-        return self.__bulk_transfer.add_target_row(source_id, cast(list[object], values), highlight=highlight)
+        return self.__bulk_transfer.add_target_row(source_id, cast(list[Any], values), highlight=highlight)
 
     def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
-        self.__bulk_transfer.update_existing_target(target_id, source_id, cast(list[object], values))
+        self.__bulk_transfer.update_existing_target(target_id, source_id, cast(list[Any], values))
 
     def set_source_error(self, message: str | None) -> None:
         self.__source_input.error = message

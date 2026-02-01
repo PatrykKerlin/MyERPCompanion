@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -15,12 +15,12 @@ if TYPE_CHECKING:
 
 class AssocModuleGroup(BaseModel):
     __tablename__ = "module_groups"
-    __table_args__ = (
-        UniqueConstraint(
-            "group_id",
-            "module_id",
-            name="uq_module_groups_group_module",
-        ),
+    __table_args__ = (Index(
+        "ux_module_groups_group_module_active_true",
+        "group_id",
+        "module_id",
+        unique=True,
+        postgresql_where=text("is_active"),),
     )
 
     can_read: Mapped[bool] = Fields.boolean(default=True)

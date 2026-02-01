@@ -147,10 +147,10 @@ class PurchaseOrderController(
     ) -> PaginatedResponseSchema[OrderPlainSchema]:
         return await super()._perform_get_page(service, Endpoint.PURCHASE_ORDERS)
 
-    def get_create_defaults(self) -> dict[str, object]:
+    def get_create_defaults(self) -> dict[str, Any]:
         return self.__build_create_defaults()
 
-    def set_hidden_field_value(self, key: str, value: object) -> None:
+    def set_hidden_field_value(self, key: str, value: Any) -> None:
         self._request_data.input_values[key] = value
 
     def set_field_value(self, key: str, value: str | int | float | bool | date | None) -> None:
@@ -408,14 +408,14 @@ class PurchaseOrderController(
         self._view.set_source_rows(source_items)
         self.__recalculate_order_totals()
 
-    def __build_create_defaults(self) -> dict[str, object]:
+    def __build_create_defaults(self) -> dict[str, Any]:
         today = date.today()
         date_part = today.strftime("%Y%m%d")
         suffix = "".join(random.choices(string.ascii_uppercase + string.digits, k=7))
         number = f"{date_part}{suffix}"
         tracking_number = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
         shipping_cost = round(random.uniform(1, 1000), 2)
-        defaults: dict[str, object] = {
+        defaults: dict[str, Any] = {
             "number": number,
             "is_sales": False,
             "currency_id": self.__default_currency_id,

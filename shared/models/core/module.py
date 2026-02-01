@@ -23,10 +23,16 @@ class Module(BaseModel):
     order: Mapped[int] = Fields.integer()
 
     views: Mapped[list[View]] = Fields.relationship(
-        argument="View", back_populates="module", foreign_keys="View.module_id"
+        argument="View",
+        back_populates="module",
+        foreign_keys="View.module_id",
+        cascade_soft_delete=True,
     )
     module_groups: Mapped[list[AssocModuleGroup]] = Fields.relationship(
-        argument="AssocModuleGroup", back_populates="module", foreign_keys="AssocModuleGroup.module_id"
+        argument="AssocModuleGroup",
+        back_populates="module",
+        foreign_keys="AssocModuleGroup.module_id",
+        cascade_soft_delete=True,
     )
 
     @property

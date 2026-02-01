@@ -1,4 +1,7 @@
 from schemas.core.group_schema import GroupPlainSchema, GroupStrictSchema
+from schemas.core.assoc_module_group_schema import AssocModuleGroupPlainSchema, AssocModuleGroupStrictSchema
+from schemas.core.assoc_user_group_schema import AssocUserGroupPlainSchema, AssocUserGroupStrictSchema
+from schemas.core.assoc_view_controller_schema import AssocViewControllerPlainSchema, AssocViewControllerStrictSchema
 from schemas.core.language_schema import LanguagePlainSchema, LanguageStrictSchema
 from schemas.core.module_schema import ModulePlainSchema, ModuleStrictSchema
 from schemas.core.user_schema import UserPlainSchema, UserStrictUpdateSchema
@@ -36,8 +39,26 @@ ViewService = ServiceFactory.create(
     strict_schema_cls=ViewStrictSchema,
 )
 
+AssocModuleGroupService = ServiceFactory.create(
+    name_prefix="AssocModuleGroup",
+    plain_schema_cls=AssocModuleGroupPlainSchema,
+    strict_schema_cls=AssocModuleGroupStrictSchema,
+)
+AssocUserGroupService = ServiceFactory.create(
+    name_prefix="AssocUserGroup",
+    plain_schema_cls=AssocUserGroupPlainSchema,
+    strict_schema_cls=AssocUserGroupStrictSchema,
+)
+AssocViewControllerService = ServiceFactory.create(
+    name_prefix="AssocViewController",
+    plain_schema_cls=AssocViewControllerPlainSchema,
+    strict_schema_cls=AssocViewControllerStrictSchema,
+)
 
 __all__ = [
+    "AssocModuleGroupService",
+    "AssocUserGroupService",
+    "AssocViewControllerService",
     "AppService",
     "AuthService",
     "GroupService",

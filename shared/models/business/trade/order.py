@@ -63,10 +63,16 @@ class Order(BaseModel):
     )
 
     order_items: Mapped[list[AssocOrderItem]] = Fields.relationship(
-        argument="AssocOrderItem", back_populates="order", foreign_keys="AssocOrderItem.order_id"
+        argument="AssocOrderItem",
+        back_populates="order",
+        foreign_keys="AssocOrderItem.order_id",
+        cascade_soft_delete=True,
     )
     order_statuses: Mapped[list[AssocOrderStatus]] = Fields.relationship(
-        argument="AssocOrderStatus", back_populates="order", foreign_keys="AssocOrderStatus.order_id"
+        argument="AssocOrderStatus",
+        back_populates="order",
+        foreign_keys="AssocOrderStatus.order_id",
+        cascade_soft_delete=True,
     )
 
     @property

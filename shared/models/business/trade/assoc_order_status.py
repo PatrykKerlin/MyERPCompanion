@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -15,12 +15,12 @@ if TYPE_CHECKING:
 
 class AssocOrderStatus(BaseModel):
     __tablename__ = "order_statuses"
-    __table_args__ = (
-        UniqueConstraint(
-            "order_id",
-            "status_id",
-            name="uq_order_statuses_order_status",
-        ),
+    __table_args__ = (Index(
+        "ux_order_statuses_order_status_active_true",
+        "order_id",
+        "status_id",
+        unique=True,
+        postgresql_where=text("is_active"),),
     )
 
     order_id: Mapped[int] = Fields.foreign_key(column="orders.id")

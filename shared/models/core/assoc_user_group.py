@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -15,12 +15,12 @@ if TYPE_CHECKING:
 
 class AssocUserGroup(BaseModel):
     __tablename__ = "user_groups"
-    __table_args__ = (
-        UniqueConstraint(
-            "user_id",
-            "group_id",
-            name="uq_user_groups_user_group",
-        ),
+    __table_args__ = (Index(
+        "ux_user_groups_user_group_active_true",
+        "user_id",
+        "group_id",
+        unique=True,
+        postgresql_where=text("is_active"),),
     )
 
     group_id: Mapped[int] = Fields.foreign_key(column="groups.id")

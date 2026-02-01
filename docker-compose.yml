@@ -82,10 +82,8 @@ services:
     environment:
       - DISPLAY=${DISPLAY}
       - API_URL=http://rest-api:8000/api
-    # stdin_open: true
-    # tty: true
     command:
-      sh -c "flet run main.py"
+      sh -c "flet run main_desktop.py"
 
 volumes:
   postgres-data:

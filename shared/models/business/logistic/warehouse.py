@@ -26,5 +26,8 @@ class Warehouse(BaseModel):
     country: Mapped[str] = Fields.string_50()
 
     bins: Mapped[list[Bin]] = Fields.relationship(
-        argument="Bin", back_populates="warehouse", foreign_keys="Bin.warehouse_id"
+        argument="Bin",
+        back_populates="warehouse",
+        foreign_keys="Bin.warehouse_id",
+        cascade_soft_delete=True,
     )

@@ -54,7 +54,10 @@ class Customer(BaseModel):
         argument="Order", back_populates="customer", foreign_keys="Order.customer_id"
     )
     customer_discounts: Mapped[list[AssocCustomerDiscount]] = Fields.relationship(
-        argument="AssocCustomerDiscount", back_populates="customer", foreign_keys="AssocCustomerDiscount.customer_id"
+        argument="AssocCustomerDiscount",
+        back_populates="customer",
+        foreign_keys="AssocCustomerDiscount.customer_id",
+        cascade_soft_delete=True,
     )
 
     @property

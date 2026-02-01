@@ -29,7 +29,10 @@ class Status(BaseModel):
     order: Mapped[int] = Fields.integer()
 
     status_orders: Mapped[list[AssocOrderStatus]] = Fields.relationship(
-        argument="AssocOrderStatus", back_populates="status", foreign_keys="AssocOrderStatus.status_id"
+        argument="AssocOrderStatus",
+        back_populates="status",
+        foreign_keys="AssocOrderStatus.status_id",
+        cascade_soft_delete=True,
     )
 
     @property

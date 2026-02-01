@@ -184,10 +184,10 @@ class OrderPickingView(BaseView):
     def __handle_customer_changed(self, _: ft.Event[ft.Dropdown]) -> None:
         self._controller.on_customer_changed(self.__customer_input.value)
 
-    def set_source_rows(self, rows: list[tuple[int, list[object]]]) -> None:
+    def set_source_rows(self, rows: list[tuple[int, list[Any]]]) -> None:
         self.__item_bulk_transfer.set_source_rows(rows)
 
-    def set_target_rows(self, rows: list[tuple[int, list[object]]]) -> None:
+    def set_target_rows(self, rows: list[tuple[int, list[Any]]]) -> None:
         self.__item_bulk_transfer.set_target_rows(rows)
 
     def mark_source_items_as_moved(self, ids: list[int]) -> None:
@@ -197,10 +197,10 @@ class OrderPickingView(BaseView):
         return self.__item_bulk_transfer.get_pending_targets()
 
     def add_target_row(self, source_id: int, values: list[str]) -> int:
-        return self.__item_bulk_transfer.add_target_row(source_id, cast(list[object], values), highlight=True)
+        return self.__item_bulk_transfer.add_target_row(source_id, cast(list[Any], values), highlight=True)
 
     def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
-        self.__item_bulk_transfer.update_existing_target(target_id, source_id, cast(list[object], values))
+        self.__item_bulk_transfer.update_existing_target(target_id, source_id, cast(list[Any], values))
 
     def set_source_enabled(self, enabled: bool) -> None:
         self.__item_bulk_transfer.set_source_enabled(enabled)
@@ -208,10 +208,10 @@ class OrderPickingView(BaseView):
     def set_target_enabled(self, enabled: bool) -> None:
         self.__item_bulk_transfer.set_target_enabled(enabled)
 
-    def set_package_source_rows(self, rows: list[tuple[int, list[object]]]) -> None:
+    def set_package_source_rows(self, rows: list[tuple[int, list[Any]]]) -> None:
         self.__package_bulk_transfer.set_source_rows(rows)
 
-    def set_package_target_rows(self, rows: list[tuple[int, list[object]]]) -> None:
+    def set_package_target_rows(self, rows: list[tuple[int, list[Any]]]) -> None:
         self.__package_bulk_transfer.set_target_rows(rows)
 
     def set_package_source_enabled(self, enabled: bool) -> None:
@@ -232,7 +232,7 @@ class OrderPickingView(BaseView):
         return self.__package_bulk_transfer.get_pending_targets()
 
     def add_package_target_row(self, source_id: int, values: list[str]) -> int:
-        return self.__package_bulk_transfer.add_target_row(source_id, cast(list[object], values), highlight=True)
+        return self.__package_bulk_transfer.add_target_row(source_id, cast(list[Any], values), highlight=True)
 
     def update_existing_package_target(self, target_id: int, source_id: int, values: list[str]) -> None:
-        self.__package_bulk_transfer.update_existing_target(target_id, source_id, cast(list[object], values))
+        self.__package_bulk_transfer.update_existing_target(target_id, source_id, cast(list[Any], values))

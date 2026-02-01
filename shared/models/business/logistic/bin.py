@@ -29,7 +29,10 @@ class Bin(BaseModel):
     )
 
     bin_items: Mapped[list[AssocBinItem]] = Fields.relationship(
-        argument="AssocBinItem", back_populates="bin", foreign_keys="AssocBinItem.bin_id"
+        argument="AssocBinItem",
+        back_populates="bin",
+        foreign_keys="AssocBinItem.bin_id",
+        cascade_soft_delete=True,
     )
 
     bin_order_items: Mapped[list[AssocOrderItem]] = Fields.relationship(
