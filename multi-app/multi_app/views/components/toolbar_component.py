@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from controllers.components.toolbar_controller import ToolbarController
 
 
-class ToolbarComponent(BaseComponent, ft.MenuBar):
+class ToolbarComponent(BaseComponent, ft.Container):
     def __init__(self, controller: ToolbarController, translation: Translation) -> None:
         BaseComponent.__init__(self, controller, translation)
         self.__toggle_menu_button = ft.IconButton(
@@ -81,9 +81,20 @@ class ToolbarComponent(BaseComponent, ft.MenuBar):
             disabled=True,
             on_click=lambda _: self._controller.on_refresh_clicked(),
         )
-        ft.MenuBar.__init__(
-            self,
-            # style=MenuStyles.flat,
+        self.__user_label = ft.Text("")
+        self.__pending_username: str | None = None
+        self.__user_button = ft.IconButton(
+            icon=ft.Icons.PERSON,
+            tooltip=translation.get("open_user"),
+            disabled=True,
+            on_click=lambda _: self._controller.on_current_user_clicked(),
+        )
+        self.__user_row = ft.Row(
+            controls=[self.__user_label, self.__user_button],
+            alignment=ft.MainAxisAlignment.END,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+        self.__left_row = ft.Row(
             controls=[
                 self.__toggle_menu_button,
                 self.__lock_view_button,
@@ -98,6 +109,19 @@ class ToolbarComponent(BaseComponent, ft.MenuBar):
                 self.__close_all_tabs_button,
                 self.__refresh_button,
             ],
+            alignment=ft.MainAxisAlignment.START,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+        self.__main_row = ft.Row(
+            controls=[self.__left_row, self.__user_row],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            expand=True,
+        )
+        ft.Container.__init__(
+            self,
+            content=self.__main_row,
+            expand=True,
         )
 
     def set_lock_view_button_icon(self, unlocked: bool) -> None:
@@ -140,3 +164,28 @@ class ToolbarComponent(BaseComponent, ft.MenuBar):
             elif not disabled and button.disabled:
                 button.disabled = False
             button.update()
+
+    def __apply_pending_username(self) -> None:
+        username = self.__pending_username
+        if username:
+            self.__user_label.value = username
+            self.__user_button.disabled = False
+        else:
+            self.__user_label.value = ""
+            self.__user_button.disabled = True
+        self.__user_label.update()
+        self.__user_button.update()
+
+    def did_mount(self):
+        if self.__pending_username is not None:
+            self.__apply_pending_username()
+        return super().did_mount()
+
+    def set_current_user(self, username: str | None) -> None:
+        self.__pending_username = username
+        try:
+            page = self.page
+        except RuntimeError:
+            return
+        if page is not None:
+            self.__apply_pending_username()

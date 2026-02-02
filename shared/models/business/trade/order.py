@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -21,7 +22,9 @@ if TYPE_CHECKING:
 class Order(BaseModel):
     __tablename__ = "orders"
 
-    number: Mapped[str] = Fields.string_20(unique=True)
+    __table_args__ = (Index("ux_order_number_active_true", "number", unique=True, postgresql_where=text("is_active")),)
+
+    number: Mapped[str] = Fields.string_20(unique=False)
     is_sales: Mapped[bool] = Fields.boolean(default=True)
 
     total_net: Mapped[float] = Fields.numeric_10_2()

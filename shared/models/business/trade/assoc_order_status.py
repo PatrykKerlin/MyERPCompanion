@@ -15,12 +15,14 @@ if TYPE_CHECKING:
 
 class AssocOrderStatus(BaseModel):
     __tablename__ = "order_statuses"
-    __table_args__ = (Index(
-        "ux_order_statuses_order_status_active_true",
-        "order_id",
-        "status_id",
-        unique=True,
-        postgresql_where=text("is_active"),),
+    __table_args__ = (
+        Index(
+            "uq_order_statuses_order_status_active_true",
+            "order_id",
+            "status_id",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
     )
 
     order_id: Mapped[int] = Fields.foreign_key(column="orders.id")

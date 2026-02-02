@@ -66,7 +66,7 @@ class Fields:
         return mapped_column(Integer, ForeignKey("users.id"), nullable=True)
 
     @staticmethod
-    def key(unique: bool = True) -> Mapped[str]:
+    def key(unique: bool = False) -> Mapped[str]:
         return mapped_column(String(25), nullable=False, unique=unique)
 
     @staticmethod
@@ -142,21 +142,21 @@ class Fields:
         return mapped_column(String(11), nullable=False)
 
     @staticmethod
-    def ean() -> Mapped[str]:
-        return mapped_column(String(13), nullable=False, unique=True)
+    def ean(unique: bool = False) -> Mapped[str]:
+        return mapped_column(String(13), nullable=False, unique=unique)
 
     @staticmethod
-    def id_document(nullable: bool = False) -> Mapped[Any]:
-        return mapped_column(String(9), nullable=nullable, unique=True)
+    def id_document(nullable: bool = False, unique: bool = False) -> Mapped[Any]:
+        return mapped_column(String(9), nullable=nullable, unique=unique)
 
     @staticmethod
-    def pesel() -> Mapped[str | None]:
-        return mapped_column(String(11), nullable=True, unique=True)
+    def pesel(unique: bool = False) -> Mapped[str | None]:
+        return mapped_column(String(11), nullable=True, unique=unique)
 
     @staticmethod
     def postal_code(nullable: bool = False) -> Mapped[Any]:
         return mapped_column(String(6), nullable=nullable)
 
     @staticmethod
-    def symbol() -> Mapped[str]:
-        return mapped_column(String(3), nullable=False, unique=True)
+    def symbol(unique: bool = False) -> Mapped[str]:
+        return mapped_column(String(3), nullable=False, unique=unique)

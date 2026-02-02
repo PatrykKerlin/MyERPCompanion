@@ -123,7 +123,7 @@ ViewController = ControllerFactory.create(
         Action.UPDATE_BULK: True,
         Action.DELETE: True,
         Action.DELETE_BULK: True,
-    }
+    },
 )
 
 

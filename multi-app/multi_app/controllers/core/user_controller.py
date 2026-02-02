@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any
+from typing import Any, cast
 
 import flet as ft
 
@@ -10,7 +10,7 @@ from schemas.core.assoc_user_group_schema import AssocUserGroupPlainSchema, Asso
 from schemas.core.group_schema import GroupPlainSchema
 from schemas.core.language_schema import LanguagePlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
-from schemas.core.user_schema import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
+from schemas.core.user_schema import UserPlainSchema, UserStrictCreateAppSchema, UserStrictUpdateAppSchema
 from services.core import AssocUserGroupService, GroupService, LanguageService, UserService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
@@ -18,9 +18,9 @@ from views.core.user_view import UserView
 from events.events import ViewRequested
 
 
-class UserController(BaseViewController[UserService, UserView, UserPlainSchema, UserStrictUpdateSchema]):
+class UserController(BaseViewController[UserService, UserView, UserPlainSchema, UserStrictUpdateAppSchema]):
     _plain_schema_cls = UserPlainSchema
-    _strict_schema_cls = UserStrictUpdateSchema
+    _strict_schema_cls = UserStrictUpdateAppSchema
     _service_cls = UserService
     _view_cls = UserView
     _endpoint = Endpoint.USERS
@@ -49,7 +49,8 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         ]
         group_source_rows: list[tuple[int, list[str]]] = []
         group_target_rows: list[tuple[int, list[str]]] = []
-        if event.data and mode in {ViewMode.READ, ViewMode.EDIT}:
+        show_groups = event.module_id != 1
+        if show_groups and event.data and mode in {ViewMode.READ, ViewMode.EDIT}:
             group_source_rows, group_target_rows = self.__build_group_rows(groups, event.data)
         return UserView(
             self,
@@ -61,16 +62,17 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
             theme_pairs,
             group_source_rows,
             group_target_rows,
+            show_groups,
             on_groups_save_clicked=self.on_groups_save_clicked,
             on_groups_delete_clicked=self.on_groups_delete_clicked,
         )
 
     def on_save_clicked(self) -> None:
         if self._view and self._view.mode == ViewMode.CREATE:
-            self._strict_schema_cls = UserStrictCreateSchema
+            self._strict_schema_cls = cast(type[UserStrictUpdateAppSchema], UserStrictCreateAppSchema)
         else:
-            self._strict_schema_cls = UserStrictUpdateSchema
-        self._page.run_task(self._BaseViewController__execute_save_clicked)
+            self._strict_schema_cls = UserStrictUpdateAppSchema
+        super().on_save_clicked()
 
     def on_groups_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         if not self._view or not self._view.data_row:

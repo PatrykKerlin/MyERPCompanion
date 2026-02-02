@@ -15,12 +15,14 @@ if TYPE_CHECKING:
 
 class AssocUserGroup(BaseModel):
     __tablename__ = "user_groups"
-    __table_args__ = (Index(
-        "ux_user_groups_user_group_active_true",
-        "user_id",
-        "group_id",
-        unique=True,
-        postgresql_where=text("is_active"),),
+    __table_args__ = (
+        Index(
+            "uq_user_groups_user_group_active_true",
+            "user_id",
+            "group_id",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
     )
 
     group_id: Mapped[int] = Fields.foreign_key(column="groups.id")

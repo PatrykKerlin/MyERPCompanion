@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -15,7 +16,9 @@ if TYPE_CHECKING:
 class Language(BaseModel):
     __tablename__ = "languages"
 
-    key: Mapped[str] = Fields.key()
+    __table_args__ = (Index("ux_language_key_active_true", "key", unique=True, postgresql_where=text("is_active")),)
+
+    key: Mapped[str] = Fields.key(unique=False)
     symbol: Mapped[str] = Fields.symbol()
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 

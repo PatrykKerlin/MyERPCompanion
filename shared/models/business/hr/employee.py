@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import literal_column, select
+from sqlalchemy import literal_column, select, Index, text
 from sqlalchemy.orm import Mapped, column_property
 
 from models.base.base_model import BaseModel
@@ -18,21 +18,23 @@ if TYPE_CHECKING:
 class Employee(BaseModel):
     __tablename__ = "employees"
 
+    __table_args__ = (Index("ux_employee_pesel_active_true", "pesel", unique=True, postgresql_where=text("is_active")), Index("ux_employee_passport_number_active_true", "passport_number", unique=True, postgresql_where=text("is_active")), Index("ux_employee_id_card_number_active_true", "id_card_number", unique=True, postgresql_where=text("is_active")), Index("ux_employee_email_active_true", "email", unique=True, postgresql_where=text("is_active")), Index("ux_employee_phone_number_active_true", "phone_number", unique=True, postgresql_where=text("is_active")),)
+
     first_name: Mapped[str] = Fields.string_50()
     middle_name: Mapped[str | None] = Fields.string_50(nullable=True)
     last_name: Mapped[str] = Fields.string_50()
 
-    pesel: Mapped[str | None] = Fields.pesel()
+    pesel: Mapped[str | None] = Fields.pesel(unique=False)
     birth_date: Mapped[date] = Fields.date()
     birth_place: Mapped[str] = Fields.string_50()
 
-    passport_number: Mapped[str | None] = Fields.id_document(nullable=True)
+    passport_number: Mapped[str | None] = Fields.id_document(nullable=True, unique=False)
     passport_expiry: Mapped[date | None] = Fields.date(nullable=True)
-    id_card_number: Mapped[str | None] = Fields.id_document(nullable=True)
+    id_card_number: Mapped[str | None] = Fields.id_document(nullable=True, unique=False)
     id_card_expiry: Mapped[date | None] = Fields.date(nullable=True)
 
-    email: Mapped[str | None] = Fields.string_100(unique=True, nullable=True)
-    phone_number: Mapped[str] = Fields.string_20(unique=True)
+    email: Mapped[str | None] = Fields.string_100(unique=False, nullable=True)
+    phone_number: Mapped[str] = Fields.string_20(unique=False)
 
     hire_date: Mapped[date] = Fields.date()
     termination_date: Mapped[date | None] = Fields.date(nullable=True)

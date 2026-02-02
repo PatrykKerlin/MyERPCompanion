@@ -15,12 +15,14 @@ if TYPE_CHECKING:
 
 class AssocBinItem(BaseModel):
     __tablename__ = "bin_items"
-    __table_args__ = (Index(
-        "ux_bin_items_item_bin_active_true",
-        "item_id",
-        "bin_id",
-        unique=True,
-        postgresql_where=text("is_active"),),
+    __table_args__ = (
+        Index(
+            "uq_bin_items_item_bin_active_true",
+            "item_id",
+            "bin_id",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
     )
 
     quantity: Mapped[int] = Fields.integer()

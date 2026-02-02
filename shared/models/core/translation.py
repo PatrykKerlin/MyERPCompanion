@@ -14,12 +14,14 @@ if TYPE_CHECKING:
 
 class Translation(BaseModel):
     __tablename__ = "translations"
-    __table_args__ = (Index(
-        "ux_translations_key_language_active_true",
-        "key",
-        "language_id",
-        unique=True,
-        postgresql_where=text("is_active"),),
+    __table_args__ = (
+        Index(
+            "uq_translations_key_language_active_true",
+            "key",
+            "language_id",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
     )
 
     key: Mapped[str] = Fields.key(unique=False)

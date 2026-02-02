@@ -44,7 +44,10 @@ class ModuleService(BaseService[Module, ModuleRepository, ModuleStrictSchema, Mo
         model = self._model_cls(**schema.model_dump(exclude={"groups"}))
         model.created_by = created_by
         saved_model = await self._repository_cls.save(session, model)
-        return await self.__to_schema(session, saved_model)
+        loaded_model = await self._repository_cls.get_one_by_id(session, saved_model.id)
+        if not loaded_model:
+            raise NoResultFound(self._not_found_message.format(model=self._model_cls.__name__, id=saved_model.id))
+        return await self.__to_schema(session, loaded_model)
 
     async def update(
         self, session: AsyncSession, model_id: int, modified_by: int, schema: ModuleStrictSchema
@@ -56,7 +59,10 @@ class ModuleService(BaseService[Module, ModuleRepository, ModuleStrictSchema, Mo
             setattr(model, key, value)
         model.modified_by = modified_by
         updated_model = await self._repository_cls.save(session, model)
-        return await self.__to_schema(session, updated_model)
+        loaded_model = await self._repository_cls.get_one_by_id(session, updated_model.id)
+        if not loaded_model:
+            raise NoResultFound(self._not_found_message.format(model=self._model_cls.__name__, id=updated_model.id))
+        return await self.__to_schema(session, loaded_model)
 
     async def __to_schema(self, session: AsyncSession, model: Module) -> ModulePlainSchema:
         schema = self._output_schema_cls.model_validate(model)

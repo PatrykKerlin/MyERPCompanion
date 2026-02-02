@@ -58,7 +58,10 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         model = self._model_cls(**schema.model_dump())
         setattr(model, "created_by", created_by)
         saved_model = await self._repository_cls.save(session, model)
-        return self._output_schema_cls.model_validate(saved_model)
+        loaded_model = await self._repository_cls.get_one_by_id(session, saved_model.id)
+        if not loaded_model:
+            raise NoResultFound(self._not_found_message.format(model=self._model_cls.__name__, id=saved_model.id))
+        return self._output_schema_cls.model_validate(loaded_model)
 
     async def create_bulk(
         self, session: AsyncSession, created_by: int, schemas: list[TInputSchema]
@@ -71,7 +74,14 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
             setattr(model, "created_by", created_by)
             models.append(model)
         saved_models = await self._repository_cls.save_many(session, models)
-        return [self._output_schema_cls.model_validate(model) for model in saved_models]
+        saved_ids = [model.id for model in saved_models]
+        loaded_models = await self._repository_cls.get_many_by_ids(session, saved_ids)
+        loaded_by_id = {model.id: model for model in loaded_models}
+        return [
+            self._output_schema_cls.model_validate(loaded_by_id[model_id])
+            for model_id in saved_ids
+            if model_id in loaded_by_id
+        ]
 
     async def update(
         self, session: AsyncSession, model_id: int, modified_by: int, schema: TInputSchema
@@ -83,7 +93,10 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
             setattr(model, key, value)
         setattr(model, "modified_by", modified_by)
         updated_model = await self._repository_cls.save(session, model)
-        return self._output_schema_cls.model_validate(updated_model)
+        loaded_model = await self._repository_cls.get_one_by_id(session, updated_model.id)
+        if not loaded_model:
+            raise NoResultFound(self._not_found_message.format(model=self._model_cls.__name__, id=updated_model.id))
+        return self._output_schema_cls.model_validate(loaded_model)
 
     async def update_bulk(
         self, session: AsyncSession, items: Sequence[tuple[int, TInputSchema]], modified_by: int
@@ -104,7 +117,14 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
                 setattr(model, key, value)
             setattr(model, "modified_by", modified_by)
         updated_models = await self._repository_cls.save_many(session=session, models=list(existing_by_id.values()))
-        return [self._output_schema_cls.model_validate(model) for model in updated_models]
+        updated_ids = [model.id for model in updated_models]
+        loaded_models = await self._repository_cls.get_many_by_ids(session, updated_ids)
+        loaded_by_id = {model.id: model for model in loaded_models}
+        return [
+            self._output_schema_cls.model_validate(loaded_by_id[model_id])
+            for model_id in updated_ids
+            if model_id in loaded_by_id
+        ]
 
     async def delete(self, session: AsyncSession, model_id: int, modified_by: int) -> None:
         model = await self._repository_cls.get_one_by_id(session, model_id)

@@ -14,7 +14,11 @@ class UserStrictBaseSchema(BaseModel):
     language_id: Constraints.PositiveInteger
 
 
-class UserStrictCreateSchema(BaseStrictSchema, UserStrictBaseSchema):
+class UserStrictCreateApiSchema(BaseStrictSchema, UserStrictBaseSchema):
+    password: Constraints.Password
+    
+
+class UserStrictCreateAppSchema(BaseStrictSchema, UserStrictBaseSchema):
     password: Constraints.Password
     password_repeat: Annotated[Constraints.Password, Field(exclude=True)]
 
@@ -25,7 +29,11 @@ class UserStrictCreateSchema(BaseStrictSchema, UserStrictBaseSchema):
         return self
 
 
-class UserStrictUpdateSchema(BaseStrictSchema, UserStrictBaseSchema):
+class UserStrictUpdateApiSchema(BaseStrictSchema, UserStrictBaseSchema):
+    password: Constraints.PasswordOptional
+    
+
+class UserStrictUpdateAppSchema(BaseStrictSchema, UserStrictBaseSchema):
     password: Constraints.PasswordOptional
     password_repeat: Annotated[Constraints.PasswordOptional, Field(exclude=True)]
 

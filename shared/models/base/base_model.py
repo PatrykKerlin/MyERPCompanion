@@ -21,14 +21,14 @@ class BaseModel(Base):
 
     @declared_attr
     def created_by_username(cls) -> Mapped[str | None]:
-        users_table = table("users", column("id"), column("username"))
+        users_table = table("users", column("id"), column("username")).alias("users_created")
         return column_property(
             select(users_table.c.username).where(users_table.c.id == cls.created_by).scalar_subquery()
         )
 
     @declared_attr
     def modified_by_username(cls) -> Mapped[str | None]:
-        users_table = table("users", column("id"), column("username"))
+        users_table = table("users", column("id"), column("username")).alias("users_modified")
         return column_property(
             select(users_table.c.username).where(users_table.c.id == cls.modified_by).scalar_subquery()
         )

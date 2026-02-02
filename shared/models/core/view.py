@@ -15,12 +15,14 @@ if TYPE_CHECKING:
 
 class View(BaseModel):
     __tablename__ = "views"
-    __table_args__ = (Index(
-        "ux_view_order_module_active_true",
-        "order",
-        "module_id",
-        unique=True,
-        postgresql_where=text("is_active"),),
+    __table_args__ = (
+        Index(
+            "uq_view_module_order_active_true",
+            "order",
+            "module_id",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
     )
 
     key: Mapped[str] = Fields.key(unique=False)
@@ -28,12 +30,7 @@ class View(BaseModel):
     order: Mapped[int] = Fields.integer()
 
     module_id: Mapped[int] = Fields.foreign_key(column="modules.id")
-    module: Mapped[Module] = Fields.relationship(
-        argument="Module",
-        back_populates="views",
-        foreign_keys=[module_id],
-        cascade_soft_delete=False,
-    )
+    module: Mapped[Module] = Fields.relationship(argument="Module", back_populates="views", foreign_keys=[module_id])
 
     view_controllers: Mapped[list[AssocViewController]] = Fields.relationship(
         argument="AssocViewController",

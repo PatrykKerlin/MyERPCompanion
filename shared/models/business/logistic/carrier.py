@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -15,7 +16,9 @@ if TYPE_CHECKING:
 class Carrier(BaseModel):
     __tablename__ = "carriers"
 
-    name: Mapped[str] = Fields.name()
+    __table_args__ = (Index("ux_carrier_name_active_true", "name", unique=True, postgresql_where=text("is_active")),)
+
+    name: Mapped[str] = Fields.name(unique=False)
 
     company_email: Mapped[str | None] = Fields.string_50(nullable=True)
     company_phone: Mapped[str | None] = Fields.string_20(nullable=True)
@@ -46,5 +49,8 @@ class Carrier(BaseModel):
     )
 
     delivery_methods: Mapped[list[DeliveryMethod]] = Fields.relationship(
-        argument="DeliveryMethod", back_populates="carrier", foreign_keys="DeliveryMethod.carrier_id"
+        argument="DeliveryMethod",
+        back_populates="carrier",
+        foreign_keys="DeliveryMethod.carrier_id",
+        cascade_soft_delete=True,
     )

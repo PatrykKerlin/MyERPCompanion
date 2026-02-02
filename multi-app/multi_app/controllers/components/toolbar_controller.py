@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from controllers.base.base_component_controller import BaseComponentController
 from states.states import ViewState
-from utils.enums import EditDisabledView, ViewMode
+from utils.enums import EditDisabledView, Module, View, ViewMode
 from views.components.toolbar_component import ToolbarComponent
 from events.events import (
     RecordDeleteRequested,
@@ -16,6 +16,7 @@ from events.events import (
     ToolbarRequested,
     SideMenuToggleRequested,
     ViewRequested,
+    TabRequested,
 )
 from utils.enums import TabNavigationDirection
 
@@ -44,12 +45,15 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         self._subscribe_state_listeners(
             {
                 "view": self.__view_updated_listener,
+                "user": self.__user_updated_listener,
             }
         )
 
     async def _component_requested_handler(self, _: ToolbarRequested) -> None:
         translation = self._state_store.app_state.translation.items
         self._component = ToolbarComponent(controller=self, translation=translation)
+        current = self._state_store.app_state.user.current
+        self._component.set_current_user(current.username if current else None)
         await self._event_bus.publish(ToolbarReady(self._component))
 
     def on_toggle_menu_clicked(self) -> None:
@@ -132,6 +136,27 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
             self._event_bus.publish,
             TabNavigateRequested(direction=TabNavigationDirection.LAST),
         )
+
+    def on_current_user_clicked(self) -> None:
+        current = self._state_store.app_state.user.current
+        if not current:
+            return
+        self._page.run_task(
+            self._event_bus.publish,
+            TabRequested(
+                module_id=Module.CORE,
+                view_key=View.USERS,
+                record_id=current.id,
+                mode=ViewMode.READ,
+            ),
+        )
+
+    def __user_updated_listener(self, state) -> None:
+        if not self._component:
+            return
+        current = state.current
+        username = current.username if current else None
+        self._component.set_current_user(username)
 
     def __view_updated_listener(self, state: ViewState) -> None:
         self.__state_handlers[state.mode]()

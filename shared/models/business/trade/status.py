@@ -17,6 +17,12 @@ class Status(BaseModel):
     __table_args__ = (
         CheckConstraint('"order" <= 10', name="ck_statuses_order_max_10"),
         Index(
+            "ux_status_key_active_true",
+            "key",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
+        Index(
             "ux_statuses_order_active_true",
             "order",
             unique=True,
@@ -24,7 +30,7 @@ class Status(BaseModel):
         ),
     )
 
-    key: Mapped[str] = Fields.key()
+    key: Mapped[str] = Fields.key(unique=False)
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
     order: Mapped[int] = Fields.integer()
 

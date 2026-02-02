@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.core import User
 from repositories.core import UserRepository
-from schemas.core.user_schema import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
+from schemas.core.user_schema import UserPlainSchema, UserStrictCreateApiSchema, UserStrictUpdateApiSchema
 from services.base.base_service import BaseService
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ class UserService(
     BaseService[
         User,
         UserRepository,
-        Union[UserStrictCreateSchema, UserStrictUpdateSchema],
+        Union[UserStrictCreateApiSchema, UserStrictUpdateApiSchema],
         UserPlainSchema,
     ]
 ):
@@ -40,7 +40,7 @@ class UserService(
         return self._output_schema_cls.model_validate(model)
 
     async def create(
-        self, session: AsyncSession, created_by: int, schema: Union[UserStrictCreateSchema, UserStrictUpdateSchema]
+        self, session: AsyncSession, created_by: int, schema: Union[UserStrictCreateApiSchema, UserStrictUpdateApiSchema]
     ) -> UserPlainSchema:
         model = self._model_cls(**schema.model_dump(exclude={"groups"}))
         model.created_by = created_by
@@ -57,7 +57,7 @@ class UserService(
         session: AsyncSession,
         model_id: int,
         modified_by: int,
-        schema: Union[UserStrictCreateSchema, UserStrictUpdateSchema],
+        schema: Union[UserStrictCreateApiSchema, UserStrictUpdateApiSchema],
     ) -> UserPlainSchema:
         model = await self._repository_cls.get_one_by_id(session, model_id)
         if not model:

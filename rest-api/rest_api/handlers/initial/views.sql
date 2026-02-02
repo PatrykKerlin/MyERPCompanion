@@ -1,14 +1,14 @@
 INSERT INTO views (key, description, "order", module_id, is_active, created_at, created_by)
 VALUES
-('side_menu', 'Side menu view', 1, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('current_user', 'Current user view', 2, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('side_menu_core', 'Side menu view', 1, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('current_user_core', 'Current user view', 2, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 
 ('languages', 'Languages view', 1, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('translations', 'Translations view', 2, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('modules', 'Modules view', 3, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('groups', 'Groups view', 4, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('users', 'Users view', 5, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('statuses', 'Statuses view', 6, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('groups', 'Groups view', 5, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('users', 'Users view', 6, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('statuses', 'Statuses view', 7, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 
 ('departments', 'Departments view', 1, 3, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('positions', 'Positions view', 2, 3, TRUE, CURRENT_TIMESTAMP, :superuser_id),
@@ -34,4 +34,6 @@ VALUES
 
 ('currencies', 'Currencies view', 1, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('exchange_rates', 'Exchange rates view', 3, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('invoices', 'Invoices view', 2, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id);
+('invoices', 'Invoices view', 2, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+
+('users_core', 'Users core view', 3, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id);

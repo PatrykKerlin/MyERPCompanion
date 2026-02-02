@@ -15,14 +15,16 @@ if TYPE_CHECKING:
 
 class AssocItemDiscount(BaseModel):
     __tablename__ = "item_discounts"
-    __table_args__ = (Index(
-        "ux_item_discounts_item_discount_active_true",
-        "item_id",
-        "discount_id",
-        unique=True,
-        postgresql_where=text("is_active"),),
+    __table_args__ = (
+        Index(
+            "uq_item_discounts_item_discount_active_true",
+            "item_id",
+            "discount_id",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
     )
-    
+
 
     item_id: Mapped[int] = Fields.foreign_key(column="items.id")
     item: Mapped[Item] = Fields.relationship(

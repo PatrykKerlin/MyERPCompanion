@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -16,7 +17,9 @@ if TYPE_CHECKING:
 class Position(BaseModel):
     __tablename__ = "positions"
 
-    name: Mapped[str] = Fields.name()
+    __table_args__ = (Index("ux_position_name_active_true", "name", unique=True, postgresql_where=text("is_active")),)
+
+    name: Mapped[str] = Fields.name(unique=False)
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
     code: Mapped[str] = Fields.symbol()
     level: Mapped[int] = Fields.integer()
@@ -34,5 +37,8 @@ class Position(BaseModel):
     )
 
     employees: Mapped[list[Employee]] = Fields.relationship(
-        argument="Employee", back_populates="position", foreign_keys="Employee.position_id"
+        argument="Employee",
+        back_populates="position",
+        foreign_keys="Employee.position_id",
+        cascade_soft_delete=True,
     )

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, Index, text
 from sqlalchemy.orm import Mapped, object_session
 
 from models.base.base_model import BaseModel
@@ -23,11 +23,13 @@ if TYPE_CHECKING:
 class Item(BaseModel):
     __tablename__ = "items"
 
-    index: Mapped[str] = Fields.string_10(unique=True, nullable=False)
-    name: Mapped[str] = Fields.name()
+    __table_args__ = (Index("ux_item_index_active_true", "index", unique=True, postgresql_where=text("is_active")), Index("ux_item_name_active_true", "name", unique=True, postgresql_where=text("is_active")), Index("ux_item_ean_active_true", "ean", unique=True, postgresql_where=text("is_active")),)
+
+    index: Mapped[str] = Fields.string_10(unique=False, nullable=False)
+    name: Mapped[str] = Fields.name(unique=False)
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
-    ean: Mapped[str] = Fields.ean()
+    ean: Mapped[str] = Fields.ean(unique=False)
 
     purchase_price: Mapped[float] = Fields.numeric_10_2()
     vat_rate: Mapped[float] = Fields.numeric_3_2()
@@ -86,7 +88,10 @@ class Item(BaseModel):
         cascade_soft_delete=True,
     )
     item_orders: Mapped[list[AssocOrderItem]] = Fields.relationship(
-        argument="AssocOrderItem", back_populates="item", foreign_keys="AssocOrderItem.item_id"
+        argument="AssocOrderItem",
+        back_populates="item",
+        foreign_keys="AssocOrderItem.item_id",
+        cascade_soft_delete=True,
     )
 
     @property

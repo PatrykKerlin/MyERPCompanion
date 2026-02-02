@@ -63,7 +63,13 @@ class ImageService(
                 description=schema.description,
                 item_id=schema.item_id,
             )
-            return await super().create(session, created_by, model_schema)
+            model = self._model_cls(**model_schema.model_dump())
+            model.created_by = created_by
+            saved_model = await self._repository_cls.save(session, model)
+            loaded_model = await self._repository_cls.get_one_by_id(session, saved_model.id)
+            if not loaded_model:
+                raise NoResultFound(self._not_found_message.format(model=self._model_cls.__name__, id=saved_model.id))
+            return self._output_schema_cls.model_validate(loaded_model)
         except:
             if public_url:
                 await self.__storage.delete_file(public_url)

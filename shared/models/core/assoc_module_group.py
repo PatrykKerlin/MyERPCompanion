@@ -15,12 +15,14 @@ if TYPE_CHECKING:
 
 class AssocModuleGroup(BaseModel):
     __tablename__ = "module_groups"
-    __table_args__ = (Index(
-        "ux_module_groups_group_module_active_true",
-        "group_id",
-        "module_id",
-        unique=True,
-        postgresql_where=text("is_active"),),
+    __table_args__ = (
+        Index(
+            "uq_module_groups_group_module_active_true",
+            "group_id",
+            "module_id",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
     )
 
     can_read: Mapped[bool] = Fields.boolean(default=True)

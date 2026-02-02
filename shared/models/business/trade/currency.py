@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -20,15 +21,23 @@ if TYPE_CHECKING:
 class Currency(BaseModel):
     __tablename__ = "currencies"
 
+    __table_args__ = (Index("ux_currency_name_active_true", "name", unique=True, postgresql_where=text("is_active")),)
+
     code: Mapped[str] = Fields.symbol()
-    name: Mapped[str] = Fields.name()
+    name: Mapped[str] = Fields.name(unique=False)
     sign: Mapped[str] = Fields.symbol()
 
     base_rates: Mapped[list[ExchangeRate]] = Fields.relationship(
-        argument="ExchangeRate", back_populates="base_currency", foreign_keys="ExchangeRate.base_currency_id"
+        argument="ExchangeRate",
+        back_populates="base_currency",
+        foreign_keys="ExchangeRate.base_currency_id",
+        cascade_soft_delete=True,
     )
     quote_rates: Mapped[list[ExchangeRate]] = Fields.relationship(
-        argument="ExchangeRate", back_populates="quote_currency", foreign_keys="ExchangeRate.quote_currency_id"
+        argument="ExchangeRate",
+        back_populates="quote_currency",
+        foreign_keys="ExchangeRate.quote_currency_id",
+        cascade_soft_delete=True,
     )
     orders: Mapped[list[Order]] = Fields.relationship(
         argument="Order", back_populates="currency", foreign_keys="Order.currency_id"

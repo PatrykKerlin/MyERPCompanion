@@ -15,12 +15,14 @@ if TYPE_CHECKING:
 
 class AssocCustomerDiscount(BaseModel):
     __tablename__ = "customer_discounts"
-    __table_args__ = (Index(
-        "ux_customer_discounts_customer_discount_active_true",
-        "customer_id",
-        "discount_id",
-        unique=True,
-        postgresql_where=text("is_active"),),
+    __table_args__ = (
+        Index(
+            "uq_customer_discounts_customer_discount_active_true",
+            "customer_id",
+            "discount_id",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
     )
 
     customer_id: Mapped[int] = Fields.foreign_key(column="customers.id")

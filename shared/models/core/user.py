@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -18,12 +19,14 @@ if TYPE_CHECKING:
 class User(BaseModel):
     __tablename__ = "users"
 
-    username: Mapped[str] = Fields.string_20(unique=True)
+    __table_args__ = (Index("ux_user_username_active_true", "username", unique=True, postgresql_where=text("is_active")), Index("ux_user_employee_id_active_true", "employee_id", unique=True, postgresql_where=text("is_active")),)
+
+    username: Mapped[str] = Fields.string_20(unique=False)
     is_superuser: Mapped[bool] = Fields.boolean(default=False)
     password: Mapped[str] = Fields.string_100()
     theme: Mapped[str] = Fields.string_10()
 
-    employee_id: Mapped[int | None] = Fields.foreign_key(column="employees.id", unique=True, nullable=True)
+    employee_id: Mapped[int | None] = Fields.foreign_key(column="employees.id", unique=False, nullable=True)
     employee: Mapped[Employee | None] = Fields.relationship(
         argument="Employee", back_populates="user", foreign_keys=[employee_id], uselist=False
     )

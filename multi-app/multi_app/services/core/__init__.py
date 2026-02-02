@@ -4,7 +4,7 @@ from schemas.core.assoc_user_group_schema import AssocUserGroupPlainSchema, Asso
 from schemas.core.assoc_view_controller_schema import AssocViewControllerPlainSchema, AssocViewControllerStrictSchema
 from schemas.core.language_schema import LanguagePlainSchema, LanguageStrictSchema
 from schemas.core.module_schema import ModulePlainSchema, ModuleStrictSchema
-from schemas.core.user_schema import UserPlainSchema, UserStrictUpdateSchema
+from schemas.core.user_schema import UserPlainSchema, UserStrictUpdateAppSchema
 from schemas.core.view_schema import ViewPlainSchema, ViewStrictSchema
 from services.core.app_service import AppService
 from services.core.auth_service import AuthService
@@ -31,7 +31,7 @@ ModuleService = ServiceFactory.create(
 UserService = ServiceFactory.create(
     name_prefix="User",
     plain_schema_cls=UserPlainSchema,
-    strict_schema_cls=UserStrictUpdateSchema,
+    strict_schema_cls=UserStrictUpdateAppSchema,
 )
 ViewService = ServiceFactory.create(
     name_prefix="View",

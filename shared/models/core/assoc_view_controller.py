@@ -15,12 +15,14 @@ if TYPE_CHECKING:
 
 class AssocViewController(BaseModel):
     __tablename__ = "view_controllers"
-    __table_args__ = (Index(
-        "ux_view_controllers_view_controller_active_true",
-        "view_id",
-        "controller_id",
-        unique=True,
-        postgresql_where=text("is_active"),),
+    __table_args__ = (
+        Index(
+            "uq_view_controllers_view_controller_active_true",
+            "view_id",
+            "controller_id",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
     )
 
     view_id: Mapped[int] = Fields.foreign_key(column="views.id")

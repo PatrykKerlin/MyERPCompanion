@@ -16,7 +16,7 @@ from utils.auth import Auth
 
 
 class TranslationController(BaseController[TranslationService, TranslationStrictSchema, TranslationPlainSchema]):
-    _input_schema_cls: type[TranslationStrictSchema]
+    _input_schema_cls = TranslationStrictSchema
     _service_cls = TranslationService
 
     def __init__(self, context: Context, auth: Auth) -> None:

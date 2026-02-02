@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -16,7 +17,9 @@ if TYPE_CHECKING:
 class Bin(BaseModel):
     __tablename__ = "bins"
 
-    location: Mapped[str] = Fields.string_10(unique=True)
+    __table_args__ = (Index("ux_bin_location_active_true", "location", unique=True, postgresql_where=text("is_active")),)
+
+    location: Mapped[str] = Fields.string_10(unique=False)
     is_inbound: Mapped[bool] = Fields.boolean(default=False)
     is_outbound: Mapped[bool] = Fields.boolean(default=False)
 
@@ -36,7 +39,10 @@ class Bin(BaseModel):
     )
 
     bin_order_items: Mapped[list[AssocOrderItem]] = Fields.relationship(
-        argument="AssocOrderItem", back_populates="bin", foreign_keys="AssocOrderItem.bin_id"
+        argument="AssocOrderItem",
+        back_populates="bin",
+        foreign_keys="AssocOrderItem.bin_id",
+        cascade_soft_delete=True,
     )
 
     @property

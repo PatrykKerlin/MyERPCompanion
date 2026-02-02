@@ -4,16 +4,16 @@ from fastapi import HTTPException, Request, status
 
 from config.context import Context
 from controllers.base.base_controller import BaseController
-from schemas.core.user_schema import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
+from schemas.core.user_schema import UserPlainSchema, UserStrictCreateApiSchema, UserStrictUpdateApiSchema
 from services.core import UserService
 from utils.auth import Auth
 from utils.enums import Permission
 
 
 class CurrentUserController(
-    BaseController[UserService, Union[UserStrictCreateSchema, UserStrictUpdateSchema], UserPlainSchema]
+    BaseController[UserService, Union[UserStrictCreateApiSchema, UserStrictUpdateApiSchema], UserPlainSchema]
 ):
-    _input_schema_cls = UserStrictCreateSchema
+    _input_schema_cls = UserStrictCreateApiSchema
     _service_cls = UserService
 
     def __init__(self, context: Context, auth: Auth) -> None:

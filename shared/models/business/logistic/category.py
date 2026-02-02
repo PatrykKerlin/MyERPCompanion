@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -16,8 +17,10 @@ if TYPE_CHECKING:
 class Category(BaseModel):
     __tablename__ = "categories"
 
-    name: Mapped[str] = Fields.name()
-    code: Mapped[str] = Fields.string_10(unique=True, nullable=False)
+    __table_args__ = (Index("ux_category_name_active_true", "name", unique=True, postgresql_where=text("is_active")), Index("ux_category_code_active_true", "code", unique=True, postgresql_where=text("is_active")),)
+
+    name: Mapped[str] = Fields.name(unique=False)
+    code: Mapped[str] = Fields.string_10(unique=False, nullable=False)
     description: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     items: Mapped[list[Item]] = Fields.relationship(

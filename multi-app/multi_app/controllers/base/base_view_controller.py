@@ -271,8 +271,10 @@ class BaseViewController(
         ):
             response = await self._perform_get_one(event.record_id, self._service, self._endpoint)
             data = response.model_dump()
-        if data is not None and event.data is None:
-            object.__setattr__(event, "data", data)
+        if data is not None:
+            self.__parse_data_row(data)
+            if event.data is None:
+                object.__setattr__(event, "data", data)
         if event.mode is not None:
             mode = event.mode
         elif data:
@@ -284,6 +286,8 @@ class BaseViewController(
         self._request_data.caller_data = event.caller_data
         if data:
             self._request_data.input_values = dict(data)
+            if self._view_key == View.USERS:
+                self._request_data.input_values["language_id"] = data["language"]["id"]
         self._view = await self._build_view(translation, mode, event)
         if self._view:
             self._request_data_by_view[id(self._view)] = self._request_data
@@ -571,5 +575,7 @@ class BaseViewController(
             if value is None and parse_none:
                 data_row[key] = ""
 
-    def _format_datetime(self, value: datetime, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
-        return value.strftime(fmt)
+    def _format_datetime(self, value: datetime | str, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
+        if isinstance(value, datetime):
+            return value.strftime(fmt)
+        return str(value)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
 from models.base.base_model import BaseModel
@@ -17,16 +18,18 @@ if TYPE_CHECKING:
 class Customer(BaseModel):
     __tablename__ = "customers"
 
+    __table_args__ = (Index("ux_customer_company_name_active_true", "company_name", unique=True, postgresql_where=text("is_active")), Index("ux_customer_email_active_true", "email", unique=True, postgresql_where=text("is_active")), Index("ux_customer_phone_number_active_true", "phone_number", unique=True, postgresql_where=text("is_active")), Index("ux_customer_user_id_active_true", "user_id", unique=True, postgresql_where=text("is_active")),)
+
     first_name: Mapped[str] = Fields.string_50(nullable=True)
     last_name: Mapped[str] = Fields.string_50(nullable=True)
 
-    company_name: Mapped[str] = Fields.name()
+    company_name: Mapped[str] = Fields.name(unique=False)
 
     payment_term: Mapped[int] = Fields.integer()
     tax_id: Mapped[str] = Fields.string_10()
 
-    email: Mapped[str] = Fields.string_100(unique=True)
-    phone_number: Mapped[str] = Fields.string_20(unique=True)
+    email: Mapped[str] = Fields.string_100(unique=False)
+    phone_number: Mapped[str] = Fields.string_20(unique=False)
 
     street: Mapped[str | None] = Fields.string_50(nullable=True)
     house_number: Mapped[str] = Fields.string_10()
@@ -42,7 +45,7 @@ class Customer(BaseModel):
     shipping_city: Mapped[str | None] = Fields.string_50(nullable=True)
     shipping_country: Mapped[str | None] = Fields.string_50(nullable=True)
 
-    user_id: Mapped[int | None] = Fields.foreign_key(column="users.id", unique=True)
+    user_id: Mapped[int | None] = Fields.foreign_key(column="users.id", unique=False)
     user: Mapped[User | None] = Fields.relationship(
         argument="User", back_populates="customer", foreign_keys=[user_id], uselist=False
     )
