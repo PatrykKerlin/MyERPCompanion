@@ -30,9 +30,11 @@ class DeliveryMethodController(
             self.__perform_get_all_carriers(),
             self.__perform_get_all_units(),
         )
-        return DeliveryMethodView(
-            self, translation, mode, event.view_key, event.data, event.is_dialog, event.caller_view_key, carriers, units
-        )
+        carrier_id = None
+        if event.data:
+            carrier_id = event.data["carrier_id"]
+            carriers = [item for item in carriers if item[0] == carrier_id]
+        return DeliveryMethodView(self, translation, mode, event.view_key, event.data, carriers, units)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_carriers(self) -> list[tuple[int, str]]:

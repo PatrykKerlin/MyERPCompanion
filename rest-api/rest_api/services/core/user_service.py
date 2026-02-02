@@ -47,7 +47,10 @@ class UserService(
         if schema.password:
             model.password = await self.__auth.get_password_hash(schema.password) if self.__auth else ""
         saved_model = await self._repository_cls.save(session, model)
-        return self._output_schema_cls.model_validate(saved_model)
+        loaded_model = await self._repository_cls.get_one_by_id(session, saved_model.id)
+        if not loaded_model:
+            raise NoResultFound(self._not_found_message.format(model=self._model_cls.__name__, id=saved_model.id))
+        return self._output_schema_cls.model_validate(loaded_model)
 
     async def update(
         self,
@@ -65,4 +68,7 @@ class UserService(
         if schema.password:
             model.password = await self.__auth.get_password_hash(schema.password) if self.__auth else ""
         updated_model = await self._repository_cls.save(session, model)
-        return self._output_schema_cls.model_validate(updated_model)
+        loaded_model = await self._repository_cls.get_one_by_id(session, updated_model.id)
+        if not loaded_model:
+            raise NoResultFound(self._not_found_message.format(model=self._model_cls.__name__, id=updated_model.id))
+        return self._output_schema_cls.model_validate(loaded_model)

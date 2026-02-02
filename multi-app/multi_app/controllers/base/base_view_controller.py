@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from controllers.base.base_controller import BaseController
 from events.events import (
     RecordDeleteRequested,
-    RecordSaved,
+    CallerActionRequested,
     TabClosed,
     TabCloseRequested,
     TabRequested,
@@ -25,10 +25,10 @@ from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.request_data import RequestData
 from utils.translation import Translation
 from views.base.base_view import BaseView
+from views.components.message_dialog_component import MessageDialogComponent
 from views.controls.date_field_control import DateField
 from views.controls.numeric_field_control import NumericField
 from config.context import Context
-from views.components.view_dialog_component import ViewDialog
 
 TService = TypeVar("TService", bound=BaseService)
 TView = TypeVar("TView", bound=BaseView)
@@ -62,8 +62,6 @@ class BaseViewController(
                 TabClosed: self.__tab_closed_handler,
                 RecordDeleteRequested: self.__record_delete_requested_handler,
                 ViewRequested: self.__view_requested_handler,
-                ViewReady: self.__view_ready_handler,
-                RecordSaved: self.__record_saved_handler,
                 SaveSucceeded: self.__save_succeeded_handler,
             }
         )
@@ -121,14 +119,11 @@ class BaseViewController(
     def on_cancel_clicked(self) -> None:
         if not self._view:
             return
-        if self._view.is_dialog:
-            self._state_store.update(view={"mode": ViewMode.READ})
-        elif self._view.mode == ViewMode.CREATE:
+        if self._view.mode == ViewMode.CREATE:
             self._state_store.update(view={"mode": ViewMode.SEARCH})
         elif self._view.mode == ViewMode.EDIT:
             self._state_store.update(view={"mode": ViewMode.READ})
         self._view.clear_inputs()
-        self._page.pop_dialog()
 
     def on_sort_clicked(self, key: str) -> None:
         if self._request_data.sort_by == key:
@@ -266,15 +261,27 @@ class BaseViewController(
         self._open_loading_dialog()
         translation = self._state_store.app_state.translation.items
         self._module_id = event.module_id
-        if event.is_dialog:
-            mode = ViewMode.CREATE
-        elif event.data:
+        data = event.data
+        if (
+            data is None
+            and event.record_id is not None
+            and (event.mode == ViewMode.READ or event.mode == ViewMode.EDIT)
+        ):
+            response = await self._perform_get_one(event.record_id, self._service, self._endpoint)
+            data = response.model_dump()
+        if data is not None and event.data is None:
+            object.__setattr__(event, "data", data)
+        if event.mode is not None:
+            mode = event.mode
+        elif data:
             mode = ViewMode.READ
         else:
             mode = ViewMode.SEARCH
         self._request_data = RequestData()
-        if event.data:
-            self._request_data.input_values = dict(event.data)
+        self._request_data.caller_view_key = event.caller_view_key
+        self._request_data.caller_data = event.caller_data
+        if data:
+            self._request_data.input_values = dict(data)
         self._view = await self._build_view(translation, mode, event)
         if self._view:
             self._request_data_by_view[id(self._view)] = self._request_data
@@ -283,28 +290,10 @@ class BaseViewController(
                 view_key=event.view_key,
                 record_id=event.record_id,
                 view=self._view,
-                is_dialog=event.is_dialog,
                 save_succeeded=event.save_succeeded,
             )
         )
         self._close_loading_dialog()
-
-    async def __view_ready_handler(self, event: ViewReady) -> None:
-        if not self._view:
-            return
-        if not event.is_dialog or event.view_key != self._view_key:
-            return
-        translation = self._state_store.app_state.translation.items
-        dialog_title = translation.get("add_new_record")
-        card_content = event.view.content
-        dialog_view = ft.Container(content=card_content, expand=True)
-        view_dialog = ViewDialog(
-            view=dialog_view,
-            title=dialog_title,
-            width_ratio=event.width_ratio,
-            actions=[self._view.buttons_row],
-        )
-        self._page.show_dialog(view_dialog)
 
     async def __tab_closed_handler(self, event: TabClosed) -> None:
         if event.view.view_key != self._view_key:
@@ -313,6 +302,21 @@ class BaseViewController(
         if self._view is event.view:
             self._view = None
             self._request_data = RequestData()
+
+    def __open_save_success_dialog(self, close_tab_title: str | None) -> None:
+        translation = self._state_store.app_state.translation.items
+
+        def on_ok(_: ft.Event[ft.TextButton]) -> None:
+            self._page.pop_dialog()
+            if close_tab_title:
+                self._page.run_task(self._event_bus.publish, TabCloseRequested(close_tab_title))
+
+        message_dialog = MessageDialogComponent(
+            translation=translation,
+            message_key="record_save_success",
+            on_ok_clicked=on_ok,
+        )
+        self._page.show_dialog(message_dialog)
 
     async def __record_delete_requested_handler(self, event: RecordDeleteRequested) -> None:
         if event.view_key != self._view_key:
@@ -326,26 +330,10 @@ class BaseViewController(
         await self.__execute_search_clicked()
         self._open_message_dialog("record_delete_success")
 
-    async def __record_saved_handler(self, event: RecordSaved):
-        if event.view_key != self._view_key:
-            return
-        if not self._view or not self._view.data_row:
-            return
-        response = await self._perform_get_one(self._view.data_row["id"], self._service, self._endpoint)
-        await self._event_bus.publish(
-            TabRequested(
-                module_id=self._module_id,
-                view_key=self._view_key,
-                record_id=response.id,
-                record_data=response.model_dump(),
-                save_succeeded=True,
-            )
-        )
-
     async def __save_succeeded_handler(self, event: SaveSucceeded):
         if event.view_key != self._view_key:
             return
-        self._open_message_dialog("record_save_success")
+        self.__open_save_success_dialog(None)
 
     def __view_updated_listener(self, state: ViewState) -> None:
         if not state.title:
@@ -466,10 +454,10 @@ class BaseViewController(
         try:
             data = json.loads(payload)
         except json.JSONDecodeError:
-            self._open_error_dialog(message="Invalid clipboard data.")
+            self._open_error_dialog(message_key="invalid_clipboard_data")
             return
         if not isinstance(data, dict):
-            self._open_error_dialog(message="Invalid clipboard data.")
+            self._open_error_dialog(message_key="invalid_clipboard_data")
             return
         for key, value in data.items():
             if key not in self._view.inputs:
@@ -510,7 +498,19 @@ class BaseViewController(
                     self._request_data.input_values["id"], self._service, self._endpoint, payload
                 )
             if response:
-                if not self._view.is_dialog:
+                if self._request_data.caller_view_key:
+                    close_title = self._state_store.app_state.view.title
+                    await self._event_bus.publish(
+                        CallerActionRequested(
+                            caller_view_key=self._request_data.caller_view_key,
+                            source_view_key=self._view_key,
+                            created_id=response.id,
+                            record_data=response.model_dump(),
+                            caller_data=self._request_data.caller_data,
+                        )
+                    )
+                    self.__open_save_success_dialog(close_title)
+                else:
                     await self._event_bus.publish(
                         TabRequested(
                             module_id=self._module_id,
@@ -525,12 +525,6 @@ class BaseViewController(
                     self._request_data_by_view[id(self._view)] = self._request_data
                 if self._view and self._view.mode == ViewMode.SEARCH:
                     self._view.clear_inputs()
-                if self._view.caller_view_key:
-                    await self._event_bus.publish(
-                        RecordSaved(
-                            view_key=self._view.caller_view_key,
-                        )
-                    )
         except ValidationError as validation_error:
             translate_state = self._state_store.app_state.translation
             error_message = [translate_state.items.get("validation_errors")]

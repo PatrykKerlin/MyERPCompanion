@@ -66,7 +66,13 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
 
     async def __tab_requested_handler(self, event: TabRequested) -> None:
         tab_title = self._get_tab_title(event.view_key, event.record_id)
-        if tab_title not in self.__active_tabs or event.save_succeeded:
+        if (
+            tab_title not in self.__active_tabs
+            or event.mode is not None
+            or event.record_data is not None
+            or event.record_id is not None
+            or event.caller_data is not None
+        ):
             self._page.run_task(
                 self._event_bus.publish,
                 ViewRequested(
@@ -74,6 +80,9 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
                     view_key=event.view_key,
                     record_id=event.record_id,
                     data=event.record_data,
+                    mode=event.mode,
+                    caller_view_key=event.caller_view_key,
+                    caller_data=event.caller_data,
                     save_succeeded=event.save_succeeded,
                 ),
             )
@@ -225,5 +234,3 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
         self._component.refresh()
         self._state_store.update(view={"title": prev_title, "mode": prev_mode, "view": prev_view})
         await self._event_bus.publish(TabClosed(closed_view))
-        # if view_key and mode in {ViewMode.SEARCH, ViewMode.LIST}:
-        #     await self._event_bus.publish(TabClosed(view_key=view_key))

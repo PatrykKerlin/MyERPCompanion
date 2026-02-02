@@ -609,10 +609,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 if option.key == str(value):
                     options.append(option)
                     break
-            if len(options) == 0:
-                options.append(input.options[0])
-            self.__dropdown_options[key] = list(input.options)
-            input.options = options
+            if options:
+                self.__dropdown_options[key] = list(input.options)
+                input.options = options
+                input.value = options[0].key
 
     def __restore_dropdown_options(self, input: ft.Dropdown, key: str) -> None:
         if self.__dropdown_options.get(key) is not None:

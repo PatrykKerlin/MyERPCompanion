@@ -5,7 +5,7 @@ from typing import Any
 from dataclasses import dataclass
 
 from events.base.base_event import BaseEvent
-from utils.enums import TabNavigationDirection, View
+from utils.enums import TabNavigationDirection, View, ViewMode
 from views.base.base_view import BaseView
 from views.components.footer_component import FooterComponent
 from views.components.menu_bar_component import MenuBarComponent
@@ -126,8 +126,9 @@ class ViewRequested(BaseEvent):
     view_key: View
     record_id: int | None = None
     data: dict[str, Any] | None = None
-    is_dialog: bool = False
+    mode: ViewMode | None = None
     caller_view_key: View | None = None
+    caller_data: dict[str, Any] | None = None
     width_ratio: float = 0.5
     save_succeeded: bool = False
 
@@ -137,7 +138,6 @@ class ViewReady(BaseEvent):
     view_key: View
     view: BaseView
     record_id: int | None = None
-    is_dialog: bool = False
     width_ratio: float = 0.5
     save_succeeded: bool = False
 
@@ -148,7 +148,19 @@ class TabRequested(BaseEvent):
     view_key: View
     record_id: int | None = None
     record_data: dict[str, Any] | None = None
+    mode: ViewMode | None = None
+    caller_view_key: View | None = None
+    caller_data: dict[str, Any] | None = None
     save_succeeded: bool = False
+
+
+@dataclass(frozen=True)
+class CallerActionRequested(BaseEvent):
+    caller_view_key: View
+    source_view_key: View
+    created_id: int
+    record_data: dict[str, Any]
+    caller_data: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -190,11 +202,6 @@ class TabClosed(BaseEvent):
 class RecordDeleteRequested(BaseEvent):
     view_key: View
     id: int
-
-
-@dataclass(frozen=True)
-class RecordSaved(BaseEvent):
-    view_key: View
 
 
 @dataclass(frozen=True)

@@ -7,7 +7,6 @@ from models.core.image import Image
 from models.core.language import Language
 from models.core.view import View
 from repositories.core.module_repository import ModuleRepository
-from repositories.core.view_repository import ViewRepository
 from repositories.core.translation_repository import TranslationRepository
 from repositories.core.user_repository import UserRepository
 from utils.repository_factory import RepositoryFactory
@@ -19,7 +18,8 @@ ControllerRepository = RepositoryFactory.create(Controller)
 GroupRepository = RepositoryFactory.create(Group)
 ImageRepository = RepositoryFactory.create(Image)
 LanguageRepository = RepositoryFactory.create(Language)
-ViewRepository = ViewRepository
+ViewRepository = RepositoryFactory.create(View)
+UserRepository = UserRepository
 
 __all__ = [
     "AssocModuleGroupRepository",

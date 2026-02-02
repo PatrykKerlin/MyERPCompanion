@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from utils.enums import View
 from typing import Any
 
 
@@ -15,3 +16,5 @@ class RequestData:
     input_values: dict[str, Any] = field(default_factory=dict)
     undo_stack: list[tuple[str, Any, Any]] = field(default_factory=list)
     redo_stack: list[tuple[str, Any, Any]] = field(default_factory=list)
+    caller_view_key: View | None = None
+    caller_data: dict[str, Any] | None = None
