@@ -120,6 +120,8 @@ class BaseViewController(
         if not self._view:
             return
         if self._view.mode == ViewMode.CREATE:
+            self._request_data.input_values.clear()
+            self._request_data.selected_inputs.clear()
             self._state_store.update(view={"mode": ViewMode.SEARCH})
         elif self._view.mode == ViewMode.EDIT:
             self._state_store.update(view={"mode": ViewMode.READ})

@@ -44,6 +44,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self._data_row = data_row
         self._base_alignment = ft.Alignment.CENTER_LEFT
         self._inputs: dict[str, FieldGroup] = {}
+        self._search_disabled_fields: set[str] = set()
         self._master_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
         self._spacing_column = ft.Column(width=25)
         self._spacing_row = ft.Row(height=25)
@@ -171,6 +172,34 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
     def clear_inputs(self) -> None:
         for key, field in self._inputs.items():
             input = field.input.content
+            if key in self._search_disabled_fields:
+                marker = field.marker.content
+                if isinstance(input, ft.TextField):
+                    input.value = ""
+                elif isinstance(input, ft.Dropdown):
+                    input.value = "0"
+                elif isinstance(input, ft.Checkbox):
+                    input.value = False
+                elif isinstance(input, NumericField):
+                    input.value = 0
+                elif isinstance(input, DateField):
+                    input.value = None
+                if hasattr(input, "read_only"):
+                    setattr(input, "read_only", True)
+                if hasattr(input, "disabled"):
+                    setattr(input, "disabled", True)
+                if hasattr(marker, "disabled"):
+                    setattr(marker, "disabled", True)
+                if hasattr(marker, "value"):
+                    setattr(marker, "value", False)
+                if hasattr(marker, "width"):
+                    setattr(marker, "width", 0)
+                self.set_field_error(key, None)
+                if input:
+                    input.update()
+                if marker:
+                    marker.update()
+                continue
             if self._data_row and self._data_row.get(key) and hasattr(input, "value"):
                 setattr(input, "value", self._data_row[key])
             elif isinstance(input, ft.TextField):
@@ -274,6 +303,22 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                     on_change=lambda event: self._controller.on_value_changed(event, key),
                     min_lines=lines,
                     max_lines=lines,
+                    expand=True,
+                ),
+                col={"sm": float(size)},
+                alignment=self._base_alignment,
+            ),
+            size,
+        )
+
+    def _get_password_input(self, key: str, size: int) -> tuple[ft.Container, int]:
+        return (
+            ft.Container(
+                content=ft.TextField(
+                    value="",
+                    password=True,
+                    can_reveal_password=True,
+                    on_change=lambda event: self._controller.on_value_changed(event, key),
                     expand=True,
                 ),
                 col={"sm": float(size)},
@@ -456,6 +501,25 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         selected_inputs = self._controller.search_params.selected_inputs
         input_values = self._controller.search_params.input_values
         for key, field in self._inputs.items():
+            if key in self._search_disabled_fields:
+                marker = field.marker.content
+                if hasattr(marker, "disabled"):
+                    setattr(marker, "disabled", True)
+                if hasattr(marker, "value"):
+                    setattr(marker, "value", False)
+                if hasattr(marker, "width"):
+                    setattr(marker, "width", 0)
+                if marker:
+                    marker.update()
+                # keep input read-only in search for disabled fields
+                input = field.input.content
+                if hasattr(input, "read_only"):
+                    setattr(input, "read_only", True)
+                if hasattr(input, "disabled"):
+                    setattr(input, "disabled", True)
+                if input:
+                    input.update()
+                continue
             input = field.input.content
             marker = field.marker.content
             is_selected = key in selected_inputs

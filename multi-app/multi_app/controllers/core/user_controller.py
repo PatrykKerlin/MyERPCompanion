@@ -10,7 +10,7 @@ from schemas.core.assoc_user_group_schema import AssocUserGroupPlainSchema, Asso
 from schemas.core.group_schema import GroupPlainSchema
 from schemas.core.language_schema import LanguagePlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
-from schemas.core.user_schema import UserPlainSchema, UserStrictUpdateSchema
+from schemas.core.user_schema import UserPlainSchema, UserStrictCreateSchema, UserStrictUpdateSchema
 from services.core import AssocUserGroupService, GroupService, LanguageService, UserService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
@@ -64,6 +64,13 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
             on_groups_save_clicked=self.on_groups_save_clicked,
             on_groups_delete_clicked=self.on_groups_delete_clicked,
         )
+
+    def on_save_clicked(self) -> None:
+        if self._view and self._view.mode == ViewMode.CREATE:
+            self._strict_schema_cls = UserStrictCreateSchema
+        else:
+            self._strict_schema_cls = UserStrictUpdateSchema
+        self._page.run_task(self._BaseViewController__execute_save_clicked)
 
     def on_groups_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         if not self._view or not self._view.data_row:
