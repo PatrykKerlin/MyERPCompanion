@@ -298,10 +298,10 @@ class BaseViewController(
     async def __tab_closed_handler(self, event: TabClosed) -> None:
         if event.view.view_key != self._view_key:
             return
-        self._request_data_by_view.pop(id(event.view), None)
         if self._view is event.view:
             self._view = None
             self._request_data = RequestData()
+        self._request_data_by_view.pop(id(event.view), None)
 
     def __open_save_success_dialog(self, close_tab_title: str | None) -> None:
         translation = self._state_store.app_state.translation.items
@@ -318,6 +318,9 @@ class BaseViewController(
         )
         self._page.show_dialog(message_dialog)
 
+    
+    
+    
     async def __record_delete_requested_handler(self, event: RecordDeleteRequested) -> None:
         if event.view_key != self._view_key:
             return
@@ -520,6 +523,7 @@ class BaseViewController(
                             save_succeeded=True,
                         )
                     )
+                self._request_data.pending_user_id = None
                 self._request_data = RequestData()
                 if self._view:
                     self._request_data_by_view[id(self._view)] = self._request_data

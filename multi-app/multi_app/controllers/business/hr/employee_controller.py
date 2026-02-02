@@ -4,6 +4,7 @@ from typing import Any
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from controllers.mixins.pending_user_cleanup_mixin import PendingUserCleanupMixin
 from schemas.business.hr.employee_schema import EmployeePlainSchema, EmployeeStrictSchema
 from schemas.business.hr.department_schema import DepartmentPlainSchema
 from schemas.business.hr.position_schema import PositionPlainSchema
@@ -20,7 +21,7 @@ from events.events import TabRequested, CallerActionRequested, ViewRequested
 import flet as ft
 
 
-class EmployeeController(BaseViewController[EmployeeService, EmployeeView, EmployeePlainSchema, EmployeeStrictSchema]):
+class EmployeeController(PendingUserCleanupMixin, BaseViewController[EmployeeService, EmployeeView, EmployeePlainSchema, EmployeeStrictSchema]):
     _plain_schema_cls = EmployeePlainSchema
     _strict_schema_cls = EmployeeStrictSchema
     _service_cls = EmployeeService
@@ -30,6 +31,7 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
+        self._init_pending_user_cleanup()
         self._subscribe_event_handlers({CallerActionRequested: self.__caller_action_handler})
         self.__position_service = PositionService(self._settings, self._logger, self._tokens_accessor)
         self.__department_service = DepartmentService(self._settings, self._logger, self._tokens_accessor)
@@ -253,6 +255,7 @@ class EmployeeController(BaseViewController[EmployeeService, EmployeeView, Emplo
                 break
         if username is None:
             return
+        self._request_data.pending_user_id = created_id
         self._view.set_dropdown_options("user_id", [(created_id, username)])
         field = self._view.inputs.get("user_id") if self._view else None
         control = field.input.content if field else None

@@ -222,6 +222,15 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
     async def __execute_close_clicked(self, title: str) -> None:
         if not self._component:
             return
+        if title not in self.__active_tabs:
+            return
+        closed_view = self.__active_tabs[title]
+        controller = getattr(closed_view, "_controller", None)
+        can_close = getattr(controller, "can_close_tab", None)
+        if can_close is not None:
+            allowed = await can_close(closed_view)
+            if not allowed:
+                return
         closed_view = self.__active_tabs.pop(title)
         prev_title = next(reversed(self.__active_tabs.keys()), "")
         prev_view = self.__active_tabs.get(prev_title, None)

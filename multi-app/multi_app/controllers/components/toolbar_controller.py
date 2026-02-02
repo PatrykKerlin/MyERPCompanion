@@ -179,7 +179,7 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         if not self._component:
             return
         self._component.set_lock_view_button_icon(unlocked=True)
-        self._component.set_lock_view_button_state(disabled=False)
+        self._component.set_lock_view_button_state(disabled=True)
         self._component.set_delete_button_state(disabled=True)
         self._component.set_navigation_buttons_state(disabled=False)
 
