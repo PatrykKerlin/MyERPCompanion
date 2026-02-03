@@ -25,7 +25,7 @@ class PositionStrictSchema(BaseStrictSchema):
 
 class PositionPlainSchema(BasePlainSchema):
     name: str
-    description: str
+    description: str | None
     code: str
     level: int
     min_salary: int

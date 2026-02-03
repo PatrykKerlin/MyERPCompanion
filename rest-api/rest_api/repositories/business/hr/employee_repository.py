@@ -22,4 +22,5 @@ class EmployeeRepository(BaseRepository[Employee]):
         query = super()._build_query(params_filters, additional_filters, sort_by, sort_order)
         return query.options(
             selectinload(cls._model_cls.subordinates),
+            selectinload(cls._model_cls.user),
         )

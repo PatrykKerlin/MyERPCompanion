@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 
 class Bin(BaseModel):
     __tablename__ = "bins"
-
     __table_args__ = (Index("ux_bin_location_active_true", "location", unique=True, postgresql_where=text("is_active")),)
 
     location: Mapped[str] = Fields.string_10(unique=False)

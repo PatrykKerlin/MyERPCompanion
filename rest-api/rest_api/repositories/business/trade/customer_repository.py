@@ -22,6 +22,7 @@ class CustomerRepository(BaseRepository[Customer]):
         query = super()._build_query(params_filters, additional_filters, sort_by, sort_order)
         return query.options(
             selectinload(cls._model_cls.customer_discounts).selectinload(AssocCustomerDiscount.discount),
+            selectinload(cls._model_cls.user),
             with_loader_criteria(AssocCustomerDiscount, cls._expr(AssocCustomerDiscount.is_active.is_(True))),
             with_loader_criteria(Discount, cls._expr(Discount.is_active.is_(True))),
         )

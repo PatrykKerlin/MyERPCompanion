@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 
 class Order(BaseModel):
     __tablename__ = "orders"
-
     __table_args__ = (Index("ux_order_number_active_true", "number", unique=True, postgresql_where=text("is_active")),)
 
     number: Mapped[str] = Fields.string_20(unique=False)

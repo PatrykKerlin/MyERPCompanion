@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 
 class DeliveryMethod(BaseModel):
     __tablename__ = "delivery_methods"
-
     __table_args__ = (Index("ux_delivery_method_name_active_true", "name", unique=True, postgresql_where=text("is_active")),)
 
     name: Mapped[str] = Fields.name(unique=False)

@@ -27,8 +27,10 @@ class GroupBulkTransferMixin:
         target_label: str,
         on_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
         on_delete_clicked: Callable[[list[int]], None] | None = None,
+        on_move_requested: Callable[[list[int]], None] | None = None,
         height: int | None = 250,
         visible_modes: set[ViewMode] | None = None,
+        target_columns: list[str] | None = None,
     ) -> None:
         self._group_visible_modes = visible_modes or {ViewMode.READ, ViewMode.EDIT}
         self._group_bulk_transfer = BulkTransfer(
@@ -36,11 +38,13 @@ class GroupBulkTransferMixin:
             source_label=source_label,
             target_label=target_label,
             on_delete_clicked=on_delete_clicked,
+            on_move_requested=on_move_requested,
             source_columns=[
                 self._translation.get("key"),
                 self._translation.get("description"),
             ],
-            target_columns=[
+            target_columns=target_columns
+            or [
                 self._translation.get("key"),
                 self._translation.get("description"),
             ],

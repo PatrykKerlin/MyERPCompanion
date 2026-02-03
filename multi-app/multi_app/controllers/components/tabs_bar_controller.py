@@ -91,8 +91,6 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
             self._state_store.update(view={"title": tab_title, "mode": view.mode, "view": view})
 
     async def __view_ready_handler(self, event: ViewReady) -> None:
-        if event.is_dialog:
-            return
         tab_title = self._get_tab_title(event.view_key, event.record_id)
         self.__active_tabs[tab_title] = event.view
         self._state_store.update(view={"title": tab_title, "mode": event.view.mode, "view": event.view})

@@ -17,7 +17,6 @@ if TYPE_CHECKING:
 
 class Invoice(BaseModel):
     __tablename__ = "invoices"
-
     __table_args__ = (Index("ux_invoice_number_active_true", "number", unique=True, postgresql_where=text("is_active")),)
 
     number: Mapped[str] = Fields.string_20(unique=False)

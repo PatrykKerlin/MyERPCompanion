@@ -119,6 +119,11 @@ class BaseViewController(
     def on_cancel_clicked(self) -> None:
         if not self._view:
             return
+        if self._view.mode == ViewMode.CREATE and self._request_data.caller_view_key:
+            title = self._state_store.app_state.view.title
+            if title:
+                self._page.run_task(self._event_bus.publish, TabCloseRequested(title))
+            return
         if self._view.mode == ViewMode.CREATE:
             self._request_data.input_values.clear()
             self._request_data.selected_inputs.clear()
@@ -324,9 +329,6 @@ class BaseViewController(
         )
         self._page.show_dialog(message_dialog)
 
-    
-    
-    
     async def __record_delete_requested_handler(self, event: RecordDeleteRequested) -> None:
         if event.view_key != self._view_key:
             return
@@ -336,7 +338,8 @@ class BaseViewController(
         await self._perform_delete(event.id, self._service, self._endpoint)
         tab_title = self._get_tab_title(event.view_key, event.id)
         await self._event_bus.publish(TabCloseRequested(tab_title))
-        await self.__execute_search_clicked()
+        if self._view and self._view.mode in {ViewMode.SEARCH, ViewMode.LIST}:
+            await self.__execute_search_clicked()
         self._open_message_dialog("record_delete_success")
 
     async def __save_succeeded_handler(self, event: SaveSucceeded):
@@ -356,6 +359,26 @@ class BaseViewController(
             self._request_data = request_data
             if self._view.mode != state.mode:
                 self._view.set_mode(state.mode)
+
+    def __parse_data_row(self, data_row: dict[str, Any], is_list: bool = False) -> None:
+        if not data_row:
+            return
+        for key, value in list(data_row.items()):
+            if isinstance(value, datetime):
+                data_row[key] = value.strftime('%Y-%m-%d %H:%M:%S')
+            elif isinstance(value, date):
+                data_row[key] = value.isoformat()
+            elif isinstance(value, str):
+                # Keep strings as-is.
+                continue
+            elif isinstance(value, list):
+                # Leave lists as-is for callers that handle them explicitly.
+                continue
+            elif isinstance(value, dict):
+                # Keep nested dicts; views/controllers may handle them explicitly.
+                continue
+        if is_list:
+            return
 
     def __parse_value(
         self, value: str | int | float | bool | date | datetime | None
@@ -494,6 +517,9 @@ class BaseViewController(
     async def __execute_save_clicked(self) -> None:
         if not self._view:
             return
+        if self._request_data.is_saving:
+            return
+        self._request_data.is_saving = True
         try:
             response: TControllerPlainSchema | None = None
             if self._view.mode == ViewMode.CREATE:
@@ -529,7 +555,6 @@ class BaseViewController(
                             save_succeeded=True,
                         )
                     )
-                self._request_data.pending_user_id = None
                 self._request_data = RequestData()
                 if self._view:
                     self._request_data_by_view[id(self._view)] = self._request_data
@@ -548,6 +573,8 @@ class BaseViewController(
                     error_message.append(message)
             final_message = "\n".join(error_message)
             self._open_error_dialog(message=final_message)
+        finally:
+            self._request_data.is_saving = False
 
     def __validate_field(self, key: str) -> str | None:
         if not self._view or self._view.mode not in {ViewMode.CREATE, ViewMode.EDIT}:
@@ -557,25 +584,14 @@ class BaseViewController(
             input_control = field.input.content
             if hasattr(input_control, "disabled") and getattr(input_control, "disabled"):
                 return None
-        self._view.set_save_button_state(True)
         if self._view.mode == ViewMode.CREATE:
             self._request_data.input_values["id"] = 1
         try:
             self._strict_schema_cls(**self._request_data.input_values)
+            return None
         except ValidationError as validation_error:
             for error in validation_error.errors():
-                if error["loc"] == (key,):
-                    return error["msg"]
-        return
-
-    def __parse_data_row(self, data_row: dict[str, Any], parse_none: bool = False) -> None:
-        for key, value in data_row.items():
-            if key in self.__meta_fields and key.endswith("_at") and value is not None:
-                data_row[key] = self._format_datetime(value)
-            if value is None and parse_none:
-                data_row[key] = ""
-
-    def _format_datetime(self, value: datetime | str, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
-        if isinstance(value, datetime):
-            return value.strftime(fmt)
-        return str(value)
+                loc = error.get("loc", ())
+                if loc and loc[0] == key:
+                    return error.get("msg", "")
+            return None

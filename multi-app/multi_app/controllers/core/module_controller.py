@@ -42,12 +42,13 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
         group_source_rows: list[tuple[int, list[str]]] = []
         group_target_rows: list[tuple[int, list[str]]] = []
         if event.data and mode in {ViewMode.READ, ViewMode.EDIT}:
-            views, groups = await asyncio.gather(
+            views, groups, group_assocs = await asyncio.gather(
                 self.__perform_get_all_views(),
                 self.__perform_get_all_groups(),
+                self.__perform_get_module_group_assocs(event.data.get("id")),
             )
             source_rows, target_rows = self.__build_view_rows(views, event.data)
-            group_source_rows, group_target_rows = self.__build_group_rows(groups, event.data)
+            group_source_rows, group_target_rows = self.__build_group_rows(groups, group_assocs)
         return ModuleView(
             self,
             translation,
@@ -146,17 +147,17 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
 
         await self.__refresh_view_rows(module_id)
 
-    async def __handle_groups_save(self, module_id: int, pending: list[tuple[int, int]]) -> None:
+    async def __handle_groups_save(self, module_id: int, pending: list[tuple[int, int, bool, bool]]) -> None:
         if not self._view or not self._view.data_row:
             return
         updates = [
             AssocModuleGroupStrictSchema(
                 module_id=module_id,
                 group_id=group_id,
-                can_read=True,
-                can_modify=False,
+                can_read=can_read,
+                can_modify=can_modify,
             )
-            for _, group_id in pending
+            for _, group_id, can_read, can_modify in pending
         ]
         if not updates:
             return
@@ -262,12 +263,26 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
         return source_rows, target_rows
 
     def __build_group_rows(
-        self, groups: list[GroupPlainSchema], data_row: dict[str, Any] | None
+        self, groups: list[GroupPlainSchema], assocs: list[AssocModuleGroupPlainSchema]
     ) -> tuple[list[tuple[int, list[str]]], list[tuple[int, list[str]]]]:
-        module_groups_raw = data_row.get("groups", []) if data_row else []
-        module_groups = [GroupPlainSchema.model_validate(item) for item in module_groups_raw]
-        target_ids = {group.id for group in module_groups}
-        target_rows = [(group.id, [group.key, group.description or ""]) for group in module_groups]
+        assoc_by_group = {assoc.group_id: assoc for assoc in assocs}
+        target_ids = {assoc.group_id for assoc in assocs}
+        target_rows: list[tuple[int, list[str]]] = []
+        for group in groups:
+            assoc = assoc_by_group.get(group.id)
+            if not assoc:
+                continue
+            target_rows.append(
+                (
+                    group.id,
+                    [
+                        group.key,
+                        group.description or "",
+                        str(assoc.can_read),
+                        str(assoc.can_modify),
+                    ],
+                )
+            )
         source_rows = [
             (group.id, [group.key, group.description or ""]) for group in groups if group.id not in target_ids
         ]
@@ -289,12 +304,13 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
     async def __refresh_group_rows(self, module_id: int) -> None:
         if not self._view:
             return
-        updated_module, groups = await asyncio.gather(
+        updated_module, groups, group_assocs = await asyncio.gather(
             self._perform_get_one(module_id, self._service, self._endpoint),
             self.__perform_get_all_groups(),
+            self.__perform_get_module_group_assocs(module_id),
         )
         data_row = updated_module.model_dump()
         self._view._data_row = data_row
-        source_rows, target_rows = self.__build_group_rows(groups, data_row)
+        source_rows, target_rows = self.__build_group_rows(groups, group_assocs)
         self._view.set_group_source_rows(source_rows)
         self._view.set_group_target_rows(target_rows)

@@ -23,6 +23,11 @@ class UserView(BaseView, GroupBulkTransferMixin):
         data_row: dict[str, Any] | None,
         languages: list[tuple[int, str]],
         themes: list[tuple[str, str]],
+        employee_pairs: list[tuple[int, str]],
+        customer_pairs: list[tuple[int, str]],
+        show_relations: bool,
+        show_customer_relation: bool,
+        employee_locked_id: int | None,
         group_source_rows: list[tuple[int, list[str]]],
         group_target_rows: list[tuple[int, list[str]]],
         show_groups: bool,
@@ -38,6 +43,9 @@ class UserView(BaseView, GroupBulkTransferMixin):
             4,
             7,
         )
+        self.__password_validation_ready = False
+        self.__employee_locked_id = employee_locked_id
+        self.__show_customer_relation = show_customer_relation
         main_fields_definitions = [
             {"key": "username", "input": self._get_text_input},
             {"key": "password", "input": self._get_password_input},
@@ -45,7 +53,25 @@ class UserView(BaseView, GroupBulkTransferMixin):
             {"key": "language_id", "input": self._get_dropdown, "options": languages},
             {"key": "theme", "input": self._get_dropdown, "options": themes},
         ]
-        if data_row:
+        if show_relations:
+            main_fields_definitions.append(
+                {
+                    "key": "employee_id",
+                    "input": self._get_dropdown,
+                    "options": employee_pairs,
+                    "callbacks": [self.__handle_employee_changed],
+                }
+            )
+            if show_customer_relation:
+                main_fields_definitions.append(
+                    {
+                        "key": "customer_id",
+                        "input": self._get_dropdown,
+                        "options": customer_pairs,
+                        "callbacks": [self.__handle_customer_changed],
+                    }
+                )
+        if data_row and isinstance(data_row.get("language"), dict):
             data_row["language_id"] = data_row["language"]["id"]
         self._search_disabled_fields.update({"password", "password_repeat"})
         main_fields = self._build_field_groups(main_fields_definitions)
@@ -53,9 +79,6 @@ class UserView(BaseView, GroupBulkTransferMixin):
         self.__hide_password_markers()
         if mode in {ViewMode.CREATE, ViewMode.EDIT}:
             self.__bind_password_validation()
-        if mode == ViewMode.CREATE:
-            self.__validate_password_fields()
-            self.update()
         main_grid = self._build_grid(main_fields)
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
 
@@ -93,6 +116,38 @@ class UserView(BaseView, GroupBulkTransferMixin):
             )
         self._rows.append(self._buttons_row)
         self._master_column.controls.extend(self._rows)
+
+    def __handle_employee_changed(self) -> None:
+        field = self._inputs.get("employee_id")
+        if not field:
+            return
+        control = field.input.content
+        if not isinstance(control, ft.Dropdown):
+            return
+        if not control.value or control.value == "0":
+            return
+        self.__clear_other_selection("customer_id")
+
+    def __handle_customer_changed(self) -> None:
+        field = self._inputs.get("customer_id")
+        if not field:
+            return
+        control = field.input.content
+        if not isinstance(control, ft.Dropdown):
+            return
+        if not control.value or control.value == "0":
+            return
+        self.__clear_other_selection("employee_id")
+
+    def __clear_other_selection(self, key: str) -> None:
+        field = self._inputs.get(key)
+        if not field:
+            return
+        control = field.input.content
+        if isinstance(control, ft.Dropdown):
+            control.value = "0"
+            control.update()
+        self._controller.set_field_value(key, None)
 
     def __hide_password_markers(self) -> None:
         for key in ("password", "password_repeat"):
@@ -159,14 +214,19 @@ class UserView(BaseView, GroupBulkTransferMixin):
                     self.__validate_password_fields(),
                 )
                 control.on_blur = lambda _: self.__validate_password_fields()
-        self.__validate_password_fields()
+        if self.__password_validation_ready:
+            self.__validate_password_fields()
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
         if mode in {ViewMode.CREATE, ViewMode.EDIT}:
-            self.__validate_password_fields()
+            if self.__password_validation_ready:
+                self.__validate_password_fields()
 
     def did_mount(self):
+        self.__password_validation_ready = True
+        if self._mode in {ViewMode.CREATE, ViewMode.EDIT}:
+            self.__validate_password_fields()
         if hasattr(self, "_group_bulk_transfer"):
             self._mount_group_bulk_transfer()
         return super().did_mount()

@@ -15,6 +15,8 @@ VALUES
 (6, 39, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (6, 27, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (7, 24, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(7, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(7, 18, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 
 (8, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (9, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),

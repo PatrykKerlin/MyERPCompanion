@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
 class Language(BaseModel):
     __tablename__ = "languages"
-
     __table_args__ = (Index("ux_language_key_active_true", "key", unique=True, postgresql_where=text("is_active")),)
 
     key: Mapped[str] = Fields.key(unique=False)

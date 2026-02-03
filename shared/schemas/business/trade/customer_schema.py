@@ -32,8 +32,6 @@ class CustomerStrictSchema(BaseStrictSchema):
     shipping_city: str | None
     shipping_country: str | None
 
-    user_id: int
-
     @model_validator(mode="after")
     def _validate_data(self) -> CustomerStrictSchema:
         shipping_required_values = [
@@ -89,6 +87,6 @@ class CustomerPlainSchema(BasePlainSchema):
     shipping_city: str | None
     shipping_country: str | None
 
-    user_id: int
+    user_id: int | None
 
     discount_ids: list[int]

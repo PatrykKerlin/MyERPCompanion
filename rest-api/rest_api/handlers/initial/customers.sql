@@ -18,7 +18,6 @@ INSERT INTO customers (
     shipping_postal_code,
     shipping_city,
     shipping_country,
-    user_id,
     is_active,
     created_at,
     created_by
@@ -43,7 +42,6 @@ SELECT
     NULL AS shipping_postal_code,
     NULL AS shipping_city,
     NULL AS shipping_country,
-    i + 1 AS user_id,
     TRUE,
     CURRENT_TIMESTAMP,
     :superuser_id

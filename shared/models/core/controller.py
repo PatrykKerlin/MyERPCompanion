@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
 class Controller(BaseModel):
     __tablename__ = "controllers"
-
     __table_args__ = (Index("ux_controller_name_active_true", "name", unique=True, postgresql_where=text("is_active")),)
 
     name: Mapped[str] = Fields.name(unique=False)

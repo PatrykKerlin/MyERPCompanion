@@ -17,7 +17,6 @@ if TYPE_CHECKING:
 
 class Group(BaseModel):
     __tablename__ = "groups"
-
     __table_args__ = (Index("ux_group_key_active_true", "key", unique=True, postgresql_where=text("is_active")),)
 
     key: Mapped[str] = Fields.key(unique=False)

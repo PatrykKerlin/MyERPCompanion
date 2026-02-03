@@ -19,7 +19,6 @@ ControllerRepository = RepositoryFactory.create(Controller)
 GroupRepository = RepositoryFactory.create(Group)
 ImageRepository = RepositoryFactory.create(Image)
 LanguageRepository = RepositoryFactory.create(Language)
-ViewRepository = ViewRepository
 UserRepository = UserRepository
 
 __all__ = [

@@ -22,7 +22,6 @@ if TYPE_CHECKING:
 
 class Item(BaseModel):
     __tablename__ = "items"
-
     __table_args__ = (Index("ux_item_index_active_true", "index", unique=True, postgresql_where=text("is_active")), Index("ux_item_name_active_true", "name", unique=True, postgresql_where=text("is_active")), Index("ux_item_ean_active_true", "ean", unique=True, postgresql_where=text("is_active")),)
 
     index: Mapped[str] = Fields.string_10(unique=False, nullable=False)

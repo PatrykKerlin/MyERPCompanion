@@ -35,7 +35,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         base_label_size: int,
         base_input_size: int,
         base_columns_qty: int = 12,
-        is_dialog: bool = False,
         caller_view_key: View | None = None,
     ) -> None:
         BaseComponent.__init__(self, controller, translation)
@@ -58,7 +57,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self._save_button = ft.Button(
             content=self._translation.get("save"),
             on_click=lambda _: self._controller.on_save_clicked(),
-            disabled=True,
+            disabled=False,
         )
         self._search_button = ft.Button(
             content=self._translation.get("search"),
@@ -74,7 +73,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
         self._rows = [self._columns_row, self._spacing_row, self._buttons_row]
-        self._is_dialog = is_dialog
         self._caller_view_key = caller_view_key
         self.__scrollable_wrapper = ft.Column(
             controls=[self._master_column],
@@ -104,10 +102,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
     @property
     def inputs(self) -> dict[str, FieldGroup]:
         return self._inputs
-
-    @property
-    def is_dialog(self) -> bool:
-        return self._is_dialog
 
     @property
     def caller_view_key(self) -> View | None:
@@ -145,6 +139,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             case ViewMode.EDIT:
                 self.__set_edit_mode()
         self.__set_buttons()
+        print(self._view_key)
+        print(self._mode)
 
     def set_input_state(self, input: ft.Control, enable: bool) -> None:
         if hasattr(input, "disabled"):
@@ -152,10 +148,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         if hasattr(input, "read_only"):
             setattr(input, "read_only", not enable)
         input.update()
-
-    def set_save_button_state(self, enable: bool) -> None:
-        self._save_button.disabled = not enable
-        self._save_button.update()
 
     def set_field_error(self, key: str, message: str | None) -> None:
         field = self._inputs[key]
@@ -201,7 +193,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                     marker.update()
                 continue
             if self._data_row and self._data_row.get(key) and hasattr(input, "value"):
-                setattr(input, "value", self._data_row[key])
+                value = self._data_row[key]
+                if isinstance(input, DateField):
+                    value = self.__normalize_date_value(value)
+                setattr(input, "value", value)
             elif isinstance(input, ft.TextField):
                 input.value = ""
             elif isinstance(input, ft.Dropdown):
@@ -569,13 +564,19 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                     setattr(input, "disabled", True)
                 else:
                     setattr(input, "disabled", False)
+                if (
+                    isinstance(input, ft.Dropdown)
+                    and self._data_row
+                    and self._caller_view_key
+                    and key in self._data_row
+                    and self._data_row.get(key) is not None
+                ):
+                    self.__limit_dropdown_options(input, key)
             if hasattr(input, "read_only"):
                 if key in self._controller.meta_fields:
                     setattr(input, "read_only", True)
                 else:
                     setattr(input, "read_only", False)
-            if isinstance(input, ft.Dropdown) and self._is_dialog:
-                self.__limit_dropdown_options(input, key)
             if hasattr(marker, "disabled"):
                 setattr(marker, "disabled", True)
             if hasattr(marker, "width"):
@@ -597,12 +598,12 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             if hasattr(input, "read_only"):
                 setattr(input, "read_only", True)
             if hasattr(input, "disabled"):
-                if isinstance(input, (ft.TextField, NumericField, DateField)):
+                if isinstance(input, (ft.TextField, ft.Dropdown, NumericField, DateField)):
                     setattr(input, "disabled", False)
-                elif isinstance(input, ft.Dropdown) and self._data_row:
-                    self.__limit_dropdown_options(input, key)
                 else:
                     setattr(input, "disabled", True)
+                if isinstance(input, ft.Dropdown) and self._data_row:
+                    self.__limit_dropdown_options(input, key)
             if hasattr(marker, "disabled"):
                 setattr(marker, "disabled", True)
             if hasattr(marker, "width"):

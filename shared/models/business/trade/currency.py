@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 
 class Currency(BaseModel):
     __tablename__ = "currencies"
-
     __table_args__ = (Index("ux_currency_name_active_true", "name", unique=True, postgresql_where=text("is_active")),)
 
     code: Mapped[str] = Fields.symbol()

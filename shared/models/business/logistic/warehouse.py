@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 
 class Warehouse(BaseModel):
     __tablename__ = "warehouses"
-
     __table_args__ = (Index("ux_warehouse_name_active_true", "name", unique=True, postgresql_where=text("is_active")), Index("ux_warehouse_email_active_true", "email", unique=True, postgresql_where=text("is_active")), Index("ux_warehouse_phone_number_active_true", "phone_number", unique=True, postgresql_where=text("is_active")),)
 
     name: Mapped[str] = Fields.name(unique=False)

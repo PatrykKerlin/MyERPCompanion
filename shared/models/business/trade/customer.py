@@ -17,8 +17,11 @@ if TYPE_CHECKING:
 
 class Customer(BaseModel):
     __tablename__ = "customers"
-
-    __table_args__ = (Index("ux_customer_company_name_active_true", "company_name", unique=True, postgresql_where=text("is_active")), Index("ux_customer_email_active_true", "email", unique=True, postgresql_where=text("is_active")), Index("ux_customer_phone_number_active_true", "phone_number", unique=True, postgresql_where=text("is_active")), Index("ux_customer_user_id_active_true", "user_id", unique=True, postgresql_where=text("is_active")),)
+    __table_args__ = (
+        Index("ux_customer_company_name_active_true", "company_name", unique=True, postgresql_where=text("is_active")),
+        Index("ux_customer_email_active_true", "email", unique=True, postgresql_where=text("is_active")),
+        Index("ux_customer_phone_number_active_true", "phone_number", unique=True, postgresql_where=text("is_active")),
+    )
 
     first_name: Mapped[str] = Fields.string_50(nullable=True)
     last_name: Mapped[str] = Fields.string_50(nullable=True)
@@ -45,9 +48,8 @@ class Customer(BaseModel):
     shipping_city: Mapped[str | None] = Fields.string_50(nullable=True)
     shipping_country: Mapped[str | None] = Fields.string_50(nullable=True)
 
-    user_id: Mapped[int | None] = Fields.foreign_key(column="users.id", unique=False)
     user: Mapped[User | None] = Fields.relationship(
-        argument="User", back_populates="customer", foreign_keys=[user_id], uselist=False
+        argument="User", back_populates="customer", foreign_keys="User.customer_id", uselist=False
     )
 
     invoices: Mapped[list[Invoice]] = Fields.relationship(
@@ -66,3 +68,7 @@ class Customer(BaseModel):
     @property
     def discount_ids(self) -> list[int]:
         return [row.discount_id for row in self.customer_discounts]
+    
+    @property
+    def user_id(self) -> int | None:
+        return self.user.id if self.user else None

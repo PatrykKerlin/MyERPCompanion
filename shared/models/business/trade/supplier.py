@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 
 class Supplier(BaseModel):
     __tablename__ = "suppliers"
-
     __table_args__ = (Index("ux_supplier_company_name_active_true", "company_name", unique=True, postgresql_where=text("is_active")),)
 
     company_name: Mapped[str] = Fields.name(unique=False)

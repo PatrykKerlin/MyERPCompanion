@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import literal_column, select, Index, text
+from sqlalchemy import Index, literal_column, select, text
 from sqlalchemy.orm import Mapped, column_property
 
 from models.base.base_model import BaseModel
@@ -17,7 +17,6 @@ if TYPE_CHECKING:
 
 class Employee(BaseModel):
     __tablename__ = "employees"
-
     __table_args__ = (Index("ux_employee_pesel_active_true", "pesel", unique=True, postgresql_where=text("is_active")), Index("ux_employee_passport_number_active_true", "passport_number", unique=True, postgresql_where=text("is_active")), Index("ux_employee_id_card_number_active_true", "id_card_number", unique=True, postgresql_where=text("is_active")), Index("ux_employee_email_active_true", "email", unique=True, postgresql_where=text("is_active")), Index("ux_employee_phone_number_active_true", "phone_number", unique=True, postgresql_where=text("is_active")),)
 
     first_name: Mapped[str] = Fields.string_50()

@@ -21,14 +21,10 @@ class DeliveryMethodView(BaseView):
         mode: ViewMode,
         key: View,
         data_row: dict[str, Any] | None,
-        is_dialog: bool,
-        caller_view_key: View | None,
         carriers: list[tuple[int, str]],
         units: list[tuple[int, str]],
     ) -> None:
-        super().__init__(
-            controller, translation, mode, key, data_row, 4, 7, is_dialog=is_dialog, caller_view_key=caller_view_key
-        )
+        super().__init__(controller, translation, mode, key, data_row, 4, 7)
         main_fields_definitions = [
             {"key": "carrier_id", "input": self._get_dropdown, "options": carriers},
             {"key": "name", "input": self._get_text_input},
@@ -46,22 +42,12 @@ class DeliveryMethodView(BaseView):
         self._add_to_inputs(main_fields)
 
         main_grid = self._build_grid(main_fields)
-
-        if self._is_dialog:
-            columns = [ft.Column(controls=main_grid, expand=True)]
-        else:
-            meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
-            columns = [
-                ft.Column(controls=main_grid, expand=3),
-                self._spacing_column,
-                ft.Column(controls=meta_grid, expand=2),
-            ]
+        meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
+        columns = [
+            ft.Column(controls=main_grid, expand=3),
+            self._spacing_column,
+            ft.Column(controls=meta_grid, expand=2),
+        ]
 
         self._columns_row.controls.extend(columns)
-
-        if self._is_dialog:
-            self._master_column.controls.append(self._columns_row)
-            self._search_button.visible = False
-            self._search_button.disabled = True
-        else:
-            self._master_column.controls.extend(self._rows)
+        self._master_column.controls.extend(self._rows)

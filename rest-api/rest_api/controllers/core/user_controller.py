@@ -6,13 +6,13 @@ from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 
 from config.context import Context
 from controllers.base.base_controller import BaseController
-from schemas.core.user_schema import UserPlainSchema, UserStrictCreateApiSchema, UserStrictUpdateAppSchema
+from schemas.core.user_schema import UserPlainSchema, UserStrictCreateApiSchema, UserStrictUpdateApiSchema
 from services.core import UserService
 from utils.auth import Auth
 
 
 class UserController(
-    BaseController[UserService, Union[UserStrictCreateApiSchema, UserStrictUpdateAppSchema], UserPlainSchema]
+    BaseController[UserService, Union[UserStrictCreateApiSchema, UserStrictUpdateApiSchema], UserPlainSchema]
 ):
     _input_schema_cls = UserStrictCreateApiSchema
     _service_cls = UserService
@@ -43,7 +43,7 @@ class UserController(
         try:
             user = request.state.user
             body = await request.json()
-            schema = UserStrictUpdateAppSchema(**body)
+            schema = UserStrictUpdateApiSchema(**body)
             session = BaseController._get_request_session(request)
             return await self._service.update(session, model_id, user.id, schema)
         except HTTPException:

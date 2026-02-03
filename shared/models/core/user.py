@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 
 class User(BaseModel):
     __tablename__ = "users"
-
     __table_args__ = (Index("ux_user_username_active_true", "username", unique=True, postgresql_where=text("is_active")), Index("ux_user_employee_id_active_true", "employee_id", unique=True, postgresql_where=text("is_active")),)
 
     username: Mapped[str] = Fields.string_20(unique=False)
@@ -31,8 +30,9 @@ class User(BaseModel):
         argument="Employee", back_populates="user", foreign_keys=[employee_id], uselist=False
     )
 
+    customer_id: Mapped[int | None] = Fields.foreign_key(column="customers.id", unique=False, nullable=True)
     customer: Mapped[Customer | None] = Fields.relationship(
-        argument="Customer", back_populates="user", foreign_keys="Customer.user_id", uselist=False
+        argument="Customer", back_populates="user", foreign_keys=[customer_id], uselist=False
     )
 
     language_id: Mapped[int | None] = Fields.foreign_key(column="languages.id", nullable=True)

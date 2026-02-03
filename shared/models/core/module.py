@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 
 class Module(BaseModel):
     __tablename__ = "modules"
-
     __table_args__ = (Index("ux_module_key_active_true", "key", unique=True, postgresql_where=text("is_active")),)
 
     key: Mapped[str] = Fields.key(unique=False)

@@ -2,18 +2,15 @@ INSERT INTO views (key, description, "order", module_id, is_active, created_at, 
 VALUES
 ('side_menu_core', 'Side menu view', 1, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('current_user_core', 'Current user view', 2, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-
 ('languages', 'Languages view', 1, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('translations', 'Translations view', 2, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('modules', 'Modules view', 3, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('groups', 'Groups view', 5, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('users', 'Users view', 6, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('statuses', 'Statuses view', 7, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-
 ('departments', 'Departments view', 1, 3, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('positions', 'Positions view', 2, 3, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('employees', 'Employees view', 3, 3, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-
 ('warehouses', 'Warehouses view', 1, 4, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('bins', 'Bins view', 2, 4, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('carriers', 'Carriers view', 3, 4, TRUE, CURRENT_TIMESTAMP, :superuser_id),
@@ -22,18 +19,14 @@ VALUES
 ('categories', 'Categories view', 6, 4, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('items', 'Items view', 7, 4, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('bin_transfer', 'Bin transfer view', 8, 4, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-
 ('discounts', 'Discounts view', 1, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('customers', 'Customers view', 2, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('sales_orders', 'Sales orders view', 3, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('order_picking', 'Sales orders view', 4, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-
 ('suppliers', 'Suppliers view', 1, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('purchase_orders', 'Sales orders view', 2, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('stock_receiving', 'Stock receiving view', 3, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-
 ('currencies', 'Currencies view', 1, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('exchange_rates', 'Exchange rates view', 3, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('invoices', 'Invoices view', 2, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-
 ('users_core', 'Users core view', 3, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id);

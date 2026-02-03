@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 
 class Position(BaseModel):
     __tablename__ = "positions"
-
     __table_args__ = (Index("ux_position_name_active_true", "name", unique=True, postgresql_where=text("is_active")),)
 
     name: Mapped[str] = Fields.name(unique=False)
