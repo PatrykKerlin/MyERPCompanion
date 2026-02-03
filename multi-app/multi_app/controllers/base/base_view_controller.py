@@ -102,6 +102,7 @@ class BaseViewController(
             self._request_data.selected_inputs.discard(key)
 
     def on_search_clicked(self) -> None:
+        self._request_data.page = 1
         self._page.run_task(self.__execute_search_clicked)
 
     def on_row_clicked(self, result_id: int) -> None:
@@ -145,7 +146,7 @@ class BaseViewController(
             self._request_data.page += 1
         elif direction == "prev" and self._request_data.page > 1:
             self._request_data.page -= 1
-        self.on_search_clicked()
+        self._page.run_task(self.__execute_search_clicked)
 
     def on_page_size_selected(self, new_size: int) -> None:
         self._request_data.page_size = new_size
@@ -252,7 +253,7 @@ class BaseViewController(
     ) -> None:
         response = await self._perform_get_one(result_id, service, endpoint)
         data = response.model_dump()
-        self.__parse_data_row(data)
+        self._parse_data_row(data)
         await self._event_bus.publish(
             TabRequested(
                 module_id=self._module_id,
@@ -277,7 +278,7 @@ class BaseViewController(
             response = await self._perform_get_one(event.record_id, self._service, self._endpoint)
             data = response.model_dump()
         if data is not None:
-            self.__parse_data_row(data)
+            self._parse_data_row(data)
             if event.data is None:
                 object.__setattr__(event, "data", data)
         if event.mode is not None:
@@ -360,7 +361,7 @@ class BaseViewController(
             if self._view.mode != state.mode:
                 self._view.set_mode(state.mode)
 
-    def __parse_data_row(self, data_row: dict[str, Any], is_list: bool = False) -> None:
+    def _parse_data_row(self, data_row: dict[str, Any], is_list: bool = False) -> None:
         if not data_row:
             return
         for key, value in list(data_row.items()):
@@ -368,17 +369,19 @@ class BaseViewController(
                 data_row[key] = value.strftime('%Y-%m-%d %H:%M:%S')
             elif isinstance(value, date):
                 data_row[key] = value.isoformat()
-            elif isinstance(value, str):
-                # Keep strings as-is.
-                continue
-            elif isinstance(value, list):
-                # Leave lists as-is for callers that handle them explicitly.
-                continue
-            elif isinstance(value, dict):
-                # Keep nested dicts; views/controllers may handle them explicitly.
+            elif isinstance(value, (str, list, dict)):
                 continue
         if is_list:
             return
+
+    def _format_datetime(self, value: datetime | date | str | None) -> str:
+        if value is None:
+            return ""
+        if isinstance(value, datetime):
+            return value.strftime('%Y-%m-%d %H:%M:%S')
+        if isinstance(value, date):
+            return value.strftime('%Y-%m-%d %H:%M:%S')
+        return str(value)
 
     def __parse_value(
         self, value: str | int | float | bool | date | datetime | None
@@ -508,7 +511,7 @@ class BaseViewController(
         results = [result.model_dump() for result in response.items]
         if results:
             for row in results:
-                self.__parse_data_row(row, True)
+                self._parse_data_row(row, True)
             self._view.search_results = results
             self._state_store.update(view={"mode": ViewMode.LIST})
         else:

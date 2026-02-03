@@ -100,7 +100,9 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
                 module_id=module_id,
                 view_key=current_view.view_key,
                 record_id=record_id,
-                data=data_row,
+                mode=view_state.mode,
+                caller_view_key=current_view.caller_view_key,
+                caller_data=current_view.data_row,
             ),
         )
 
@@ -148,6 +150,7 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
                 view_key=View.USERS,
                 record_id=current.id,
                 mode=ViewMode.READ,
+                caller_view_key=View.CURRENT_USER,
             ),
         )
 

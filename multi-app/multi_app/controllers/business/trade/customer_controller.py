@@ -1,16 +1,19 @@
 from typing import Any
 
+import asyncio
+
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from controllers.mixins.user_link_controller_mixin import UserLinkControllerMixin
 from schemas.business.trade.assoc_customer_discount_schema import (
     AssocCustomerDiscountPlainSchema,
     AssocCustomerDiscountStrictSchema,
 )
 from schemas.business.trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
+from schemas.business.trade.discount_schema import DiscountPlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
 
-# from schemas.core.user_schema import UserPlainSchema
 from services.business.trade import AssocCustomerDiscountService, CustomerService, DiscountService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
@@ -19,7 +22,10 @@ from events.events import ViewRequested
 import flet as ft
 
 
-class CustomerController(BaseViewController[CustomerService, CustomerView, CustomerPlainSchema, CustomerStrictSchema]):
+class CustomerController(
+    UserLinkControllerMixin,
+    BaseViewController[CustomerService, CustomerView, CustomerPlainSchema, CustomerStrictSchema],
+):
     _plain_schema_cls = CustomerPlainSchema
     _strict_schema_cls = CustomerStrictSchema
     _service_cls = CustomerService
@@ -29,20 +35,37 @@ class CustomerController(BaseViewController[CustomerService, CustomerView, Custo
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
+        self._init_user_link_mixin()
         self.__discount_service = DiscountService(self._settings, self._logger, self._tokens_accessor)
         self.__assoc_customer_discount_service = AssocCustomerDiscountService(
             self._settings, self._logger, self._tokens_accessor
         )
-        # self.__user_service = UserService(self._settings, self._logger, self._tokens_accessor)
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> CustomerView:
-        # users = self.__perform_get_all_users()
         discount_source_items: list[tuple[int, str]] = []
         discount_target_items: list[tuple[int, str]] = []
+        user_options: list[tuple[int, str]] = []
         if mode != ViewMode.SEARCH:
-            discount_target_items = self.__extract_customer_discounts(event.data)
-            target_ids = {item_id for item_id, _ in discount_target_items}
-            discount_source_items = await self.__perform_get_customer_discount_options(target_ids)
+            discounts = await self.__perform_get_all_customer_discounts()
+            target_ids = set(self.__extract_discount_ids(event.data))
+            discount_target_items = [
+                (discount.id, discount.code) for discount in discounts if discount.id in target_ids
+            ]
+            discount_source_items = [
+                (discount.id, discount.code) for discount in discounts if discount.id not in target_ids
+            ]
+        if mode == ViewMode.SEARCH:
+            users, customers = await asyncio.gather(
+                self._perform_get_all_users(),
+                self._perform_get_all_customers(),
+            )
+            user_options = self._get_user_link_options(mode, event, users, [], customers)
+        else:
+            users, customers = await asyncio.gather(
+                self._perform_get_all_users(),
+                self._perform_get_all_customers(),
+            )
+            user_options = self._get_user_link_options(mode, event, users, [], customers)
         return CustomerView(
             self,
             translation,
@@ -51,9 +74,18 @@ class CustomerController(BaseViewController[CustomerService, CustomerView, Custo
             event.data,
             discount_source_items,
             discount_target_items,
+            user_options,
             self.on_discount_save_clicked,
             self.on_discount_delete_clicked,
         )
+
+    @property
+    def _user_link_view_key(self) -> View:
+        return View.CUSTOMERS
+
+    @property
+    def _user_link_entity_key(self) -> str:
+        return "customer_id"
 
     def on_discount_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         if not self._view:
@@ -86,24 +118,10 @@ class CustomerController(BaseViewController[CustomerService, CustomerView, Custo
         await self.__perform_delete_customer_discounts(customer_id, discount_ids)
         await self.__refresh_customer_discount_lists(customer_id)
 
-    # async def __perform_get_all_users(self) -> list[UserPlainSchema]:
-    #     return await self.__user_service.call_api_with_token_refresh(
-    #         func=self.__user_service.get_all,
-    #         endpoint=Endpoint.USERS,
-    #         module_id=self._module_id,
-    #     )
-
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_get_customer_discount_options(self, exclude_ids: set[int]) -> list[tuple[int, str]]:
+    async def __perform_get_all_customer_discounts(self) -> list[DiscountPlainSchema]:
         discounts = await self.__discount_service.get_all(Endpoint.DISCOUNTS, None, None, None, self._module_id)
-        options: list[tuple[int, str]] = []
-        for discount in discounts:
-            if not discount.for_customers:
-                continue
-            if discount.id in exclude_ids:
-                continue
-            options.append((discount.id, discount.code))
-        return options
+        return [discount for discount in discounts if discount.for_customers]
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
     async def __perform_create_customer_discounts(self, payload: list[AssocCustomerDiscountStrictSchema]) -> None:
@@ -124,14 +142,21 @@ class CustomerController(BaseViewController[CustomerService, CustomerView, Custo
             Endpoint.CUSTOMER_DISCOUNTS_DELETE_BULK, None, None, body_params, self._module_id
         )
 
-    def __extract_customer_discounts(self, data: dict[str, Any] | None) -> list[tuple[int, str]]:
+    @staticmethod
+    def __extract_discount_ids(data: dict[str, Any] | None) -> list[int]:
         if not data:
             return []
-        raw_items = data["discounts"]
-        items: list[tuple[int, str]] = []
-        for raw in raw_items:
-            items.append((raw["id"], raw["code"]))
-        return items
+        raw_ids = data.get("discount_ids")
+        if isinstance(raw_ids, list):
+            return [item for item in raw_ids if isinstance(item, int)]
+        raw_discounts = data.get("discounts")
+        if isinstance(raw_discounts, list):
+            ids: list[int] = []
+            for raw in raw_discounts:
+                if isinstance(raw, dict) and isinstance(raw.get("id"), int):
+                    ids.append(raw["id"])
+            return ids
+        return []
 
     async def __refresh_customer_discount_lists(self, customer_id: int) -> None:
         if not self._view:
@@ -139,9 +164,11 @@ class CustomerController(BaseViewController[CustomerService, CustomerView, Custo
         customer = await self.__perform_get_customer(customer_id)
         if not customer:
             return
-        target_items = [(discount.id, discount.code) for discount in customer.discounts]
-        target_ids = {item_id for item_id, _ in target_items}
-        source_items = await self.__perform_get_customer_discount_options(target_ids)
+        data_row = customer.model_dump()
+        discounts = await self.__perform_get_all_customer_discounts()
+        target_ids = set(self.__extract_discount_ids(data_row))
+        target_items = [(discount.id, discount.code) for discount in discounts if discount.id in target_ids]
+        source_items = [(discount.id, discount.code) for discount in discounts if discount.id not in target_ids]
         self._view.set_discount_target_items(target_items)
         self._view.set_discount_source_items(source_items)
 

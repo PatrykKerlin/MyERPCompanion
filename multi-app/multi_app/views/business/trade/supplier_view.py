@@ -64,9 +64,9 @@ class SupplierView(BaseView):
             {"key": "contact_email", "input": self._get_text_input},
         ]
         financial_fields_definitions = [
-            {"key": "bank_account", "input": self._get_numeric_input},
+            {"key": "bank_account", "input": self._get_text_input},
             {"key": "bank_swift", "input": self._get_text_input},
-            {"key": "bank_name", "input": self._get_numeric_input},
+            {"key": "bank_name", "input": self._get_text_input},
             {"key": "tax_id", "input": self._get_text_input},
             {"key": "payment_term", "input": self._get_numeric_input},
             {"key": "currency_id", "input": self._get_dropdown, "options": currencies},

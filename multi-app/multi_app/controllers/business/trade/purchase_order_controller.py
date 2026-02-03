@@ -8,6 +8,8 @@ import flet as ft
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
+from schemas.business.logistic.item_schema import ItemPlainSchema
 from schemas.business.trade.assoc_order_item_schema import AssocOrderItemStrictSchema
 from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusStrictSchema
 from schemas.business.trade.order_schema import OrderPlainSchema, PurchaseOrderStrictSchema
@@ -17,14 +19,12 @@ from schemas.business.trade.order_view_schema import (
     OrderViewStatusHistorySchema,
     OrderViewTargetItemSchema,
 )
+from schemas.core.param_schema import IdsPayloadSchema, PaginatedResponseSchema
 from services.base.base_service import BaseService
 from services.business.logistic import ItemService
-from schemas.business.logistic.item_schema import ItemPlainSchema
 from services.business.trade import AssocOrderItemService, AssocOrderStatusService, OrderService, OrderViewService
-from schemas.core.param_schema import IdsPayloadSchema, PaginatedResponseSchema
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
-from events.events import ViewRequested
 from views.business.trade.purchase_order_view import PurchaseOrderView
 from views.components.quantity_dialog_component import QuantityDialogComponent
 
@@ -80,6 +80,7 @@ class PurchaseOrderController(
         order_data = event.data
         if view_data.order:
             order_data = view_data.order.model_dump()
+            self._parse_data_row(order_data)
         self._request_data.input_values["delivery_method_id"] = None
         if mode in {ViewMode.READ, ViewMode.EDIT} and order_data:
             current_status_id = self.__get_latest_status_id(view_data.status_history)
@@ -157,6 +158,28 @@ class PurchaseOrderController(
         if key == "is_sales":
             value = False
         super().set_field_value(key, value)
+
+    def __build_order_item_schema(
+        self, order_id: int, item_id: int, quantity: int, assoc_id: int | None
+    ) -> AssocOrderItemStrictSchema:
+        total_net, total_vat, total_gross, total_discount = self.__calculate_item_totals(item_id, quantity)
+        data = {
+            "order_id": order_id,
+            "item_id": item_id,
+            "quantity": quantity,
+            "to_process": quantity,
+            "total_net": total_net,
+            "total_vat": total_vat,
+            "total_gross": total_gross,
+            "total_discount": total_discount,
+            "bin_id": None,
+            "category_discount_id": None,
+            "customer_discount_id": None,
+            "item_discount_id": None,
+        }
+        if assoc_id is not None:
+            data["id"] = assoc_id
+        return AssocOrderItemStrictSchema(**data)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_purchase_view(self, order_id: int | None) -> OrderViewResponseSchema:
@@ -340,44 +363,9 @@ class PurchaseOrderController(
             if target_id in self.__order_items:
                 base_quantity = self.__order_items[target_id][1]
                 total_quantity = base_quantity + quantity
-                total_net, total_vat, total_gross, total_discount = self.__calculate_item_totals(
-                    item_id, total_quantity
-                )
-                updates.append(
-                    AssocOrderItemStrictSchema(
-                        id=target_id,
-                        order_id=order_id,
-                        item_id=item_id,
-                        quantity=total_quantity,
-                        to_process=total_quantity,
-                        total_net=total_net,
-                        total_vat=total_vat,
-                        total_gross=total_gross,
-                        total_discount=total_discount,
-                        bin_id=None,
-                        category_discount_id=None,
-                        customer_discount_id=None,
-                        item_discount_id=None,
-                    )
-                )
+                updates.append(self.__build_order_item_schema(order_id, item_id, total_quantity, target_id))
             else:
-                total_net, total_vat, total_gross, total_discount = self.__calculate_item_totals(item_id, quantity)
-                payload.append(
-                    AssocOrderItemStrictSchema(
-                        order_id=order_id,
-                        item_id=item_id,
-                        quantity=quantity,
-                        to_process=quantity,
-                        total_net=total_net,
-                        total_vat=total_vat,
-                        total_gross=total_gross,
-                        total_discount=total_discount,
-                        bin_id=None,
-                        category_discount_id=None,
-                        customer_discount_id=None,
-                        item_discount_id=None,
-                    )
-                )
+                payload.append(self.__build_order_item_schema(order_id, item_id, quantity, None))
         if not payload and not updates:
             return
         if payload:

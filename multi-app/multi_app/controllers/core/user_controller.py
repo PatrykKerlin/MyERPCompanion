@@ -14,7 +14,7 @@ from schemas.core.user_schema import UserPlainSchema, UserStrictCreateAppSchema,
 from services.core import AssocUserGroupService, GroupService, LanguageService, UserService
 from services.business.hr import EmployeeService
 from services.business.trade import CustomerService
-from utils.enums import ApiActionError, Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
 from utils.translation import Translation
 from views.core.user_view import UserView
 from events.events import ViewRequested
@@ -38,9 +38,12 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> UserView:
         groups: list[GroupPlainSchema] = []
-        show_groups = event.module_id != 1
-        show_relations = event.module_id != 1
+        is_current_user = event.caller_view_key == View.CURRENT_USER
         is_from_employees = event.caller_view_key == View.EMPLOYEES
+        is_from_customers = event.caller_view_key == View.CUSTOMERS
+        show_groups = event.module_id != Module.CORE and not is_current_user
+        show_relations = event.module_id != Module.CORE and not is_current_user
+        show_employee_relation = show_relations and not is_from_customers
         show_customer_relation = show_relations and not is_from_employees
         data_row = dict(event.data) if event.data else None
         if is_from_employees and event.caller_data:
@@ -51,49 +54,46 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
                 elif data_row.get("employee_id") is None:
                     data_row["employee_id"] = candidate
                 self._request_data.input_values["employee_id"] = candidate
-        if data_row and mode in {ViewMode.READ, ViewMode.EDIT}:
-            if show_relations:
-                if show_customer_relation:
-                    languages, groups, employees, customers, users = await asyncio.gather(
-                        self.__perform_get_all_languages(),
-                        self.__perform_get_all_groups(),
-                        self.__perform_get_all_employees(),
-                        self.__perform_get_all_customers(),
-                        self.__perform_get_all_users(),
-                    )
-                else:
-                    languages, groups, employees, users = await asyncio.gather(
-                        self.__perform_get_all_languages(),
-                        self.__perform_get_all_groups(),
-                        self.__perform_get_all_employees(),
-                        self.__perform_get_all_users(),
-                    )
-                    customers = []
-            else:
-                languages, groups = await asyncio.gather(
-                    self.__perform_get_all_languages(),
-                    self.__perform_get_all_groups(),
-                )
-                employees, customers, users = [], [], []
-        else:
-            if show_relations:
-                if show_customer_relation:
-                    languages, employees, customers, users = await asyncio.gather(
-                        self.__perform_get_all_languages(),
-                        self.__perform_get_all_employees(),
-                        self.__perform_get_all_customers(),
-                        self.__perform_get_all_users(),
-                    )
-                else:
-                    languages, employees, users = await asyncio.gather(
-                        self.__perform_get_all_languages(),
-                        self.__perform_get_all_employees(),
-                        self.__perform_get_all_users(),
-                    )
-                    customers = []
-            else:
-                languages = await self.__perform_get_all_languages()
-                employees, customers, users = [], [], []
+        if is_from_customers and event.caller_data:
+            candidate = event.caller_data.get("customer_id")
+            if isinstance(candidate, int):
+                if data_row is None:
+                    data_row = {"customer_id": candidate}
+                elif data_row.get("customer_id") is None:
+                    data_row["customer_id"] = candidate
+                self._request_data.input_values["customer_id"] = candidate
+        languages = []
+        employees: list = []
+        customers: list = []
+        users: list = []
+        groups = []
+        need_groups = show_groups
+        need_users = show_relations
+        need_employees = show_employee_relation
+        need_customers = show_customer_relation
+        tasks: dict[str, Any] = {
+            "languages": self.__perform_get_all_languages(),
+        }
+        if need_groups:
+            tasks["groups"] = self.__perform_get_all_groups()
+        if need_users:
+            tasks["users"] = self.__perform_get_all_users()
+        if need_employees:
+            tasks["employees"] = self.__perform_get_all_employees()
+        if need_customers:
+            tasks["customers"] = self.__perform_get_all_customers()
+        results = await asyncio.gather(*tasks.values())
+        for key, value in zip(tasks.keys(), results):
+            if key == "languages":
+                languages = value
+            elif key == "groups":
+                groups = value
+            elif key == "users":
+                users = value
+            elif key == "employees":
+                employees = value
+            elif key == "customers":
+                customers = value
         language_pairs = [(language.id, language.key) for language in languages]
         used_employee_ids = {user.employee_id for user in users if user.employee_id is not None}
         used_customer_ids = {user.customer_id for user in users if user.customer_id is not None}
@@ -117,8 +117,16 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         customer_pairs = [
             (customer.id, customer.company_name) for customer in customers if customer.id not in used_customer_ids
         ]
+        if is_from_customers and current_customer_id is not None:
+            customer_pairs = [
+                (customer.id, customer.company_name)
+                for customer in customers
+                if customer.id == current_customer_id
+            ]
         if not show_customer_relation:
             customer_pairs = []
+        if not show_employee_relation:
+            employee_pairs = []
         if current_employee_id is not None and current_employee_id not in {item[0] for item in employee_pairs}:
             for employee in employees:
                 if employee.id == current_employee_id:
@@ -150,6 +158,7 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
             customer_pairs,
             show_relations,
             show_customer_relation,
+            show_employee_relation,
             group_source_rows,
             group_target_rows,
             show_groups,

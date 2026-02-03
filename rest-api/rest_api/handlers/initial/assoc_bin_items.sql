@@ -51,3 +51,13 @@ SELECT
     :superuser_id
 FROM parts
 WHERE quantity > 0;
+
+UPDATE items i
+SET stock_quantity = totals.qty
+FROM (
+    SELECT item_id, SUM(quantity)::int AS qty
+    FROM bin_items
+    WHERE is_active IS TRUE
+    GROUP BY item_id
+) AS totals
+WHERE i.id = totals.item_id;

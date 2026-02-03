@@ -5,11 +5,10 @@ from typing import TYPE_CHECKING, Any, Callable, cast
 import flet as ft
 
 from utils.enums import View, ViewMode
-
+from utils.translation import Translation
 from views.base.base_view import BaseView
 from views.controls.bulk_transfer_control import BulkTransfer
 from views.controls.data_table_control import DataTable
-from utils.translation import Translation
 
 if TYPE_CHECKING:
     from controllers.business.trade.purchase_order_controller import PurchaseOrderController
@@ -51,7 +50,7 @@ class PurchaseOrderView(BaseView):
                 "key": "supplier_id",
                 "input": self._get_dropdown,
                 "options": suppliers,
-                "callbacks": [self.__handle_supplier_changed],
+                "callbacks": [self.__on_supplier_changed],
             },
             {"key": "status_id", "input": self._get_dropdown, "options": statuses},
             {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
@@ -129,18 +128,6 @@ class PurchaseOrderView(BaseView):
             ]
         )
 
-    def did_mount(self):
-        result = super().did_mount()
-        self.__is_mounted = True
-        if self._mode == ViewMode.CREATE:
-            self.__apply_supplier_currency()
-        self.__bulk_transfer.set_source_rows(cast(list[tuple[int, list[Any]]], self.__pending_source_items))
-        self.__bulk_transfer.set_target_rows(cast(list[tuple[int, list[Any]]], self.__pending_target_items))
-        if self.__pending_totals:
-            self.__apply_order_totals(self.__pending_totals)
-            self.__pending_totals.clear()
-        return result
-
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
         if mode == ViewMode.CREATE:
@@ -157,6 +144,18 @@ class PurchaseOrderView(BaseView):
         self.__status_history_table.read_only = True
         if self.__status_history_table.page:
             self.__status_history_table.update()
+
+    def did_mount(self):
+        result = super().did_mount()
+        self.__is_mounted = True
+        if self._mode == ViewMode.CREATE:
+            self.__apply_supplier_currency()
+        self.__bulk_transfer.set_source_rows(cast(list[tuple[int, list[Any]]], self.__pending_source_items))
+        self.__bulk_transfer.set_target_rows(cast(list[tuple[int, list[Any]]], self.__pending_target_items))
+        if self.__pending_totals:
+            self.__apply_order_totals(self.__pending_totals)
+            self.__pending_totals.clear()
+        return result
 
     def __apply_create_defaults(self) -> None:
         for key, value in self.__create_defaults.items():
@@ -191,7 +190,7 @@ class PurchaseOrderView(BaseView):
         enabled = mode == ViewMode.READ and self.__bulk_transfer_enabled_in_read
         self.__bulk_transfer.set_enabled_states(enabled, enabled, enabled)
 
-    def __handle_supplier_changed(self) -> None:
+    def __on_supplier_changed(self) -> None:
         self.__apply_supplier_currency()
 
     def __apply_supplier_currency(self) -> None:

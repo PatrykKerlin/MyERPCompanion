@@ -12,7 +12,7 @@ from schemas.business.trade.assoc_order_item_schema import AssocOrderItemPlainSc
 from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusPlainSchema, AssocOrderStatusStrictSchema
 from schemas.business.trade.order_schema import OrderPlainSchema
 from schemas.business.trade.status_schema import StatusPlainSchema
-from schemas.core.param_schema import IdsPayloadSchema, PaginatedResponseSchema
+from schemas.core.param_schema import IdsPayloadSchema
 from services.business.logistic import AssocBinItemService, BinService, ItemService
 from services.business.trade import (
     AssocOrderItemService,
@@ -122,10 +122,16 @@ class StockReceivingController(
     async def __perform_get_all_statuses(self) -> list[StatusPlainSchema]:
         return await self.__status_service.get_all(Endpoint.STATUSES, None, None, None, self._module_id)
 
+    async def __perform_get_orders_by_ids(self, order_ids: list[int]) -> list[OrderPlainSchema]:
+        if not order_ids:
+            return []
+        body_params = IdsPayloadSchema(ids=order_ids)
+        return await self.__order_service.get_bulk(Endpoint.ORDERS_GET_BULK, None, None, body_params, self._module_id)
+
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_get_purchase_orders(self) -> PaginatedResponseSchema[OrderPlainSchema]:
-        return await self.__order_service.get_page(
-            Endpoint.PURCHASE_ORDERS, None, {"page": 1, "page_size": 200}, None, self._module_id
+    async def __perform_get_order_statuses_by_status_id(self, status_id: int) -> list[AssocOrderStatusPlainSchema]:
+        return await self.__order_status_service.get_all(
+            Endpoint.ORDER_STATUSES, None, {"status_id": status_id}, None, self._module_id
         )
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
@@ -188,16 +194,30 @@ class StockReceivingController(
     async def __load_eligible_orders(self) -> list[OrderPlainSchema]:
         statuses = await self.__perform_get_all_statuses()
         status_by_id = {status.id: status for status in statuses}
-        response = await self.__perform_get_purchase_orders()
-        orders = response.items
+        target_status = next((status for status in statuses if status.order == 7), None)
+        if not target_status:
+            return []
+        assoc_statuses = await self.__perform_get_order_statuses_by_status_id(target_status.id)
+        order_ids = {assoc.order_id for assoc in assoc_statuses}
+        if not order_ids:
+            return []
+        orders = await self.__perform_get_orders_by_ids(list(order_ids))
+        orders = [order for order in orders if order.is_sales is False]
+        if not orders:
+            return []
+        status_tasks = {order.id: self.__perform_get_order_statuses(order.id) for order in orders}
+        status_results = await asyncio.gather(*status_tasks.values())
+        order_statuses_by_id = {
+            order_id: (statuses or []) for order_id, statuses in zip(status_tasks.keys(), status_results, strict=False)
+        }
         eligible: list[OrderPlainSchema] = []
         for order in orders:
-            order_statuses = await self.__perform_get_order_statuses(order.id)
+            order_statuses = order_statuses_by_id.get(order.id, [])
             if not order_statuses:
                 continue
             latest_status = max(order_statuses, key=lambda status: status.created_at)
             status = status_by_id.get(latest_status.status_id)
-            if status and status.order == 6:
+            if status and status.order == 7:
                 eligible.append(order)
         return eligible
 
@@ -246,14 +266,24 @@ class StockReceivingController(
             return
         target_bin = await self.__perform_get_single_bin(location)
         if not target_bin:
+            self.__target_bin = None
+            self.__target_items = {}
+            self.__target_bin_item_by_id = {}
+            self.__target_rows = []
             self._view.set_target_error(self._state_store.app_state.translation.items.get("bin_not_found"))
             self._view.set_target_rows([])
             self._view.set_target_enabled(False)
+            self.__sync_transfer_state()
             return
         if not target_bin.is_inbound:
+            self.__target_bin = None
+            self.__target_items = {}
+            self.__target_bin_item_by_id = {}
+            self.__target_rows = []
             self._view.set_target_error(self._state_store.app_state.translation.items.get("bin_not_inbound"))
             self._view.set_target_rows([])
             self._view.set_target_enabled(False)
+            self.__sync_transfer_state()
             return
         self.__target_bin = target_bin
         bin_items = await self.__perform_get_bin_items(target_bin.id)
@@ -274,16 +304,18 @@ class StockReceivingController(
             target_rows.append((bin_item.id, label))
         self._view.set_target_rows(target_rows)
         self.__target_rows = target_rows
-        self._view.set_target_enabled(True)
         self.__sync_transfer_state()
 
     def __sync_transfer_state(self) -> None:
         if not self._view:
             return
-        source_enabled = any(remaining > 0 for remaining in self.__order_item_quantities.values()) or bool(
+        has_target_bin = self.__target_bin is not None
+        has_order = self.__current_order_id is not None
+        source_available = any(remaining > 0 for remaining in self.__order_item_quantities.values()) or bool(
             self.__pending_move_item_ids
         )
-        target_enabled = self.__target_bin is not None
+        source_enabled = has_target_bin and has_order and source_available
+        target_enabled = has_target_bin and has_order
         self._view.set_source_enabled(source_enabled)
         self._view.set_target_enabled(target_enabled)
 

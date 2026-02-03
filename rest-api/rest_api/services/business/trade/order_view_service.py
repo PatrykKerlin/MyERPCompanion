@@ -69,12 +69,12 @@ class OrderViewService(ItemQuantityMixin):
                     label=row.company_name,
                     discounts=[
                         OrderViewDiscountSchema(
-                            id=discount.id,
-                            code=discount.code,
-                            percent=discount.percent,
+                            id=assoc.discount.id,
+                            code=assoc.discount.code,
+                            percent=assoc.discount.percent,
                         )
-                        for discount in row.discounts
-                        if discount.is_active
+                        for assoc in row.customer_discounts
+                        if assoc.discount and assoc.discount.is_active
                     ],
                 )
                 for row in customers
@@ -103,12 +103,12 @@ class OrderViewService(ItemQuantityMixin):
                     label=row.name,
                     discounts=[
                         OrderViewDiscountSchema(
-                            id=discount.id,
-                            code=discount.code,
-                            percent=discount.percent,
+                            id=assoc.discount.id,
+                            code=assoc.discount.code,
+                            percent=assoc.discount.percent,
                         )
-                        for discount in row.discounts
-                        if discount.is_active
+                        for assoc in row.category_discounts
+                        if assoc.discount and assoc.discount.is_active
                     ],
                 )
                 for row in categories
@@ -182,6 +182,8 @@ class OrderViewService(ItemQuantityMixin):
                     height=item.height,
                     length=item.length,
                     weight=item.weight,
+                    category_id=item.category_id,
+                    supplier_currency_id=item.supplier.currency_id if item.supplier else None,
                     category_discount_id=assoc.category_discount_id,
                     customer_discount_id=assoc.customer_discount_id,
                     item_discount_id=assoc.item_discount_id,

@@ -6,6 +6,7 @@ import flet as ft
 
 from utils.enums import View, ViewMode
 from utils.translation import Translation
+from utils.field_group import FieldGroup
 from views.base.base_view import BaseView
 from views.controls.bulk_transfer_control import BulkTransfer
 
@@ -33,6 +34,11 @@ class StockReceivingView(BaseView):
         self.__order_input = cast(ft.Dropdown, order_container.content)
         self.__order_input.label = self._translation.get("order")
         order_container.expand = True
+        self._inputs["order_id"] = FieldGroup(
+            label=self._get_label("order", 0, colon=False),
+            input=(order_container, 12),
+            marker=self._get_marker("order_id", 0),
+        )
         self.__target_input = ft.TextField(label=self._translation.get("target_bin"), on_submit=on_target_submitted)
 
         self.__bulk_transfer = BulkTransfer(
@@ -87,10 +93,10 @@ class StockReceivingView(BaseView):
             self.__target_input.update()
 
     def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
-        self.__bulk_transfer.set_source_rows(cast(list[tuple[int, list[Any]]], rows))
+        self.__bulk_transfer.set_source_rows(rows)
 
     def set_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
-        self.__bulk_transfer.set_target_rows(cast(list[tuple[int, list[Any]]], rows))
+        self.__bulk_transfer.set_target_rows(rows)
 
     def mark_source_items_as_moved(self, ids: list[int]) -> None:
         self.__bulk_transfer.mark_source_items_as_moved(ids)
@@ -99,10 +105,10 @@ class StockReceivingView(BaseView):
         return self.__bulk_transfer.get_pending_targets()
 
     def add_target_row(self, source_id: int, values: list[str]) -> int:
-        return self.__bulk_transfer.add_target_row(source_id, cast(list[Any], values), highlight=True)
+        return self.__bulk_transfer.add_target_row(source_id, values, highlight=True)
 
     def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
-        self.__bulk_transfer.update_existing_target(target_id, source_id, cast(list[Any], values))
+        self.__bulk_transfer.update_existing_target(target_id, source_id, values)
 
     def set_source_enabled(self, enabled: bool) -> None:
         self.__bulk_transfer.set_source_enabled(enabled)

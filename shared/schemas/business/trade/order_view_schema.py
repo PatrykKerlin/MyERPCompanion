@@ -74,6 +74,8 @@ class OrderViewTargetItemSchema(BaseSchema):
     height: float
     length: float
     weight: float
+    category_id: int | None = None
+    supplier_currency_id: int | None = None
     bin_id: int | None = None
     category_discount_id: int | None = None
     customer_discount_id: int | None = None

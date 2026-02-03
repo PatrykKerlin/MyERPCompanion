@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
 from utils.enums import View, ViewMode
 
-from utils.field_group import FieldGroup
 from views.base.base_view import BaseView
+from views.controls.data_table_control import DataTable
+from views.mixins.user_link_view_mixin import UserLinkViewMixin
 
 if TYPE_CHECKING:
     from controllers.business.hr.employee_controller import EmployeeController
     from utils.translation import Translation
 
 
-class EmployeeView(BaseView):
+class EmployeeView(BaseView, UserLinkViewMixin):
     def __init__(
         self,
         controller: EmployeeController,
@@ -26,6 +27,7 @@ class EmployeeView(BaseView):
         positions: list[tuple[int, str]],
         managers: list[tuple[int, str]],
         user_options: list[tuple[int, str]],
+        subordinate_rows: list[dict[str, Any]],
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
         personal_fields_definitions = [
@@ -119,43 +121,8 @@ class EmployeeView(BaseView):
         employment_fields = self._build_field_groups(employment_fields_definitions)
         bank_fields = self._build_field_groups(bank_fields_definitions)
 
-        dropdown_container, input_size = self._get_dropdown("user_id", 7, user_options)
-        dropdown = dropdown_container.content
-        self.__user_dropdown = dropdown if isinstance(dropdown, ft.Dropdown) else None
-        self.__user_dropdown_options: list[ft.DropdownOption] | None = None
-        self.__user_button = ft.IconButton(
-            icon=ft.Icons.PERSON_ADD,
-            on_click=self._controller.on_add_user_clicked,
-        )
-        user_input = ft.Container(
-            content=ft.Row(
-                controls=[cast(ft.Control, dropdown), self.__user_button],
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                expand=True,
-                spacing=8,
-            ),
-            col={"sm": float(input_size)},
-            alignment=self._base_alignment,
-        )
-        user_field = {
-            "user_id": FieldGroup(
-                label=self._get_label("user_id", 4),
-                input=(user_input, input_size),
-                marker=self._get_marker("user_id", 1),
-            )
-        }
+        user_field = self._init_user_link_field(user_options, self._controller.on_add_user_clicked, input_size=7)
 
-        user_id_value = data_row.get("user_id") if data_row else None
-        if self.__user_dropdown and user_id_value is not None:
-            match = None
-            for option in self.__user_dropdown.options:
-                if option.key == str(user_id_value):
-                    match = option
-                    break
-            if match is None:
-                self.__user_dropdown.options.append(ft.dropdown.Option(key=str(user_id_value), text=str(user_id_value)))
-            self.__user_dropdown.value = str(user_id_value)
         self._add_to_inputs(
             personal_fields,
             contact_fields,
@@ -175,6 +142,13 @@ class EmployeeView(BaseView):
         city_grid = self._build_grid(city_fields, inline=True)
         country_grid = self._build_grid(country_field)
         user_grid = self._build_grid(user_field)
+        self.__subordinates_table = DataTable(
+            columns=["id", "first_name", "last_name"],
+            rows=subordinate_rows,
+            translation=self._translation,
+            height=200,
+            with_button=False,
+        )
         employment_grid = self._build_grid(employment_fields)
         bank_grid = self._build_grid(bank_fields)
 
@@ -186,7 +160,7 @@ class EmployeeView(BaseView):
             ),
             self._spacing_column,
             ft.Column(
-                controls=meta_grid + self._spacing_responsive_row + employment_grid + bank_grid + user_grid,
+                controls=meta_grid + self._spacing_responsive_row + employment_grid + bank_grid + user_grid + [self.__subordinates_table],
                 expand=2,
             ),
         ]
@@ -195,68 +169,21 @@ class EmployeeView(BaseView):
 
     def clear_inputs(self) -> None:
         super().clear_inputs()
-        if self.__user_dropdown:
-            self.__user_dropdown.value = "0"
-            self.__user_dropdown.update()
-
+        self._reset_user_link()
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
-        field = self._inputs.get("user_id")
-        row = field.input.content if field else None
-        dropdown = self.__user_dropdown
-        marker_value = False
-        if field and field.marker and hasattr(field.marker.content, "value"):
-            marker_value = bool(field.marker.content.value)
-        user_id_value = self._data_row.get("user_id") if self._data_row else None
-        if user_id_value in (0, "0", ""):
-            user_id_value = None
-        if dropdown:
-            if mode == ViewMode.READ:
-                if user_id_value is not None:
-                    if self.__user_dropdown_options is None:
-                        self.__user_dropdown_options = list(dropdown.options)
-                    matching = [option for option in dropdown.options if option.key == str(user_id_value)]
-                    if matching:
-                        dropdown.options = matching
-                        dropdown.value = matching[0].key
-                else:
-                    if self.__user_dropdown_options is not None:
-                        dropdown.options = self.__user_dropdown_options
-                        self.__user_dropdown_options = None
-                    dropdown.value = "0"
-            else:
-                if self.__user_dropdown_options is not None:
-                    dropdown.options = self.__user_dropdown_options
-                    self.__user_dropdown_options = None
-            if mode == ViewMode.SEARCH:
-                dropdown.disabled = not marker_value
-            elif mode in {ViewMode.CREATE, ViewMode.EDIT}:
-                dropdown.disabled = True
-            elif mode == ViewMode.READ:
-                dropdown.disabled = False
-            dropdown.update()
-        if mode == ViewMode.READ:
-            self.__user_button.disabled = user_id_value is not None
+        self._apply_user_link_mode(mode)
+        if self._mode in {ViewMode.READ, ViewMode.EDIT}:
+            self.__subordinates_table.visible = True
         else:
-            self.__user_button.disabled = True
-        if self.__user_button.page:
-            self.__user_button.update()
-        # keep row enabled in READ/SEARCH so dropdown/button can reflect their own state
-        if hasattr(row, "disabled"):
-            if mode in {ViewMode.CREATE, ViewMode.EDIT}:
-                row.disabled = True
-            else:
-                row.disabled = False
-            if row and row.page:
-                row.update()
-
-
-
-
-
+            self.__subordinates_table.visible = False
+        self.__subordinates_table.read_only = True
+        self.__subordinates_table.update()
 
     def set_dropdown_options(self, key: str, options: list[tuple[int, str]]) -> None:
+        if self._set_user_link_dropdown_options(key, options):
+            return
         field = self._inputs[key]
         control = field.input.content
         dropdown: ft.Dropdown | None = None
@@ -269,15 +196,4 @@ class EmployeeView(BaseView):
                     break
         if dropdown is not None:
             dropdown.options = [ft.dropdown.Option(text=label, key=str(value)) for value, label in options]
-            if (
-                key == "user_id"
-                and self._mode == ViewMode.READ
-                and self._data_row
-                and self._data_row.get("user_id") is not None
-            ):
-                value = self._data_row.get("user_id")
-                matching = [option for option in dropdown.options if option.key == str(value)]
-                if matching:
-                    dropdown.options = matching
-                    dropdown.value = matching[0].key
             dropdown.update()

@@ -4,13 +4,12 @@ from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
 
+from schemas.business.trade.order_view_schema import OrderViewDiscountSchema
 from utils.enums import View, ViewMode
-
+from utils.translation import Translation
 from views.base.base_view import BaseView
 from views.controls.bulk_transfer_control import BulkTransfer
 from views.controls.data_table_control import DataTable
-from utils.translation import Translation
-from schemas.business.trade.order_view_schema import OrderViewDiscountSchema
 
 if TYPE_CHECKING:
     from controllers.business.trade.sales_order_controller import SalesOrderController
@@ -67,6 +66,31 @@ class SalesOrderView(BaseView):
         self.__pending_totals: dict[str, float] = {}
         self.__is_mounted = False
         self.__bulk_transfer_enabled_in_read = bulk_transfer_enabled
+        self.__bulk_transfer = BulkTransfer(
+            on_save_clicked=on_items_save_clicked or (lambda _: None),
+            source_label=self._translation.get("items"),
+            target_label=self._translation.get("order_items"),
+            on_move_requested=on_items_move_requested,
+            on_delete_clicked=on_items_delete_clicked,
+            on_pending_reverted=on_items_pending_reverted,
+            allow_duplicate_targets=True,
+            source_columns=[
+                self._translation.get("index"),
+                self._translation.get("name"),
+                self._translation.get("outbound_quantity"),
+                self._translation.get("reserved_quantity"),
+            ],
+            target_columns=[
+                self._translation.get("index"),
+                self._translation.get("name"),
+                self._translation.get("quantity"),
+                self._translation.get("category_discount"),
+                self._translation.get("discount"),
+            ],
+        )
+        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
+        self.__set_bulk_transfer_state(mode)
 
         main_fields_definitions = [
             {
@@ -121,7 +145,7 @@ class SalesOrderView(BaseView):
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
         self.__customer_discount_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
-        self.__customer_discount.disabled = mode == ViewMode.EDIT
+        self.__customer_discount.disabled = not self.__is_customer_discount_editable(mode)
 
         main_grid.append(self.__customer_discount_row)
 
@@ -157,31 +181,6 @@ class SalesOrderView(BaseView):
             ft.Column(controls=meta_grid + notes_grid, expand=2),
         ]
         self._columns_row.controls.extend(columns)
-        self.__bulk_transfer = BulkTransfer(
-            on_save_clicked=on_items_save_clicked or (lambda _: None),
-            source_label=self._translation.get("items"),
-            target_label=self._translation.get("order_items"),
-            on_move_requested=on_items_move_requested,
-            on_delete_clicked=on_items_delete_clicked,
-            on_pending_reverted=on_items_pending_reverted,
-            allow_duplicate_targets=True,
-            source_columns=[
-                self._translation.get("index"),
-                self._translation.get("name"),
-                self._translation.get("outbound_quantity"),
-                self._translation.get("reserved_quantity"),
-            ],
-            target_columns=[
-                self._translation.get("index"),
-                self._translation.get("name"),
-                self._translation.get("quantity"),
-                self._translation.get("category_discount"),
-                self._translation.get("discount"),
-            ],
-        )
-        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
-        self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
-        self.__set_bulk_transfer_state(mode)
         bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
         self.__status_history_table = DataTable(
             columns=["status", "created_at"],
@@ -208,23 +207,6 @@ class SalesOrderView(BaseView):
         )
         self.__pending_source_items = self.__get_filtered_source_items()
 
-    def did_mount(self):
-        result = super().did_mount()
-        self.__is_mounted = True
-        self.__bulk_transfer.set_source_rows(self.__pending_source_items)
-        self.__apply_source_selectable_ids(self.__pending_source_items)
-        self.__bulk_transfer.set_target_rows(
-            self.__build_target_rows_with_discounts(self.__pending_target_items_raw, self.__target_item_ids)
-        )
-        self.__apply_customer_discount_options()
-        if self.__pending_customer_discount_id is not None:
-            self.set_selected_customer_discount_id(self.__pending_customer_discount_id)
-            self.__pending_customer_discount_id = None
-        if self.__pending_totals:
-            self.__apply_order_totals(self.__pending_totals)
-            self.__pending_totals.clear()
-        return result
-
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
         if mode == ViewMode.CREATE:
@@ -242,7 +224,7 @@ class SalesOrderView(BaseView):
         self.__category_filter.disabled = mode == ViewMode.EDIT
         self.__category_filter_row.visible = self.__category_filter.visible
         self.__customer_discount_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
-        self.__customer_discount.disabled = mode == ViewMode.EDIT
+        self.__customer_discount.disabled = not self.__is_customer_discount_editable(mode)
         if self.__bulk_transfer.visible:
             self.__apply_category_filter()
         if self.__category_filter.page:
@@ -253,6 +235,23 @@ class SalesOrderView(BaseView):
             self.__customer_discount_row.update()
         if self.__status_history_table.page:
             self.__status_history_table.update()
+
+    def did_mount(self):
+        result = super().did_mount()
+        self.__is_mounted = True
+        self.__bulk_transfer.set_source_rows(self.__pending_source_items)
+        self.__apply_source_selectable_ids(self.__pending_source_items)
+        self.__bulk_transfer.set_target_rows(
+            self.__build_target_rows_with_discounts(self.__pending_target_items_raw, self.__target_item_ids)
+        )
+        self.__apply_customer_discount_options()
+        if self.__pending_customer_discount_id is not None:
+            self.set_selected_customer_discount_id(self.__pending_customer_discount_id)
+            self.__pending_customer_discount_id = None
+        if self.__pending_totals:
+            self.__apply_order_totals(self.__pending_totals)
+            self.__pending_totals.clear()
+        return result
 
     def set_order_number(self, number: str) -> None:
         field = self._inputs.get("number")
@@ -295,6 +294,7 @@ class SalesOrderView(BaseView):
     def __set_bulk_transfer_state(self, mode: ViewMode) -> None:
         enabled = mode == ViewMode.READ and self.__bulk_transfer_enabled_in_read
         self.__bulk_transfer.set_enabled_states(enabled, enabled, enabled)
+        self.__bulk_transfer.set_source_selectable_ids(self.__source_selectable_ids)
 
     def get_pending_targets(self) -> list[tuple[int, int]]:
         return self.__bulk_transfer.get_pending_targets()
@@ -341,7 +341,8 @@ class SalesOrderView(BaseView):
         ):
             self.__selected_customer_discount_id = None
             self.__customer_discount.value = "0"
-            self._controller.set_customer_discount_id(None)
+            if self.__is_customer_discount_editable():
+                self._controller.set_customer_discount_id(None)
         else:
             self.__customer_discount.value = str(self.__selected_customer_discount_id)
         if self.__customer_discount.page:
@@ -372,10 +373,12 @@ class SalesOrderView(BaseView):
         if discount_id is None or str(discount_id) not in option_keys:
             self.__selected_customer_discount_id = None
             self.__customer_discount.value = "0"
-            self._controller.set_customer_discount_id(None)
+            if self.__is_customer_discount_editable():
+                self._controller.set_customer_discount_id(None)
         else:
             self.__customer_discount.value = str(discount_id)
-            self._controller.set_customer_discount_id(discount_id)
+            if self.__is_customer_discount_editable():
+                self._controller.set_customer_discount_id(discount_id)
         if self.__customer_discount.page:
             self.__customer_discount.update()
 
@@ -462,9 +465,12 @@ class SalesOrderView(BaseView):
     def __on_customer_changed(self) -> None:
         self.__apply_customer_discount_options()
         self.__selected_customer_discount_id = None
-        self._controller.set_customer_discount_id(None)
+        if self.__is_customer_discount_editable():
+            self._controller.set_customer_discount_id(None)
 
     def __on_customer_discount_changed(self, event: ft.Event[ft.Dropdown]) -> None:
+        if not self.__is_customer_discount_editable():
+            return
         self.__selected_customer_discount_id = self.__parse_dropdown_value(event.control.value)
         self._controller.set_customer_discount_id(self.__selected_customer_discount_id)
 
@@ -638,6 +644,10 @@ class SalesOrderView(BaseView):
         if hasattr(input_control, "value"):
             return self.__parse_dropdown_value(getattr(input_control, "value", None))
         return None
+
+    def __is_customer_discount_editable(self, mode: ViewMode | None = None) -> bool:
+        effective_mode = mode or self._mode
+        return effective_mode == ViewMode.READ and self.__bulk_transfer_enabled_in_read
 
     @staticmethod
     def __parse_dropdown_value(value: str | None) -> int | None:

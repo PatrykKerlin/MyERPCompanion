@@ -1,9 +1,4 @@
-WITH max_sales AS (
-    SELECT max(order_date) AS max_date
-    FROM orders
-    WHERE is_sales IS TRUE
-),
-invoiced_orders AS (
+WITH invoiced_orders AS (
     SELECT
         o.id AS order_id,
         o.order_date,
@@ -21,10 +16,8 @@ invoiced_orders AS (
         ) AS seq
     FROM orders o
     JOIN customers c ON c.id = o.customer_id
-    CROSS JOIN max_sales ms
     WHERE
         o.is_sales IS TRUE
-        AND o.order_date <= (ms.max_date - INTERVAL '5 days')
 ),
 inserted AS (
     INSERT INTO invoices (

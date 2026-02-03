@@ -165,3 +165,73 @@ FROM (
     GROUP BY order_id
 ) AS totals
 WHERE o.id = totals.order_id;
+
+UPDATE order_items
+SET to_process = 0;
+
+WITH sold AS (
+    SELECT oi.item_id, COALESCE(SUM(oi.quantity), 0)::int AS sold_qty
+    FROM order_items oi
+    JOIN orders o ON o.id = oi.order_id AND o.is_sales IS TRUE
+    GROUP BY oi.item_id
+)
+UPDATE items i
+SET stock_quantity = GREATEST(0, i.stock_quantity - COALESCE(s.sold_qty, 0))
+FROM sold s
+WHERE i.id = s.item_id;
+
+DELETE FROM bin_items;
+
+WITH outbound_bins AS (
+    SELECT id, row_number() OVER (ORDER BY id) AS rn
+    FROM bins
+    WHERE is_outbound IS TRUE
+),
+outbound_count AS (
+    SELECT COUNT(*)::int AS cnt FROM outbound_bins
+),
+item_bins AS (
+    SELECT
+        i.id AS item_id,
+        i.stock_quantity,
+        ob1.id AS bin_id_1,
+        ob2.id AS bin_id_2,
+        ob3.id AS bin_id_3
+    FROM items i
+    CROSS JOIN outbound_count oc
+    JOIN outbound_bins ob1 ON ob1.rn = ((i.id - 1) % oc.cnt) + 1
+    JOIN outbound_bins ob2 ON ob2.rn = ((i.id + 1) % oc.cnt) + 1
+    JOIN outbound_bins ob3 ON ob3.rn = ((i.id + 3) % oc.cnt) + 1
+),
+parts AS (
+    SELECT
+        item_id,
+        bin_id_1 AS bin_id,
+        GREATEST(0, floor(stock_quantity * 0.5))::int AS quantity
+    FROM item_bins
+    UNION ALL
+    SELECT
+        item_id,
+        bin_id_2 AS bin_id,
+        GREATEST(0, floor(stock_quantity * 0.3))::int AS quantity
+    FROM item_bins
+    UNION ALL
+    SELECT
+        item_id,
+        bin_id_3 AS bin_id,
+        (stock_quantity
+         - GREATEST(0, floor(stock_quantity * 0.5))
+         - GREATEST(0, floor(stock_quantity * 0.3))
+        )::int AS quantity
+    FROM item_bins
+)
+INSERT INTO bin_items (bin_id, item_id, quantity, is_active, created_at, created_by)
+SELECT
+    bin_id,
+    item_id,
+    quantity,
+    TRUE,
+    CURRENT_TIMESTAMP,
+    CAST(:superuser_id AS INTEGER)
+FROM parts
+WHERE quantity > 0;

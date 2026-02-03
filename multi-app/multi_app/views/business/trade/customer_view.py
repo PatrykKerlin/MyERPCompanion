@@ -7,6 +7,7 @@ import flet as ft
 from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
+from views.mixins.user_link_view_mixin import UserLinkViewMixin
 from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin
 from utils.translation import Translation
 
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
     from controllers.business.trade.customer_controller import CustomerController
 
 
-class CustomerView(BaseView, DiscountBulkTransferMixin):
+class CustomerView(BaseView, DiscountBulkTransferMixin, UserLinkViewMixin):
     def __init__(
         self,
         controller: CustomerController,
@@ -24,6 +25,7 @@ class CustomerView(BaseView, DiscountBulkTransferMixin):
         data_row: dict[str, Any] | None,
         discount_source_items: list[tuple[int, str]],
         discount_target_items: list[tuple[int, str]],
+        user_options: list[tuple[int, str]],
         on_discount_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
         on_discount_delete_clicked: Callable[[list[int]], None] | None = None,
         # users: list[tuple[int, str]],
@@ -115,6 +117,8 @@ class CustomerView(BaseView, DiscountBulkTransferMixin):
         shipping_city_fields = self._build_field_groups(shipping_city_fields_definitions)
         shipping_country_field = self._build_field_groups(shipping_country_field_definition)
 
+        user_field = self._init_user_link_field(user_options, self._controller.on_add_user_clicked, input_size=7)
+
         self._add_to_inputs(
             # user_field,
             company_fields,
@@ -128,6 +132,7 @@ class CustomerView(BaseView, DiscountBulkTransferMixin):
             shipping_house_fields,
             shipping_city_fields,
             shipping_country_field,
+            user_field,
         )
 
         # user_grid = self._build_grid(user_field)
@@ -142,6 +147,7 @@ class CustomerView(BaseView, DiscountBulkTransferMixin):
         shipping_house_grid = self._build_grid(shipping_house_fields, inline=True)
         shipping_city_grid = self._build_grid(shipping_city_fields, inline=True)
         shipping_country_grid = self._build_grid(shipping_country_field)
+        user_grid = self._build_grid(user_field)
 
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
 
@@ -156,6 +162,7 @@ class CustomerView(BaseView, DiscountBulkTransferMixin):
             ft.Column(
                 controls=meta_grid
                 + self._spacing_responsive_row
+                + user_grid
                 + self._spacing_responsive_row
                 + shipping_street_grid
                 + shipping_house_grid
@@ -174,6 +181,7 @@ class CustomerView(BaseView, DiscountBulkTransferMixin):
             on_discount_save_clicked,
             on_discount_delete_clicked,
             height=250,
+            visible_modes={ViewMode.READ, ViewMode.EDIT},
         )
         bulk_transfer_row = self._build_discount_bulk_transfer_row()
         self._master_column.controls.extend(
@@ -186,10 +194,21 @@ class CustomerView(BaseView, DiscountBulkTransferMixin):
             ]
         )
 
-    def did_mount(self):
-        self._mount_discount_bulk_transfer()
-        return super().did_mount()
+
+    def clear_inputs(self) -> None:
+        super().clear_inputs()
+        self._reset_user_link()
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
         self._update_discount_bulk_transfer_mode(mode)
+        self._apply_user_link_mode(mode)
+
+    def set_dropdown_options(self, key: str, options: list[tuple[int, str]]) -> None:
+        if self._set_user_link_dropdown_options(key, options):
+            return
+
+    def did_mount(self):
+        self._mount_discount_bulk_transfer()
+        return super().did_mount()
+

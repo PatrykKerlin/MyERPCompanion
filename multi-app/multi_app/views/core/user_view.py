@@ -27,6 +27,7 @@ class UserView(BaseView, GroupBulkTransferMixin):
         customer_pairs: list[tuple[int, str]],
         show_relations: bool,
         show_customer_relation: bool,
+        show_employee_relation: bool,
         group_source_rows: list[tuple[int, list[str]]],
         group_target_rows: list[tuple[int, list[str]]],
         show_groups: bool,
@@ -52,7 +53,7 @@ class UserView(BaseView, GroupBulkTransferMixin):
             {"key": "language_id", "input": self._get_dropdown, "options": languages},
             {"key": "theme", "input": self._get_dropdown, "options": themes},
         ]
-        if show_relations:
+        if show_relations and show_employee_relation:
             main_fields_definitions.append(
                 {
                     "key": "employee_id",
@@ -61,15 +62,15 @@ class UserView(BaseView, GroupBulkTransferMixin):
                     "callbacks": [self.__handle_employee_changed],
                 }
             )
-            if show_customer_relation:
-                main_fields_definitions.append(
-                    {
-                        "key": "customer_id",
-                        "input": self._get_dropdown,
-                        "options": customer_pairs,
-                        "callbacks": [self.__handle_customer_changed],
-                    }
-                )
+        if show_relations and show_customer_relation:
+            main_fields_definitions.append(
+                {
+                    "key": "customer_id",
+                    "input": self._get_dropdown,
+                    "options": customer_pairs,
+                    "callbacks": [self.__handle_customer_changed],
+                }
+            )
         if data_row and isinstance(data_row.get("language"), dict):
             data_row["language_id"] = data_row["language"]["id"]
         self._search_disabled_fields.update({"password", "password_repeat"})

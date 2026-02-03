@@ -55,6 +55,6 @@ class SupplierPlainSchema(BasePlainSchema):
     tax_id: str
     payment_term: int
 
-    notes: str
+    notes: str | None
 
     currency_id: int

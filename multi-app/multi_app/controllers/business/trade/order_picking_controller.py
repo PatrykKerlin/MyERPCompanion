@@ -14,7 +14,7 @@ from schemas.business.trade.assoc_order_item_schema import AssocOrderItemPlainSc
 from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusPlainSchema, AssocOrderStatusStrictSchema
 from schemas.business.trade.order_schema import OrderPlainSchema
 from schemas.business.trade.status_schema import StatusPlainSchema
-from schemas.core.param_schema import IdsPayloadSchema, PaginatedResponseSchema
+from schemas.core.param_schema import IdsPayloadSchema
 from services.business.logistic import AssocBinItemService, BinService, ItemService
 from services.business.trade import (
     AssocOrderItemService,
@@ -178,10 +178,16 @@ class OrderPickingController(
         return await self.__status_service.get_all(Endpoint.STATUSES, None, None, None, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_get_sales_orders(self) -> PaginatedResponseSchema[OrderPlainSchema]:
-        return await self.__order_service.get_page(
-            Endpoint.SALES_ORDERS, None, {"page": 1, "page_size": 200}, None, self._module_id
+    async def __perform_get_order_statuses_by_status_id(self, status_id: int) -> list[AssocOrderStatusPlainSchema]:
+        return await self.__order_status_service.get_all(
+            Endpoint.ORDER_STATUSES, None, {"status_id": status_id}, None, self._module_id
         )
+
+    async def __perform_get_orders_by_ids(self, order_ids: list[int]) -> list[OrderPlainSchema]:
+        if not order_ids:
+            return []
+        body_params = IdsPayloadSchema(ids=order_ids)
+        return await self.__order_service.get_bulk(Endpoint.ORDERS_GET_BULK, None, None, body_params, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_order_statuses(self, order_id: int) -> list[AssocOrderStatusPlainSchema]:
@@ -257,15 +263,34 @@ class OrderPickingController(
     async def __load_eligible_orders(self, order_date: date | None, customer_id: int | None) -> list[OrderPlainSchema]:
         statuses = await self.__perform_get_all_statuses()
         status_by_id = {status.id: status for status in statuses}
-        response = await self.__perform_get_sales_orders()
-        orders = response.items
+        status_ids = [status.id for status in statuses if status.order in {2, 3}]
+        if not status_ids:
+            return []
+        status_batches = await asyncio.gather(
+            *(self.__perform_get_order_statuses_by_status_id(status_id) for status_id in status_ids)
+        )
+        order_ids = {assoc.order_id for batch in status_batches for assoc in (batch or [])}
+        if not order_ids:
+            return []
+        orders = await self.__perform_get_orders_by_ids(list(order_ids))
+        orders = [
+            order
+            for order in orders
+            if order.is_sales is True
+            and order.customer_id is not None
+            and (order_date is None or order.order_date == order_date)
+            and (customer_id is None or order.customer_id == customer_id)
+        ]
+        if not orders:
+            return []
+        status_tasks = {order.id: self.__perform_get_order_statuses(order.id) for order in orders}
+        status_results = await asyncio.gather(*status_tasks.values())
+        order_statuses_by_id = {
+            order_id: (statuses or []) for order_id, statuses in zip(status_tasks.keys(), status_results, strict=False)
+        }
         eligible: list[OrderPlainSchema] = []
         for order in orders:
-            if order_date is not None and order.order_date != order_date:
-                continue
-            if customer_id is not None and order.customer_id != customer_id:
-                continue
-            order_statuses = await self.__perform_get_order_statuses(order.id)
+            order_statuses = order_statuses_by_id.get(order.id, [])
             if not order_statuses:
                 continue
             latest_status = max(order_statuses, key=lambda status: status.created_at)
@@ -483,7 +508,6 @@ class OrderPickingController(
     async def __handle_move_with_quantity(self, item_id: int, max_quantity: int) -> None:
         if not self._view:
             return
-        await self.__ensure_item_label(item_id)
         bin_item_schemas = await self.__perform_get_bin_items_for_item(item_id)
         if not bin_item_schemas:
             return
@@ -1025,19 +1049,6 @@ class OrderPickingController(
         self._view.set_package_target_rows(self.__package_target_rows)
         self._view.set_package_target_enabled(bool(self.__package_target_rows))
         self.__update_complete_button_state()
-
-    async def __ensure_item_label(self, item_id: int) -> None:
-        label = self.__order_item_labels.get(item_id)
-        if label and label[1]:
-            return
-        item_schema = self.__items_by_id.get(item_id)
-        if not item_schema:
-            items = await self.__perform_get_items_by_ids([item_id])
-            item_schema = items[0] if items else None
-            if item_schema:
-                self.__items_by_id[item_schema.id] = item_schema
-        if item_schema:
-            self.__order_item_labels[item_id] = (item_schema.index, item_schema.name)
 
     @staticmethod
     def __build_item_update(item: ItemPlainSchema, stock_quantity: int) -> ItemStrictSchema:
