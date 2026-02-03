@@ -42,18 +42,15 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         show_relations = event.module_id != 1
         is_from_employees = event.caller_view_key == View.EMPLOYEES
         show_customer_relation = show_relations and not is_from_employees
-        employee_locked_id = None
+        data_row = dict(event.data) if event.data else None
         if is_from_employees and event.caller_data:
             candidate = event.caller_data.get("employee_id")
             if isinstance(candidate, int):
-                employee_locked_id = candidate
-        data_row = dict(event.data) if event.data else None
-        if employee_locked_id is not None:
-            if data_row is None:
-                data_row = {"employee_id": employee_locked_id}
-            elif data_row.get("employee_id") is None:
-                data_row["employee_id"] = employee_locked_id
-            self._request_data.input_values["employee_id"] = employee_locked_id
+                if data_row is None:
+                    data_row = {"employee_id": candidate}
+                elif data_row.get("employee_id") is None:
+                    data_row["employee_id"] = candidate
+                self._request_data.input_values["employee_id"] = candidate
         if data_row and mode in {ViewMode.READ, ViewMode.EDIT}:
             if show_relations:
                 if show_customer_relation:
@@ -111,11 +108,11 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
             for employee in employees
             if employee.id not in used_employee_ids
         ]
-        if employee_locked_id is not None:
+        if is_from_employees and current_employee_id is not None:
             employee_pairs = [
                 (employee.id, f"{employee.first_name} {employee.last_name}")
                 for employee in employees
-                if employee.id == employee_locked_id
+                if employee.id == current_employee_id
             ]
         customer_pairs = [
             (customer.id, customer.company_name) for customer in customers if customer.id not in used_customer_ids
@@ -153,10 +150,10 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
             customer_pairs,
             show_relations,
             show_customer_relation,
-            employee_locked_id,
             group_source_rows,
             group_target_rows,
             show_groups,
+            event.caller_view_key,
             on_groups_save_clicked=self.on_groups_save_clicked,
             on_groups_delete_clicked=self.on_groups_delete_clicked,
         )

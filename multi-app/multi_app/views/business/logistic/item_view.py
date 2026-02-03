@@ -244,7 +244,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         is_primary = image["is_primary"]
         image_height = self.__GALLERY_HEIGHT - 2 * self.__PRIMARY_BORDER
         padding = self.__PRIMARY_BORDER if is_primary else 0
-        border = ft.border.all(2, ft.Colors.BLUE_300) if is_primary else None
+        border = ft.Border.all(2, ft.Colors.BLUE_300) if is_primary else None
         return ft.Container(
             content=ft.Image(
                 src=url,

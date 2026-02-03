@@ -27,10 +27,10 @@ class UserView(BaseView, GroupBulkTransferMixin):
         customer_pairs: list[tuple[int, str]],
         show_relations: bool,
         show_customer_relation: bool,
-        employee_locked_id: int | None,
         group_source_rows: list[tuple[int, list[str]]],
         group_target_rows: list[tuple[int, list[str]]],
         show_groups: bool,
+        caller_view_key: View | None = None,
         on_groups_save_clicked=None,
         on_groups_delete_clicked=None,
     ) -> None:
@@ -42,10 +42,9 @@ class UserView(BaseView, GroupBulkTransferMixin):
             data_row,
             4,
             7,
+            caller_view_key=caller_view_key,
         )
         self.__password_validation_ready = False
-        self.__employee_locked_id = employee_locked_id
-        self.__show_customer_relation = show_customer_relation
         main_fields_definitions = [
             {"key": "username", "input": self._get_text_input},
             {"key": "password", "input": self._get_password_input},
@@ -219,9 +218,8 @@ class UserView(BaseView, GroupBulkTransferMixin):
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
-        if mode in {ViewMode.CREATE, ViewMode.EDIT}:
-            if self.__password_validation_ready:
-                self.__validate_password_fields()
+        if mode in {ViewMode.CREATE, ViewMode.EDIT} and self.__password_validation_ready:
+            self.__validate_password_fields()
 
     def did_mount(self):
         self.__password_validation_ready = True

@@ -20,7 +20,7 @@ class WarehousePlainSchema(BasePlainSchema):
     email: str
     phone_number: str
 
-    street: str
+    street: str | None
     house_number: str
     apartment_number: str | None
     postal_code: str

@@ -139,8 +139,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             case ViewMode.EDIT:
                 self.__set_edit_mode()
         self.__set_buttons()
-        print(self._view_key)
-        print(self._mode)
 
     def set_input_state(self, input: ft.Control, enable: bool) -> None:
         if hasattr(input, "disabled"):

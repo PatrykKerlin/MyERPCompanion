@@ -61,7 +61,7 @@ class ItemPlainSchema(BasePlainSchema):
     index: str
     name: str
     ean: str
-    description: str
+    description: str | None
 
     purchase_price: float
     vat_rate: float

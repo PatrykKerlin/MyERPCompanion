@@ -23,8 +23,9 @@ class DeliveryMethodView(BaseView):
         data_row: dict[str, Any] | None,
         carriers: list[tuple[int, str]],
         units: list[tuple[int, str]],
+        caller_view_key: View | None = None,
     ) -> None:
-        super().__init__(controller, translation, mode, key, data_row, 4, 7)
+        super().__init__(controller, translation, mode, key, data_row, 4, 7, caller_view_key=caller_view_key)
         main_fields_definitions = [
             {"key": "carrier_id", "input": self._get_dropdown, "options": carriers},
             {"key": "name", "input": self._get_text_input},

@@ -11,4 +11,4 @@ class UnitStrictSchema(BaseStrictSchema):
 class UnitPlainSchema(BasePlainSchema):
     name: str
     symbol: str
-    description: str
+    description: str | None
