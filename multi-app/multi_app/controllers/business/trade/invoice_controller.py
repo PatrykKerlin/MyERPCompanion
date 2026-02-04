@@ -1,14 +1,16 @@
+import asyncio
 from datetime import date, timedelta
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 import flet as ft
 
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.trade.invoice_schema import InvoicePlainSchema, InvoiceStrictSchema
-from schemas.business.trade.order_schema import OrderPlainSchema, OrderInvoiceBulkStrictSchema
+from schemas.business.trade.order_schema import OrderPlainSchema, SalesOrderStrictSchema
 from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusPlainSchema
 from schemas.business.trade.status_schema import StatusPlainSchema
+from schemas.core.param_schema import IdsPayloadSchema
 from services.business.trade import (
     AssocOrderStatusService,
     CurrencyService,
@@ -17,6 +19,7 @@ from services.business.trade import (
     OrderService,
     StatusService,
 )
+from services.base.base_service import BaseService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.trade.invoice_view import InvoiceView
@@ -47,14 +50,13 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         self.__target_rows: list[tuple[int, list[Any]]] = []
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> InvoiceView:
-        currencies = await self.__perform_get_all_currencies()
-        customers = await self.__perform_get_all_customers()
-        statuses = await self.__perform_get_all_statuses()
+        currencies, customers, statuses = await asyncio.gather(
+            self.__perform_get_all_currencies(),
+            self.__perform_get_all_customers(),
+            self.__perform_get_all_statuses(),
+        )
         self.__eligible_status_ids = {status.id for status in statuses if status.order == 4}
-        if mode == ViewMode.CREATE:
-            self.__prefetched_create_number = await self.__generate_invoice_number(date.today())
-        else:
-            self.__prefetched_create_number = None
+        self.__prefetched_create_number = None
         view = InvoiceView(
             self,
             translation,
@@ -85,6 +87,16 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         return await self.__status_service.get_all(Endpoint.STATUSES, None, None, None, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_invoices_by_issue_date(self, issue_date: date) -> list[InvoicePlainSchema]:
+        return await self._service.get_all(
+            Endpoint.INVOICES,
+            None,
+            {"issue_date": issue_date.isoformat()},
+            None,
+            self._module_id,
+        )
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_sales_orders(self, customer_id: int, currency_id: int) -> list[OrderPlainSchema]:
         response = await self.__order_service.get_page(
             Endpoint.SALES_ORDERS,
@@ -99,6 +111,31 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
     async def __perform_get_order_statuses(self, order_id: int) -> list[AssocOrderStatusPlainSchema]:
         return await self.__order_status_service.get_all(
             Endpoint.ORDER_STATUSES, None, {"order_id": order_id}, None, self._module_id
+        )
+
+    @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def __perform_create_invoice(self, payload: InvoiceStrictSchema) -> InvoicePlainSchema:
+        return await self._service.create(Endpoint.INVOICES, None, None, payload, self._module_id)
+
+    @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def __perform_update_invoice(self, invoice_id: int, payload: InvoiceStrictSchema) -> InvoicePlainSchema:
+        return await self._service.update(Endpoint.INVOICES, invoice_id, None, payload, self._module_id)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_orders_by_ids(self, order_ids: list[int]) -> list[OrderPlainSchema]:
+        if not order_ids:
+            return []
+        body_params = IdsPayloadSchema(ids=order_ids)
+        return await self.__order_service.get_bulk(Endpoint.ORDERS_GET_BULK, None, None, body_params, self._module_id)
+
+    @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def __perform_update_orders_invoice_bulk(self, payload: list[SalesOrderStrictSchema]) -> None:
+        await self.__order_service.update_bulk(
+            Endpoint.ORDER_UPDATE_BULK,
+            None,
+            None,
+            cast(list[Any], payload),
+            self._module_id,
         )
 
     def on_value_changed(self, event: ft.ControlEvent, key: str, *after_change: Callable[[], None]) -> None:
@@ -117,12 +154,13 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
     def on_orders_delete_clicked(self, order_ids: list[int]) -> None:
         if not self._view or not order_ids:
             return
-        for order_id in order_ids:
-            self.__selected_order_ids.discard(order_id)
-        self.__target_rows = self.__build_target_rows()
-        self._view.set_target_rows(self.__target_rows)
-        self._view.mark_source_orders_as_moved(list(self.__selected_order_ids))
-        self.__apply_totals_from_selection()
+        self._page.run_task(self.__handle_orders_delete, order_ids)
+
+    def on_create_mode_requested(self) -> None:
+        self._page.run_task(self.__refresh_create_defaults)
+
+    def on_read_mode_requested(self) -> None:
+        self._page.run_task(self.__reload_orders_for_selection)
 
     def get_create_defaults(self) -> dict[str, Any]:
         return self.__build_create_defaults()
@@ -179,6 +217,17 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             return None
         return int(value) if value.isdigit() else None
 
+    def __get_current_invoice_id(self) -> int | None:
+        value = self._request_data.input_values.get("id")
+        if isinstance(value, int):
+            return value
+        if not isinstance(value, str):
+            return None
+        value = value.strip()
+        if value in {"", "0"}:
+            return None
+        return int(value) if value.isdigit() else None
+
     async def __reload_orders_for_selection(self) -> None:
         if not self._view:
             return
@@ -187,33 +236,46 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         if customer_id is None or currency_id is None:
             self.__reset_orders(self._view)
             return
-        orders = await self.__load_eligible_orders(customer_id, currency_id)
-        self.__orders_by_id = {order.id: order for order in orders}
-        self.__selected_order_ids = {
-            order_id for order_id in self.__selected_order_ids if order_id in self.__orders_by_id
-        }
-        source_rows = self.__build_source_rows(orders)
+        invoice_id = self.__get_current_invoice_id()
+        source_orders, target_orders = await self.__load_orders_for_selection(customer_id, currency_id, invoice_id)
+        combined_orders = {order.id: order for order in (source_orders + target_orders)}
+        self.__orders_by_id = combined_orders
+        self.__selected_order_ids = {order.id for order in target_orders}
+        source_rows = self.__build_source_rows(source_orders)
         self._view.set_source_rows(source_rows)
         self._view.set_source_enabled(bool(source_rows))
-        self._view.set_target_enabled(bool(source_rows))
         self._view.set_target_rows(self.__build_target_rows())
+        self._view.set_target_enabled(bool(source_rows) or bool(self.__selected_order_ids))
         self._view.mark_source_orders_as_moved(list(self.__selected_order_ids))
         self.__apply_totals_from_selection()
 
-    async def __load_eligible_orders(self, customer_id: int, currency_id: int) -> list[OrderPlainSchema]:
+    async def __load_orders_for_selection(
+        self, customer_id: int, currency_id: int, invoice_id: int | None
+    ) -> tuple[list[OrderPlainSchema], list[OrderPlainSchema]]:
         orders = await self.__perform_get_sales_orders(customer_id, currency_id)
-        current_invoice_id = self._request_data.input_values.get("id")
-        eligible: list[OrderPlainSchema] = []
-        for order in orders:
-            if order.invoice_id is not None and order.invoice_id != current_invoice_id:
-                continue
-            order_statuses = await self.__perform_get_order_statuses(order.id)
+        sales_orders = [order for order in orders if order.is_sales is True]
+        target_orders = (
+            [order for order in sales_orders if invoice_id is not None and order.invoice_id == invoice_id]
+            if invoice_id is not None
+            else []
+        )
+        source_candidates = [order for order in sales_orders if order.invoice_id is None]
+        if not source_candidates:
+            return [], target_orders
+        status_tasks = {order.id: self.__perform_get_order_statuses(order.id) for order in source_candidates}
+        status_results = await asyncio.gather(*status_tasks.values())
+        order_statuses_by_id = {
+            order_id: (statuses or []) for order_id, statuses in zip(status_tasks.keys(), status_results, strict=False)
+        }
+        source_orders: list[OrderPlainSchema] = []
+        for order in source_candidates:
+            order_statuses = order_statuses_by_id.get(order.id, [])
             if not order_statuses:
                 continue
             latest_status = max(order_statuses, key=lambda status: status.created_at)
             if latest_status.status_id in self.__eligible_status_ids:
-                eligible.append(order)
-        return eligible
+                source_orders.append(order)
+        return source_orders, target_orders
 
     def __build_source_rows(self, orders: list[OrderPlainSchema]) -> list[tuple[int, list[Any]]]:
         rows: list[tuple[int, list[Any]]] = []
@@ -278,13 +340,20 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         pending_targets = self._view.get_pending_targets()
         if not pending_targets:
             return
-        for _, order_id in pending_targets:
-            self.__selected_order_ids.add(order_id)
-        self.__target_rows = self.__build_target_rows()
-        self._view.set_target_rows(self.__target_rows)
-        self._view.mark_source_orders_as_moved(list(self.__selected_order_ids))
-        self._view.set_target_enabled(bool(self.__selected_order_ids))
-        self.__apply_totals_from_selection()
+        invoice_id = self.__get_current_invoice_id()
+        if invoice_id is not None:
+            pending_order_ids = [order_id for _, order_id in pending_targets]
+            if pending_order_ids:
+                await self.__update_orders_invoice_assignment(pending_order_ids, invoice_id)
+        await self.__reload_orders_for_selection()
+
+    async def __handle_orders_delete(self, order_ids: list[int]) -> None:
+        if not self._view or not order_ids:
+            return
+        invoice_id = self.__get_current_invoice_id()
+        if invoice_id is not None:
+            await self.__update_orders_invoice_assignment(order_ids, None)
+        await self.__reload_orders_for_selection()
 
     def __reset_orders(self, view: InvoiceView) -> None:
         self.__orders_by_id.clear()
@@ -307,54 +376,99 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         sequence = await self.__get_next_invoice_sequence(issue_date)
         return self.__format_invoice_number(issue_date, sequence)
 
+    async def __update_orders_invoice_assignment(self, order_ids: list[int], invoice_id: int | None) -> None:
+        orders = await self.__perform_get_orders_by_ids(order_ids)
+        if not orders:
+            return
+        payload = [self.__build_order_update_payload(order, invoice_id) for order in orders]
+        await self.__perform_update_orders_invoice_bulk(payload)
+
+    @staticmethod
+    def __build_order_update_payload(order: OrderPlainSchema, invoice_id: int | None) -> SalesOrderStrictSchema:
+        if order.customer_id is None or order.delivery_method_id is None:
+            raise ValueError("Order is missing required sales fields for invoice assignment.")
+        return SalesOrderStrictSchema(
+            id=order.id,
+            number=order.number,
+            is_sales=True,
+            total_net=order.total_net,
+            total_vat=order.total_vat,
+            total_gross=order.total_gross,
+            total_discount=order.total_discount,
+            order_date=order.order_date,
+            tracking_number=order.tracking_number,
+            shipping_cost=order.shipping_cost,
+            notes=order.notes,
+            internal_notes=order.internal_notes,
+            customer_id=order.customer_id,
+            supplier_id=order.supplier_id,
+            delivery_method_id=order.delivery_method_id,
+            currency_id=order.currency_id,
+            invoice_id=invoice_id,
+        )
+
+    async def __refresh_create_defaults(self) -> None:
+        if not self._view or self._view.mode != ViewMode.CREATE:
+            return
+        issue_date = date.today()
+        number = await self.__generate_invoice_number(issue_date)
+        self.__prefetched_create_number = number
+        self._view.set_number(number)
+        self._view.set_issue_date(issue_date)
+        self._view.set_due_date(issue_date)
+
     async def __get_next_invoice_sequence(self, issue_date: date) -> int:
-        try:
-            response = await self._service.get_page(
-                Endpoint.INVOICES,
-                None,
-                {"issue_date": issue_date.isoformat(), "page": 1, "page_size": 1},
-                None,
-                self._module_id,
-            )
-        except Exception:
-            self._logger.exception("Failed to fetch invoice count for date.")
-            return 1
-        if not response:
-            return 1
-        return max(1, response.total + 1)
+        invoices = await self.__perform_get_invoices_by_issue_date(issue_date)
+        max_sequence = 0
+        for invoice in invoices or []:
+            if invoice.issue_date != issue_date:
+                continue
+            number = (invoice.number or "").strip()
+            parts = [part for part in number.split("/") if part]
+            if not parts:
+                continue
+            suffix = parts[-1]
+            if not suffix.isdigit():
+                continue
+            max_sequence = max(max_sequence, int(suffix))
+        return max(1, max_sequence + 1)
 
     @staticmethod
     def __format_invoice_number(issue_date: date, sequence: int) -> str:
         date_part = issue_date.strftime("%Y/%m/%d")
         return f"{date_part}/{sequence:04d}"
 
-    @BaseController.handle_api_action(ApiActionError.SAVE)
     async def _perform_create(
         self,
-        service: InvoiceService,
+        service: BaseService[InvoicePlainSchema, InvoiceStrictSchema],
         endpoint: Endpoint,
         payload: InvoiceStrictSchema,
     ) -> InvoicePlainSchema:
-        response = await super()._perform_create(service, endpoint, payload)
-        await self.__assign_invoice_to_orders(response.id)
+        try:
+            issue_date = payload.issue_date
+        except Exception:
+            issue_date = date.today()
+        if not payload.number or payload.number == self.__prefetched_create_number:
+            next_number = await self.__generate_invoice_number(issue_date)
+            payload = payload.model_copy(update={"number": next_number})
+        response = await self.__perform_create_invoice(payload)
+        if response:
+            await self.__assign_invoice_to_orders(response.id)
         return response
 
-    @BaseController.handle_api_action(ApiActionError.SAVE)
     async def _perform_update(
         self,
         id: int,
-        service: InvoiceService,
+        service: BaseService[InvoicePlainSchema, InvoiceStrictSchema],
         endpoint: Endpoint,
         payload: InvoiceStrictSchema,
     ) -> InvoicePlainSchema:
-        response = await super()._perform_update(id, service, endpoint, payload)
-        await self.__assign_invoice_to_orders(response.id)
+        response = await self.__perform_update_invoice(id, payload)
+        if response:
+            await self.__assign_invoice_to_orders(response.id)
         return response
 
     async def __assign_invoice_to_orders(self, invoice_id: int) -> None:
         if not self.__selected_order_ids:
             return
-        payload = [
-            OrderInvoiceBulkStrictSchema(id=order_id, invoice_id=invoice_id) for order_id in self.__selected_order_ids
-        ]
-        await self.__order_service.update_bulk(Endpoint.ORDER_UPDATE_BULK, None, None, payload, self._module_id)
+        await self.__update_orders_invoice_assignment(list(self.__selected_order_ids), invoice_id)

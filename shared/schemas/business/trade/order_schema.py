@@ -8,7 +8,7 @@ from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
 
 
-class OrderStrictSchema(BaseStrictSchema):
+class OrderStrictBaseSchema(BaseStrictSchema):
     number: Constraints.String_20
     is_sales: Constraints.BooleanTrue
 
@@ -25,13 +25,17 @@ class OrderStrictSchema(BaseStrictSchema):
     notes: Constraints.StringOptional_1000
     internal_notes: Constraints.StringOptional_1000
 
-    customer_id: Constraints.PositiveIntegerOptional
-    supplier_id: Constraints.PositiveIntegerOptional
     delivery_method_id: Constraints.PositiveIntegerOptional
     currency_id: Constraints.PositiveInteger
+    invoice_id: Constraints.PositiveIntegerOptional = None
+
+
+class OrderStrictSchema(OrderStrictBaseSchema):
+    customer_id: Constraints.PositiveIntegerOptional
+    supplier_id: Constraints.PositiveIntegerOptional
 
     @model_validator(mode="after")
-    def _validate_data(self) -> OrderStrictSchema:
+    def _validate_data(self) -> "OrderStrictSchema":
         if not self.customer_id and not self.supplier_id:
             raise ValueError("either customer_id or supplier_id must be provided")
 
@@ -47,58 +51,19 @@ class OrderStrictSchema(BaseStrictSchema):
         return self
 
 
-class OrderInvoiceBulkStrictSchema(BaseStrictSchema):
-    invoice_id: Constraints.PositiveIntegerOptional
-
-
-class PurchaseOrderStrictSchema(BaseStrictSchema):
-    number: Constraints.String_20
-    is_sales: Constraints.BooleanTrue
-
-    total_net: Constraints.NonNegativeNumeric_10_2
-    total_vat: Constraints.NonNegativeNumeric_10_2
-    total_gross: Constraints.NonNegativeNumeric_10_2
-    total_discount: Constraints.NonNegativeNumeric_10_2
-
-    order_date: date
-
-    tracking_number: Constraints.StringOptional_50
-    shipping_cost: Constraints.NonNegativeNumeric_10_2
-
-    notes: Constraints.StringOptional_1000
-    internal_notes: Constraints.StringOptional_1000
-
+class PurchaseOrderStrictSchema(OrderStrictBaseSchema):
     customer_id: Constraints.PositiveIntegerOptional
     supplier_id: Constraints.PositiveInteger
-    delivery_method_id: Constraints.PositiveIntegerOptional
-    currency_id: Constraints.PositiveInteger
 
 
-class SalesOrderStrictSchema(BaseStrictSchema):
-    number: Constraints.String_20
-    is_sales: Constraints.BooleanTrue
-
-    total_net: Constraints.NonNegativeNumeric_10_2
-    total_vat: Constraints.NonNegativeNumeric_10_2
-    total_gross: Constraints.NonNegativeNumeric_10_2
-    total_discount: Constraints.NonNegativeNumeric_10_2
-
-    order_date: date
-
-    tracking_number: Constraints.StringOptional_50
-    shipping_cost: Constraints.NonNegativeNumeric_10_2
-
-    notes: Constraints.StringOptional_1000
-    internal_notes: Constraints.StringOptional_1000
-
+class SalesOrderStrictSchema(OrderStrictBaseSchema):
     customer_id: Constraints.PositiveInteger
     supplier_id: Constraints.PositiveIntegerOptional
-    delivery_method_id: Constraints.PositiveInteger
-    currency_id: Constraints.PositiveInteger
 
 
 class OrderPlainSchema(BasePlainSchema):
     number: str
+    invoice_number: str | None = None
     is_sales: bool | None
 
     total_net: float

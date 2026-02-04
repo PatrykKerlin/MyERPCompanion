@@ -476,9 +476,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         total_gross = round(total_net + total_vat, 2)
         return total_net, total_vat, total_gross, total_discount
 
-    def __get_discount_percent(
-        self, item_id: int, quantity: int, base_net: float, context: DiscountContext
-    ) -> float:
+    def __get_discount_percent(self, item_id: int, quantity: int, base_net: float, context: DiscountContext) -> float:
         discount_ids = self.__get_discount_ids_for_item(item_id, quantity, base_net, context)
         if not discount_ids:
             return 0.0
@@ -534,10 +532,6 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             discount_ids.append(customer_discount_id)
 
         return discount_ids
-
-    # def __get_primary_discount_id(self, item_id: int, quantity: int, base_net: float) -> int | None:
-    #     discount_ids = self.__get_discount_ids_for_item(item_id, quantity, base_net)
-    #     return discount_ids[0] if discount_ids else None
 
     def __get_discount_payload(
         self, item_id: int, quantity: int, base_net: float, context: DiscountContext
@@ -684,7 +678,9 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
                 quantity = quantities.get(item_id, 0)
                 base_net = base_net_map.get(item_id, 0.0)
                 item_discounts[item_id] = [
-                    discount for discount in discounts if self.__discount_meets_requirements(discount, quantity, base_net)
+                    discount
+                    for discount in discounts
+                    if self.__discount_meets_requirements(discount, quantity, base_net)
                 ]
 
             selected_item_discounts: dict[int, int | None] = {}
@@ -866,9 +862,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         if reverse_rate:
             return amount / reverse_rate
         self.__notify_missing_exchange_rate()
-        raise MissingExchangeRateError(
-            f"Missing exchange rate for {source_currency_id} -> {order_currency_id}."
-        )
+        raise MissingExchangeRateError(f"Missing exchange rate for {source_currency_id} -> {order_currency_id}.")
 
     def __load_exchange_rates(self, exchange_rates: list[OrderViewExchangeRateSchema] | None) -> None:
         self.__exchange_rate_map = {}
@@ -948,7 +942,9 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
                 if target_id in self.__order_items:
                     base_quantity = self.__order_items[target_id][1]
                     total_quantity = base_quantity + quantity
-                    updates.append(self.__build_order_item_schema(order_id, item_id, total_quantity, target_id, context))
+                    updates.append(
+                        self.__build_order_item_schema(order_id, item_id, total_quantity, target_id, context)
+                    )
                 else:
                     payload.append(self.__build_order_item_schema(order_id, item_id, quantity, None, context))
             if self.__pending_category_discount_item_ids:

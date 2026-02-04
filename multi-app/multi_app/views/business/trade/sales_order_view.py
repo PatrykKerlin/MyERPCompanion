@@ -59,7 +59,6 @@ class SalesOrderView(BaseView):
         self.__selected_category_id: int | None = None
         self.__pending_customer_discount_id: int | None = None
         self.__pending_source_items: list[tuple[int, list[Any]]] = []
-        self.__pending_source_selectable_ids: set[int] | None = None
         self.__pending_target_items_raw = list(target_items)
         self.__target_item_ids: dict[int, int] = dict(target_item_ids)
         self.__target_row_values = self.__build_target_row_values(target_items, self.__target_item_ids)
@@ -103,6 +102,7 @@ class SalesOrderView(BaseView):
             {"key": "status_id", "input": self._get_dropdown, "options": statuses},
             {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
             {"key": "number", "input": self._get_text_input},
+            {"key": "invoice_number", "input": self._get_text_input},
             {"key": "order_date", "input": self._get_date_picker},
             {"key": "tracking_number", "input": self._get_text_input},
             {"key": "shipping_cost", "input": self._get_numeric_input, "is_float": True, "step": 0.01},

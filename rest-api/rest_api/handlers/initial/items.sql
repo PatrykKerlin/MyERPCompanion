@@ -43,7 +43,7 @@ SELECT
     TRUE AS is_available,
     (i % 7 = 0) AS is_fragile,
     (i % 5 = 0) AS is_package,
-    (i % 9 = 0) AS is_returnable,
+    ((i % 5 = 0) AND (i % 9 = 0)) AS is_returnable,
     CASE WHEN i % 12 = 0 THEN CURRENT_DATE + INTERVAL '365 days' ELSE NULL END AS expiration_date,
     ROUND((0.10 + (i % 10) * 0.05)::numeric, 3) AS width,
     ROUND((0.10 + (i % 8) * 0.04)::numeric, 3) AS height,

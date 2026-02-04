@@ -80,8 +80,9 @@ class InvoiceView(BaseView):
                 self._translation.get("total_gross"),
             ],
         )
-        self.__bulk_transfer.visible = mode in {ViewMode.CREATE, ViewMode.EDIT}
+        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
         self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
+        self.__set_bulk_transfer_state(mode)
         bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
 
         self._master_column.controls.extend(self._rows)
@@ -93,10 +94,14 @@ class InvoiceView(BaseView):
         if mode == ViewMode.CREATE:
             self.__create_defaults = self._controller.get_create_defaults()
             self.__apply_create_defaults()
+            self._controller.on_create_mode_requested()
+        if mode == ViewMode.READ:
+            self._controller.on_read_mode_requested()
         if mode != ViewMode.READ:
             self.__apply_editable_fields(mode)
-        self.__bulk_transfer.visible = mode in {ViewMode.CREATE, ViewMode.EDIT}
+        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
         self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
+        self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()
         if self.__bulk_transfer.page:
             self.__bulk_transfer.update()
@@ -147,9 +152,15 @@ class InvoiceView(BaseView):
         self.__bulk_transfer.mark_source_items_as_moved(ids)
 
     def set_source_enabled(self, enabled: bool) -> None:
+        if self._mode != ViewMode.READ:
+            self.__bulk_transfer.set_enabled_states(False, False, False)
+            return
         self.__bulk_transfer.set_source_enabled(enabled)
 
     def set_target_enabled(self, enabled: bool) -> None:
+        if self._mode != ViewMode.READ:
+            self.__bulk_transfer.set_enabled_states(False, False, False)
+            return
         self.__bulk_transfer.set_target_enabled(enabled)
 
     def __apply_create_defaults(self) -> None:
@@ -182,6 +193,10 @@ class InvoiceView(BaseView):
                 setattr(input_control, "disabled", False)
             if input_control:
                 input_control.update()
+
+    def __set_bulk_transfer_state(self, mode: ViewMode) -> None:
+        enabled = mode == ViewMode.READ
+        self.__bulk_transfer.set_enabled_states(enabled, enabled, enabled)
 
     def __set_total_value(self, key: str, value: float) -> None:
         if not self.__is_mounted:

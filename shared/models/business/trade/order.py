@@ -3,11 +3,13 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Index, text
-from sqlalchemy.orm import Mapped
+from sqlalchemy import Index, text, select, literal_column
+from sqlalchemy.orm import Mapped, column_property
 
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
+
+from models.business.trade.invoice import Invoice
 
 if TYPE_CHECKING:
     from models.business.logistic.delivery_method import DeliveryMethod
@@ -15,7 +17,6 @@ if TYPE_CHECKING:
     from models.business.trade.assoc_order_status import AssocOrderStatus
     from models.business.trade.currency import Currency
     from models.business.trade.customer import Customer
-    from models.business.trade.invoice import Invoice
     from models.business.trade.supplier import Supplier
 
 
@@ -84,3 +85,10 @@ class Order(BaseModel):
     @property
     def status_ids(self) -> list[int]:
         return [row.status_id for row in self.order_statuses]
+    
+    invoice_number = column_property(
+        select(Invoice.number)
+        .where(Invoice.id == literal_column("orders.invoice_id"))
+        .where(Invoice.is_active.is_(True))
+        .scalar_subquery()
+    )
