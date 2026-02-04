@@ -6,7 +6,7 @@ import flet as ft
 
 from utils.enums import View, ViewMode
 
-from views.base.base_view import BaseView
+from views.base.base_desktop_view import BaseDesktopView
 from utils.translation import Translation
 from views.controls.data_table_control import DataTable
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from controllers.business.logistic.bin_controller import BinController
 
 
-class BinView(BaseView):
+class BinView(BaseDesktopView):
     def __init__(
         self,
         controller: BinController,

@@ -6,14 +6,14 @@ import flet as ft
 
 from utils.enums import View, ViewMode
 
-from views.base.base_view import BaseView
+from views.base.base_desktop_view import BaseDesktopView
 from utils.translation import Translation
 
 if TYPE_CHECKING:
     from controllers.business.trade.exchange_rate_controller import ExchangeRateController
 
 
-class ExchangeRateView(BaseView):
+class ExchangeRateView(BaseDesktopView):
     def __init__(
         self,
         controller: ExchangeRateController,

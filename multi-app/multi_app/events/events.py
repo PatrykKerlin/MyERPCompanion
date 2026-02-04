@@ -51,6 +51,11 @@ class AuthDialogRequested(BaseEvent):
 
 
 @dataclass(frozen=True)
+class AuthViewReady(BaseEvent):
+    component: Any | None
+
+
+@dataclass(frozen=True)
 class UserAuthenticated(BaseEvent):
     pass
 

@@ -6,7 +6,8 @@ from controllers.base.base_component_controller import BaseComponentController
 from controllers.base.base_controller import BaseController
 from services.core.auth_service import AuthService
 from views.components.auth_dialog_component import AuthDialogComponent
-from events.events import AuthDialogRequested
+from views.web.auth_view import AuthView
+from events.events import AuthDialogRequested, AuthViewReady
 from utils.enums import ApiActionError, Endpoint
 from events.events import UserAuthenticated
 
@@ -25,6 +26,10 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
 
     async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
         translation_state = self._state_store.app_state.translation
+        if self._settings.CLIENT == "web":
+            self._component = AuthView(controller=self, translation=translation_state.items)
+            await self._event_bus.publish(AuthViewReady(component=self._component))
+            return
         self._component = AuthDialogComponent(controller=self, translation=translation_state.items)
         self._queue_dialog(self._component)
 
@@ -32,7 +37,10 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
         self._page.run_task(self._page.window.destroy)
 
     def on_login_click(self, username: str, password: str) -> None:
-        self._page.run_task(self.__handle_login, "employee001", "test1234")
+        if self._settings.CLIENT == "desktop":
+            self._page.run_task(self.__handle_login, "employee001", "test1234")
+        else:
+            self._page.run_task(self.__handle_login, "customer001", "test1234")
 
     async def __handle_login(self, username: str, password: str) -> None:
         tokens = await self.__perform_fetch_tokens(username, password)
@@ -53,8 +61,10 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
                 user_modules.append(module)
         self._state_store.update(modules={"items": user_modules})
         self._state_store.update(user={"current": user})
-        if self._component:
+        if self._component and self._settings.CLIENT != "web":
             self._page.pop_dialog()
+        if self._settings.CLIENT == "web":
+            await self._event_bus.publish(AuthViewReady(component=None))
         await self._event_bus.publish(UserAuthenticated())
 
     @BaseController.handle_api_action(ApiActionError.INVALID_CREDENTIALS)

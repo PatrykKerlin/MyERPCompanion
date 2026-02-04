@@ -32,8 +32,7 @@ class App:
             format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
         )
 
-        self.__settings = Settings()  # type: ignore
-        self.__settings.CLIENT = "web"
+        self.__settings = Settings(CLIENT="web")  # type: ignore
         self.__logger = logging.getLogger("app")
         self.__event_bus = EventBus(self.__logger)
 
@@ -72,7 +71,6 @@ class App:
             core.GroupController(self.__context),
             core.LanguageController(self.__context),
             core.ModuleController(self.__context),
-            core.ViewController(self.__context),
             core.UserController(self.__context),
             components.AuthDialogController(self.__context),
             components.MenuBarController(self.__context),
@@ -129,9 +127,11 @@ class App:
 
 def main() -> None:
     app = App()
+    os.environ.setdefault("FLET_FORCE_WEB_SERVER", "1")
     host = os.getenv("FLET_SERVER_HOST", "0.0.0.0")
     port = int(os.getenv("FLET_SERVER_PORT", "8550"))
-    ft.app(target=app.run, view=ft.AppView.WEB_BROWSER, host=host, port=port)
+    view = getattr(ft.AppView, "WEB_SERVER", ft.AppView.WEB_BROWSER)
+    ft.run(app.run, view=view, host=host, port=port)
 
 
 if __name__ == "__main__":

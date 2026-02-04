@@ -21,6 +21,7 @@ from events.events import (
     TranslationReady,
     TranslationRequested,
     AuthDialogRequested,
+    AuthViewReady,
     UserAuthenticated,
     SideMenuRequested,
     FooterRequested,
@@ -33,7 +34,8 @@ from services.core.app_service import AppService
 from utils.enums import ApiActionError
 
 from states.states import ViewState
-from views.core.app_view import AppView
+from views.core.app_view import AppView as DesktopAppView
+from views.web.app_view import AppView as WebAppView
 
 if TYPE_CHECKING:
     from config.context import Context
@@ -44,7 +46,10 @@ class AppController(BaseController):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self.__service = AppService(self._settings, self._logger, self._tokens_accessor)
-        self.__view = AppView(self._state_store.app_state.translation.items, self._settings.THEME)
+        if self._settings.CLIENT == "web":
+            self.__view = WebAppView(self._state_store.app_state.translation.items, self._settings.THEME)
+        else:
+            self.__view = DesktopAppView(self._state_store.app_state.translation.items, self._settings.THEME)
 
         self._subscribe_event_handlers(
             {
@@ -53,6 +58,7 @@ class AppController(BaseController):
                 TranslationFailed: self.__api_not_responding_handler,
                 UserAuthenticated: self.__user_authenticated_handler,
                 ApiStatusRequested: self.__api_status_handler,
+                AuthViewReady: self.__auth_view_ready_handler,
                 MenuBarReady: self.__menu_bar_ready_handler,
                 ToolbarReady: self.__toolbar_ready_handler,
                 SideMenuReady: self.__side_menu_ready_handler,
@@ -99,7 +105,8 @@ class AppController(BaseController):
     async def __translation_ready_handler(self, event: TranslationReady) -> None:
         self._close_loading_dialog()
         if event.user_authenticated:
-            await self.__request_shell()
+            if self._settings.CLIENT != "web":
+                await self.__request_shell()
         else:
             await self._event_bus.publish(AuthDialogRequested())
 
@@ -111,41 +118,66 @@ class AppController(BaseController):
         user = self._state_store.app_state.user.current
         if not user:
             return
+        self.__view.set_auth_view(None)
+        if isinstance(self.__view, WebAppView):
+            self.__view.set_username(user.username)
+        self._page.update()
         translation_state = self._state_store.app_state.translation
         if user.language.symbol == translation_state.language:
-            await self.__request_shell()
+            if self._settings.CLIENT != "web":
+                await self.__request_shell()
         else:
             await self._open_loading_dialog()
             await self._event_bus.publish(TranslationRequested(user.language.symbol, True))
 
+    async def __auth_view_ready_handler(self, event: AuthViewReady) -> None:
+        self.__view.set_auth_view(event.component)
+        self._page.update()
+
     async def __menu_bar_ready_handler(self, event: MenuBarReady) -> None:
+        if not isinstance(self.__view, DesktopAppView):
+            return
         self.__view.set_menu_bar(event.component)
         self._state_store.update(shell={"is_menu_bar_ready": True})
 
     async def __toolbar_ready_handler(self, event: ToolbarReady) -> None:
+        if not isinstance(self.__view, DesktopAppView):
+            return
         self.__view.set_toolbar(event.component)
         self._state_store.update(shell={"is_toolbar_ready": True})
 
     async def __side_menu_ready_handler(self, event: SideMenuReady) -> None:
+        if not isinstance(self.__view, DesktopAppView):
+            return
         self.__view.set_side_menu(event.component)
         self._state_store.update(shell={"is_side_menu_ready": True})
 
     async def __footer_ready_handler(self, event: FooterReady) -> None:
+        if not isinstance(self.__view, DesktopAppView):
+            return
         self.__view.set_footer(event.component)
         self._state_store.update(shell={"is_footer_ready": True})
 
     async def __tabs_bar_ready_handler(self, event: TabsBarReady) -> None:
+        if not isinstance(self.__view, DesktopAppView):
+            return
         self.__view.set_tabs_bar(event.component)
         self._state_store.update(shell={"is_tabs_bar_ready": True})
 
     async def __tab_closed_handler(self, event: TabClosed) -> None:
+        if not isinstance(self.__view, DesktopAppView):
+            return
         self.__view.remove_stack_item(event.view)
 
     async def __toolbar_toggle_handler(self, _: ToolbarToggleRequested) -> None:
+        if not isinstance(self.__view, DesktopAppView):
+            return
         self.__view.toggle_toolbar_visible()
         self._page.update()
 
     async def __tabs_bar_toggle_handler(self, _: TabsBarToggleRequested) -> None:
+        if not isinstance(self.__view, DesktopAppView):
+            return
         self.__view.toggle_tabs_bar_visible()
         self._page.update()
 

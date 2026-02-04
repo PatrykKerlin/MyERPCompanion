@@ -6,7 +6,7 @@ import flet as ft
 
 from utils.enums import View, ViewMode
 
-from views.base.base_view import BaseView
+from views.base.base_desktop_view import BaseDesktopView
 from views.controls.data_table_control import DataTable
 from views.mixins.user_link_view_mixin import UserLinkViewMixin
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from utils.translation import Translation
 
 
-class EmployeeView(BaseView, UserLinkViewMixin):
+class EmployeeView(BaseDesktopView, UserLinkViewMixin):
     def __init__(
         self,
         controller: EmployeeController,

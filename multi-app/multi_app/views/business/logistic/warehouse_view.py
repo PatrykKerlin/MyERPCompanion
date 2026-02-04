@@ -6,14 +6,14 @@ import flet as ft
 
 from utils.enums import View, ViewMode
 
-from views.base.base_view import BaseView
+from views.base.base_desktop_view import BaseDesktopView
 from utils.translation import Translation
 
 if TYPE_CHECKING:
     from controllers.business.logistic.warehouse_controller import WarehouseController
 
 
-class WarehouseView(BaseView):
+class WarehouseView(BaseDesktopView):
     def __init__(
         self,
         controller: WarehouseController,

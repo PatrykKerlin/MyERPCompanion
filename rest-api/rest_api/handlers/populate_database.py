@@ -71,8 +71,6 @@ class PopulateDatabase:
             "departments",
             "positions",
             "employees",
-            "users",
-            "assoc_user_groups",
             "warehouses",
             "bins",
             "units",
@@ -92,6 +90,8 @@ class PopulateDatabase:
             "order_items",
             "invoices",
             "order_statuses",
+            "users",
+            "assoc_user_groups",
         ]
         for file_name in sql_files:
             file_path = self.__base_path / f"{file_name}.sql"

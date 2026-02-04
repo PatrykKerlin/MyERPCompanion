@@ -7,7 +7,7 @@ import flet as ft
 from controllers.base.base_controller import BaseController
 from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_view import BaseView
+from views.base.base_desktop_view import BaseDesktopView
 from views.mixins.group_bulk_transfer_mixin import GroupBulkTransferMixin
 from views.controls.bulk_transfer_control import BulkTransfer
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from controllers.core.module_controller import ModuleController
 
 
-class ModuleView(BaseView, GroupBulkTransferMixin):
+class ModuleView(BaseDesktopView, GroupBulkTransferMixin):
     def __init__(
         self,
         controller: ModuleController,

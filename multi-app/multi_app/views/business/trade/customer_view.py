@@ -6,7 +6,7 @@ import flet as ft
 
 from utils.enums import View, ViewMode
 
-from views.base.base_view import BaseView
+from views.base.base_desktop_view import BaseDesktopView
 from views.mixins.user_link_view_mixin import UserLinkViewMixin
 from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin
 from utils.translation import Translation
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from controllers.business.trade.customer_controller import CustomerController
 
 
-class CustomerView(BaseView, DiscountBulkTransferMixin, UserLinkViewMixin):
+class CustomerView(BaseDesktopView, DiscountBulkTransferMixin, UserLinkViewMixin):
     def __init__(
         self,
         controller: CustomerController,

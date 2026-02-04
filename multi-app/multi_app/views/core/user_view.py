@@ -6,14 +6,14 @@ import flet as ft
 
 from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_view import BaseView
+from views.base.base_desktop_view import BaseDesktopView
 from views.mixins.group_bulk_transfer_mixin import GroupBulkTransferMixin
 
 if TYPE_CHECKING:
     from controllers.core.user_controller import UserController
 
 
-class UserView(BaseView, GroupBulkTransferMixin):
+class UserView(BaseDesktopView, GroupBulkTransferMixin):
     def __init__(
         self,
         controller: UserController,

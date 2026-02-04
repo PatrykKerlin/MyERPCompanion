@@ -6,7 +6,7 @@ import flet as ft
 
 from utils.enums import View, ViewMode
 
-from views.base.base_view import BaseView
+from views.base.base_desktop_view import BaseDesktopView
 from utils.translation import Translation
 from views.controls.bulk_transfer_control import BulkTransfer
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from controllers.business.logistic.bin_transfer_controller import BinTransferController
 
 
-class BinTransferView(BaseView):
+class BinTransferView(BaseDesktopView):
     def __init__(
         self,
         controller: BinTransferController,

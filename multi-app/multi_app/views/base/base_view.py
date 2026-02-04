@@ -18,13 +18,12 @@ from services.base.base_service import BaseService
 if TYPE_CHECKING:
     from controllers.base.base_view_controller import BaseViewController
 
-
 TController = TypeVar(
     "TController", bound="BaseViewController[BaseService, BaseView, BasePlainSchema, BaseStrictSchema]"
 )
 
 
-class BaseView(BaseComponent, Generic[TController], ft.Card):
+class BaseView(BaseComponent, Generic[TController], ft.Container):
     def __init__(
         self,
         controller: TController,
@@ -50,42 +49,24 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self._spacing_responsive_row = [
             ft.ResponsiveRow(controls=[ft.Container(content=ft.TextField(disabled=True), opacity=0.0, col={"sm": 1})])
         ]
-        self._cancel_button = ft.Button(
-            content=self._translation.get("cancel"),
-            on_click=lambda _: self._controller.on_cancel_clicked(),
-        )
-        self._save_button = ft.Button(
-            content=self._translation.get("save"),
-            on_click=lambda _: self._controller.on_save_clicked(),
-            disabled=False,
-        )
-        self._search_button = ft.Button(
-            content=self._translation.get("search"),
-            on_click=lambda _: self._controller.on_search_clicked(),
-        )
         self._columns_row = ft.Row(
             alignment=ft.MainAxisAlignment.START,
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
-        self._buttons_row = ft.Row(
-            controls=[self._search_button, self._cancel_button, self._save_button],
-            alignment=ft.MainAxisAlignment.END,
-            vertical_alignment=ft.CrossAxisAlignment.START,
-        )
-        self._rows = [self._columns_row, self._spacing_row, self._buttons_row]
         self._caller_view_key = caller_view_key
         self.__scrollable_wrapper = ft.Column(
             controls=[self._master_column],
             expand=True,
             scroll=ft.ScrollMode.AUTO,
         )
+        self._base_content = self.__scrollable_wrapper
         self.__base_label_size = base_label_size
         self.__base_input_size = base_input_size
         self.__base_columns_qty = base_columns_qty
         self.__search_results: list[dict[str, Any]] | None = None
         self.__dropdown_options: dict[str, list[ft.DropdownOption]] = {}
 
-        ft.Card.__init__(self, content=self.__scrollable_wrapper, expand=True)
+        ft.Container.__init__(self, content=self.__scrollable_wrapper, expand=True)
 
     @property
     def view_key(self) -> View:
@@ -106,10 +87,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
     @property
     def caller_view_key(self) -> View | None:
         return self._caller_view_key
-
-    @property
-    def buttons_row(self) -> ft.Row:
-        return self._buttons_row
 
     @property
     def search_results(self) -> list[dict[str, Any]] | None:
@@ -138,7 +115,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 self.__set_create_mode()
             case ViewMode.EDIT:
                 self.__set_edit_mode()
-        self.__set_buttons()
 
     def set_input_state(self, input: ft.Control, enable: bool) -> None:
         if hasattr(input, "disabled"):
@@ -680,25 +656,3 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
     def __restore_dropdown_options(self, input: ft.Dropdown, key: str) -> None:
         if self.__dropdown_options.get(key) is not None:
             input.options = self.__dropdown_options[key]
-
-    def __set_buttons(self) -> None:
-        if self._mode == ViewMode.STATIC:
-            return
-        if self._mode in [ViewMode.EDIT, ViewMode.CREATE]:
-            self._cancel_button.visible = True
-            self._save_button.visible = True
-            self._search_button.visible = False
-        elif self._mode == ViewMode.SEARCH:
-            self._cancel_button.visible = False
-            self._save_button.visible = False
-            self._search_button.visible = True
-        elif self._mode == ViewMode.READ:
-            self._cancel_button.visible = False
-            self._save_button.visible = False
-            self._search_button.visible = False
-        if self._cancel_button.page:
-            self._cancel_button.update()
-        if self._save_button.page:
-            self._save_button.update()
-        if self._search_button.page:
-            self._search_button.update()

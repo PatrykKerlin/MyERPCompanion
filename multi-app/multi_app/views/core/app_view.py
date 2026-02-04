@@ -21,7 +21,8 @@ class AppView:
         self.__footer_container = ft.Container(visible=False)
         self.__tabs_bar_container = ft.Container(visible=False)
         self.__views_stack = ft.Stack(expand=True, fit=ft.StackFit.EXPAND)
-        self.__root = ft.Column(
+        self.__auth_container = ft.Container(visible=False, expand=True)
+        self.__content = ft.Column(
             controls=[
                 self.__menu_bar_container,
                 # horizontal_divider,
@@ -48,8 +49,12 @@ class AppView:
             horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
             expand=True,
         )
+        self.__root = ft.Stack(
+            controls=[self.__content, self.__auth_container],
+            expand=True,
+        )
 
-    def build(self) -> ft.Column:
+    def build(self) -> ft.Control:
         page = ft.context.page
         self._apply_page_settings(page)
         return self.__root
@@ -76,6 +81,10 @@ class AppView:
     def set_tabs_bar(self, component: TabsBarComponent) -> None:
         self.__tabs_bar_container.content = component
         self.__tabs_bar_container.visible = True
+
+    def set_auth_view(self, component: ft.Control | None) -> None:
+        self.__auth_container.content = component
+        self.__auth_container.visible = component is not None
 
     def toggle_toolbar_visible(self) -> None:
         self.__toolbar_container.visible = not self.__toolbar_container.visible

@@ -6,14 +6,14 @@ import flet as ft
 
 from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_view import BaseView
+from views.base.base_desktop_view import BaseDesktopView
 from views.controls.bulk_transfer_control import BulkTransfer
 
 if TYPE_CHECKING:
     from controllers.business.trade.invoice_controller import InvoiceController
 
 
-class InvoiceView(BaseView):
+class InvoiceView(BaseDesktopView):
     def __init__(
         self,
         controller: InvoiceController,

@@ -6,13 +6,13 @@ import flet as ft
 
 from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_view import BaseView
+from views.base.base_desktop_view import BaseDesktopView
 
 if TYPE_CHECKING:
     from controllers.core.language_controller import LanguageController
 
 
-class LanguageView(BaseView):
+class LanguageView(BaseDesktopView):
     def __init__(
         self,
         controller: LanguageController,

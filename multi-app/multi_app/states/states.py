@@ -60,4 +60,4 @@ class AppState(BaseState):
     view: ViewState
 
 
-ViewState.model_rebuild(force=True, _types_namespace={"Control": ft.Control})
+ViewState.model_rebuild(force=True, _types_namespace={"Control": ft.Control, "Theme": ft.Theme})

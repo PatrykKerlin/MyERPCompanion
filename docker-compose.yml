@@ -83,7 +83,9 @@ services:
       - DISPLAY=${DISPLAY}
       - API_URL=http://rest-api:8000/api
     command:
-      sh -c "flet run main_desktop.py"
+      sh -c "flet run main_desktop.py & FLET_FORCE_WEB_SERVER=true FLET_SERVER_PORT=8550 FLET_SERVER_IP=0.0.0.0 /project/bin/python /multi_app/main_web.py"
+    ports:
+      - "8550:8550"
 
 volumes:
   postgres-data:

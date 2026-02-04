@@ -4,6 +4,11 @@ class Translation:
             "my_erp_companion": "MyERPCompanion",
             "api_not_responding": "API is not responding.",
             "loading": "Loading...",
+            "customer_portal_title": "Customer portal – {app_name}",
+            "customer_portal_subtitle": "Sign in to place orders.",
+            "create_order": "New order",
+            "browse_orders": "Orders",
+            "username": "User",
         }
         if items:
             self.__items.update(items)

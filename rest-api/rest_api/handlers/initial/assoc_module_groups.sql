@@ -1,6 +1,12 @@
 INSERT INTO module_groups (group_id, module_id, can_read, can_modify, is_active, created_at, created_by)
 VALUES
 (1, 1, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(2, 1, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(3, 1, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(4, 1, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(5, 1, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(6, 1, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(7, 1, TRUE, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (1, 2, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (1, 3, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (1, 4, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
@@ -9,13 +15,8 @@ VALUES
 (1, 7, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (1, 8, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (1, 9, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-(2, 1, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (2, 5, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-(3, 1, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (3, 6, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-(4, 1, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (4, 7, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-(5, 1, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (5, 8, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-(6, 1, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (6, 9, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id);

@@ -34,6 +34,7 @@ class ApiActionError(StrEnum):
 
 
 class View(StrEnum):
+    LOGIN = "login"
     SIDE_MENU = "side_menu"
     CURRENT_USER = "current_user"
     USERS = "users"
