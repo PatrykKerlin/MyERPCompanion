@@ -329,8 +329,8 @@ class StockReceivingController(
             default_value=max_quantity,
             min_value=1,
         )
-        self._page.show_dialog(dialog)
         try:
+            await self._show_dialog_serialized(dialog, wait_for_future=dialog.future)
             quantity = await dialog.future
         finally:
             self._page.pop_dialog()

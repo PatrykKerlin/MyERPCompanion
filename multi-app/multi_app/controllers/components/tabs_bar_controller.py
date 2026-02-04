@@ -185,7 +185,7 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
                 ft.TextButton(translation.get("ok"), on_click=confirm_dialog),
             ],
         )
-        self._page.show_dialog(dialog)
+        self._queue_dialog(dialog)
 
     async def __close_all_tabs(self) -> None:
         if not self.__active_tabs:

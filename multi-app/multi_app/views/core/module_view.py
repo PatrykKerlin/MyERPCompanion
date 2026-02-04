@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
 
+from controllers.base.base_controller import BaseController
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -133,7 +134,7 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
                 ft.TextButton(self._translation.get("ok"), on_click=on_confirm),
             ],
         )
-        self.page.show_dialog(dialog)
+        BaseController.queue_dialog(self.page, dialog)
 
     def get_pending_group_targets(self) -> list[tuple[int, int, bool, bool]]:
         pending = self._group_bulk_transfer.get_pending_targets()

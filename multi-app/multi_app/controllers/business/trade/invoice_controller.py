@@ -48,6 +48,7 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         self.__orders_by_id: dict[int, OrderPlainSchema] = {}
         self.__selected_order_ids: set[int] = set()
         self.__target_rows: list[tuple[int, list[Any]]] = []
+        self.__pending_order_ids: set[int] = set()
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> InvoiceView:
         currencies, customers, statuses = await asyncio.gather(
@@ -237,10 +238,16 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             self.__reset_orders(self._view)
             return
         invoice_id = self.__get_current_invoice_id()
-        source_orders, target_orders = await self.__load_orders_for_selection(customer_id, currency_id, invoice_id)
+        pending_ids = self.__pending_order_ids if self._view.mode == ViewMode.CREATE else set()
+        source_orders, target_orders = await self.__load_orders_for_selection(
+            customer_id, currency_id, invoice_id, pending_ids
+        )
         combined_orders = {order.id: order for order in (source_orders + target_orders)}
         self.__orders_by_id = combined_orders
-        self.__selected_order_ids = {order.id for order in target_orders}
+        if self._view.mode == ViewMode.CREATE:
+            self.__selected_order_ids = set(self.__pending_order_ids)
+        else:
+            self.__selected_order_ids = {order.id for order in target_orders}
         source_rows = self.__build_source_rows(source_orders)
         self._view.set_source_rows(source_rows)
         self._view.set_source_enabled(bool(source_rows))
@@ -250,16 +257,21 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         self.__apply_totals_from_selection()
 
     async def __load_orders_for_selection(
-        self, customer_id: int, currency_id: int, invoice_id: int | None
+        self, customer_id: int, currency_id: int, invoice_id: int | None, pending_ids: set[int]
     ) -> tuple[list[OrderPlainSchema], list[OrderPlainSchema]]:
         orders = await self.__perform_get_sales_orders(customer_id, currency_id)
         sales_orders = [order for order in orders if order.is_sales is True]
-        target_orders = (
-            [order for order in sales_orders if invoice_id is not None and order.invoice_id == invoice_id]
-            if invoice_id is not None
-            else []
-        )
-        source_candidates = [order for order in sales_orders if order.invoice_id is None]
+        if pending_ids:
+            target_orders = [order for order in sales_orders if order.id in pending_ids]
+        else:
+            target_orders = (
+                [order for order in sales_orders if invoice_id is not None and order.invoice_id == invoice_id]
+                if invoice_id is not None
+                else []
+            )
+        source_candidates = [
+            order for order in sales_orders if order.invoice_id is None and order.id not in pending_ids
+        ]
         if not source_candidates:
             return [], target_orders
         status_tasks = {order.id: self.__perform_get_order_statuses(order.id) for order in source_candidates}
@@ -341,6 +353,10 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         if not pending_targets:
             return
         invoice_id = self.__get_current_invoice_id()
+        if self._view.mode == ViewMode.CREATE or invoice_id is None:
+            self.__pending_order_ids.update(order_id for _, order_id in pending_targets)
+            await self.__reload_orders_for_selection()
+            return
         if invoice_id is not None:
             pending_order_ids = [order_id for _, order_id in pending_targets]
             if pending_order_ids:
@@ -349,6 +365,11 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
 
     async def __handle_orders_delete(self, order_ids: list[int]) -> None:
         if not self._view or not order_ids:
+            return
+        if self._view.mode == ViewMode.CREATE or self.__get_current_invoice_id() is None:
+            for order_id in order_ids:
+                self.__pending_order_ids.discard(order_id)
+            await self.__reload_orders_for_selection()
             return
         invoice_id = self.__get_current_invoice_id()
         if invoice_id is not None:
@@ -359,6 +380,7 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         self.__orders_by_id.clear()
         self.__selected_order_ids.clear()
         self.__target_rows = []
+        self.__pending_order_ids.clear()
         view.set_source_rows([])
         view.set_target_rows([])
         view.set_source_enabled(False)
@@ -472,3 +494,4 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         if not self.__selected_order_ids:
             return
         await self.__update_orders_invoice_assignment(list(self.__selected_order_ids), invoice_id)
+        self.__pending_order_ids.clear()

@@ -79,7 +79,7 @@ class AppController(BaseController):
         self._page.update()
 
     async def __app_started_handler(self, _: AppStarted) -> None:
-        self._open_loading_dialog()
+        await self._open_loading_dialog()
         ok = await self.__perform_api_health_check()
         if ok:
             initial_language = self._settings.LANGUAGE
@@ -115,7 +115,7 @@ class AppController(BaseController):
         if user.language.symbol == translation_state.language:
             await self.__request_shell()
         else:
-            self._open_loading_dialog()
+            await self._open_loading_dialog()
             await self._event_bus.publish(TranslationRequested(user.language.symbol, True))
 
     async def __menu_bar_ready_handler(self, event: MenuBarReady) -> None:

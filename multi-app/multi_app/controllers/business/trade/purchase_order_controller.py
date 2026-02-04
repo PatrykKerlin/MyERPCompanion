@@ -342,8 +342,8 @@ class PurchaseOrderController(
     async def __show_quantity_dialog(self) -> int | None:
         translation = self._state_store.app_state.translation.items
         dialog = QuantityDialogComponent(translation, 1000000, default_value=1, min_value=1)
-        self._page.show_dialog(dialog)
         try:
+            await self._show_dialog_serialized(dialog, wait_for_future=dialog.future)
             return await dialog.future
         finally:
             self._page.pop_dialog()

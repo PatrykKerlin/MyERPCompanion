@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
 
+from controllers.base.base_controller import BaseController
 from utils.enums import View, ViewMode
 
 from views.base.base_view import BaseView
@@ -269,7 +270,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         self.__image_order_field.error = None
         self.__image_primary_checkbox.value = image["is_primary"]
         if self.page:
-            self.page.show_dialog(self.__image_edit_dialog)
+            BaseController.queue_dialog(self.page, self.__image_edit_dialog)
 
     def __on_image_edit_cancelled(self, _: ft.Event[ft.TextButton]) -> None:
         self.page.pop_dialog()

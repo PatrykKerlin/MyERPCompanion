@@ -562,8 +562,8 @@ class OrderPickingController(
             default_quantity,
             max_quantity,
         )
-        self._page.show_dialog(dialog)
         try:
+            await self._show_dialog_serialized(dialog, wait_for_future=dialog.future)
             result = await dialog.future
         finally:
             self._page.pop_dialog()
@@ -657,8 +657,8 @@ class OrderPickingController(
             default_quantity,
             max_quantity,
         )
-        self._page.show_dialog(dialog)
         try:
+            await self._show_dialog_serialized(dialog, wait_for_future=dialog.future)
             result = await dialog.future
         finally:
             self._page.pop_dialog()

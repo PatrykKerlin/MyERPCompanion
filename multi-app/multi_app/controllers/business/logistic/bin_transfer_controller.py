@@ -235,8 +235,8 @@ class BinTransferController(
     async def __show_quantity_dialog(self, max_quantity: int) -> int | None:
         translation = self._state_store.app_state.translation.items
         dialog = QuantityDialogComponent(translation, max_quantity, default_value=max_quantity, min_value=1)
-        self._page.show_dialog(dialog)
         try:
+            await self._show_dialog_serialized(dialog, wait_for_future=dialog.future)
             return await dialog.future
         finally:
             self._page.pop_dialog()
@@ -281,7 +281,7 @@ class BinTransferController(
     async def __validate_enable_and_load_source(self, location: str) -> None:
         if not self._view:
             return
-        self._open_loading_dialog()
+        await self._open_loading_dialog()
         bin_schema = await self.__perform_get_single_bin(location)
         if not bin_schema:
             self._close_loading_dialog()
@@ -306,7 +306,7 @@ class BinTransferController(
     async def __validate_enable_and_load_target(self, location: str) -> None:
         if not self._view:
             return
-        self._open_loading_dialog()
+        await self._open_loading_dialog()
         bin_schema = await self.__perform_get_single_bin(location)
         if not bin_schema:
             self._close_loading_dialog()

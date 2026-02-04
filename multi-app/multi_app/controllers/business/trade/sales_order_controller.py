@@ -920,8 +920,8 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             return None
         translation = self._state_store.app_state.translation.items
         dialog = QuantityDialogComponent(translation, max_value, default_value=moq, min_value=moq, step=moq)
-        self._page.show_dialog(dialog)
         try:
+            await self._show_dialog_serialized(dialog, wait_for_future=dialog.future)
             return await dialog.future
         finally:
             self._page.pop_dialog()

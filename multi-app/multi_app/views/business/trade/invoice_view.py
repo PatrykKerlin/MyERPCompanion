@@ -80,7 +80,7 @@ class InvoiceView(BaseView):
                 self._translation.get("total_gross"),
             ],
         )
-        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT, ViewMode.CREATE}
         self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
@@ -99,7 +99,7 @@ class InvoiceView(BaseView):
             self._controller.on_read_mode_requested()
         if mode != ViewMode.READ:
             self.__apply_editable_fields(mode)
-        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT, ViewMode.CREATE}
         self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()
@@ -152,13 +152,13 @@ class InvoiceView(BaseView):
         self.__bulk_transfer.mark_source_items_as_moved(ids)
 
     def set_source_enabled(self, enabled: bool) -> None:
-        if self._mode != ViewMode.READ:
+        if self._mode != ViewMode.CREATE:
             self.__bulk_transfer.set_enabled_states(False, False, False)
             return
         self.__bulk_transfer.set_source_enabled(enabled)
 
     def set_target_enabled(self, enabled: bool) -> None:
-        if self._mode != ViewMode.READ:
+        if self._mode != ViewMode.CREATE:
             self.__bulk_transfer.set_enabled_states(False, False, False)
             return
         self.__bulk_transfer.set_target_enabled(enabled)
@@ -195,7 +195,7 @@ class InvoiceView(BaseView):
                 input_control.update()
 
     def __set_bulk_transfer_state(self, mode: ViewMode) -> None:
-        enabled = mode == ViewMode.READ
+        enabled = mode == ViewMode.CREATE
         self.__bulk_transfer.set_enabled_states(enabled, enabled, enabled)
 
     def __set_total_value(self, key: str, value: float) -> None:

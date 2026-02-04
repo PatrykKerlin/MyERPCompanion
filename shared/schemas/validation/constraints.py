@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import BeforeValidator, EmailStr, Field, HttpUrl
+from pydantic import BeforeValidator, EmailStr, Field, HttpUrl, PlainSerializer
 
 
 class Constraints:
@@ -62,4 +62,8 @@ class Constraints:
     TaxIdOptional = Annotated[str | None, Field(min_length=10, max_length=10, pattern=__digits_only_regex)]
     Theme = Literal["system", "dark", "light"]
     Username = Annotated[str, Field(min_length=5, max_length=20)]
-    WebsiteOptional = Annotated[HttpUrl | None, Field(max_length=50)]
+    WebsiteOptional = Annotated[
+        HttpUrl | None,
+        PlainSerializer(lambda value: str(value) if value is not None else None, return_type=str | None, when_used="always"),
+        Field(max_length=50),
+    ]

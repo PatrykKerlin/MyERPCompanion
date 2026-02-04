@@ -26,7 +26,7 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
     async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
         translation_state = self._state_store.app_state.translation
         self._component = AuthDialogComponent(controller=self, translation=translation_state.items)
-        self._page.show_dialog(self._component)
+        self._queue_dialog(self._component)
 
     def on_cancel_click(self) -> None:
         self._page.run_task(self._page.window.destroy)

@@ -1,6 +1,8 @@
 import flet as ft
 from typing import Callable, cast, Any
 
+from controllers.base.base_controller import BaseController
+
 
 class BulkTransfer(ft.Container):
     def __init__(
@@ -504,7 +506,7 @@ class BulkTransfer(ft.Container):
                 ft.TextButton("OK", on_click=on_confirm),
             ],
         )
-        page.show_dialog(dialog)
+        BaseController.queue_dialog(page, dialog)
 
     def __handle_save_clicked(self, event: ft.Event[ft.IconButton]) -> None:
         self.__on_save_clicked(event)

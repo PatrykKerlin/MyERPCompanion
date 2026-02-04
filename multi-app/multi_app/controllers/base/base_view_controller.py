@@ -266,7 +266,7 @@ class BaseViewController(
     async def __view_requested_handler(self, event: ViewRequested) -> None:
         if event.view_key != self._view_key:
             return
-        self._open_loading_dialog()
+        await self._open_loading_dialog()
         translation = self._state_store.app_state.translation.items
         self._module_id = event.module_id
         data = event.data
@@ -328,7 +328,7 @@ class BaseViewController(
             message_key="record_save_success",
             on_ok_clicked=on_ok,
         )
-        self._page.show_dialog(message_dialog)
+        self._queue_dialog(message_dialog)
 
     async def __record_delete_requested_handler(self, event: RecordDeleteRequested) -> None:
         if event.view_key != self._view_key:
