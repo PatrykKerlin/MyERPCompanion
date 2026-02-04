@@ -24,6 +24,11 @@ class UserMiddleware(BaseHTTPMiddleware):
             token = auth_header.split(" ")[1]
             payload = self.__auth.decode_access_token(token)
             user_id = payload.get("user")
+            token_client = payload.get("client")
+            request_client = request.headers.get("X-Client")
+
+            if token_client is not None and token_client != request_client:
+                return await call_next(request)
 
             if isinstance(user_id, int) and payload.get("type") == "access":
                 user_service = UserService()

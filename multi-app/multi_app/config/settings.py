@@ -1,4 +1,5 @@
 import locale
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -6,6 +7,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     API_URL: str
+    CLIENT: Literal["desktop", "web"]
     LANGUAGE: str = Field(default_factory=lambda: Settings.__get_system_language())
     THEME: str = "system"
     API_CHECK_DELAY: int = 60

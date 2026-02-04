@@ -25,13 +25,26 @@ class Auth:
         self.__user_service.set_auth(self)
         self.__module_service = ModuleService()
 
-    async def authenticate(self, session: AsyncSession, username: str, password: str) -> dict[str, str] | None:
+    async def authenticate(
+        self, session: AsyncSession, username: str, password: str, client: str
+    ) -> tuple[dict[str, str] | None, str | None]:
         user_schema = await self.__user_service.get_one_by_username(session, username)
         if not user_schema or not await self.__verify_password(password, cast(str, user_schema.password)):
-            return None
-        access_token = self.create_access_token(user_schema.id)
-        refresh_token = self.__create_refresh_token(user_schema.id)
-        return {"access": access_token, "refresh": refresh_token}
+            return None, "invalid_credentials"
+        is_superuser = user_schema.is_superuser
+        has_employee = user_schema.employee_id is not None
+        has_customer = user_schema.customer_id is not None
+        if client == "desktop":
+            allowed = is_superuser or has_employee
+        elif client == "web":
+            allowed = is_superuser or has_customer
+        else:
+            return None, "invalid_client"
+        if not allowed:
+            return None, "user_not_allowed"
+        access_token = self.create_access_token(user_schema.id, client=client)
+        refresh_token = self.__create_refresh_token(user_schema.id, client=client)
+        return {"access": access_token, "refresh": refresh_token}, None
 
     async def get_password_hash(self, password: str) -> str:
         return await asyncio.to_thread(self.__pwd_context.hash, password)
@@ -45,22 +58,28 @@ class Auth:
     def create_access_token(
         self,
         user_id: int,
+        client: str | None = None,
     ) -> str:
         time_to_expire = timedelta(minutes=self.__settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         token_type = "access"
-        token = self.__prepare_token(user_id, time_to_expire, token_type)
+        token = self.__prepare_token(user_id, time_to_expire, token_type, client=client)
         return token
 
-    async def validate_refresh_token(self, session: AsyncSession, token: str) -> UserPlainSchema:
+    async def validate_refresh_token(
+        self, session: AsyncSession, token: str, client: str | None
+    ) -> tuple[UserPlainSchema, str | None]:
         payload = self.decode_access_token(token)
         user_id = payload.get("user")
         token_type = payload.get("type")
+        token_client = payload.get("client")
         if not isinstance(user_id, int) or token_type != "refresh":
+            raise NoResultFound()
+        if token_client is not None and token_client != client:
             raise NoResultFound()
         user_schema = await self.__user_service.get_one_by_id(session, user_id)
         if not user_schema:
             raise NoResultFound()
-        return user_schema
+        return user_schema, token_client if isinstance(token_client, str) else None
 
     def restrict_access(self, permissions: list[Permission], controller: str) -> Callable[..., Awaitable[None]]:
         async def dependency(request: Request) -> None:
@@ -114,17 +133,19 @@ class Auth:
     async def __verify_password(self, plain_password: str, hashed_password: str) -> bool:
         return await asyncio.to_thread(self.__pwd_context.verify, plain_password, hashed_password)
 
-    def __create_refresh_token(self, user_id: int) -> str:
+    def __create_refresh_token(self, user_id: int, client: str | None = None) -> str:
         time_to_expire = timedelta(days=self.__settings.REFRESH_TOKEN_EXPIRE_DAYS)
         token_type = "refresh"
-        token = self.__prepare_token(user_id, time_to_expire, token_type)
+        token = self.__prepare_token(user_id, time_to_expire, token_type, client=client)
         return token
 
-    def __prepare_token(self, user_id: int, time_to_expire: timedelta, token_type: str) -> str:
+    def __prepare_token(self, user_id: int, time_to_expire: timedelta, token_type: str, client: str | None) -> str:
         token_data = {
             "user": user_id,
             "type": token_type,
             "exp": datetime.now(UTC) + time_to_expire,
         }
+        if client:
+            token_data["client"] = client
         encoded_jwt = jwt.encode(token_data, self.__settings.SECRET_KEY, algorithm=self.__settings.ALGORITHM)
         return encoded_jwt

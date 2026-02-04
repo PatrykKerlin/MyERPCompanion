@@ -5,4 +5,5 @@ VALUES
 ('logistic', 'Logistic group', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('sales', 'Sales group', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('purchase', 'Purchase group', TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('accounting', 'Accounting group', TRUE, CURRENT_TIMESTAMP, :superuser_id);
+('accounting', 'Accounting group', TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('customers', 'Customers group', TRUE, CURRENT_TIMESTAMP, :superuser_id);

@@ -12,7 +12,10 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
     _plain_schema_cls = BasePlainSchema
 
     async def fetch_tokens(self, username: str, password: str) -> TokenPlainSchema:
-        response = await self._post(Endpoint.TOKEN, {"username": username, "password": password})
+        response = await self._post(
+            Endpoint.TOKEN,
+            {"username": username, "password": password, "client": self._settings.CLIENT},
+        )
         return TokenPlainSchema(**response.json())
 
     @BaseService.handle_token_refresh

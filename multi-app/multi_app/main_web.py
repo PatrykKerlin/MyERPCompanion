@@ -33,6 +33,7 @@ class App:
         )
 
         self.__settings = Settings()  # type: ignore
+        self.__settings.CLIENT = "web"
         self.__logger = logging.getLogger("app")
         self.__event_bus = EventBus(self.__logger)
 

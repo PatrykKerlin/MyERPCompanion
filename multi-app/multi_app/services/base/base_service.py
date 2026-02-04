@@ -313,7 +313,8 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         return True
 
     async def refresh_tokens(self, tokens: TokenPlainSchema) -> TokenPlainSchema:
-        headers = {"Authorization": f"Bearer {tokens.refresh}"}
+        headers = self.__prepare_headers()
+        headers["Authorization"] = f"Bearer {tokens.refresh}"
         client = self.__get_client()
         response = await client.get(Endpoint.REFRESH, headers=headers)
         response.raise_for_status()
@@ -387,7 +388,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         return response
 
     def __prepare_headers(self, tokens: TokenPlainSchema | None = None, module_id: int | None = None) -> dict[str, str]:
-        headers: dict[str, str] = {}
+        headers = {"X-Client": self._settings.CLIENT}
         if tokens and tokens.access:
             headers["Authorization"] = f"Bearer {tokens.access}"
         if module_id:

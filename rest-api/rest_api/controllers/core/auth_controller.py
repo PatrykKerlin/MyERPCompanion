@@ -22,9 +22,19 @@ class AuthController:
             session = getattr(request.state, "db", None)
             if session is None:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            response = await self.__auth.authenticate(session, data.username, data.password)
+            response, error = await self.__auth.authenticate(session, data.username, data.password, data.client)
             if not response:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+                if error == "user_not_allowed":
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN, detail="user_not_allowed"
+                    )
+                if error == "invalid_client":
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="invalid_client"
+                    )
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_credentials"
+                )
             return JSONResponse(response)
         except SQLAlchemyError as err:
             self.__logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.auth.__qualname__}")
@@ -39,9 +49,11 @@ class AuthController:
             session = getattr(request.state, "db", None)
             if session is None:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            schema = await self.__auth.validate_refresh_token(session, refresh_token)
+            client = request.headers.get("X-Client")
+            schema, token_client = await self.__auth.validate_refresh_token(session, refresh_token, client)
             new_access_token = self.__auth.create_access_token(
                 schema.id,
+                client=token_client,
             )
             return JSONResponse(content={"access": new_access_token})
         except (JWTError, KeyError, NoResultFound):

@@ -9,7 +9,7 @@ class ModuleStrictSchema(BaseStrictSchema):
     key: Constraints.Key
     description: Constraints.StringOptional_1000
     in_side_menu: Constraints.BooleanTrue
-    order: Constraints.PositiveInteger
+    order: Constraints.NonNegativeInteger
 
 
 class ModulePlainSchema(BasePlainSchema):

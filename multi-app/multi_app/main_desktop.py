@@ -32,7 +32,7 @@ class App:
             format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
         )
 
-        self.__settings = Settings()  # type: ignore
+        self.__settings = Settings(CLIENT="desktop")  # type: ignore
         self.__logger = logging.getLogger("app")
         self.__event_bus = EventBus(self.__logger)
 
