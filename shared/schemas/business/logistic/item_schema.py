@@ -94,3 +94,5 @@ class ItemPlainSchema(BasePlainSchema):
 
     bin_ids: list[int]
     discount_ids: list[int]
+
+    category_name: str

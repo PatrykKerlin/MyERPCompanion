@@ -242,11 +242,19 @@ class BaseController:
             self._release_dialog_slot()
 
     def _queue_dialog(self, dialog: Any, wait_for_future: Awaitable[Any] | None = None) -> None:
-        self._page.run_task(self._show_dialog_serialized, dialog, wait_for_future)
+        try:
+            self._page.run_task(self._show_dialog_serialized, dialog, wait_for_future)
+        except (AttributeError, RuntimeError):
+            # Fallback for web sessions without an active connection loop.
+            self._logger.warning("Dialog fallback: showing without run_task", exc_info=True)
+            self._page.show_dialog(dialog)
 
     @classmethod
     def queue_dialog(cls, page: Any, dialog: Any, wait_for_future: Awaitable[Any] | None = None) -> None:
-        page.run_task(cls._show_dialog_serialized_static, page, dialog, wait_for_future)
+        try:
+            page.run_task(cls._show_dialog_serialized_static, page, dialog, wait_for_future)
+        except (AttributeError, RuntimeError):
+            page.show_dialog(dialog)
 
     @classmethod
     async def _show_dialog_serialized_static(

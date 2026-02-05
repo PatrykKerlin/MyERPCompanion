@@ -3,15 +3,16 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import func, select, Index, text
-from sqlalchemy.orm import Mapped, object_session
+from sqlalchemy import literal_column, select, Index, text
+from sqlalchemy.orm import Mapped, column_property
 
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
 
+from models.business.logistic.category import Category
+
 if TYPE_CHECKING:
     from models.business.logistic.assoc_bin_item import AssocBinItem
-    from models.business.logistic.category import Category
     from models.business.logistic.unit import Unit
     from models.business.trade.assoc_item_discount import AssocItemDiscount
     from models.business.trade.assoc_order_item import AssocOrderItem
@@ -100,3 +101,10 @@ class Item(BaseModel):
     @property
     def discount_ids(self) -> list[int]:
         return [row.discount_id for row in self.item_discounts]
+    
+    category_name = column_property(
+        select(Category.name)
+        .where(Category.id == literal_column("items.category_id"))
+        .where(Category.is_active.is_(True))
+        .scalar_subquery()
+    )

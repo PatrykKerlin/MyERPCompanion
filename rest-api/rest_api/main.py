@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 
 from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 
 from config.context import Context
@@ -155,6 +156,21 @@ def create_app() -> FastAPI:
         yield
 
     app_instance = App(context=context, database=database, auth=auth, lifespan=lifespan)
+    allowed_origins = []
+    if settings.CORS_ORIGINS:
+        allowed_origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()]
+    if not allowed_origins:
+        allowed_origins = [
+            "http://localhost:8550",
+            "http://127.0.0.1:8550",
+        ]
+    app_instance.get_app().add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        allow_credentials=False,
+    )
     app_instance.get_app().add_middleware(UserMiddleware, auth=auth)  # type: ignore
     app_instance.get_app().add_middleware(ModuleMiddleware, module_header=context.settings.MODULE_HEADER)  # type: ignore
     app_instance.get_app().add_middleware(DbSessionMiddleware, get_session=context.get_session)  # type: ignore

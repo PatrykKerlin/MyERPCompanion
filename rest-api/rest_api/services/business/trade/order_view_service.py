@@ -51,8 +51,10 @@ class OrderViewService(ItemQuantityMixin):
             order_statuses = order.order_statuses
             if not is_sales and order.supplier_id:
                 source_items = await OrderViewRepository.get_items_for_supplier(session, order.supplier_id)
-            elif is_sales:
+            elif is_sales and order.customer_id:
                 source_items = await OrderViewRepository.get_all_items(session)
+        else:
+            source_items = await OrderViewRepository.get_all_items(session)
 
         reserved_by_id = await self._get_reserved_quantities(session, source_items)
         outbound_by_id = await self._get_outbound_quantities(session, source_items)

@@ -61,6 +61,11 @@ class UserAuthenticated(BaseEvent):
 
 
 @dataclass(frozen=True)
+class CartUpdated(BaseEvent):
+    count: int
+
+
+@dataclass(frozen=True)
 class SideMenuRequested(BaseEvent):
     pass
 

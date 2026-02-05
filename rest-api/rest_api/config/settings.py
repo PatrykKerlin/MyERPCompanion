@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     MODULE_HEADER: str
     MEDIA_DIR: str
     MEDIA_URL: str
+    CORS_ORIGINS: str | None = None
     DB_POOL_SIZE: int = 2
     DB_MAX_OVERFLOW: int = 1
     DB_POOL_TIMEOUT: int = 30

@@ -19,4 +19,5 @@ VALUES
 (3, 6, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (4, 7, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (5, 8, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-(6, 9, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id);
+(6, 9, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(7, 2, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, :superuser_id);

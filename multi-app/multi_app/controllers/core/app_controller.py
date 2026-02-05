@@ -23,15 +23,17 @@ from events.events import (
     AuthDialogRequested,
     AuthViewReady,
     UserAuthenticated,
+    CartUpdated,
     SideMenuRequested,
     FooterRequested,
     TabsBarRequested,
     ToolbarRequested,
     ToolbarToggleRequested,
     TabsBarToggleRequested,
+    ViewRequested,
 )
 from services.core.app_service import AppService
-from utils.enums import ApiActionError
+from utils.enums import ApiActionError, Module, View, ViewMode
 
 from states.states import ViewState
 from views.core.app_view import AppView as DesktopAppView
@@ -48,6 +50,7 @@ class AppController(BaseController):
         self.__service = AppService(self._settings, self._logger, self._tokens_accessor)
         if self._settings.CLIENT == "web":
             self.__view = WebAppView(self._state_store.app_state.translation.items, self._settings.THEME)
+            self.__view.set_nav_handlers(self.__open_create_order, self.__open_orders)
         else:
             self.__view = DesktopAppView(self._state_store.app_state.translation.items, self._settings.THEME)
 
@@ -57,6 +60,7 @@ class AppController(BaseController):
                 TranslationReady: self.__translation_ready_handler,
                 TranslationFailed: self.__api_not_responding_handler,
                 UserAuthenticated: self.__user_authenticated_handler,
+                CartUpdated: self.__cart_updated_handler,
                 ApiStatusRequested: self.__api_status_handler,
                 AuthViewReady: self.__auth_view_ready_handler,
                 MenuBarReady: self.__menu_bar_ready_handler,
@@ -121,6 +125,7 @@ class AppController(BaseController):
         self.__view.set_auth_view(None)
         if isinstance(self.__view, WebAppView):
             self.__view.set_username(user.username)
+            self.__view.set_cart_count(0)
         self._page.update()
         translation_state = self._state_store.app_state.translation
         if user.language.symbol == translation_state.language:
@@ -133,6 +138,10 @@ class AppController(BaseController):
     async def __auth_view_ready_handler(self, event: AuthViewReady) -> None:
         self.__view.set_auth_view(event.component)
         self._page.update()
+
+    async def __cart_updated_handler(self, event: CartUpdated) -> None:
+        if isinstance(self.__view, WebAppView):
+            self.__view.set_cart_count(event.count)
 
     async def __menu_bar_ready_handler(self, event: MenuBarReady) -> None:
         if not isinstance(self.__view, DesktopAppView):
@@ -195,3 +204,23 @@ class AppController(BaseController):
         await self._event_bus.publish(SideMenuRequested())
         await self._event_bus.publish(FooterRequested())
         await self._event_bus.publish(TabsBarRequested())
+
+    def __open_create_order(self) -> None:
+        self._page.run_task(
+            self._event_bus.publish,
+            ViewRequested(
+                module_id=Module.WEB,
+                view_key=View.WEB_CREATE_ORDER,
+                mode=ViewMode.STATIC,
+            ),
+        )
+
+    def __open_orders(self) -> None:
+        self._page.run_task(
+            self._event_bus.publish,
+            ViewRequested(
+                module_id=Module.WEB,
+                view_key=View.WEB_ORDERS,
+                mode=ViewMode.STATIC,
+            ),
+        )

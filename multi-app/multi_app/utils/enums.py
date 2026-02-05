@@ -20,6 +20,7 @@ class TabNavigationDirection(StrEnum):
 
 class Module(IntEnum):
     CORE = 1
+    WEB = 2
 
 
 class ApiActionError(StrEnum):
@@ -35,6 +36,8 @@ class ApiActionError(StrEnum):
 
 class View(StrEnum):
     LOGIN = "login"
+    WEB_CREATE_ORDER = "web_create_order"
+    WEB_ORDERS = "web_orders"
     SIDE_MENU = "side_menu"
     CURRENT_USER = "current_user"
     USERS = "users"

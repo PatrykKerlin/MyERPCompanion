@@ -29,4 +29,5 @@ VALUES
 ('currencies', 'Currencies view', 1, 9, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('exchange_rates', 'Exchange rates view', 3, 9, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('invoices', 'Invoices view', 2, 9, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('users_core', 'Users core view', 3, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id);
+('users_core', 'Users core view', 3, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('web_sales_orders', 'Sales orders view', 1, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id);

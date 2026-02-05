@@ -115,6 +115,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                 self.__set_create_mode()
             case ViewMode.EDIT:
                 self.__set_edit_mode()
+            case ViewMode.STATIC:
+                return
 
     def set_input_state(self, input: ft.Control, enable: bool) -> None:
         if hasattr(input, "disabled"):

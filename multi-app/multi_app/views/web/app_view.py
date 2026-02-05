@@ -1,3 +1,5 @@
+from typing import Callable
+
 import flet as ft
 
 from utils.translation import Translation
@@ -8,9 +10,25 @@ class AppView:
     def __init__(self, translation: Translation, theme: str) -> None:
         self.__theme = theme
         self.__translation = translation
+        self.__on_create_order: Callable[[], None] | None = None
+        self.__on_browse_orders: Callable[[], None] | None = None
         self.__auth_container = ft.Container(visible=False, expand=True)
         self.__content_container = ft.Container(expand=True)
         self.__username_text = ft.Text("")
+        self.__cart_count_text = ft.Text("0")
+        self.__cart_button = ft.IconButton(
+            icon=ft.Icons.SHOPPING_CART_OUTLINED,
+            tooltip=self.__translation.get("cart"),
+            on_click=lambda _: None,
+        )
+        self.__create_order_button = ft.TextButton(
+            self.__translation.get("create_order"),
+            on_click=lambda _: self.__handle_create_order(),
+        )
+        self.__browse_orders_button = ft.TextButton(
+            self.__translation.get("browse_orders"),
+            on_click=lambda _: self.__handle_browse_orders(),
+        )
         self.__top_bar = ft.Container(
             visible=False,
             padding=ft.Padding.symmetric(horizontal=24, vertical=12),
@@ -21,11 +39,14 @@ class AppView:
                     ft.Row(
                         spacing=12,
                         controls=[
-                            ft.TextButton(self.__translation.get("create_order"), on_click=lambda _: None),
-                            ft.TextButton(self.__translation.get("browse_orders"), on_click=lambda _: None),
+                            self.__create_order_button,
+                            self.__browse_orders_button,
                         ],
                     ),
-                    self.__username_text,
+                    ft.Row(
+                        spacing=8,
+                        controls=[self.__cart_button, self.__cart_count_text, self.__username_text],
+                    ),
                 ],
             ),
         )
@@ -44,9 +65,9 @@ class AppView:
 
     def update_translation(self, translation: Translation) -> None:
         self.__translation = translation
-        left_controls = self.__top_bar.content.controls[0].controls
-        left_controls[0].text = self.__translation.get("create_order")
-        left_controls[1].text = self.__translation.get("browse_orders")
+        self.__create_order_button.text = self.__translation.get("create_order")
+        self.__browse_orders_button.text = self.__translation.get("browse_orders")
+        self.__cart_button.tooltip = self.__translation.get("cart")
         if not self.__username_text.value:
             self.__username_text.value = self.__translation.get("username")
 
@@ -65,6 +86,23 @@ class AppView:
         self.__top_bar.visible = True
         if self.__top_bar.page:
             self.__top_bar.update()
+
+    def set_cart_count(self, count: int) -> None:
+        self.__cart_count_text.value = str(max(count, 0))
+        if self.__cart_count_text.page:
+            self.__cart_count_text.update()
+
+    def set_nav_handlers(self, on_create_order: Callable[[], None], on_browse_orders: Callable[[], None]) -> None:
+        self.__on_create_order = on_create_order
+        self.__on_browse_orders = on_browse_orders
+
+    def __handle_create_order(self) -> None:
+        if self.__on_create_order:
+            self.__on_create_order()
+
+    def __handle_browse_orders(self) -> None:
+        if self.__on_browse_orders:
+            self.__on_browse_orders()
 
     def _apply_page_settings(self, page: ft.Page) -> None:
         page.title = self.__translation.get("my_erp_companion")

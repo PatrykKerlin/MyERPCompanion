@@ -1,11 +1,19 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import Field
 
 from schemas.base.base_schema import BaseSchema
 from schemas.business.trade.order_schema import OrderPlainSchema
+
+
+class OrderViewImageSchema(BaseSchema):
+    url: str | None = None
+    is_primary: bool | None = None
+    order: int | None = None
+    description: str | None = None
+    item_id: int | None = None
 
 
 class OrderViewLookupSchema(BaseSchema):
@@ -46,13 +54,17 @@ class OrderViewSourceItemSchema(BaseSchema):
     index: str
     name: str
     ean: str
+    description: str | None = None
     purchase_price: float
     vat_rate: float
+    is_fragile: bool | None = None
     category_id: int | None = None
+    category_name: str | None = None
     width: float
     height: float
     length: float
     weight: float
+    expiration_date: date | None = None
     stock_quantity: int = 0
     reserved_quantity: int = 0
     outbound_quantity: int = 0
@@ -60,6 +72,7 @@ class OrderViewSourceItemSchema(BaseSchema):
     is_package: bool = False
     supplier_currency_id: int | None = None
     discounts: list[OrderViewDiscountSchema]
+    images: list[OrderViewImageSchema] = Field(default_factory=list)
 
 
 class OrderViewTargetItemSchema(BaseSchema):

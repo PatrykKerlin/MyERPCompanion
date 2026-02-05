@@ -1,11 +1,8 @@
 INSERT INTO controllers (name, is_active, created_at, created_by)
 VALUES
--- business_hr
 ('DepartmentController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('EmployeeController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('PositionController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
-
--- business_logistic
 ('AssocBinItemController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('BinController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('CarrierController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
@@ -14,8 +11,6 @@ VALUES
 ('ItemController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('UnitController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('WarehouseController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
-
--- business_trade
 ('AssocCategoryDiscountController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('AssocCustomerDiscountController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('AssocItemDiscountController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
@@ -30,8 +25,6 @@ VALUES
 ('OrderViewController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('StatusController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('SupplierController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
-
--- core
 ('AssocModuleGroupController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('AssocUserGroupController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('AssocViewControllerController', TRUE, CURRENT_TIMESTAMP, :superuser_id),

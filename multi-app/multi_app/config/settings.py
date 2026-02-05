@@ -7,6 +7,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     API_URL: str
+    PUBLIC_API_URL: str | None = None
     CLIENT: Literal["desktop", "web"]
     LANGUAGE: str = Field(default_factory=lambda: Settings.__get_system_language())
     THEME: str = "system"
