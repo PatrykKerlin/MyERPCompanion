@@ -15,6 +15,7 @@ from schemas.business.trade.order_view_schema import (
     OrderViewExchangeRateSchema,
     OrderViewCustomerSchema,
     OrderViewCategorySchema,
+    OrderViewImageSchema,
     OrderViewLookupSchema,
     OrderViewResponseSchema,
     OrderViewSourceItemSchema,
@@ -74,6 +75,9 @@ class OrderViewService(ItemQuantityMixin):
                             id=assoc.discount.id,
                             code=assoc.discount.code,
                             percent=assoc.discount.percent,
+                            min_value=assoc.discount.min_value,
+                            min_quantity=assoc.discount.min_quantity,
+                            currency_id=assoc.discount.currency_id,
                         )
                         for assoc in row.customer_discounts
                         if assoc.discount and assoc.discount.is_active
@@ -108,6 +112,9 @@ class OrderViewService(ItemQuantityMixin):
                             id=assoc.discount.id,
                             code=assoc.discount.code,
                             percent=assoc.discount.percent,
+                            min_value=assoc.discount.min_value,
+                            min_quantity=assoc.discount.min_quantity,
+                            currency_id=assoc.discount.currency_id,
                         )
                         for assoc in row.category_discounts
                         if assoc.discount and assoc.discount.is_active
@@ -140,13 +147,17 @@ class OrderViewService(ItemQuantityMixin):
                 index=item.index,
                 name=item.name,
                 ean=item.ean,
+                description=item.description,
                 purchase_price=item.purchase_price,
                 vat_rate=item.vat_rate,
+                is_fragile=item.is_fragile,
                 category_id=item.category_id,
+                category_name=item.category_name,
                 width=item.width,
                 height=item.height,
                 length=item.length,
                 weight=item.weight,
+                expiration_date=item.expiration_date,
                 stock_quantity=item.stock_quantity,
                 reserved_quantity=reserved_by_id.get(item.id, 0),
                 outbound_quantity=outbound_by_id.get(item.id, 0),
@@ -158,9 +169,23 @@ class OrderViewService(ItemQuantityMixin):
                         id=assoc.discount.id,
                         code=assoc.discount.code,
                         percent=assoc.discount.percent,
+                        min_value=assoc.discount.min_value,
+                        min_quantity=assoc.discount.min_quantity,
+                        currency_id=assoc.discount.currency_id,
                     )
                     for assoc in item.item_discounts
                     if assoc.discount and assoc.discount.is_active
+                ],
+                images=[
+                    OrderViewImageSchema(
+                        url=image.url,
+                        is_primary=image.is_primary,
+                        order=image.order,
+                        description=image.description,
+                        item_id=image.item_id,
+                    )
+                    for image in sorted(item.images or [], key=lambda image: image.order)
+                    if image.is_active
                 ],
             )
             for item in items
@@ -186,6 +211,7 @@ class OrderViewService(ItemQuantityMixin):
                     weight=item.weight,
                     category_id=item.category_id,
                     supplier_currency_id=item.supplier.currency_id if item.supplier else None,
+                    bin_id=assoc.bin_id,
                     category_discount_id=assoc.category_discount_id,
                     customer_discount_id=assoc.customer_discount_id,
                     item_discount_id=assoc.item_discount_id,

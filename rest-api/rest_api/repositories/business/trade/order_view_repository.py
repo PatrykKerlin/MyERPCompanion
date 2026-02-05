@@ -10,6 +10,7 @@ from models.business.logistic.carrier import Carrier
 from models.business.logistic.category import Category
 from models.business.logistic.delivery_method import DeliveryMethod
 from models.business.logistic.item import Item
+from models.core.image import Image
 from models.business.trade.assoc_order_item import AssocOrderItem
 from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.assoc_category_discount import AssocCategoryDiscount
@@ -122,8 +123,10 @@ class OrderViewRepository:
             .where(Item.is_active.is_(True), Item.supplier_id == supplier_id)
             .options(
                 selectinload(Item.supplier),
+                selectinload(Item.images),
                 selectinload(Item.item_discounts).selectinload(AssocItemDiscount.discount),
                 with_loader_criteria(Item, Item.is_active.is_(True)),
+                with_loader_criteria(Image, Image.is_active.is_(True), include_aliases=True),
                 with_loader_criteria(Supplier, Supplier.is_active.is_(True)),
                 with_loader_criteria(AssocItemDiscount, AssocItemDiscount.is_active.is_(True), include_aliases=True),
                 with_loader_criteria(Discount, Discount.is_active.is_(True), include_aliases=True),
@@ -139,8 +142,10 @@ class OrderViewRepository:
             .where(Item.is_active.is_(True))
             .options(
                 selectinload(Item.supplier),
+                selectinload(Item.images),
                 selectinload(Item.item_discounts).selectinload(AssocItemDiscount.discount),
                 with_loader_criteria(Supplier, Supplier.is_active.is_(True)),
+                with_loader_criteria(Image, Image.is_active.is_(True), include_aliases=True),
                 with_loader_criteria(AssocItemDiscount, AssocItemDiscount.is_active.is_(True), include_aliases=True),
                 with_loader_criteria(Discount, Discount.is_active.is_(True), include_aliases=True),
             )

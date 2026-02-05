@@ -51,6 +51,7 @@ class AppController(BaseController):
         if self._settings.CLIENT == "web":
             self.__view = WebAppView(self._state_store.app_state.translation.items, self._settings.THEME)
             self.__view.set_nav_handlers(self.__open_create_order, self.__open_orders)
+            self.__view.set_cart_handler(self.__open_cart)
         else:
             self.__view = DesktopAppView(self._state_store.app_state.translation.items, self._settings.THEME)
 
@@ -224,3 +225,11 @@ class AppController(BaseController):
                 mode=ViewMode.STATIC,
             ),
         )
+
+    def __open_cart(self) -> None:
+        view = self._state_store.app_state.view.view
+        if not view or view.view_key != View.WEB_CREATE_ORDER:
+            return
+        open_handler = getattr(view, "open_cart_dialog", None)
+        if callable(open_handler):
+            open_handler()

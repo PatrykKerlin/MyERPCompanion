@@ -119,7 +119,7 @@ class OrderViewExchangeRateSchema(BaseSchema):
 
 
 class OrderViewResponseSchema(BaseSchema):
-    order: OrderPlainSchema | None
+    order: OrderPlainSchema | None = None
     suppliers: list[OrderViewSupplierSchema]
     customers: list[OrderViewCustomerSchema]
     currencies: list[OrderViewLookupSchema]

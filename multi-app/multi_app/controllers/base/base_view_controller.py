@@ -24,7 +24,7 @@ from states.states import ViewState
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.request_data import RequestData
 from utils.translation import Translation
-from utils.media_url import normalize_media_url
+from utils.media_url import MediaUrl
 from views.base.base_view import BaseView
 from views.components.message_dialog_component import MessageDialogComponent
 from views.controls.date_field_control import DateField
@@ -375,7 +375,7 @@ class BaseViewController(
                     continue
                 url = image.get("url")
                 if isinstance(url, str):
-                    image["url"] = normalize_media_url(url, api_url)
+                    image["url"] = MediaUrl.normalize(url, api_url)
         for key, value in list(data_row.items()):
             if isinstance(value, datetime):
                 data_row[key] = value.strftime('%Y-%m-%d %H:%M:%S')
@@ -407,7 +407,7 @@ class BaseViewController(
         if isinstance(value, (bool, int, float)):
             return value
         value_stripped = str(value).strip()
-        if value_stripped == "":
+        if value_stripped == "" or value_stripped == "0":
             return None
         value_lower = value_stripped.lower()
         if value_lower in {"true", "false"}:

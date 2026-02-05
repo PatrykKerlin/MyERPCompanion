@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from datetime import date
 from typing import Any, Callable
 import math
@@ -14,6 +13,7 @@ from controllers.base.base_view_controller import BaseViewController
 from events.events import ViewRequested
 from schemas.business.trade.assoc_order_item_schema import AssocOrderItemStrictSchema
 from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusStrictSchema
+from utils.discount_context import DiscountContext
 from schemas.business.trade.order_schema import OrderPlainSchema, SalesOrderStrictSchema
 from schemas.business.trade.order_view_schema import (
     OrderViewResponseSchema,
@@ -34,16 +34,6 @@ from views.components.quantity_dialog_component import QuantityDialogComponent
 
 class MissingExchangeRateError(RuntimeError):
     pass
-
-
-@dataclass(frozen=True)
-class DiscountContext:
-    quantities: dict[int, int]
-    base_net_map: dict[int, float]
-    order_quantity: int
-    order_net: float
-    category_quantities: dict[int, int]
-    category_net_map: dict[int, float]
 
 
 class SalesOrderController(BaseViewController[OrderService, SalesOrderView, OrderPlainSchema, SalesOrderStrictSchema]):
@@ -476,7 +466,9 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         total_gross = round(total_net + total_vat, 2)
         return total_net, total_vat, total_gross, total_discount
 
-    def __get_discount_percent(self, item_id: int, quantity: int, base_net: float, context: DiscountContext) -> float:
+    def __get_discount_percent(
+        self, item_id: int, quantity: int, base_net: float, context: DiscountContext
+    ) -> float:
         discount_ids = self.__get_discount_ids_for_item(item_id, quantity, base_net, context)
         if not discount_ids:
             return 0.0

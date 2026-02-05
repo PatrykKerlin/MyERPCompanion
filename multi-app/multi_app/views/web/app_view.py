@@ -12,6 +12,7 @@ class AppView:
         self.__translation = translation
         self.__on_create_order: Callable[[], None] | None = None
         self.__on_browse_orders: Callable[[], None] | None = None
+        self.__on_cart: Callable[[], None] | None = None
         self.__auth_container = ft.Container(visible=False, expand=True)
         self.__content_container = ft.Container(expand=True)
         self.__username_text = ft.Text("")
@@ -19,7 +20,7 @@ class AppView:
         self.__cart_button = ft.IconButton(
             icon=ft.Icons.SHOPPING_CART_OUTLINED,
             tooltip=self.__translation.get("cart"),
-            on_click=lambda _: None,
+            on_click=lambda _: self.__handle_cart(),
         )
         self.__create_order_button = ft.TextButton(
             self.__translation.get("create_order"),
@@ -96,6 +97,9 @@ class AppView:
         self.__on_create_order = on_create_order
         self.__on_browse_orders = on_browse_orders
 
+    def set_cart_handler(self, on_cart: Callable[[], None]) -> None:
+        self.__on_cart = on_cart
+
     def __handle_create_order(self) -> None:
         if self.__on_create_order:
             self.__on_create_order()
@@ -104,13 +108,18 @@ class AppView:
         if self.__on_browse_orders:
             self.__on_browse_orders()
 
+    def __handle_cart(self) -> None:
+        if self.__on_cart:
+            self.__on_cart()
+
     def _apply_page_settings(self, page: ft.Page) -> None:
         page.title = self.__translation.get("my_erp_companion")
         page.theme_mode = self._resolve_theme_mode(self.__theme)
-        page.window.width = 1600
-        page.window.height = 900
-        page.window.min_width = 1024
-        page.window.min_height = 768
+        if not page.web:
+            page.window.width = 1600
+            page.window.height = 900
+            page.window.min_width = 1024
+            page.window.min_height = 768
 
     def _resolve_theme_mode(self, theme: str) -> ft.ThemeMode:
         if theme == "dark":
