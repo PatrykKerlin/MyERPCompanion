@@ -148,6 +148,7 @@ class AppController(BaseController):
         self.__apply_user_preferences(user)
         if isinstance(self.__view, WebAppView):
             self.__view.set_cart_count(0)
+            await self.__save_web_user_settings(user)
         self._page.update()
         translation_state = self._state_store.app_state.translation
         if user.language.symbol == translation_state.language:
@@ -191,6 +192,7 @@ class AppController(BaseController):
         if not current_user:
             return
         self._state_store.update(user={"current": current_user})
+        await self.__save_web_user_settings(current_user)
         current_language = self._state_store.app_state.translation.language
         target_language = current_user.language.symbol
         if target_language != current_language:
@@ -365,14 +367,14 @@ class AppController(BaseController):
             language_options.append((current_user.language.id, current_user.language.key))
             language_by_id[current_user.language.id] = current_user.language
         password_field = ft.TextField(
-            label=translation.get("password"),
             password=True,
             can_reveal_password=True,
+            expand=True,
         )
         password_repeat_field = ft.TextField(
-            label=translation.get("password_repeat"),
             password=True,
             can_reveal_password=True,
+            expand=True,
         )
         language_dropdown = ft.Dropdown(
             options=[ft.dropdown.Option(key=str(option[0]), text=option[1]) for option in language_options],
@@ -392,7 +394,7 @@ class AppController(BaseController):
             expand=True,
         )
 
-        def build_labeled_dropdown(label: str, dropdown: ft.Dropdown) -> ft.Row:
+        def build_labeled_control(label: str, control: ft.Control) -> ft.Row:
             return ft.Row(
                 expand=True,
                 alignment=ft.MainAxisAlignment.START,
@@ -400,20 +402,26 @@ class AppController(BaseController):
                 spacing=12,
                 controls=[
                     ft.Container(width=170, content=ft.Text(label)),
-                    ft.Container(expand=True, content=dropdown),
+                    ft.Container(expand=True, content=control),
                 ],
             )
 
         save_button = ft.Button(content=translation.get("save"))
         cancel_button = ft.TextButton(translation.get("cancel"), on_click=lambda _: self._page.pop_dialog())
         controls: list[ft.Control] = [
-            ft.Container(content=password_field, padding=ft.Padding.only(bottom=8)),
-            ft.Container(content=password_repeat_field, padding=ft.Padding.only(bottom=8)),
             ft.Container(
-                content=build_labeled_dropdown(translation.get("language_id"), language_dropdown),
+                content=build_labeled_control(translation.get("password"), password_field),
                 padding=ft.Padding.only(bottom=8),
             ),
-            ft.Container(content=build_labeled_dropdown(translation.get("theme"), theme_dropdown)),
+            ft.Container(
+                content=build_labeled_control(translation.get("password_repeat"), password_repeat_field),
+                padding=ft.Padding.only(bottom=8),
+            ),
+            ft.Container(
+                content=build_labeled_control(translation.get("language_id"), language_dropdown),
+                padding=ft.Padding.only(bottom=8),
+            ),
+            ft.Container(content=build_labeled_control(translation.get("theme"), theme_dropdown)),
         ]
         dialog = BaseDialog(
             title=translation.get("current_user"),
@@ -498,17 +506,26 @@ class AppController(BaseController):
         updated_user = await self.__perform_update_user(current_user.id, payload)
         if not updated_user:
             return
-        self._page.pop_dialog()
+        while True:
+            closed_dialog = self._page.pop_dialog()
+            if closed_dialog is None or closed_dialog is dialog:
+                break
         previous_language = self._state_store.app_state.translation.language
         effective_user = updated_user
         if selected_language and updated_user.language.id != selected_language.id:
             effective_user = updated_user.model_copy(update={"language": selected_language})
         self._state_store.update(user={"current": effective_user})
+        await self.__save_web_user_settings(effective_user)
         self._open_message_dialog("record_save_success")
         target_language = selected_language.symbol if selected_language else effective_user.language.symbol
         if target_language != previous_language:
             await self._open_loading_dialog()
             await self._event_bus.publish(TranslationRequested(target_language, True))
+
+    async def __save_web_user_settings(self, user: UserPlainSchema) -> None:
+        if self._settings.CLIENT != "web":
+            return
+        await UserSettings.save_web(user.theme, user.language.symbol)
 
     @staticmethod
     def __parse_optional_int(value: str | None) -> int | None:

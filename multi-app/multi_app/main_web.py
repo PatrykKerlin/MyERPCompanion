@@ -21,6 +21,7 @@ from states.states import (
 )
 from utils.enums import ViewMode
 from utils.translation import Translation
+from utils.user_settings import UserSettings
 from config.context import Context
 from services.base.base_service import BaseService
 
@@ -39,11 +40,18 @@ class App:
         self.__event_bus_by_session: dict[int, EventBus] = {}
 
     async def run(self, page: ft.Page) -> None:
+        preferred_theme, preferred_language = await UserSettings.load_web()
+        settings_kwargs: dict[str, str] = {"CLIENT": "web"}
+        if isinstance(preferred_theme, str) and preferred_theme:
+            settings_kwargs["THEME"] = preferred_theme
+        if isinstance(preferred_language, str) and preferred_language:
+            settings_kwargs["LANGUAGE"] = preferred_language
+        session_settings = Settings(**settings_kwargs)  # type: ignore
         session_id = id(page)
         event_bus = EventBus(self.__logger)
         initial_state = AppState(
             translation=TranslationState(
-                language=self.__settings.LANGUAGE,
+                language=session_settings.LANGUAGE,
                 items=Translation(),
             ),
             tokens=TokensState(),
@@ -59,7 +67,7 @@ class App:
         state_store = StateStore(initial_state)
         context = Context(
             page=page,
-            settings=self.__settings,
+            settings=session_settings,
             logger=self.__logger,
             event_bus=event_bus,
             state_store=state_store,
