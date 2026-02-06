@@ -493,7 +493,12 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                 continue
             input = field.input.content
             marker = field.marker.content
-            is_selected = key in selected_inputs
+            marker_selected = bool(getattr(marker, "value", False)) if marker else False
+            is_selected = key in selected_inputs or marker_selected
+            if is_selected:
+                selected_inputs.add(key)
+            else:
+                selected_inputs.discard(key)
             if isinstance(input, ft.Dropdown):
                 self.__restore_dropdown_options(input, key)
             if hasattr(input, "value"):
@@ -643,17 +648,21 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     def __limit_dropdown_options(self, input: ft.Dropdown, key: str) -> None:
         if not self._data_row:
             return
-        options: list[ft.DropdownOption] = []
+        source_options = self.__dropdown_options.get(key)
+        if source_options is None:
+            source_options = list(input.options)
+            self.__dropdown_options[key] = source_options
         value = self._data_row.get(key)
-        if value is not None:
-            for option in input.options:
-                if option.key == str(value):
-                    options.append(option)
-                    break
-            if options:
-                self.__dropdown_options[key] = list(input.options)
-                input.options = options
-                input.value = options[0].key
+        if value in {None, "", "0", 0}:
+            input.options = [ft.dropdown.Option(key="0", text="")]
+            input.value = "0"
+            return
+        value_key = str(value)
+        matching_option = next((option for option in source_options if option.key == value_key), None)
+        if matching_option is None:
+            matching_option = ft.dropdown.Option(key=value_key, text=value_key)
+        input.options = [matching_option]
+        input.value = value_key
 
     def __restore_dropdown_options(self, input: ft.Dropdown, key: str) -> None:
         if self.__dropdown_options.get(key) is not None:

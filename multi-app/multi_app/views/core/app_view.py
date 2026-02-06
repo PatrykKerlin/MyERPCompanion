@@ -86,6 +86,14 @@ class AppView:
         self.__auth_container.content = component
         self.__auth_container.visible = component is not None
 
+    def set_theme(self, theme: str) -> None:
+        self.__theme = theme
+        page = self.__root.page
+        if not page:
+            return
+        page.theme_mode = self._resolve_theme_mode(theme)
+        page.update()
+
     def toggle_toolbar_visible(self) -> None:
         self.__toolbar_container.visible = not self.__toolbar_container.visible
 

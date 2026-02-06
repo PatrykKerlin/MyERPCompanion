@@ -1,34 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import flet as ft
 
-from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_view import BaseView
 
 if TYPE_CHECKING:
     from controllers.components.auth_dialog_controller import AuthDialogController
 
 
-class AuthView(BaseView["AuthDialogController"]):
+class AuthView(ft.Container):
     def __init__(self, controller: AuthDialogController, translation: Translation) -> None:
-        BaseView.__init__(
-            self,
-            controller=controller,
-            translation=translation,
-            mode=ViewMode.READ,
-            view_key=View.LOGIN,
-            data_row=None,
-            base_label_size=0,
-            base_input_size=0,
-            base_columns_qty=12,
-        )
-        self._cancel_button = None
-        self._save_button = None
-        self._search_button = None
-
         login_field = ft.TextField(
             label=translation.get("login"),
             autofocus=True,
@@ -55,7 +38,7 @@ class AuthView(BaseView["AuthDialogController"]):
             ],
             tight=True,
             horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
-            width=320,
+            width=300,
         )
 
         app_name = translation.get("my_erp_companion")
@@ -73,33 +56,18 @@ class AuthView(BaseView["AuthDialogController"]):
         )
 
         hero_body = ft.Container(
-            expand=True,
             alignment=ft.Alignment.CENTER,
-            padding=ft.Padding.all(24),
+            padding=ft.Padding.all(16),
             content=ft.Column(
                 controls=[portal_text, subtitle, ft.Container(height=12), form],
                 tight=True,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
         )
-        hero_card = ft.Card(content=hero_body, expand=2)
-        hero_row = ft.Row(
-            expand=2,
-            alignment=ft.MainAxisAlignment.CENTER,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                ft.Container(expand=1),
-                hero_card,
-                ft.Container(expand=1),
-            ],
-        )
+        hero_card = ft.Card(content=hero_body, width=360)
 
-        self.content = ft.Column(
-            expand=True,
-            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
-            controls=[
-                ft.Container(expand=1),
-                hero_row,
-                ft.Container(expand=1),
-            ],
+        ft.Container.__init__(
+            self,
+            content=hero_card,
+            alignment=ft.Alignment.CENTER,
         )

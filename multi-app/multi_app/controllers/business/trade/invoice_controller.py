@@ -8,7 +8,7 @@ from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from schemas.business.trade.invoice_schema import InvoicePlainSchema, InvoiceStrictSchema
 from schemas.business.trade.order_schema import OrderPlainSchema, SalesOrderStrictSchema
-from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusPlainSchema
+from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusPlainSchema, AssocOrderStatusStrictSchema
 from schemas.business.trade.status_schema import StatusPlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
 from services.business.trade import (
@@ -45,6 +45,7 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         self.__customer_payment_terms: dict[int, int] = {}
         self.__prefetched_create_number: str | None = None
         self.__eligible_status_ids: set[int] = set()
+        self.__invoiced_status_id: int | None = None
         self.__orders_by_id: dict[int, OrderPlainSchema] = {}
         self.__selected_order_ids: set[int] = set()
         self.__target_rows: list[tuple[int, list[Any]]] = []
@@ -57,6 +58,8 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             self.__perform_get_all_statuses(),
         )
         self.__eligible_status_ids = {status.id for status in statuses if status.order == 4}
+        invoiced_status = next((status for status in statuses if status.order == 5), None)
+        self.__invoiced_status_id = invoiced_status.id if invoiced_status else None
         self.__prefetched_create_number = None
         view = InvoiceView(
             self,
@@ -137,6 +140,16 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             None,
             cast(list[Any], payload),
             self._module_id,
+        )
+
+    @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def __perform_create_order_statuses_bulk(
+        self, payload: list[AssocOrderStatusStrictSchema]
+    ) -> list[AssocOrderStatusPlainSchema] | None:
+        if not payload:
+            return []
+        return await self.__order_status_service.create_bulk(
+            Endpoint.ORDER_STATUSES_CREATE_BULK, None, None, payload, self._module_id
         )
 
     def on_value_changed(self, event: ft.ControlEvent, key: str, *after_change: Callable[[], None]) -> None:
@@ -404,6 +417,8 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             return
         payload = [self.__build_order_update_payload(order, invoice_id) for order in orders]
         await self.__perform_update_orders_invoice_bulk(payload)
+        if invoice_id is not None:
+            await self.__update_orders_invoiced_status(order_ids)
 
     @staticmethod
     def __build_order_update_payload(order: OrderPlainSchema, invoice_id: int | None) -> SalesOrderStrictSchema:
@@ -495,3 +510,28 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             return
         await self.__update_orders_invoice_assignment(list(self.__selected_order_ids), invoice_id)
         self.__pending_order_ids.clear()
+
+    async def __update_orders_invoiced_status(self, order_ids: list[int]) -> None:
+        if not order_ids:
+            return
+        status_id = self.__invoiced_status_id
+        if status_id is None:
+            self._logger.warning("Missing invoiced status (order=5); skipping order status update.")
+            return
+        status_results = await asyncio.gather(*(self.__perform_get_order_statuses(order_id) for order_id in order_ids))
+        payload: list[AssocOrderStatusStrictSchema] = []
+        for order_id, statuses in zip(order_ids, status_results, strict=False):
+            latest_status_id = self.__get_latest_status_id(statuses or [])
+            if latest_status_id == status_id:
+                continue
+            payload.append(AssocOrderStatusStrictSchema(order_id=order_id, status_id=status_id))
+        if not payload:
+            return
+        await self.__perform_create_order_statuses_bulk(payload)
+
+    @staticmethod
+    def __get_latest_status_id(statuses: list[AssocOrderStatusPlainSchema]) -> int | None:
+        if not statuses:
+            return None
+        latest = max(statuses, key=lambda status: (status.created_at, status.id))
+        return latest.status_id

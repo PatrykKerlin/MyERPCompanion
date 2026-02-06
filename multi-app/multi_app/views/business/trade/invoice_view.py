@@ -97,7 +97,7 @@ class InvoiceView(BaseDesktopView):
             self._controller.on_create_mode_requested()
         if mode == ViewMode.READ:
             self._controller.on_read_mode_requested()
-        if mode != ViewMode.READ:
+        if mode in {ViewMode.CREATE, ViewMode.EDIT}:
             self.__apply_editable_fields(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT, ViewMode.CREATE}
         self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0

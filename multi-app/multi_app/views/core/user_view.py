@@ -31,6 +31,7 @@ class UserView(BaseDesktopView, GroupBulkTransferMixin):
         group_source_rows: list[tuple[int, list[str]]],
         group_target_rows: list[tuple[int, list[str]]],
         show_groups: bool,
+        show_meta: bool = True,
         caller_view_key: View | None = None,
         on_groups_save_clicked=None,
         on_groups_delete_clicked=None,
@@ -80,13 +81,14 @@ class UserView(BaseDesktopView, GroupBulkTransferMixin):
         if mode in {ViewMode.CREATE, ViewMode.EDIT}:
             self.__bind_password_validation()
         main_grid = self._build_grid(main_fields)
-        meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
-
-        columns = [
-            ft.Column(controls=main_grid, expand=3),
-            self._spacing_column,
-            ft.Column(controls=meta_grid, expand=2),
-        ]
+        columns = [ft.Column(controls=main_grid, expand=1)]
+        if show_meta:
+            meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
+            columns = [
+                ft.Column(controls=main_grid, expand=3),
+                self._spacing_column,
+                ft.Column(controls=meta_grid, expand=2),
+            ]
         self._columns_row.controls.extend(columns)
 
         group_row = None

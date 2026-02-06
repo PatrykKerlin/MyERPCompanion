@@ -31,7 +31,7 @@ from services.business.trade import (
     OrderService,
     OrderViewService,
 )
-from utils.enums import ApiActionError, Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
 from utils.translation import Translation
 from utils.media_url import MediaUrl
 from views.base.base_dialog import BaseDialog
@@ -182,6 +182,9 @@ class CreateOrderController(
         delivery_method_id: int | None,
     ) -> None:
         self._page.run_task(self.__handle_checkout_confirm, currency_id, customer_discount_id, delivery_method_id)
+
+    def on_back_to_orders_clicked(self) -> None:
+        self._page.run_task(self.__open_orders_view, False)
 
     def get_currency_options(self) -> list[tuple[int | str, str]]:
         return [(currency_id, label) for currency_id, label in self.__currency_label_map.items()]
@@ -350,6 +353,7 @@ class CreateOrderController(
         if currency_id is None:
             return
         opened_loading = False
+        created_order_number: str | None = None
         if self._loading_dialog is None:
             try:
                 await self._open_loading_dialog()
@@ -400,13 +404,16 @@ class CreateOrderController(
             self._page.run_task(self._event_bus.publish, CartUpdated(count=0))
             if self._view:
                 self._view.refresh_items_list()
-            self.__show_order_confirmation(order.number)
+            created_order_number = order.number
         except MissingExchangeRateError:
             self._open_error_dialog(message_key="missing_exchange_rate")
             return
         finally:
             if opened_loading:
                 self._close_loading_dialog()
+        if created_order_number:
+            await self.__open_orders_view(True)
+            self.__show_order_confirmation(created_order_number)
 
     def __resolve_customer_id(self) -> int | None:
         user = self._state_store.app_state.user.current
@@ -589,6 +596,16 @@ class CreateOrderController(
             actions=[ft.TextButton(translation.get("ok"), on_click=lambda _: self._page.pop_dialog())],
         )
         self._queue_dialog(dialog)
+
+    async def __open_orders_view(self, save_succeeded: bool = False) -> None:
+        await self._event_bus.publish(
+            ViewRequested(
+                module_id=Module.WEB,
+                view_key=View.WEB_ORDERS,
+                mode=ViewMode.STATIC,
+                save_succeeded=save_succeeded,
+            )
+        )
 
     def __recalculate_cart_prices(self) -> None:
         if not self.__cart:

@@ -134,7 +134,7 @@ class PurchaseOrderView(BaseDesktopView):
             self.__create_defaults = self._controller.get_create_defaults()
             self.__apply_create_defaults()
             self.__apply_supplier_currency()
-        if mode != ViewMode.READ:
+        if mode in {ViewMode.CREATE, ViewMode.EDIT}:
             self.__apply_editable_fields(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
         self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0

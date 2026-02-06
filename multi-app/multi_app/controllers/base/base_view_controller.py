@@ -157,7 +157,14 @@ class BaseViewController(
     def on_value_changed(self, event: ft.ControlEvent, key: str, *after_change: Callable[[], None]) -> None:
         if hasattr(event.control, "value"):
             value = getattr(event.control, "value", None)
-            parsed_value = self.__parse_value(value)
+            if isinstance(event.control, ft.Dropdown):
+                if value is None:
+                    parsed_value = None
+                else:
+                    value_stripped = str(value).strip()
+                    parsed_value = None if value_stripped in {"", "0"} else value_stripped
+            else:
+                parsed_value = self.__parse_value(value)
             self.__record_undo_state(key, parsed_value)
             self.__set_field_value_no_history(key, parsed_value)
         for callback in after_change:
@@ -407,7 +414,7 @@ class BaseViewController(
         if isinstance(value, (bool, int, float)):
             return value
         value_stripped = str(value).strip()
-        if value_stripped == "" or value_stripped == "0":
+        if value_stripped == "":
             return None
         value_lower = value_stripped.lower()
         if value_lower in {"true", "false"}:
@@ -549,7 +556,10 @@ class BaseViewController(
                 )
             if response:
                 if self._request_data.caller_view_key:
-                    close_title = self._state_store.app_state.view.title
+                    is_current_user_settings = (
+                        self._request_data.caller_view_key == View.CURRENT_USER and self._view_key == View.USERS
+                    )
+                    close_title = None if is_current_user_settings else self._state_store.app_state.view.title
                     await self._event_bus.publish(
                         CallerActionRequested(
                             caller_view_key=self._request_data.caller_view_key,
@@ -559,6 +569,16 @@ class BaseViewController(
                             caller_data=self._request_data.caller_data,
                         )
                     )
+                    if is_current_user_settings:
+                        await self._event_bus.publish(
+                            TabRequested(
+                                module_id=self._module_id,
+                                view_key=self._view_key,
+                                record_id=response.id,
+                                record_data=response.model_dump(),
+                                mode=ViewMode.READ,
+                            )
+                        )
                     self.__open_save_success_dialog(close_title)
                 else:
                     await self._event_bus.publish(

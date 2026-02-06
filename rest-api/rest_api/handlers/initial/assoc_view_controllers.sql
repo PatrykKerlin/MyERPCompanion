@@ -110,4 +110,5 @@ VALUES
 (31, 15, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (31, 16, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (31, 22, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-(31, 23, TRUE, CURRENT_TIMESTAMP, :superuser_id);
+(31, 23, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(31, 39, TRUE, CURRENT_TIMESTAMP, :superuser_id);

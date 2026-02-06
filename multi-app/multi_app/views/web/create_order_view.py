@@ -59,19 +59,35 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         self.__category_discount_map: dict[int, list[OrderViewDiscountSchema]] = {
             category.id: list(category.discounts) for category in categories
         }
-        self.__category_dropdown_container, self.__category_dropdown = self.__build_dropdown(
+        _category_dropdown_container, self.__category_dropdown = self.__build_dropdown(
             key="category_id",
             options=self.__build_category_options(),
             callbacks=[self.__on_category_changed],
             value="0",
         )
+        self.__category_dropdown.label = self._translation.get("item_filter")
         self._inputs["category_id"] = self.__wrap_dropdown(self.__category_dropdown)
         self.__items_list = ft.ListView(spacing=8, expand=True)
         self.__refresh_items_list()
 
+        back_button = ft.TextButton(
+            self._translation.get("back_to_orders"),
+            on_click=lambda _: self._controller.on_back_to_orders_clicked(),
+        )
         header_row = ft.ResponsiveRow(
             columns=12,
-            controls=[self.__category_dropdown_container],
+            controls=[
+                ft.Container(
+                    col={"sm": 12, "md": 2},
+                    content=back_button,
+                    alignment=ft.Alignment.CENTER_LEFT,
+                ),
+                ft.Container(
+                    col={"sm": 12, "md": 10},
+                    content=self.__category_dropdown,
+                    alignment=ft.Alignment.CENTER_LEFT,
+                ),
+            ],
             alignment=ft.MainAxisAlignment.START,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
@@ -399,7 +415,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         control.update()
 
     def open_cart_dialog(self) -> None:
-        cart_list = ft.Column(spacing=8, tight=True, scroll=ft.ScrollMode.AUTO, expand=True)
+        cart_list = ft.Column(spacing=6, tight=True, scroll=ft.ScrollMode.AUTO, expand=True)
         proceed_button = ft.Button(
             content=self._translation.get("proceed_to_checkout"),
             on_click=lambda _: self.__on_checkout_clicked(),
@@ -426,9 +442,10 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                 if viewport_width >= 900:
                     target_width = min(target_width, 960)
                 target_width = max(320, min(target_width, viewport_width))
+                target_width = max(380, int(target_width * 0.72))
                 self.__cart_container.width = target_width
             else:
-                self.__cart_container.width = 720
+                self.__cart_container.width = 460
             if self.__cart_has_items and viewport_height:
                 self.__cart_container.height = int(viewport_height * 0.5)
             else:
@@ -446,13 +463,16 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             self.__cart_resize_handler = handle_resize
             page.on_resize = handle_resize
 
-        def build_text(value: str, align: ft.TextAlign | None = None) -> ft.Text:
+        def build_text(
+            value: str, align: ft.TextAlign | None = None, weight: ft.FontWeight | None = None
+        ) -> ft.Text:
             return ft.Text(
                 value,
                 no_wrap=True,
                 overflow=ft.TextOverflow.ELLIPSIS,
                 max_lines=1,
                 text_align=align,
+                weight=weight,
             )
 
         def render_cart_items() -> None:
@@ -470,6 +490,54 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             proceed_button.disabled = False
             self.__cart_has_items = True
             apply_size()
+            cart_list.controls.append(
+                ft.Container(
+                    padding=ft.Padding.symmetric(vertical=2, horizontal=6),
+                    content=ft.ResponsiveRow(
+                        columns=12,
+                        spacing=4,
+                        run_spacing=4,
+                        alignment=ft.MainAxisAlignment.START,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            ft.Container(
+                                col={"sm": 12, "md": 3},
+                                content=build_text(
+                                    self._translation.get("name"),
+                                    align=ft.TextAlign.START,
+                                    weight=ft.FontWeight.BOLD,
+                                ),
+                            ),
+                            ft.Container(
+                                col={"sm": 6, "md": 3},
+                                alignment=ft.Alignment.CENTER_LEFT,
+                                content=build_text(
+                                    self._translation.get("quantity"),
+                                    align=ft.TextAlign.START,
+                                    weight=ft.FontWeight.BOLD,
+                                ),
+                            ),
+                            ft.Container(
+                                col={"sm": 12, "md": 5},
+                                content=build_text(
+                                    self._translation.get("discounts"),
+                                    align=ft.TextAlign.START,
+                                    weight=ft.FontWeight.BOLD,
+                                ),
+                            ),
+                            ft.Container(
+                                col={"sm": 6, "md": 1},
+                                alignment=ft.Alignment.CENTER,
+                                content=build_text(
+                                    self._translation.get("remove"),
+                                    align=ft.TextAlign.CENTER,
+                                    weight=ft.FontWeight.BOLD,
+                                ),
+                            ),
+                        ],
+                    ),
+                )
+            )
             for entry in cart_items:
                 item_id = entry.get("item_id")
                 if not isinstance(item_id, int):
@@ -500,16 +568,16 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                     )
                 row_controls: list[ft.Control] = [
                     ft.Container(
-                        col={"sm": 12, "md": 4},
+                        col={"sm": 12, "md": 3},
                         content=build_text(name, align=ft.TextAlign.START),
                     ),
                     ft.Container(
-                        col={"sm": 6, "md": 2},
-                        alignment=ft.Alignment.CENTER_RIGHT,
-                        content=build_text(f"{self._translation.get('quantity')}: {quantity}", align=ft.TextAlign.END),
+                        col={"sm": 6, "md": 3},
+                        alignment=ft.Alignment.CENTER_LEFT,
+                        content=build_text(str(quantity), align=ft.TextAlign.START),
                     ),
                     ft.Container(
-                        col={"sm": 12, "md": 4},
+                        col={"sm": 12, "md": 5},
                         content=ft.Column(
                             controls=discount_controls,
                             spacing=2,
@@ -517,17 +585,19 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                         ),
                     ),
                     ft.Container(
-                        col={"sm": 6, "md": 2},
-                        alignment=ft.Alignment.CENTER_RIGHT,
+                        col={"sm": 6, "md": 1},
+                        alignment=ft.Alignment.CENTER,
                         content=remove_button,
                     )
                 ]
                 cart_list.controls.append(
                     ft.Container(
-                        padding=ft.Padding.all(8),
-                        border=ft.Border.all(1, ft.Colors.GREY_300),
+                        padding=ft.Padding.symmetric(vertical=6, horizontal=6),
+                        border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
                         content=ft.ResponsiveRow(
                             columns=12,
+                            spacing=4,
+                            run_spacing=4,
                             alignment=ft.MainAxisAlignment.START,
                             vertical_alignment=ft.CrossAxisAlignment.CENTER,
                             controls=row_controls,
@@ -613,7 +683,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         total_with_shipping_text = build_text("", align=ft.TextAlign.END)
         missing_rate_text = ft.Text(
             self._translation.get("missing_exchange_rate"),
-            color=ft.Colors.RED_600,
+            color=ft.Colors.ERROR,
             visible=False,
         )
         confirm_button = ft.Button(
