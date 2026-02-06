@@ -21,6 +21,7 @@ from states.states import (
 
 from utils.enums import ViewMode
 from utils.translation import Translation
+from utils.user_settings import UserSettings
 from config.context import Context
 from services.base.base_service import BaseService
 
@@ -32,7 +33,13 @@ class App:
             format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
         )
 
-        self.__settings = Settings(CLIENT="desktop")  # type: ignore
+        preferred_theme, preferred_language = UserSettings.load()
+        settings_kwargs: dict[str, str] = {"CLIENT": "desktop"}
+        if preferred_theme:
+            settings_kwargs["THEME"] = preferred_theme
+        if preferred_language:
+            settings_kwargs["LANGUAGE"] = preferred_language
+        self.__settings = Settings(**settings_kwargs)  # type: ignore
         self.__logger = logging.getLogger("app")
         self.__event_bus = EventBus(self.__logger)
 

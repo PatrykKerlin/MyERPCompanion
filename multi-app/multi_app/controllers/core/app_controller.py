@@ -41,6 +41,7 @@ from schemas.core.user_schema import UserPlainSchema, UserStrictUpdateAppSchema
 from services.core import LanguageService, UserService
 from services.core.app_service import AppService
 from services.core.auth_service import AuthService
+from utils.user_settings import UserSettings
 from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
 
 from states.states import ViewState
@@ -261,6 +262,8 @@ class AppController(BaseController):
                 self.__view.set_cart_count(0)
                 self._page.update()
             return
+        if self._settings.CLIENT == "desktop":
+            UserSettings.save(user.theme, user.language.symbol)
         self.__apply_user_preferences(user)
         self._page.update()
 

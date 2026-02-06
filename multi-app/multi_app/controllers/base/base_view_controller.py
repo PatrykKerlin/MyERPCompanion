@@ -577,6 +577,8 @@ class BaseViewController(
                                 record_id=response.id,
                                 record_data=response.model_dump(),
                                 mode=ViewMode.READ,
+                                caller_view_key=View.CURRENT_USER,
+                                caller_data=self._request_data.caller_data,
                             )
                         )
                     self.__open_save_success_dialog(close_title)

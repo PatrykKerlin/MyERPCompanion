@@ -185,3 +185,5 @@ rest-api/rest_api/migrations/versions
 .ssh
 .vscode-server
 .bash_history
+.config
+.local
