@@ -126,6 +126,11 @@ class ToolbarToggleRequested(BaseEvent):
 
 
 @dataclass(frozen=True)
+class LogoutRequested(BaseEvent):
+    pass
+
+
+@dataclass(frozen=True)
 class TabsBarToggleRequested(BaseEvent):
     pass
 

@@ -8,6 +8,8 @@ VALUES
 ('login', 'Logowanie', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('log_in', 'Log in', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('log_in', 'Zaloguj', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('log_out', 'Log out', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('log_out', 'Wyloguj', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('cancel', 'Cancel', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('cancel', 'Anuluj', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('username', 'Username', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),

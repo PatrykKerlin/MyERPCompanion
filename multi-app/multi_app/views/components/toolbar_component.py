@@ -89,8 +89,14 @@ class ToolbarComponent(BaseComponent, ft.Container):
             disabled=True,
             on_click=lambda _: self._controller.on_current_user_clicked(),
         )
+        self.__logout_button = ft.IconButton(
+            icon=ft.Icons.LOGOUT,
+            tooltip=translation.get("log_out"),
+            disabled=True,
+            on_click=lambda _: self._controller.on_logout_clicked(),
+        )
         self.__user_row = ft.Row(
-            controls=[self.__user_label, self.__user_button],
+            controls=[self.__user_label, self.__user_button, self.__logout_button],
             alignment=ft.MainAxisAlignment.END,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
@@ -170,11 +176,14 @@ class ToolbarComponent(BaseComponent, ft.Container):
         if username:
             self.__user_label.value = username
             self.__user_button.disabled = False
+            self.__logout_button.disabled = False
         else:
             self.__user_label.value = ""
             self.__user_button.disabled = True
+            self.__logout_button.disabled = True
         self.__user_label.update()
         self.__user_button.update()
+        self.__logout_button.update()
 
     def did_mount(self):
         if self.__pending_username is not None:

@@ -28,7 +28,9 @@ from events.events import (
     CartUpdated,
     SideMenuRequested,
     FooterRequested,
+    LogoutRequested,
     TabsBarRequested,
+    TabCloseAllRequested,
     ToolbarRequested,
     ToolbarToggleRequested,
     TabsBarToggleRequested,
@@ -63,6 +65,7 @@ class AppController(BaseController):
             self.__view.set_nav_handlers(self.__open_create_order, self.__open_orders)
             self.__view.set_cart_handler(self.__open_cart)
             self.__view.set_user_settings_handler(self.__open_current_user_settings)
+            self.__view.set_logout_handler(self.__request_logout)
             self._page.on_connect = lambda event: self._page.run_task(self.__handle_web_reconnect, event)
         else:
             self.__view = DesktopAppView(self._state_store.app_state.translation.items, self._settings.THEME)
@@ -74,6 +77,7 @@ class AppController(BaseController):
                 TranslationFailed: self.__api_not_responding_handler,
                 UserAuthenticated: self.__user_authenticated_handler,
                 CallerActionRequested: self.__caller_action_handler,
+                LogoutRequested: self.__logout_requested_handler,
                 CartUpdated: self.__cart_updated_handler,
                 ApiStatusRequested: self.__api_status_handler,
                 AuthViewReady: self.__auth_view_ready_handler,
@@ -162,6 +166,21 @@ class AppController(BaseController):
         if isinstance(self.__view, WebAppView):
             self.__view.set_cart_count(event.count)
 
+    async def __logout_requested_handler(self, _: LogoutRequested) -> None:
+        if isinstance(self.__view, DesktopAppView):
+            await self._event_bus.publish(TabCloseAllRequested())
+            self.__view.set_shell_visible(False)
+            self.__reset_shell_state()
+        elif not isinstance(self.__view, WebAppView):
+            return
+        self._state_store.update(
+            view={"title": "", "mode": ViewMode.NONE, "view": None},
+            modules={"items": []},
+            user={"current": None},
+            tokens={"access": None, "refresh": None},
+        )
+        await self._event_bus.publish(AuthDialogRequested())
+
     async def __caller_action_handler(self, event: CallerActionRequested) -> None:
         if event.caller_view_key != View.CURRENT_USER:
             return
@@ -225,8 +244,10 @@ class AppController(BaseController):
         self._page.update()
 
     def __shell_updated_listener(self, state: ShellState) -> None:
-        if state.is_shell_ready:
-            self._page.update()
+        if isinstance(self.__view, DesktopAppView):
+            has_user = self._state_store.app_state.user.current is not None
+            self.__view.set_shell_visible(state.is_shell_ready and has_user)
+        self._page.update()
 
     def __view_updated_listener(self, state: ViewState) -> None:
         self.__view.set_stack_item(state.view)
@@ -235,6 +256,10 @@ class AppController(BaseController):
     def __user_updated_listener(self, state: UserState) -> None:
         user = state.current
         if not user:
+            if isinstance(self.__view, WebAppView):
+                self.__view.set_username(None)
+                self.__view.set_cart_count(0)
+                self._page.update()
             return
         self.__apply_user_preferences(user)
         self._page.update()
@@ -244,7 +269,21 @@ class AppController(BaseController):
         if isinstance(self.__view, WebAppView):
             self.__view.set_username(user.username)
 
+    def __reset_shell_state(self) -> None:
+        self._state_store.update(
+            shell={
+                "is_menu_bar_ready": False,
+                "is_toolbar_ready": False,
+                "is_side_menu_ready": False,
+                "is_footer_ready": False,
+                "is_tabs_bar_ready": False,
+            }
+        )
+
     async def __request_shell(self) -> None:
+        if isinstance(self.__view, DesktopAppView):
+            self.__view.set_shell_visible(False)
+        self.__reset_shell_state()
         await self._event_bus.publish(MenuBarRequested())
         await self._event_bus.publish(ToolbarRequested())
         await self._event_bus.publish(SideMenuRequested())
@@ -299,6 +338,9 @@ class AppController(BaseController):
         open_handler = getattr(view, "open_cart_dialog", None)
         if callable(open_handler):
             open_handler()
+
+    def __request_logout(self) -> None:
+        self._page.run_task(self._event_bus.publish, LogoutRequested())
 
     def __open_current_user_settings(self) -> None:
         if not isinstance(self.__view, WebAppView):

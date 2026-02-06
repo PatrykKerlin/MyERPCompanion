@@ -15,6 +15,7 @@ class AppView:
         self.__on_browse_orders: Callable[[], None] | None = None
         self.__on_cart: Callable[[], None] | None = None
         self.__on_user_settings: Callable[[], None] | None = None
+        self.__on_logout: Callable[[], None] | None = None
         self.__auth_container = ft.Container(visible=False, alignment=ft.Alignment.CENTER)
         self.__content_container = ft.Container(expand=True)
         self.__app_name = ft.Text(self.__translation.get("my_erp_companion"), weight=ft.FontWeight.BOLD, size=20)
@@ -35,6 +36,11 @@ class AppView:
             tooltip=self.__translation.get("cart"),
             on_click=lambda _: self.__handle_cart(),
         )
+        self.__logout_button = ft.IconButton(
+            icon=ft.Icons.LOGOUT,
+            tooltip=self.__translation.get("log_out"),
+            on_click=lambda _: self.__handle_logout(),
+        )
         self.__top_bar = ft.Container(
             visible=False,
             padding=ft.Padding.symmetric(horizontal=24, vertical=12),
@@ -45,7 +51,12 @@ class AppView:
                     self.__app_name_container,
                     ft.Row(
                         spacing=8,
-                        controls=[self.__cart_button, self.__cart_count_text, self.__username_clickable],
+                        controls=[
+                            self.__cart_button,
+                            self.__cart_count_text,
+                            self.__username_clickable,
+                            self.__logout_button,
+                        ],
                     ),
                 ],
             ),
@@ -97,6 +108,7 @@ class AppView:
         self.__translation = translation
         self.__app_name.value = self.__translation.get("my_erp_companion")
         self.__cart_button.tooltip = self.__translation.get("cart")
+        self.__logout_button.tooltip = self.__translation.get("log_out")
         self.__footer_app_name.value = self.__translation.get("my_erp_companion")
         self.__footer_portal.value = self.__translation.get("footer_web_portal")
         self.__footer_copy.value = self.__build_footer_copy()
@@ -128,9 +140,10 @@ class AppView:
     def set_username(self, username: str | None) -> None:
         if username:
             self.__username_text.value = username
+            self.__top_bar.visible = True
         else:
             self.__username_text.value = self.__translation.get("username")
-        self.__top_bar.visible = True
+            self.__top_bar.visible = False
         if self.__top_bar.page:
             self.__top_bar.update()
 
@@ -149,6 +162,9 @@ class AppView:
     def set_user_settings_handler(self, on_user_settings: Callable[[], None]) -> None:
         self.__on_user_settings = on_user_settings
 
+    def set_logout_handler(self, on_logout: Callable[[], None]) -> None:
+        self.__on_logout = on_logout
+
     def __handle_create_order(self) -> None:
         if self.__on_create_order:
             self.__on_create_order()
@@ -164,6 +180,10 @@ class AppView:
     def __handle_user_settings(self) -> None:
         if self.__on_user_settings:
             self.__on_user_settings()
+
+    def __handle_logout(self) -> None:
+        if self.__on_logout:
+            self.__on_logout()
 
     def _apply_page_settings(self, page: ft.Page) -> None:
         page.title = self.__translation.get("my_erp_companion")

@@ -17,6 +17,7 @@ class Translation:
             "no_items": "No items.",
             "no_status_history": "No status history.",
             "username": "User",
+            "log_out": "Log out",
             "customer": "Customer",
             "number": "Number",
             "invoice_number": "Invoice number",

@@ -48,6 +48,7 @@ class AppView:
             alignment=ft.MainAxisAlignment.START,
             horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
             expand=True,
+            visible=False,
         )
         self.__root = ft.Stack(
             controls=[self.__content, self.__auth_container],
@@ -85,6 +86,11 @@ class AppView:
     def set_auth_view(self, component: ft.Control | None) -> None:
         self.__auth_container.content = component
         self.__auth_container.visible = component is not None
+
+    def set_shell_visible(self, visible: bool) -> None:
+        self.__content.visible = visible
+        if self.__content.page:
+            self.__content.update()
 
     def set_theme(self, theme: str) -> None:
         self.__theme = theme

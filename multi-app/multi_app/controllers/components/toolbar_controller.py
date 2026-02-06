@@ -7,6 +7,7 @@ from states.states import ViewState
 from utils.enums import EditDisabledView, Module, View, ViewMode
 from views.components.toolbar_component import ToolbarComponent
 from events.events import (
+    LogoutRequested,
     RecordDeleteRequested,
     TabNavigateRequested,
     TabCloseAllRequested,
@@ -153,6 +154,9 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
                 caller_view_key=View.CURRENT_USER,
             ),
         )
+
+    def on_logout_clicked(self) -> None:
+        self._page.run_task(self._event_bus.publish, LogoutRequested())
 
     def __user_updated_listener(self, state) -> None:
         if not self._component:
