@@ -5,7 +5,7 @@ import flet as ft
 from config.settings import Settings
 from controllers import components, core
 from controllers.base.base_controller import BaseController
-from controllers.business import hr, logistic, trade
+from controllers.business import hr, logistic, reporting, trade
 from events.event_bus import EventBus
 from events.events import AppStarted
 from states.state_store import StateStore
@@ -32,6 +32,10 @@ class App:
             level=logging.INFO,
             format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
         )
+        logging.getLogger("matplotlib").setLevel(logging.WARNING)
+        logging.getLogger("matplotlib.font_manager").setLevel(logging.WARNING)
+        logging.getLogger("matplotlib.category").setLevel(logging.WARNING)
+        logging.getLogger("seaborn").setLevel(logging.WARNING)
 
         preferred_theme, preferred_language = UserSettings.load()
         settings_kwargs: dict[str, str] = {"CLIENT": "desktop"}
@@ -114,7 +118,12 @@ class App:
             trade.StockReceivingController(self.__context),
             trade.SupplierController(self.__context),
         ]
-        self.__controllers = core_controllers + hr_controllers + logistic_controllers + trade_controllers
+        reporting_controllers = [
+            reporting.SalesReportController(self.__context),
+        ]
+        self.__controllers = (
+            core_controllers + hr_controllers + logistic_controllers + trade_controllers + reporting_controllers
+        )
         page.window.on_event = self.__on_window_event
         page.render(lambda: app_controller.build_root())
         self.__event_bus.start()

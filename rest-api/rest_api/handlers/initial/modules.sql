@@ -8,4 +8,5 @@ VALUES
 ('logistic', 'Logistic module', TRUE, 3, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('sales', 'Sales module', TRUE, 4, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('purchase', 'Sales module', TRUE, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('accounting', 'Accounting module', TRUE, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id);
+('accounting', 'Accounting module', TRUE, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('reporting', 'Reporting module', TRUE, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id);

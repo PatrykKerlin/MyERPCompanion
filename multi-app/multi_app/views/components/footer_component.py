@@ -51,7 +51,7 @@ class FooterComponent(BaseComponent, ft.Container):
 
     def set_time(self, value: str) -> None:
         self.__timestamp.value = value
-        self.__timestamp.update()
+        self.__safe_update(self.__timestamp)
 
     def set_status(self, success: bool) -> None:
         if success:
@@ -60,5 +60,16 @@ class FooterComponent(BaseComponent, ft.Container):
         else:
             self.__status_message.value = self.__error_message
             self.__status_icon.icon = self.__error_icon
-        self.__status_message.update()
-        self.__status_icon.update()
+        self.__safe_update(self.__status_message)
+        self.__safe_update(self.__status_icon)
+
+    @staticmethod
+    def __safe_update(control: ft.Control) -> None:
+        try:
+            _ = control.page
+        except RuntimeError:
+            return
+        try:
+            control.update()
+        except RuntimeError:
+            return

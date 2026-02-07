@@ -1,4 +1,6 @@
 flet[all]
+matplotlib
+seaborn
 pydantic
 pydantic-settings
 pydantic[email]

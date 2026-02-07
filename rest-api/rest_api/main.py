@@ -12,7 +12,7 @@ from database.engine import Engine
 from config.settings import Settings
 from controllers import core
 import models.ai  # noqa: F401
-from controllers.business import hr, logistic, trade
+from controllers.business import hr, logistic, reporting, trade
 from handlers.check_database_state import CheckDatabaseState
 from handlers.populate_database import PopulateDatabase
 from middlewares.db_session_middleware import DbSessionMiddleware
@@ -112,11 +112,15 @@ class App:
             {"router": trade.SupplierController(self.__context, self.__auth).router, "prefix": "/suppliers"},
             {"router": trade.OrderController(self.__context, self.__auth).router, "prefix": "/orders"},
         ]
+        business_reporting_endpoints = [
+            {"router": reporting.SalesReportController(self.__context, self.__auth).router, "prefix": "/reports/sales"},
+        ]
 
         endpoints.extend(core_endpoints)
         endpoints.extend(business_hr_endpoints)
         endpoints.extend(business_logistic_endpoints)
         endpoints.extend(business_trade_endpoints)
+        endpoints.extend(business_reporting_endpoints)
 
         for endpoint in endpoints:
             api_router.include_router(**endpoint)
@@ -143,8 +147,8 @@ def create_app() -> FastAPI:
     auth = Auth(context)
 
     def load_all_models() -> None:
-        for models in ("models.business.hr", "models.business.logistic", "models.business.trade", "models.core"):
-            importlib.import_module(models)
+        for model_path in ("models.business.hr", "models.business.logistic", "models.business.trade", "models.core"):
+            importlib.import_module(model_path)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
