@@ -9,6 +9,7 @@ import flet as ft
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import seaborn as sns
+from matplotlib.ticker import FuncFormatter
 
 from config.context import Context
 from controllers.base.base_controller import BaseController
@@ -16,24 +17,29 @@ from controllers.base.base_view_controller import BaseViewController
 from events.events import ViewRequested
 from schemas.business.logistic.category_schema import CategoryPlainSchema
 from schemas.business.logistic.item_schema import ItemPlainSchema
-from schemas.business.reporting.sales_report_schema import (
-    SalesReportFilterSchema,
-    SalesReportResponseSchema,
-    SalesReportRowSchema,
-    SalesReportTotalsSchema,
+from schemas.business.reporting.sales_forecast_report_schema import (
+    SalesForecastReportFilterSchema,
+    SalesForecastReportResponseSchema,
+    SalesForecastReportRowSchema,
+    SalesForecastReportTotalsSchema,
 )
 from schemas.business.trade.currency_schema import CurrencyPlainSchema
 from schemas.business.trade.customer_schema import CustomerPlainSchema
 from services.business.logistic import CategoryService, ItemService
-from services.business.reporting import SalesReportService
+from services.business.reporting import SalesForecastReportService
 from services.business.trade import CurrencyService, CustomerService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
-from views.business.reporting.sales_report_view import SalesReportView
+from views.business.reporting.sales_forecast_report_view import SalesForecastReportView
 
 
-class SalesReportController(
-    BaseViewController[SalesReportService, SalesReportView, SalesReportRowSchema, SalesReportFilterSchema]
+class SalesForecastReportController(
+    BaseViewController[
+        SalesForecastReportService,
+        SalesForecastReportView,
+        SalesForecastReportRowSchema,
+        SalesForecastReportFilterSchema,
+    ]
 ):
     plt.switch_backend("Agg")
     __view_chart_size = (8.0, 4.5)
@@ -41,12 +47,12 @@ class SalesReportController(
     __dialog_chart_size = (12.0, 6.75)
     __dialog_chart_dpi = 200
 
-    _plain_schema_cls = SalesReportRowSchema
-    _strict_schema_cls = SalesReportFilterSchema
-    _service_cls = SalesReportService
-    _view_cls = SalesReportView
-    _endpoint = Endpoint.SALES_REPORT
-    _view_key = View.SALES_REPORT
+    _plain_schema_cls = SalesForecastReportRowSchema
+    _strict_schema_cls = SalesForecastReportFilterSchema
+    _service_cls = SalesForecastReportService
+    _view_cls = SalesForecastReportView
+    _endpoint = Endpoint.SALES_FORECAST_REPORT
+    _view_key = View.SALES_FORECAST_REPORT
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
@@ -61,8 +67,15 @@ class SalesReportController(
         self.__customer_id: int | None = None
         self.__item_id: int | None = None
         self.__category_id: int | None = None
+        self.__discount_from: float | None = None
+        self.__discount_to: float | None = None
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> SalesReportView:
+    async def _build_view(
+        self,
+        translation: Translation,
+        mode: ViewMode,
+        event: ViewRequested,
+    ) -> SalesForecastReportView:
         mode = ViewMode.STATIC
         currencies, customers, items, categories, response = await asyncio.gather(
             self.__perform_get_currencies(),
@@ -75,12 +88,12 @@ class SalesReportController(
         customer_options = self.__to_customer_options(customers or [])
         item_options = self.__to_item_options(items or [])
         category_options = self.__to_category_options(categories or [])
-        totals = self.__to_totals(response.totals, show_amounts=self.__currency_id is not None)
-        category_chart = self.__build_category_chart(response.items, for_dialog=False)
-        daily_chart = self.__build_daily_chart(response.items, for_dialog=False)
-        category_chart_dialog = self.__build_category_chart(response.items, for_dialog=True)
-        daily_chart_dialog = self.__build_daily_chart(response.items, for_dialog=True)
-        return SalesReportView(
+        totals = self.__to_totals(response.totals)
+        net_monthly_chart = self.__build_monthly_net_chart(response.items, for_dialog=False)
+        gross_monthly_chart = self.__build_monthly_gross_chart(response.items, for_dialog=False)
+        net_monthly_chart_dialog = self.__build_monthly_net_chart(response.items, for_dialog=True)
+        gross_monthly_chart_dialog = self.__build_monthly_gross_chart(response.items, for_dialog=True)
+        return SalesForecastReportView(
             controller=self,
             translation=translation,
             mode=mode,
@@ -92,14 +105,17 @@ class SalesReportController(
             customer_options=customer_options,
             item_options=item_options,
             category_options=category_options,
+            discount_options=self.__to_discount_options(response.totals.discount_steps),
             currency_id=self.__currency_id,
             customer_id=self.__customer_id,
             item_id=self.__item_id,
             category_id=self.__category_id,
-            category_chart=category_chart,
-            daily_chart=daily_chart,
-            category_chart_dialog=category_chart_dialog,
-            daily_chart_dialog=daily_chart_dialog,
+            discount_from_key=self.__to_discount_key(self.__discount_from),
+            discount_to_key=self.__to_discount_key(self.__discount_to),
+            net_monthly_chart=net_monthly_chart,
+            gross_monthly_chart=gross_monthly_chart,
+            net_monthly_chart_dialog=net_monthly_chart_dialog,
+            gross_monthly_chart_dialog=gross_monthly_chart_dialog,
         )
 
     def on_apply_filters_clicked(
@@ -110,6 +126,8 @@ class SalesReportController(
         customer_id: str | None,
         item_id: str | None,
         category_id: str | None,
+        discount_from: str | None,
+        discount_to: str | None,
     ) -> None:
         self._page.run_task(
             self.__handle_apply_filters,
@@ -119,6 +137,8 @@ class SalesReportController(
             customer_id,
             item_id,
             category_id,
+            discount_from,
+            discount_to,
         )
 
     def on_clear_filters_clicked(self) -> None:
@@ -132,6 +152,8 @@ class SalesReportController(
         customer_id: str | None,
         item_id: str | None,
         category_id: str | None,
+        discount_from: str | None,
+        discount_to: str | None,
     ) -> None:
         if date_from and date_to and date_from > date_to:
             self._open_error_dialog(message=self.__t("date_range_invalid"))
@@ -141,8 +163,13 @@ class SalesReportController(
             parsed_customer_id = self.__parse_optional_positive_int(customer_id, "customer")
             parsed_item_id = self.__parse_optional_positive_int(item_id, "item")
             parsed_category_id = self.__parse_optional_positive_int(category_id, "category")
+            parsed_discount_from = self.__parse_optional_discount(discount_from)
+            parsed_discount_to = self.__parse_optional_discount(discount_to)
         except ValueError as error:
             self._open_error_dialog(message=str(error))
+            return
+        if parsed_discount_from is not None and parsed_discount_to is not None and parsed_discount_from > parsed_discount_to:
+            self._open_error_dialog(message=self.__t("discount_range_invalid"))
             return
         self.__date_from = date_from
         self.__date_to = date_to
@@ -150,6 +177,8 @@ class SalesReportController(
         self.__customer_id = parsed_customer_id
         self.__item_id = parsed_item_id
         self.__category_id = parsed_category_id
+        self.__discount_from = parsed_discount_from
+        self.__discount_to = parsed_discount_to
         await self.__refresh_view()
 
     async def __handle_clear_filters(self) -> None:
@@ -159,6 +188,8 @@ class SalesReportController(
         self.__customer_id = None
         self.__item_id = None
         self.__category_id = None
+        self.__discount_from = None
+        self.__discount_to = None
         if self._view:
             self._view.reset_filters()
         await self.__refresh_view()
@@ -169,17 +200,17 @@ class SalesReportController(
         response = await self.__perform_get_report()
         if response is None:
             return
-        totals = self.__to_totals(response.totals, show_amounts=self.__currency_id is not None)
-        category_chart = self.__build_category_chart(response.items, for_dialog=False)
-        daily_chart = self.__build_daily_chart(response.items, for_dialog=False)
-        category_chart_dialog = self.__build_category_chart(response.items, for_dialog=True)
-        daily_chart_dialog = self.__build_daily_chart(response.items, for_dialog=True)
+        totals = self.__to_totals(response.totals)
+        net_monthly_chart = self.__build_monthly_net_chart(response.items, for_dialog=False)
+        gross_monthly_chart = self.__build_monthly_gross_chart(response.items, for_dialog=False)
+        net_monthly_chart_dialog = self.__build_monthly_net_chart(response.items, for_dialog=True)
+        gross_monthly_chart_dialog = self.__build_monthly_gross_chart(response.items, for_dialog=True)
         self._view.set_report_data(
             totals=totals,
-            category_chart=category_chart,
-            daily_chart=daily_chart,
-            category_chart_dialog=category_chart_dialog,
-            daily_chart_dialog=daily_chart_dialog,
+            net_monthly_chart=net_monthly_chart,
+            gross_monthly_chart=gross_monthly_chart,
+            net_monthly_chart_dialog=net_monthly_chart_dialog,
+            gross_monthly_chart_dialog=gross_monthly_chart_dialog,
         )
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
@@ -199,8 +230,8 @@ class SalesReportController(
         return await self.__category_service.get_all(Endpoint.CATEGORIES, None, None, None, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_get_report(self) -> SalesReportResponseSchema:
-        params: dict[str, str | int] = {}
+    async def __perform_get_report(self) -> SalesForecastReportResponseSchema:
+        params: dict[str, str | int | float] = {}
         if self.__date_from is not None:
             params["date_from"] = self.__date_from.isoformat()
         if self.__date_to is not None:
@@ -213,7 +244,11 @@ class SalesReportController(
             params["item_id"] = self.__item_id
         if self.__category_id is not None:
             params["category_id"] = self.__category_id
-        return await self._service.get_report(Endpoint.SALES_REPORT, None, params, None, self._module_id)
+        if self.__discount_from is not None:
+            params["discount_from"] = self.__discount_from
+        if self.__discount_to is not None:
+            params["discount_to"] = self.__discount_to
+        return await self._service.get_report(Endpoint.SALES_FORECAST_REPORT, None, params, None, self._module_id)
 
     def __parse_optional_positive_int(self, value: str | None, label_key: str) -> int | None:
         if value is None:
@@ -232,6 +267,24 @@ class SalesReportController(
 
     def __t(self, key: str) -> str:
         return self._state_store.app_state.translation.items.get(key)
+
+    def __parse_optional_discount(self, value: str | None) -> float | None:
+        if value is None:
+            return None
+        stripped = value.strip().replace(",", ".")
+        if stripped in {"", "0"}:
+            return None
+        try:
+            parsed_value = float(stripped)
+        except ValueError as error:
+            raise ValueError(self.__t("discount_percent_invalid")) from error
+        if parsed_value < 0:
+            raise ValueError(self.__t("discount_percent_invalid"))
+        if parsed_value > 100:
+            raise ValueError(self.__t("discount_percent_invalid"))
+        if parsed_value > 1:
+            return parsed_value / 100.0
+        return parsed_value
 
     @staticmethod
     def __to_customer_options(customers: list[CustomerPlainSchema]) -> list[tuple[int, str]]:
@@ -254,76 +307,58 @@ class SalesReportController(
         return sorted(options, key=lambda option: option[1].lower())
 
     @staticmethod
-    def __to_totals(totals: SalesReportTotalsSchema, show_amounts: bool) -> dict[str, str]:
-        total_net = f"{totals.total_net:.2f}" if show_amounts else ""
-        total_vat = f"{totals.total_vat:.2f}" if show_amounts else ""
-        total_gross = f"{totals.total_gross:.2f}" if show_amounts else ""
-        total_discount = f"{totals.total_discount:.2f}" if show_amounts else ""
+    def __to_totals(totals: SalesForecastReportTotalsSchema) -> dict[str, str]:
         return {
-            "orders_count": str(totals.orders_count),
             "rows_count": str(totals.rows_count),
-            "quantity": str(totals.quantity),
-            "total_net": total_net,
-            "total_vat": total_vat,
-            "total_gross": total_gross,
-            "total_discount": total_discount,
+            "periods_count": str(totals.periods_count),
+            "total_predicted_net": f"{totals.total_predicted_net:.2f}",
+            "total_predicted_gross": f"{totals.total_predicted_gross:.2f}",
         }
 
-    def __build_category_chart(self, rows: list[SalesReportRowSchema], for_dialog: bool) -> bytes | None:
-        if not rows:
-            return None
-        category_sums: dict[str, float] = defaultdict(float)
-        for row in rows:
-            category_sums[row.category_name] += row.total_gross
-        if not category_sums:
-            return None
-        sorted_data = sorted(category_sums.items(), key=lambda item: item[1], reverse=True)[:8]
-        labels = [item[0] for item in sorted_data]
-        values = [item[1] for item in sorted_data]
-        return self.__build_bar_chart(
-            labels=labels,
-            values=values,
-            title=self.__t("gross_by_category"),
-            for_dialog=for_dialog,
-        )
+    @staticmethod
+    def __to_discount_options(discount_steps: list[float]) -> list[tuple[str, str]]:
+        unique_steps = sorted(set(float(step) for step in discount_steps))
+        return [(SalesForecastReportController.__to_discount_key(step), f"{step * 100:.0f}%") for step in unique_steps]
 
-    def __build_daily_chart(self, rows: list[SalesReportRowSchema], for_dialog: bool) -> bytes | None:
+    @staticmethod
+    def __to_discount_key(discount: float | None) -> str:
+        if discount is None:
+            return "0"
+        return f"{discount:.4f}"
+
+    def __build_monthly_net_chart(self, rows: list[SalesForecastReportRowSchema], for_dialog: bool) -> bytes | None:
         if not rows:
             return None
-        date_sums: dict[date, float] = defaultdict(float)
+        monthly_sums: dict[date, float] = defaultdict(float)
         for row in rows:
-            date_sums[row.order_date] += row.total_gross
-        if not date_sums:
+            monthly_sums[row.predicted_at] += row.predicted_net
+        if not monthly_sums:
             return None
-        sorted_dates = sorted(date_sums.keys())
-        values = [date_sums[item] for item in sorted_dates]
+        sorted_dates = sorted(monthly_sums.keys())
+        values = [monthly_sums[item] for item in sorted_dates]
         return self.__build_line_chart(
             date_values=sorted_dates,
             values=values,
-            title=self.__t("gross_by_day"),
+            title=self.__t("predicted_net_by_month"),
             for_dialog=for_dialog,
         )
 
-    def __build_bar_chart(self, labels: list[str], values: list[float], title: str, for_dialog: bool) -> bytes | None:
-        theme_style = self.__get_chart_theme()
-        chart_size, chart_dpi = self.__get_chart_render_settings(for_dialog)
-        figure = None
-        try:
-            sns.set_theme(style=theme_style)
-            figure, axis = plt.subplots(figsize=chart_size)
-            sns.barplot(x=labels, y=values, ax=axis)
-            axis.set_title(title)
-            axis.set_xlabel("")
-            axis.set_ylabel("")
-            axis.tick_params(axis="x", rotation=30)
-            axis.grid(axis="y", alpha=0.35)
-            figure.tight_layout()
-            buffer = BytesIO()
-            figure.savefig(buffer, format="png", dpi=chart_dpi)
-            return buffer.getvalue()
-        finally:
-            if figure is not None:
-                plt.close(figure)
+    def __build_monthly_gross_chart(self, rows: list[SalesForecastReportRowSchema], for_dialog: bool) -> bytes | None:
+        if not rows:
+            return None
+        monthly_sums: dict[date, float] = defaultdict(float)
+        for row in rows:
+            monthly_sums[row.predicted_at] += row.predicted_gross
+        if not monthly_sums:
+            return None
+        sorted_dates = sorted(monthly_sums.keys())
+        values = [monthly_sums[item] for item in sorted_dates]
+        return self.__build_line_chart(
+            date_values=sorted_dates,
+            values=values,
+            title=self.__t("predicted_gross_by_month"),
+            for_dialog=for_dialog,
+        )
 
     def __build_line_chart(
         self,
@@ -349,6 +384,8 @@ class SalesReportController(
             axis.set_xlabel("")
             axis.set_ylabel("")
             axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+            axis.ticklabel_format(axis="y", style="plain", useOffset=False)
+            axis.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.2f}"))
             axis.tick_params(axis="x", rotation=30)
             axis.grid(axis="y", alpha=0.35)
             figure.tight_layout()
@@ -362,8 +399,8 @@ class SalesReportController(
     @staticmethod
     def __get_chart_render_settings(for_dialog: bool) -> tuple[tuple[float, float], int]:
         if for_dialog:
-            return SalesReportController.__dialog_chart_size, SalesReportController.__dialog_chart_dpi
-        return SalesReportController.__view_chart_size, SalesReportController.__view_chart_dpi
+            return SalesForecastReportController.__dialog_chart_size, SalesForecastReportController.__dialog_chart_dpi
+        return SalesForecastReportController.__view_chart_size, SalesForecastReportController.__view_chart_dpi
 
     def __get_chart_theme(self) -> str:
         if self.__is_dark_theme():

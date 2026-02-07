@@ -114,6 +114,10 @@ class App:
         ]
         business_reporting_endpoints = [
             {"router": reporting.SalesReportController(self.__context, self.__auth).router, "prefix": "/reports/sales"},
+            {
+                "router": reporting.SalesForecastReportController(self.__context, self.__auth).router,
+                "prefix": "/reports/sales-forecast",
+            },
         ]
 
         endpoints.extend(core_endpoints)

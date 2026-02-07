@@ -40,4 +40,5 @@ VALUES
 ('TranslationController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('UserController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('ViewController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('SalesReportController', TRUE, CURRENT_TIMESTAMP, :superuser_id);
+('SalesReportController', TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('SalesForecastReportController', TRUE, CURRENT_TIMESTAMP, :superuser_id);

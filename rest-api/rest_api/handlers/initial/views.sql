@@ -31,4 +31,5 @@ VALUES
 ('invoices', 'Invoices view', 2, 9, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('users_core', 'Users core view', 3, 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('web_sales_orders', 'Sales orders view', 1, 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('sales_report', 'Sales report view', 1, 10, TRUE, CURRENT_TIMESTAMP, :superuser_id)
+('sales_report', 'Sales report view', 1, 10, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('sales_forecast_report', 'Sales forecast report view', 2, 10, TRUE, CURRENT_TIMESTAMP, :superuser_id)

@@ -30,13 +30,7 @@ item_counts AS (
                 floor(
                     1
                     + random() * 4
-                    + CASE EXTRACT(MONTH FROM order_date)
-                        WHEN 11 THEN 1.2
-                        WHEN 12 THEN 1.8
-                        WHEN 6 THEN 0.8
-                        ELSE 0.0
-                    END
-                    + CASE WHEN customer_id <= 10 THEN 0.9 ELSE 0.0 END
+                    + CASE WHEN customer_id <= 10 THEN 0.9 ELSE 0.2 END
                     + CASE currency_id
                         WHEN 2 THEN 0.3
                         WHEN 3 THEN 0.6
@@ -97,23 +91,6 @@ item_pricing AS (
                 floor(
                     0.5
                     + (1 + (item_id % 6)) * 0.85
-                    + CASE EXTRACT(MONTH FROM order_date)
-                        WHEN 1 THEN 0.3
-                        WHEN 2 THEN 0.2
-                        WHEN 5 THEN 0.8
-                        WHEN 6 THEN 1.1
-                        WHEN 9 THEN 0.7
-                        WHEN 10 THEN 0.9
-                        WHEN 11 THEN 1.4
-                        WHEN 12 THEN 1.8
-                        ELSE 0.4
-                    END
-                    + CASE EXTRACT(DOW FROM order_date)
-                        WHEN 0 THEN 0.2
-                        WHEN 5 THEN 0.7
-                        WHEN 6 THEN 1.0
-                        ELSE 0.4
-                    END
                     + customer_weight * 1.2
                     + CASE currency_id
                         WHEN 2 THEN 0.6

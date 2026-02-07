@@ -31,7 +31,8 @@ class SalesPredictionRepository:
                 Order.customer_id.label("customer_id"),
                 Item.category_id.label("category_id"),
                 Order.currency_id.label("currency_id"),
-                func.sum(AssocOrderItem.quantity).label("quantity"),
+                func.sum(AssocOrderItem.total_net).label("total_net"),
+                func.sum(AssocOrderItem.total_gross).label("total_gross"),
                 discount_ratio.label("discount_ratio"),
             )
             .join(AssocOrderItem, AssocOrderItem.order_id == Order.id)
@@ -67,7 +68,8 @@ class SalesPredictionRepository:
                 "customer_id": int(row.customer_id),
                 "category_id": int(row.category_id),
                 "currency_id": int(row.currency_id),
-                "quantity": float(row.quantity or 0.0),
+                "total_net": float(row.total_net or 0.0),
+                "total_gross": float(row.total_gross or 0.0),
                 "discount_ratio": float(row.discount_ratio or 0.0),
             }
             for row in rows

@@ -120,6 +120,7 @@ class App:
         ]
         reporting_controllers = [
             reporting.SalesReportController(self.__context),
+            reporting.SalesForecastReportController(self.__context),
         ]
         self.__controllers = (
             core_controllers + hr_controllers + logistic_controllers + trade_controllers + reporting_controllers

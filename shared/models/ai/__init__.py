@@ -1,7 +1,7 @@
-from models.ai.ai_task_result import AiTaskResult
 from models.ai.ai_task_run import AiTaskRun
+from models.ai.sales_forecast import SalesForecast
 
 __all__ = [
-    "AiTaskResult",
     "AiTaskRun",
+    "SalesForecast",
 ]

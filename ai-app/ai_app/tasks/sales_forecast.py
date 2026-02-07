@@ -5,7 +5,7 @@ import logging
 from ml.sales_forecast_trainer import SalesForecastTrainer
 from services.data_window_service import DataWindow
 from services.sales_forecast_service import SalesForecastService
-from tasks.base import TaskBase
+from tasks.base.base import TaskBase
 
 logger = logging.getLogger("ai")
 
@@ -31,17 +31,34 @@ class SalesForecastTask(TaskBase):
             logger.info(f"Task={self.key} skipped: training data not available")
             return
 
-        x_train, y_train, x_predict, prediction_points = training_data
+        (
+            categorical_train,
+            numerical_train,
+            y_train,
+            categorical_predict,
+            numerical_predict,
+            prediction_points,
+            item_vocab_size,
+            customer_vocab_size,
+            category_vocab_size,
+            currency_vocab_size,
+        ) = training_data
         logger.info(
             f"Task={self.key} training started (train_rows={int(y_train.shape[0])}, "
             f"prediction_points={len(prediction_points)})"
         )
-        model = self._trainer.train(x_train, y_train)
-        forecast = self._trainer.predict(model, x_predict)
+        model = self._trainer.train(
+            categorical_train,
+            numerical_train,
+            y_train,
+            item_vocab_size=item_vocab_size,
+            customer_vocab_size=customer_vocab_size,
+            category_vocab_size=category_vocab_size,
+            currency_vocab_size=currency_vocab_size,
+        )
+        forecast = self._trainer.predict(model, categorical_predict, numerical_predict)
         await self._service.save_forecast_results(
-            task_key=self.key,
             run_id=run_id,
-            window_end=window.end,
             y_train=y_train,
             prediction_points=prediction_points,
             forecast=forecast,

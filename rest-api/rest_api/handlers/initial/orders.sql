@@ -27,29 +27,7 @@ counts_sales AS (
         order_date,
         GREATEST(
             0,
-            floor(
-                random() * 12
-                * CASE EXTRACT(MONTH FROM order_date)
-                    WHEN 1 THEN 0.9
-                    WHEN 2 THEN 0.85
-                    WHEN 3 THEN 0.95
-                    WHEN 4 THEN 1.05
-                    WHEN 5 THEN 1.15
-                    WHEN 6 THEN 1.25
-                    WHEN 7 THEN 0.9
-                    WHEN 8 THEN 0.85
-                    WHEN 9 THEN 1.05
-                    WHEN 10 THEN 1.25
-                    WHEN 11 THEN 1.6
-                    WHEN 12 THEN 1.9
-                    ELSE 1.0
-                END
-                * CASE EXTRACT(DOW FROM order_date)
-                    WHEN 0 THEN 0.6
-                    WHEN 6 THEN 0.7
-                    ELSE 1.0
-                END
-            )
+            floor(5 + random() * 6)
         )::int AS orders_count
     FROM days
 ),
