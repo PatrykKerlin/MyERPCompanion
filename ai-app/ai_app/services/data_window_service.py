@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date
+from datetime import timedelta
 
-from ai_app.repositories.order_repository import OrderRepository
-from ai_app.repositories.task_run_repository import TaskRunRepository
+from repositories.order_repository import OrderRepository
+from repositories.task_run_repository import TaskRunRepository
 
 logger = logging.getLogger("ai")
 
@@ -25,16 +26,16 @@ class DataWindowService:
         _, last_end = await self._runs.get_last_successful_range(task_key)
         if last_end is None:
             start = await self._orders.get_min_order_date()
-            logger.info("Task=%s has no successful history, min start=%s", task_key, start)
+            logger.info(f"Task={task_key} has no successful history, min start={start}")
         else:
             start = last_end + timedelta(days=1)
-            logger.info("Task=%s last successful end=%s, next start=%s", task_key, last_end, start)
+            logger.info(f"Task={task_key} last successful end={last_end}, next start={start}")
         if start is None:
-            logger.info("Task=%s no orders found, cannot build data window", task_key)
+            logger.info(f"Task={task_key} no orders found, cannot build data window")
             return None
         end = await self._orders.get_max_order_date(start)
         if end is None:
-            logger.info("Task=%s no new orders for start=%s", task_key, start)
+            logger.info(f"Task={task_key} no new orders for start={start}")
             return None
-        logger.info("Task=%s data window resolved to [%s, %s]", task_key, start, end)
+        logger.info(f"Task={task_key} data window resolved to [{start}, {end}]")
         return DataWindow(start=start, end=end)

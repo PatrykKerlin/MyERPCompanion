@@ -6,17 +6,17 @@ from datetime import UTC, datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from ai_app.config.settings import Settings
+from config.settings import Settings
 from database.engine import Engine
-from ai_app.repositories.order_repository import OrderRepository
-from ai_app.repositories.sales_prediction_repository import SalesPredictionRepository
-from ai_app.repositories.task_result_repository import TaskResultRepository
-from ai_app.repositories.task_run_repository import TaskRunRepository
-from ai_app.services.data_window_service import DataWindowService
-from ai_app.services.sales_forecast_service import SalesForecastService
-from ai_app.services.sales_prediction_service import SalesPredictionService
-from ai_app.tasks.sales_forecast import SalesForecastTask
-from ai_app.use_cases.sales_forecast_use_case import SalesForecastUseCase
+from ml.sales_forecast_trainer import SalesForecastTrainer
+from repositories.order_repository import OrderRepository
+from repositories.sales_prediction_repository import SalesPredictionRepository
+from repositories.task_result_repository import TaskResultRepository
+from repositories.task_run_repository import TaskRunRepository
+from services.data_window_service import DataWindowService
+from services.sales_forecast_service import SalesForecastService
+from tasks.base import TaskBase
+from tasks.sales_forecast import SalesForecastTask
 
 logger = logging.getLogger("ai")
 
@@ -30,31 +30,23 @@ def load_all_models() -> None:
 class TaskOrchestrator:
     def __init__(
         self,
-        engine: Engine,
         data_window: DataWindowService,
         runs: TaskRunRepository,
-        sales_forecast_use_case: SalesForecastUseCase,
+        tasks: list[TaskBase],
     ) -> None:
         self._data_window = data_window
         self._runs = runs
-        self._tasks = [
-            SalesForecastTask(engine, sales_forecast_use_case),
-        ]
+        self._tasks = tasks
 
     async def run_daily(self) -> None:
         logger.info("Starting run_daily cycle")
         for task in self._tasks:
-            logger.info("Resolving data window for task=%s", task.key)
+            logger.info(f"Resolving data window for task={task.key}")
             window = await self._data_window.resolve(task.key)
             if not window:
-                logger.info("Skipping task=%s, no data window", task.key)
+                logger.info(f"Skipping task={task.key}, no data window")
                 continue
-            logger.info(
-                "Task=%s window resolved: start=%s end=%s",
-                task.key,
-                window.start,
-                window.end,
-            )
+            logger.info(f"Task={task.key} window resolved: start={window.start} end={window.end}")
             started_at = datetime.now(UTC)
             run_id = await self._runs.create_run(
                 task_key=task.key,
@@ -63,13 +55,13 @@ class TaskOrchestrator:
                 data_range_end=window.end,
             )
             try:
-                logger.info("Task=%s run started, run_id=%s", task.key, run_id)
+                logger.info(f"Task={task.key} run started, run_id={run_id}")
                 await task.run(window, run_id)
                 await self._runs.finish_run(run_id, "success", datetime.now(UTC))
-                logger.info("Task=%s run finished successfully, run_id=%s", task.key, run_id)
+                logger.info(f"Task={task.key} run finished successfully, run_id={run_id}")
             except Exception:
                 await self._runs.finish_run(run_id, "failed", datetime.now(UTC))
-                logger.exception("Task=%s run failed, run_id=%s", task.key, run_id)
+                logger.exception(f"Task={task.key} run failed, run_id={run_id}")
                 raise
         logger.info("Finished run_daily cycle")
 
@@ -82,20 +74,24 @@ class AiApp:
         self._results = TaskResultRepository(self._engine)
         self._sales_prediction_data = SalesPredictionRepository(self._engine)
         self._runs = TaskRunRepository(self._engine)
-        self._sales_prediction_service = SalesPredictionService(self._sales_prediction_data)
         self._sales_forecast_service = SalesForecastService(
             self._results,
-            self._sales_prediction_service,
+            self._sales_prediction_data,
             horizon_months=self._settings.FORECAST_HORIZON_MONTHS,
             prediction_discount_rates=self._settings.FORECAST_DISCOUNT_SCENARIOS,
         )
-        self._sales_forecast_use_case = SalesForecastUseCase(self._sales_forecast_service)
+        self._sales_forecast_trainer = SalesForecastTrainer()
+        self._tasks = [
+            SalesForecastTask(
+                service=self._sales_forecast_service,
+                trainer=self._sales_forecast_trainer,
+            )
+        ]
         self._windows = DataWindowService(self._orders, self._runs)
         self._orchestrator = TaskOrchestrator(
-            self._engine,
             self._windows,
             self._runs,
-            self._sales_forecast_use_case,
+            self._tasks,
         )
 
     async def run_daily(self) -> None:
@@ -115,10 +111,9 @@ class AiApp:
         )
         scheduler.start()
         logger.info(
-            "Scheduler started: next daily run at %02d:%02d (%s)",
-            self._settings.TRAIN_HOUR_UTC,
-            self._settings.TRAIN_MINUTE_UTC,
-            self._settings.TIMEZONE,
+            f"Scheduler started: next daily run at "
+            f"{self._settings.TRAIN_HOUR_UTC:02d}:{self._settings.TRAIN_MINUTE_UTC:02d} "
+            f"({self._settings.TIMEZONE})"
         )
         try:
             await asyncio.Event().wait()

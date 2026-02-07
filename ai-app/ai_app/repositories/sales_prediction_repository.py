@@ -42,8 +42,11 @@ class SalesPredictionRepository:
                 Order.order_date <= end_date,
                 Order.is_active.is_(True),
                 Order.invoice_id.is_not(None),
+                Order.customer_id.is_not(None),
+                Order.currency_id.is_not(None),
                 AssocOrderItem.is_active.is_(True),
                 Item.is_active.is_(True),
+                Item.category_id.is_not(None),
             )
             .group_by(
                 period_start,
@@ -60,10 +63,10 @@ class SalesPredictionRepository:
         return [
             {
                 "period_start": row.period_start,
-                "item_id": row.item_id,
-                "customer_id": row.customer_id,
-                "category_id": row.category_id,
-                "currency_id": row.currency_id,
+                "item_id": int(row.item_id),
+                "customer_id": int(row.customer_id),
+                "category_id": int(row.category_id),
+                "currency_id": int(row.currency_id),
                 "quantity": float(row.quantity or 0.0),
                 "discount_ratio": float(row.discount_ratio or 0.0),
             }

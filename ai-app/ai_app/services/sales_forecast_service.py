@@ -1,222 +1,182 @@
 from __future__ import annotations
 
 import logging
-import time
-from pathlib import Path
+from datetime import date
+from typing import Any
 
 import numpy as np
 import torch
-from torch import nn
 
-from ai_app.ml.feed_forward_model import FeedForwardModel
-from ai_app.repositories.task_result_repository import TaskResultRepository
-from ai_app.services.data_window_service import DataWindow
-from ai_app.services.sales_prediction_service import SalesPredictionService, SalesTrainingBatch
+from repositories.sales_prediction_repository import SalesPredictionRepository
+from repositories.task_result_repository import TaskResultRepository
 
 logger = logging.getLogger("ai")
 
 
 class SalesForecastService:
-    _checkpoint_path = Path("/ai_app/.artifacts/sales_forecast_monthly_ffn.pt")
-    _max_epochs = 1200
-    _min_epochs = 150
-    _learning_rate = 0.003
-    _weight_decay = 1e-5
-    _validation_ratio = 0.2
-    _min_validation_rows = 20
-    _early_stopping_patience = 80
-    _early_stopping_min_delta = 1e-4
-    _hidden_dims = (128, 64, 32)
-    _hidden_dropout = 0.10
-
     def __init__(
         self,
         result_repository: TaskResultRepository,
-        sales_prediction_service: SalesPredictionService,
+        prediction_repository: SalesPredictionRepository,
         horizon_months: int,
         prediction_discount_rates: list[float],
     ) -> None:
         self._result_repository = result_repository
-        self._sales_prediction_service = sales_prediction_service
+        self._prediction_repository = prediction_repository
         self._horizon_months = max(1, horizon_months)
         self._prediction_discount_rates = prediction_discount_rates
 
-    async def run(self, window: DataWindow, task_key: str, run_id: int) -> None:
-        if window.start is None or window.end is None:
-            logger.info("Task=%s skipped: empty window boundaries", task_key)
-            return
-
+    async def build_training_data(
+        self,
+        start_date: date,
+        end_date: date,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, list[dict[str, Any]]] | None:
         logger.info(
-            "Task=%s building monthly training batch for window [%s, %s], horizon=%s, discount_scenarios=%s",
-            task_key,
-            window.start,
-            window.end,
-            self._horizon_months,
-            self._prediction_discount_rates,
+            f"Building monthly training data for range [{start_date}, {end_date}], "
+            f"horizon_months={self._horizon_months}, discount_scenarios={self._prediction_discount_rates}"
         )
-        training_batch = await self._sales_prediction_service.build_training_batch(
-            window.start,
-            window.end,
-            self._horizon_months,
-            prediction_discount_rates=self._prediction_discount_rates,
-        )
-        if training_batch is None:
-            logger.info("Task=%s skipped: training batch not available", task_key)
-            return
+        rows = await self._prediction_repository.get_monthly_sales(start_date, end_date)
+        if not rows:
+            logger.info("No sales rows for selected range, skipped")
+            return None
 
-        logger.info(
-            "Task=%s training started (train_rows=%s, prediction_points=%s)",
-            task_key,
-            int(training_batch.y_train.shape[0]),
-            len(training_batch.prediction_points),
+        rows.sort(key=lambda row: row["period_start"])
+        min_period = rows[0]["period_start"]
+        max_period = rows[-1]["period_start"]
+        period_span = SalesForecastService._months_between(min_period, max_period)
+        if period_span <= 0:
+            logger.info(f"Only one unique month in dataset ({min_period}), skipped")
+            return None
+
+        item_scale = max(1, max(int(row["item_id"]) for row in rows))
+        customer_scale = max(1, max(int(row["customer_id"]) for row in rows))
+        category_scale = max(1, max(int(row["category_id"]) for row in rows))
+        currency_scale = max(1, max(int(row["currency_id"]) for row in rows))
+        period_scale = float(period_span)
+
+        x_train_values: list[list[float]] = []
+        y_train_values: list[float] = []
+        for row in rows:
+            period_index = float(SalesForecastService._months_between(min_period, row["period_start"])) / period_scale
+            discount_ratio = min(max(float(row["discount_ratio"]), 0.0), 0.90)
+            x_train_values.append(
+                [
+                    period_index,
+                    float(row["item_id"]) / item_scale,
+                    float(row["customer_id"]) / customer_scale,
+                    float(row["category_id"]) / category_scale,
+                    float(row["currency_id"]) / currency_scale,
+                    discount_ratio,
+                ]
+            )
+            y_train_values.append(float(row["quantity"]))
+
+        if len(x_train_values) < 3:
+            logger.info(f"Too few training rows ({len(x_train_values)}), skipped")
+            return None
+
+        x_train = torch.tensor(x_train_values, dtype=torch.float32)
+        y_train = torch.tensor(y_train_values, dtype=torch.float32).unsqueeze(1)
+
+        prediction_keys = list(
+            dict.fromkeys(
+                (
+                    int(row["item_id"]),
+                    int(row["customer_id"]),
+                    int(row["category_id"]),
+                    int(row["currency_id"]),
+                )
+                for row in rows
+            )
         )
-        model = self._train_model(training_batch)
-        forecast = self._predict(model, training_batch.x_predict)
-        rows_to_save: list[dict] = []
-        for point, value in zip(training_batch.prediction_points, forecast):
-            predicted_quantity = float(value)
-            horizon = max(1, (point.predicted_date - window.end).days)
+        x_predict_values: list[list[float]] = []
+        prediction_points: list[dict[str, Any]] = []
+        for month_offset in range(1, self._horizon_months + 1):
+            predicted_date = SalesForecastService._add_months(max_period, month_offset)
+            period_index = float(SalesForecastService._months_between(min_period, predicted_date)) / period_scale
+            for item_id, customer_id, category_id, currency_id in prediction_keys:
+                for discount_rate in self._prediction_discount_rates:
+                    x_predict_values.append(
+                        [
+                            period_index,
+                            float(item_id) / item_scale,
+                            float(customer_id) / customer_scale,
+                            float(category_id) / category_scale,
+                            float(currency_id) / currency_scale,
+                            float(discount_rate),
+                        ]
+                    )
+                    prediction_points.append(
+                        {
+                            "item_id": item_id,
+                            "customer_id": customer_id,
+                            "category_id": category_id,
+                            "currency_id": currency_id,
+                            "predicted_date": predicted_date,
+                            "discount_rate": float(discount_rate),
+                            "horizon_months": month_offset,
+                        }
+                    )
+
+        if not x_predict_values:
+            logger.info("No prediction points generated, skipped")
+            return None
+
+        x_predict = torch.tensor(x_predict_values, dtype=torch.float32)
+        logger.info(
+            f"Training data ready: train_rows={len(x_train_values)} "
+            f"prediction_points={len(prediction_points)}"
+        )
+        return x_train, y_train, x_predict, prediction_points
+
+    async def save_forecast_results(
+        self,
+        task_key: str,
+        run_id: int,
+        window_end: date,
+        y_train: torch.Tensor,
+        prediction_points: list[dict[str, Any]],
+        forecast: np.ndarray,
+    ) -> None:
+        rows_to_save: list[dict[str, Any]] = []
+        for point, value in zip(prediction_points, forecast):
+            predicted_date = point["predicted_date"]
+            horizon = max(1, (predicted_date - window_end).days)
             rows_to_save.append(
                 {
                     "task_key": task_key,
                     "run_id": run_id,
-                    "item_id": point.item_id,
-                    "customer_id": point.customer_id,
-                    "category_id": point.category_id,
-                    "predicted_at": point.predicted_date,
+                    "item_id": point["item_id"],
+                    "customer_id": point["customer_id"],
+                    "category_id": point["category_id"],
+                    "predicted_at": predicted_date,
                     "horizon_days": horizon,
                     "risk_level": None,
                     "score": None,
                     "payload": {
-                        "predicted_quantity": predicted_quantity,
-                        "currency_id": point.currency_id,
-                        "samples": int(training_batch.y_train.shape[0]),
+                        "predicted_quantity": float(value),
+                        "currency_id": point["currency_id"],
+                        "samples": int(y_train.shape[0]),
                         "aggregation": "month",
-                        "horizon_months": point.horizon_months,
-                        "discount_rate_assumption": point.discount_rate,
+                        "horizon_months": point["horizon_months"],
+                        "discount_rate_assumption": point["discount_rate"],
                     },
                 }
             )
+
         await self._result_repository.save_results(rows_to_save)
         logger.info(
-            "Task=%s completed: saved_results=%s for horizon_months=%s and discount_scenarios=%s",
-            task_key,
-            len(rows_to_save),
-            self._horizon_months,
-            self._prediction_discount_rates,
+            f"Task={task_key} completed: saved_results={len(rows_to_save)} "
+            f"horizon_months={self._horizon_months} discount_scenarios={self._prediction_discount_rates}"
         )
-
-    def _train_model(self, data: SalesTrainingBatch) -> nn.Module:
-        model = FeedForwardModel.for_prediction(
-            input_dim=6,
-            hidden_dims=SalesForecastService._hidden_dims,
-            dropout=SalesForecastService._hidden_dropout,
-        )
-        self._load_checkpoint_if_exists(model)
-        optimizer = torch.optim.Adam(
-            model.parameters(),
-            lr=SalesForecastService._learning_rate,
-            weight_decay=SalesForecastService._weight_decay,
-        )
-        loss_fn = nn.MSELoss()
-        x_train, y_train, x_val, y_val = SalesForecastService._split_train_validation(data)
-        best_state: dict[str, torch.Tensor] | None = None
-        best_val_loss = float("inf")
-        patience_counter = 0
-        epochs_executed = 0
-        started_at = time.perf_counter()
-
-        for epoch in range(1, SalesForecastService._max_epochs + 1):
-            epochs_executed = epoch
-            model.train()
-            optimizer.zero_grad()
-            preds = model(x_train)
-            loss = loss_fn(preds, y_train)
-            loss.backward()
-            optimizer.step()
-
-            if x_val is None or y_val is None:
-                continue
-
-            model.eval()
-            with torch.no_grad():
-                val_preds = model(x_val)
-                val_loss = float(loss_fn(val_preds, y_val).item())
-
-            if val_loss < best_val_loss - SalesForecastService._early_stopping_min_delta:
-                best_val_loss = val_loss
-                patience_counter = 0
-                best_state = {
-                    key: value.detach().clone()
-                    for key, value in model.state_dict().items()
-                }
-                continue
-
-            patience_counter += 1
-            if (
-                epoch >= SalesForecastService._min_epochs
-                and patience_counter >= SalesForecastService._early_stopping_patience
-            ):
-                logger.info(
-                    "Early stopping triggered at epoch=%s (best_val_loss=%.6f)",
-                    epoch,
-                    best_val_loss,
-                )
-                break
-
-        if best_state is not None:
-            model.load_state_dict(best_state)
-        self._save_checkpoint(model)
-        training_seconds = time.perf_counter() - started_at
-        logger.info(
-            "Model training finished: epochs=%s duration=%.2fs best_val_loss=%s checkpoint_saved=%s",
-            epochs_executed,
-            training_seconds,
-            f"{best_val_loss:.6f}" if best_val_loss != float("inf") else "n/a",
-            self._checkpoint_path,
-        )
-        return model.eval()
 
     @staticmethod
-    def _predict(model: nn.Module, x_predict: torch.Tensor) -> np.ndarray:
-        with torch.no_grad():
-            preds = model(x_predict).squeeze(1).numpy()
-        return np.maximum(preds, 0.0)
+    def _months_between(start: date, end: date) -> int:
+        return (end.year - start.year) * 12 + (end.month - start.month)
 
     @staticmethod
-    def _split_train_validation(
-        data: SalesTrainingBatch,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None, torch.Tensor | None]:
-        rows = int(data.x_train.shape[0])
-        if rows < SalesForecastService._min_validation_rows:
-            return data.x_train, data.y_train, None, None
-
-        val_rows = max(1, int(rows * SalesForecastService._validation_ratio))
-        if val_rows >= rows:
-            return data.x_train, data.y_train, None, None
-
-        split_idx = rows - val_rows
-        return (
-            data.x_train[:split_idx],
-            data.y_train[:split_idx],
-            data.x_train[split_idx:],
-            data.y_train[split_idx:],
-        )
-
-    @classmethod
-    def _load_checkpoint_if_exists(cls, model: nn.Module) -> None:
-        if not cls._checkpoint_path.exists():
-            logger.info("No model checkpoint found at %s, starting from current weights", cls._checkpoint_path)
-            return
-        checkpoint = torch.load(cls._checkpoint_path, map_location="cpu")
-        if isinstance(checkpoint, dict) and "state_dict" in checkpoint:
-            state_dict = checkpoint["state_dict"]
-        else:
-            state_dict = checkpoint
-        model.load_state_dict(state_dict, strict=True)
-        logger.info("Loaded model checkpoint from %s", cls._checkpoint_path)
-
-    @classmethod
-    def _save_checkpoint(cls, model: nn.Module) -> None:
-        cls._checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
-        torch.save({"state_dict": model.state_dict()}, cls._checkpoint_path)
+    def _add_months(value: date, months: int) -> date:
+        month_zero_based = value.month - 1 + months
+        year = value.year + month_zero_based // 12
+        month = month_zero_based % 12 + 1
+        return date(year, month, 1)
