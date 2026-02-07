@@ -187,3 +187,4 @@ rest-api/rest_api/migrations/versions
 .bash_history
 .config
 .local
+.artifacts

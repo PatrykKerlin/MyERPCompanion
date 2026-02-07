@@ -13,5 +13,5 @@ class TaskBase(ABC):
         self._engine = engine
 
     @abstractmethod
-    async def run(self, window: DataWindow) -> None:
+    async def run(self, window: DataWindow, run_id: int) -> None:
         raise NotImplementedError

@@ -1,33 +1,88 @@
 WITH sales_orders AS (
-    SELECT id, order_date, row_number() OVER (ORDER BY order_date, id) AS rn
-    FROM orders
-    WHERE is_sales IS TRUE
+    SELECT
+        o.id,
+        o.order_date,
+        o.customer_id,
+        o.currency_id,
+        row_number() OVER (ORDER BY o.order_date, o.id) AS rn,
+        random() AS promo_roll,
+        CASE
+            WHEN o.customer_id <= 8 THEN 1.4
+            WHEN o.customer_id <= 20 THEN 1.1
+            ELSE 0.9
+        END AS customer_weight
+    FROM orders o
+    WHERE o.is_sales IS TRUE
 ),
 item_counts AS (
     SELECT
         id AS order_id,
         order_date,
+        customer_id,
+        currency_id,
+        customer_weight,
         rn,
-        (1 + floor(random() * 5))::int AS item_count
+        promo_roll,
+        GREATEST(
+            1,
+            LEAST(
+                8,
+                floor(
+                    1
+                    + random() * 4
+                    + CASE EXTRACT(MONTH FROM order_date)
+                        WHEN 11 THEN 1.2
+                        WHEN 12 THEN 1.8
+                        WHEN 6 THEN 0.8
+                        ELSE 0.0
+                    END
+                    + CASE WHEN customer_id <= 10 THEN 0.9 ELSE 0.0 END
+                    + CASE currency_id
+                        WHEN 2 THEN 0.3
+                        WHEN 3 THEN 0.6
+                        ELSE 0.0
+                    END
+                )::int
+            )
+        ) AS item_count
     FROM sales_orders
 ),
 item_rows AS (
-    SELECT ic.order_id, ic.rn, gs.off
+    SELECT
+        ic.order_id,
+        ic.order_date,
+        ic.customer_id,
+        ic.currency_id,
+        ic.customer_weight,
+        ic.rn,
+        ic.promo_roll,
+        gs.off
     FROM item_counts ic
     JOIN LATERAL generate_series(0, ic.item_count - 1) AS gs(off) ON TRUE
 ),
 item_data AS (
     SELECT
         ir.order_id,
+        ir.order_date,
+        ir.customer_id,
+        ir.currency_id,
+        ir.customer_weight,
         ir.rn,
         ir.off,
         ((ir.rn + ir.off - 1) % 60) + 1 AS item_id,
-        (1 + floor(random() * 8))::int AS quantity,
+        random() AS quantity_noise,
         i.purchase_price,
         i.margin,
         i.vat_rate,
         random() AS discount_roll,
-        random() AS discount_type_roll
+        random() AS discount_type_roll,
+        CASE
+            WHEN ir.promo_roll < 0.35 THEN 0
+            WHEN ir.promo_roll < 0.60 THEN 1
+            WHEN ir.promo_roll < 0.80 THEN 2
+            WHEN ir.promo_roll < 0.95 THEN 3
+            ELSE 4
+        END AS promo_mode
     FROM item_rows ir
     JOIN items i ON i.id = ((ir.rn + ir.off - 1) % 60) + 1
 ),
@@ -35,17 +90,64 @@ item_pricing AS (
     SELECT
         order_id,
         item_id,
-        quantity,
+        GREATEST(
+            1,
+            LEAST(
+                24,
+                floor(
+                    0.5
+                    + (1 + (item_id % 6)) * 0.85
+                    + CASE EXTRACT(MONTH FROM order_date)
+                        WHEN 1 THEN 0.3
+                        WHEN 2 THEN 0.2
+                        WHEN 5 THEN 0.8
+                        WHEN 6 THEN 1.1
+                        WHEN 9 THEN 0.7
+                        WHEN 10 THEN 0.9
+                        WHEN 11 THEN 1.4
+                        WHEN 12 THEN 1.8
+                        ELSE 0.4
+                    END
+                    + CASE EXTRACT(DOW FROM order_date)
+                        WHEN 0 THEN 0.2
+                        WHEN 5 THEN 0.7
+                        WHEN 6 THEN 1.0
+                        ELSE 0.4
+                    END
+                    + customer_weight * 1.2
+                    + CASE currency_id
+                        WHEN 2 THEN 0.6
+                        WHEN 3 THEN 1.1
+                        ELSE 0.0
+                    END
+                    + CASE promo_mode
+                        WHEN 0 THEN 0.0
+                        WHEN 4 THEN 1.8
+                        ELSE 0.9
+                    END
+                    + quantity_noise * 2.4
+                )::int
+            )
+        ) AS quantity,
         purchase_price,
         margin,
         vat_rate,
         CASE
-            WHEN discount_roll < 0.20 THEN 0.05
-            WHEN discount_roll < 0.25 THEN 0.10
-            WHEN discount_roll < 0.30 THEN 0.15
+            WHEN promo_mode = 0 THEN 0
+            WHEN promo_mode = 4 THEN
+                CASE
+                    WHEN discount_roll < 0.50 THEN 0.10
+                    WHEN discount_roll < 0.82 THEN 0.15
+                    WHEN discount_roll < 0.95 THEN 0.20
+                    ELSE 0
+                END
+            WHEN discount_roll < 0.50 THEN 0.05
+            WHEN discount_roll < 0.78 THEN 0.10
+            WHEN discount_roll < 0.92 THEN 0.15
             ELSE 0
         END AS discount_rate,
-        discount_type_roll
+        discount_type_roll,
+        promo_mode
     FROM item_data
 ),
 insert_sales AS (
@@ -76,9 +178,33 @@ insert_sales AS (
         ROUND((purchase_price * (1 + margin) * quantity * discount_rate)::numeric, 2) AS total_discount,
         1 AS to_process,
         NULL AS bin_id,
-        CASE WHEN discount_rate > 0 AND discount_type_roll < 0.33 THEN ((item_id - 1) % 4) + 1 ELSE NULL END AS category_discount_id,
-        CASE WHEN discount_rate > 0 AND discount_type_roll >= 0.66 THEN ((item_id - 1) % 4) + 9 ELSE NULL END AS customer_discount_id,
-        CASE WHEN discount_rate > 0 AND discount_type_roll >= 0.33 AND discount_type_roll < 0.66 THEN ((item_id - 1) % 4) + 5 ELSE NULL END AS item_discount_id,
+        CASE
+            WHEN discount_rate > 0
+                 AND (
+                     promo_mode = 1
+                     OR (promo_mode = 4 AND discount_type_roll < 0.33)
+                 )
+            THEN ((item_id - 1) % 4) + 1
+            ELSE NULL
+        END AS category_discount_id,
+        CASE
+            WHEN discount_rate > 0
+                 AND (
+                     promo_mode = 3
+                     OR (promo_mode = 4 AND discount_type_roll >= 0.66)
+                 )
+            THEN ((item_id - 1) % 4) + 9
+            ELSE NULL
+        END AS customer_discount_id,
+        CASE
+            WHEN discount_rate > 0
+                 AND (
+                     promo_mode = 2
+                     OR (promo_mode = 4 AND discount_type_roll >= 0.33 AND discount_type_roll < 0.66)
+                 )
+            THEN ((item_id - 1) % 4) + 5
+            ELSE NULL
+        END AS item_discount_id,
         TRUE,
         CURRENT_TIMESTAMP,
         CAST(:superuser_id AS INTEGER)

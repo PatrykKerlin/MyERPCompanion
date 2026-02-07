@@ -9,6 +9,8 @@ from models.ai.ai_task_run import AiTaskRun
 
 
 class TaskRunRepository:
+    _system_user_id = 1
+
     def __init__(self, engine: Engine) -> None:
         self._engine = engine
 
@@ -31,6 +33,7 @@ class TaskRunRepository:
                 params=None,
                 metrics=None,
                 created_at=started_at,
+                created_by=TaskRunRepository._system_user_id,
             )
             session.add(run)
             await session.commit()

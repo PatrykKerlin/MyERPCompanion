@@ -1,11 +1,20 @@
 from __future__ import annotations
+
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Protocol
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from database.base import Base
-from config.settings import Settings
+
+
+class EngineSettings(Protocol):
+    DATABASE_URL: str
+    DB_POOL_SIZE: int
+    DB_MAX_OVERFLOW: int
+    DB_POOL_TIMEOUT: int
+    DB_POOL_RECYCLE: int
+    DB_POOL_PRE_PING: bool
 
 
 class Engine:
@@ -13,13 +22,13 @@ class Engine:
     __initialized: bool = False
     __base = Base
 
-    def __new__(cls, _: Settings) -> Engine:
+    def __new__(cls, _: EngineSettings) -> Engine:
         if cls.__instance is None:
             cls.__instance = super().__new__(cls)
             cls.__instance.__initialized = False
         return cls.__instance
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: EngineSettings) -> None:
         if not self.__initialized:
             self.engine: AsyncEngine = create_async_engine(
                 settings.DATABASE_URL,
