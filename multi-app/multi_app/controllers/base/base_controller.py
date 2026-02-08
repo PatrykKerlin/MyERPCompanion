@@ -7,6 +7,7 @@ from typing import Any, Awaitable, Callable, TypeVar, cast
 
 from httpx import HTTPStatusError
 
+from events.events import LogoutRequested
 from schemas.base.base_schema import BaseStrictSchema
 from utils.enums import ApiActionError
 from utils.tokens_accessor import TokensAccessor
@@ -69,6 +70,12 @@ class BaseController:
                         self._open_error_dialog(message_key="no_permissions")
                     else:
                         self._open_error_dialog(message_key=message_key)
+                    return cast(TReturn, None)
+                except PermissionError:
+                    self._close_loading_dialog()
+                    self._logger.info("Authentication failure in %s", func.__qualname__, exc_info=True)
+                    self._state_store.update(tokens={"access": None, "refresh": None})
+                    self._page.run_task(self._event_bus.publish, LogoutRequested())
                     return cast(TReturn, None)
                 except Exception:
                     self._close_loading_dialog()

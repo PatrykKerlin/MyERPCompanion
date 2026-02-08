@@ -3,7 +3,6 @@ from __future__ import annotations
 from functools import wraps
 from logging import Logger
 from typing import Any, Awaitable, Callable, Generic, TypeVar
-from fastapi import HTTPException, status
 
 import httpx
 
@@ -65,15 +64,27 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         ) -> TReturn:
             resolved_tokens = self._tokens_accessor.read()
             if not resolved_tokens:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionError("Missing authentication tokens.")
             try:
                 return await func(self, endpoint, path_param, query_params, body_params, resolved_tokens, module_id)
             except httpx.HTTPStatusError as first_error:
                 self._logger.exception(f"HTTPStatusError in {func.__qualname__}")
                 if first_error.response.status_code == httpx.codes.UNAUTHORIZED:
-                    new_tokens = await self.refresh_tokens(resolved_tokens)
+                    try:
+                        new_tokens = await self.refresh_tokens(resolved_tokens)
+                    except httpx.HTTPStatusError as refresh_error:
+                        if refresh_error.response.status_code == httpx.codes.UNAUTHORIZED:
+                            raise PermissionError("Session expired.") from refresh_error
+                        raise
                     self._tokens_accessor.write(new_tokens)
-                    return await func(self, endpoint, path_param, query_params, body_params, new_tokens, module_id)
+                    try:
+                        return await func(
+                            self, endpoint, path_param, query_params, body_params, new_tokens, module_id
+                        )
+                    except httpx.HTTPStatusError as second_error:
+                        if second_error.response.status_code == httpx.codes.UNAUTHORIZED:
+                            raise PermissionError("Session expired.") from second_error
+                        raise
                 raise
 
         return wrapper
