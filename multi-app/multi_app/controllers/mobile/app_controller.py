@@ -4,7 +4,10 @@ from typing import TYPE_CHECKING
 
 import flet as ft
 
+from config.context import Context
 from controllers.base.base_controller import BaseController
+from controllers.mobile.bins_controller import BinsController
+from controllers.mobile.items_controller import ItemsController
 from events.base.base_event import BaseEvent
 from events.events import (
     ApiStatusChecked,
@@ -13,21 +16,21 @@ from events.events import (
     AuthDialogRequested,
     AuthViewReady,
     LogoutRequested,
+    MobileMainMenuRequested,
     TranslationFailed,
     TranslationReady,
     TranslationRequested,
     UserAuthenticated,
+    ViewReady,
     ViewRequested,
 )
 from services.core.app_service import AppService
 from utils.enums import ApiActionError, Module, View, ViewMode
 from utils.user_settings import UserSettings
 from views.mobile.app_view import AppView as MobileAppView
-from views.mobile.bins_view import BinsView
 from views.mobile.main_menu_view import MainMenuView
 
 if TYPE_CHECKING:
-    from config.context import Context
     from schemas.core.user_schema import UserPlainSchema
     from states.states import TranslationState, UserState
 
@@ -36,9 +39,10 @@ class AppController(BaseController):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self.__service = AppService(self._settings, self._logger, self._tokens_accessor)
+        self.__bins_controller = BinsController(context)
+        self.__items_controller = ItemsController(context)
         self.__view = MobileAppView(self._state_store.app_state.translation.items, self._settings.THEME)
         self.__main_menu: MainMenuView | None = None
-        self.__bins_view: BinsView | None = None
 
         self._subscribe_event_handlers(
             {
@@ -49,7 +53,8 @@ class AppController(BaseController):
                 ApiStatusRequested: self.__api_status_handler,
                 AuthViewReady: self.__auth_view_ready_handler,
                 LogoutRequested: self.__logout_requested_handler,
-                ViewRequested: self.__view_requested_handler,
+                ViewReady: self.__view_ready_handler,
+                MobileMainMenuRequested: self.__mobile_main_menu_requested_handler,
             }
         )
         self._subscribe_state_listeners(
@@ -58,6 +63,11 @@ class AppController(BaseController):
                 "user": self.__user_updated_listener,
             }
         )
+
+    async def dispose(self) -> None:
+        await self.__bins_controller.dispose()
+        await self.__items_controller.dispose()
+        await super().dispose()
 
     def build_root(self) -> ft.Control:
         return self.__view.build()
@@ -118,7 +128,6 @@ class AppController(BaseController):
         self.__view.set_content_visible(False)
         self.__view.set_content(None)
         self.__main_menu = None
-        self.__bins_view = None
         self._state_store.update(
             view={"title": "", "mode": ViewMode.NONE, "view": None},
             modules={"items": []},
@@ -127,11 +136,16 @@ class AppController(BaseController):
         )
         await self._event_bus.publish(AuthDialogRequested())
 
-    async def __view_requested_handler(self, event: ViewRequested) -> None:
-        if event.module_id != Module.MOBILE:
+    async def __view_ready_handler(self, event: ViewReady) -> None:
+        if event.view_key not in {View.BINS, View.ITEMS}:
             return
-        if event.view_key == View.BINS:
-            self.__open_bins_view()
+        self.__main_menu = None
+        self.__view.set_content(event.view)
+        self.__view.set_content_visible(True)
+        self._page.update()
+
+    async def __mobile_main_menu_requested_handler(self, _: MobileMainMenuRequested) -> None:
+        self.__open_main_menu_view()
 
     def __user_updated_listener(self, state: UserState) -> None:
         user = state.current
@@ -139,15 +153,10 @@ class AppController(BaseController):
             self.__view.set_content_visible(False)
             self.__view.set_content(None)
             self.__main_menu = None
-            self.__bins_view = None
             self._page.update()
             return
         UserSettings.save(user.theme, user.language.symbol)
         self.__apply_user_preferences(user)
-        if self.__main_menu:
-            self.__main_menu.update_translation(self._state_store.app_state.translation.items)
-        if self.__bins_view:
-            self.__bins_view.update_translation(self._state_store.app_state.translation.items)
         self._page.update()
 
     def __apply_user_preferences(self, user: UserPlainSchema) -> None:
@@ -158,17 +167,7 @@ class AppController(BaseController):
             self._state_store.app_state.translation.items,
             on_view_selected=self.__request_mobile_view,
         )
-        self.__bins_view = None
         self.__view.set_content(self.__main_menu)
-        self.__view.set_content_visible(True)
-        self._page.update()
-
-    def __open_bins_view(self) -> None:
-        self.__bins_view = BinsView(
-            translation=self._state_store.app_state.translation.items,
-            on_back=self.__open_main_menu_view,
-        )
-        self.__view.set_content(self.__bins_view)
         self.__view.set_content_visible(True)
         self._page.update()
 

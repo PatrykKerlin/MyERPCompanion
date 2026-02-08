@@ -10,6 +10,7 @@ from models.base.fields import Fields
 
 if TYPE_CHECKING:
     from models.business.hr.employee import Employee
+    from models.business.logistic.warehouse import Warehouse
     from models.business.trade.customer import Customer
     from models.core.assoc_user_group import AssocUserGroup
     from models.core.group import Group
@@ -38,6 +39,14 @@ class User(BaseModel):
     language_id: Mapped[int | None] = Fields.foreign_key(column="languages.id", nullable=True)
     language: Mapped[Language | None] = Fields.relationship(
         argument="Language", back_populates="users", foreign_keys=[language_id]
+    )
+
+    warehouse_id: Mapped[int | None] = Fields.foreign_key(column="warehouses.id", unique=False, nullable=True)
+    warehouse: Mapped[Warehouse | None] = Fields.relationship(
+        argument="Warehouse",
+        back_populates="users",
+        foreign_keys=[warehouse_id],
+        uselist=False,
     )
 
     user_groups: Mapped[list[AssocUserGroup]] = Fields.relationship(

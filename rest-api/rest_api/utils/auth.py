@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.context import Context
 from models.core.assoc_module_group import AssocModuleGroup
+from services.business.logistic import WarehouseService
 from schemas.core.user_schema import UserPlainSchema
 from services.core import ModuleService, UserService
 from utils.enums import Permission
@@ -24,9 +25,15 @@ class Auth:
         self.__user_service = UserService()
         self.__user_service.set_auth(self)
         self.__module_service = ModuleService()
+        self.__warehouse_service = WarehouseService()
 
     async def authenticate(
-        self, session: AsyncSession, username: str, password: str, client: str
+        self,
+        session: AsyncSession,
+        username: str,
+        password: str,
+        client: str,
+        warehouse_id: int | None = None,
     ) -> tuple[dict[str, str] | None, str | None]:
         user_schema = await self.__user_service.get_one_by_username(session, username)
         if not user_schema or not await self.__verify_password(password, cast(str, user_schema.password)):
@@ -34,6 +41,7 @@ class Auth:
         is_superuser = user_schema.is_superuser
         has_employee = user_schema.employee_id is not None
         has_customer = user_schema.customer_id is not None
+        effective_warehouse_id: int | None = None
         if client in {"desktop", "mobile"}:
             allowed = is_superuser or has_employee
         elif client == "web":
@@ -42,8 +50,27 @@ class Auth:
             return None, "invalid_client"
         if not allowed:
             return None, "user_not_allowed"
-        access_token = self.create_access_token(user_schema.id, client=client)
-        refresh_token = self.__create_refresh_token(user_schema.id, client=client)
+        if client == "mobile":
+            if user_schema.warehouse_id is not None:
+                effective_warehouse_id = user_schema.warehouse_id
+            elif warehouse_id is None:
+                return None, "warehouse_required"
+            else:
+                try:
+                    selected_warehouse = await self.__warehouse_service.get_one_by_id(session, warehouse_id)
+                except NoResultFound:
+                    return None, "invalid_warehouse"
+                effective_warehouse_id = selected_warehouse.id
+        access_token = self.create_access_token(
+            user_schema.id,
+            client=client,
+            warehouse_id=effective_warehouse_id,
+        )
+        refresh_token = self.__create_refresh_token(
+            user_schema.id,
+            client=client,
+            warehouse_id=effective_warehouse_id,
+        )
         return {"access": access_token, "refresh": refresh_token}, None
 
     async def get_password_hash(self, password: str) -> str:
@@ -59,19 +86,27 @@ class Auth:
         self,
         user_id: int,
         client: str | None = None,
+        warehouse_id: int | None = None,
     ) -> str:
         time_to_expire = timedelta(minutes=self.__settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         token_type = "access"
-        token = self.__prepare_token(user_id, time_to_expire, token_type, client=client)
+        token = self.__prepare_token(
+            user_id,
+            time_to_expire,
+            token_type,
+            client=client,
+            warehouse_id=warehouse_id,
+        )
         return token
 
     async def validate_refresh_token(
         self, session: AsyncSession, token: str, client: str | None
-    ) -> tuple[UserPlainSchema, str | None]:
+    ) -> tuple[UserPlainSchema, str | None, int | None]:
         payload = self.decode_access_token(token)
         user_id = payload.get("user")
         token_type = payload.get("type")
         token_client = payload.get("client")
+        token_warehouse_id = payload.get("warehouse_id")
         if not isinstance(user_id, int) or token_type != "refresh":
             raise NoResultFound()
         if token_client is not None and token_client != client:
@@ -79,7 +114,11 @@ class Auth:
         user_schema = await self.__user_service.get_one_by_id(session, user_id)
         if not user_schema:
             raise NoResultFound()
-        return user_schema, token_client if isinstance(token_client, str) else None
+        return (
+            user_schema,
+            token_client if isinstance(token_client, str) else None,
+            token_warehouse_id if isinstance(token_warehouse_id, int) else None,
+        )
 
     def restrict_access(self, permissions: list[Permission], controller: str) -> Callable[..., Awaitable[None]]:
         async def dependency(request: Request) -> None:
@@ -133,13 +172,31 @@ class Auth:
     async def __verify_password(self, plain_password: str, hashed_password: str) -> bool:
         return await asyncio.to_thread(self.__pwd_context.verify, plain_password, hashed_password)
 
-    def __create_refresh_token(self, user_id: int, client: str | None = None) -> str:
+    def __create_refresh_token(
+        self,
+        user_id: int,
+        client: str | None = None,
+        warehouse_id: int | None = None,
+    ) -> str:
         time_to_expire = timedelta(days=self.__settings.REFRESH_TOKEN_EXPIRE_DAYS)
         token_type = "refresh"
-        token = self.__prepare_token(user_id, time_to_expire, token_type, client=client)
+        token = self.__prepare_token(
+            user_id,
+            time_to_expire,
+            token_type,
+            client=client,
+            warehouse_id=warehouse_id,
+        )
         return token
 
-    def __prepare_token(self, user_id: int, time_to_expire: timedelta, token_type: str, client: str | None) -> str:
+    def __prepare_token(
+        self,
+        user_id: int,
+        time_to_expire: timedelta,
+        token_type: str,
+        client: str | None,
+        warehouse_id: int | None = None,
+    ) -> str:
         token_data = {
             "user": user_id,
             "type": token_type,
@@ -147,5 +204,7 @@ class Auth:
         }
         if client:
             token_data["client"] = client
+        if warehouse_id is not None:
+            token_data["warehouse_id"] = warehouse_id
         encoded_jwt = jwt.encode(token_data, self.__settings.SECRET_KEY, algorithm=self.__settings.ALGORITHM)
         return encoded_jwt

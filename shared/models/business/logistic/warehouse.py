@@ -10,6 +10,7 @@ from models.base.fields import Fields
 
 if TYPE_CHECKING:
     from models.business.logistic.bin import Bin
+    from models.core.user import User
 
 
 class Warehouse(BaseModel):
@@ -32,4 +33,10 @@ class Warehouse(BaseModel):
         back_populates="warehouse",
         foreign_keys="Bin.warehouse_id",
         cascade_soft_delete=True,
+    )
+
+    users: Mapped[list[User]] = Fields.relationship(
+        argument="User",
+        back_populates="warehouse",
+        foreign_keys="User.warehouse_id",
     )

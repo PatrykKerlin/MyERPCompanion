@@ -106,6 +106,7 @@ class Endpoint(StrEnum):
     CURRENCIES = "currencies"
     EMPLOYEES = "employees"
     WAREHOUSES = "warehouses"
+    WAREHOUSES_BY_USERNAME = "warehouses/by-username"
     BINS = "bins"
     BINS_GET_BULK = "bins/get-bulk"
     CARRIERS = "carriers"

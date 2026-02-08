@@ -85,8 +85,7 @@ services:
       - API_URL=http://rest-api:8000/api
       - PUBLIC_API_URL=http://localhost:8000/api
     command:
-      sh -c "flet run main_desktop.py & \
-      /project/bin/python /multi_app/main_mobile.py"
+      sh -c "flet run main_mobile.py"
 
   web-app:
     build:

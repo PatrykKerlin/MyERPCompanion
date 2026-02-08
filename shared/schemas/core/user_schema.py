@@ -16,6 +16,7 @@ class UserStrictBaseSchema(BaseModel):
     language_id: Constraints.PositiveInteger
     employee_id: Constraints.PositiveIntegerOptional
     customer_id: Constraints.PositiveIntegerOptional
+    warehouse_id: Constraints.PositiveIntegerOptional
 
     @model_validator(mode="after")
     def _validate_exactly_one_of_employee_or_customer(self) -> UserStrictBaseSchema:
@@ -70,3 +71,4 @@ class UserPlainSchema(BasePlainSchema):
     password: Annotated[str | None, Field(default=None, exclude=True)]
     employee_id: int | None
     customer_id: int | None
+    warehouse_id: int | None

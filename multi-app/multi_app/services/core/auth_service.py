@@ -1,5 +1,6 @@
 from typing import Any
-from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.base.base_schema import BasePlainSchema, BaseSchema, BaseStrictSchema
+from schemas.business.logistic.warehouse_schema import WarehouseLoginOptionSchema
 from schemas.core.user_schema import UserPlainSchema
 from schemas.core.token_schema import TokenPlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
@@ -11,12 +12,34 @@ from utils.enums import Endpoint
 class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
     _plain_schema_cls = BasePlainSchema
 
-    async def fetch_tokens(self, username: str, password: str) -> TokenPlainSchema:
+    async def fetch_tokens(
+        self,
+        username: str,
+        password: str,
+        warehouse_id: int | None = None,
+    ) -> TokenPlainSchema:
+        payload: dict[str, Any] = {
+            "username": username,
+            "password": password,
+            "client": self._settings.CLIENT,
+            "warehouse_id": warehouse_id,
+        }
         response = await self._post(
             Endpoint.TOKEN,
-            {"username": username, "password": password, "client": self._settings.CLIENT},
+            payload,
         )
         return TokenPlainSchema(**response.json())
+
+    async def get_login_warehouses(self, username: str | None = None) -> list[WarehouseLoginOptionSchema]:
+        query_params = {"username": username} if username else None
+        original_plain_schema_cls = self._plain_schema_cls
+        self._plain_schema_cls = _WarehouseLoginOptionFetchSchema
+        try:
+            # Public endpoint does not require auth token, so we bypass token-refresh wrapper.
+            rows = await BaseService.get_all.__wrapped__(self, Endpoint.WAREHOUSES_BY_USERNAME, None, query_params, None, None, None)
+        finally:
+            self._plain_schema_cls = original_plain_schema_cls
+        return [WarehouseLoginOptionSchema.model_construct(**row.model_dump(mode="python")) for row in rows]
 
     @BaseService.handle_token_refresh
     async def get_all_modules(
@@ -54,3 +77,8 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
     ) -> UserPlainSchema:
         response = await self._get(endpoint=endpoint, tokens=tokens, module_id=module_id)
         return UserPlainSchema(**response.json(), is_superuser=False, password="")
+
+
+class _WarehouseLoginOptionFetchSchema(BaseSchema):
+    id: int
+    name: str

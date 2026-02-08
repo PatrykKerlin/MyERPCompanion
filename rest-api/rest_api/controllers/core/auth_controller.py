@@ -22,7 +22,13 @@ class AuthController:
             session = getattr(request.state, "db", None)
             if session is None:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            response, error = await self.__auth.authenticate(session, data.username, data.password, data.client)
+            response, error = await self.__auth.authenticate(
+                session,
+                data.username,
+                data.password,
+                data.client,
+                data.warehouse_id,
+            )
             if not response:
                 if error == "user_not_allowed":
                     raise HTTPException(
@@ -31,6 +37,10 @@ class AuthController:
                 if error == "invalid_client":
                     raise HTTPException(
                         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="invalid_client"
+                    )
+                if error in {"warehouse_required", "invalid_warehouse"}:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error
                     )
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_credentials"
@@ -50,10 +60,15 @@ class AuthController:
             if session is None:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
             client = request.headers.get("X-Client")
-            schema, token_client = await self.__auth.validate_refresh_token(session, refresh_token, client)
+            schema, token_client, token_warehouse_id = await self.__auth.validate_refresh_token(
+                session,
+                refresh_token,
+                client,
+            )
             new_access_token = self.__auth.create_access_token(
                 schema.id,
                 client=token_client,
+                warehouse_id=token_warehouse_id,
             )
             return JSONResponse(content={"access": new_access_token})
         except (JWTError, KeyError, NoResultFound):
