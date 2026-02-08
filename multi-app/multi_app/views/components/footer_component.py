@@ -23,7 +23,7 @@ class FooterComponent(BaseComponent, ft.Container):
         self.__status_icon = ft.Icon(self.__success_icon)
         self.__status_row = ft.Row(
             controls=[
-                ft.Text(value=f"{self._translation.get("connection_status")}:"),
+                ft.Text(value=f"{self._translation.get('connection_status')}:"),
                 self.__status_message,
                 self.__status_icon,
             ]

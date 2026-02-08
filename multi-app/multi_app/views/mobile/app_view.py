@@ -59,8 +59,13 @@ class AppView:
     def _apply_page_settings(self, page: ft.Page) -> None:
         page.title = self.__translation.get("my_erp_companion")
         page.theme_mode = self._resolve_theme_mode(self.__theme)
-        page.window.width = 393
-        page.window.height = 852
+        # page.window.width = 393
+        # page.window.height = 852
+        # page.window.max_width = 393
+        # page.window.max_height = 852
+        # page.window.resizable = False
+        # page.window.maximizable = False
+        # page.update()
 
     def _resolve_theme_mode(self, theme: str) -> ft.ThemeMode:
         if theme == "dark":

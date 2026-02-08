@@ -19,7 +19,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt /tmp/requirements.txt
+COPY /web_app/requirements.txt /tmp/requirements.txt
 RUN python -m venv $VIRTUAL_ENV && \
     pip install --upgrade pip && \
     pip install -r /tmp/requirements.txt && \

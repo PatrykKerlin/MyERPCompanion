@@ -62,28 +62,6 @@ class App:
         self.__controllers: list[BaseController] = []
 
     async def run(self, page: ft.Page) -> None:
-        platform = getattr(page, "platform", None)
-        platform_value = getattr(platform, "value", str(platform)).lower()
-        if platform_value in {"linux", "windows", "macos"}:
-            target_width = 393
-            target_height = 852
-            if hasattr(page.window, "width"):
-                page.window.width = target_width
-            if hasattr(page.window, "height"):
-                page.window.height = target_height
-            if hasattr(page.window, "min_width"):
-                page.window.min_width = target_width
-            if hasattr(page.window, "min_height"):
-                page.window.min_height = target_height
-            if hasattr(page.window, "max_width"):
-                page.window.max_width = target_width
-            if hasattr(page.window, "max_height"):
-                page.window.max_height = target_height
-            if hasattr(page.window, "resizable"):
-                page.window.resizable = False
-            if hasattr(page.window, "maximizable"):
-                page.window.maximizable = False
-
         self.__context = Context(
             page=page,
             settings=self.__settings,
@@ -117,7 +95,3 @@ class App:
 async def main(page: ft.Page) -> None:
     app = App()
     await app.run(page)
-
-
-if __name__ == "__main__":
-    ft.run(main, view=ft.AppView.FLET_APP)

@@ -101,8 +101,6 @@ class Constraints:
     Username = Annotated[str, Field(min_length=5, max_length=20)]
     WebsiteOptional = Annotated[
         HttpUrl | None,
-        PlainSerializer(
-            lambda value: str(value) if value is not None else None, return_type=str | None, when_used="always"
-        ),
+        PlainSerializer(lambda value: str(value) if value is not None else None, return_type=str | None, when_used="always"),
         Field(max_length=50),
     ]

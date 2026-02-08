@@ -76,10 +76,6 @@ services:
     volumes:
       - ./multi-app/multi_app/:/multi_app
       - /tmp/.X11-unix:/tmp/.X11-unix
-      - ./shared/schemas/business:/multi_app/schemas/business
-      - ./shared/schemas/core:/multi_app/schemas/core
-      - ./shared/schemas/validation:/multi_app/schemas/validation
-      - ./multi-app/multi_app/schemas/base:/multi_app/schemas/base
     environment:
       - DISPLAY=${DISPLAY}
       - API_URL=http://rest-api:8000/api

@@ -315,7 +315,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         args = [
             "zenity",
             "--file-selection",
-            f"--title={translation.get("select_picture")}",
+            f"--title={translation.get('select_picture')}",
             f"--filename={cwd}/",
             "--file-filter=Images | *.png *.jpg *.jpeg",
         ]

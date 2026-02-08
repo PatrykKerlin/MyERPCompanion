@@ -8,9 +8,5 @@ python-jose[cryptography]
 pydantic
 pydantic-settings
 pydantic[email]
-black
-pyright
-ruff
-isort
 aiofiles
 python-multipart
