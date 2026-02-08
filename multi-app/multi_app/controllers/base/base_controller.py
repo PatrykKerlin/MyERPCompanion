@@ -245,7 +245,7 @@ class BaseController:
         try:
             self._page.run_task(self._show_dialog_serialized, dialog, wait_for_future)
         except (AttributeError, RuntimeError):
-            # Fallback for web sessions without an active connection loop.
+            # Fallback when run_task is unavailable in the active runtime.
             self._logger.warning("Dialog fallback: showing without run_task", exc_info=True)
             self._page.show_dialog(dialog)
 

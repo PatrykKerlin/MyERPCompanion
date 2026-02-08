@@ -17,11 +17,14 @@ from events.events import (
     TranslationReady,
     TranslationRequested,
     UserAuthenticated,
+    ViewRequested,
 )
 from services.core.app_service import AppService
-from utils.enums import ApiActionError, ViewMode
+from utils.enums import ApiActionError, Module, View, ViewMode
 from utils.user_settings import UserSettings
 from views.mobile.app_view import AppView as MobileAppView
+from views.mobile.bins_view import BinsView
+from views.mobile.main_menu_view import MainMenuView
 
 if TYPE_CHECKING:
     from config.context import Context
@@ -34,6 +37,8 @@ class AppController(BaseController):
         super().__init__(context)
         self.__service = AppService(self._settings, self._logger, self._tokens_accessor)
         self.__view = MobileAppView(self._state_store.app_state.translation.items, self._settings.THEME)
+        self.__main_menu: MainMenuView | None = None
+        self.__bins_view: BinsView | None = None
 
         self._subscribe_event_handlers(
             {
@@ -44,6 +49,7 @@ class AppController(BaseController):
                 ApiStatusRequested: self.__api_status_handler,
                 AuthViewReady: self.__auth_view_ready_handler,
                 LogoutRequested: self.__logout_requested_handler,
+                ViewRequested: self.__view_requested_handler,
             }
         )
         self._subscribe_state_listeners(
@@ -80,7 +86,7 @@ class AppController(BaseController):
     async def __translation_ready_handler(self, event: TranslationReady) -> None:
         self._close_loading_dialog()
         if event.user_authenticated:
-            self.__open_empty_app_view()
+            self.__open_main_menu_view()
             return
         await self._event_bus.publish(AuthDialogRequested())
 
@@ -98,7 +104,7 @@ class AppController(BaseController):
 
         translation_state = self._state_store.app_state.translation
         if user.language.symbol == translation_state.language:
-            self.__open_empty_app_view()
+            self.__open_main_menu_view()
             return
 
         await self._open_loading_dialog()
@@ -110,6 +116,9 @@ class AppController(BaseController):
 
     async def __logout_requested_handler(self, _: LogoutRequested) -> None:
         self.__view.set_content_visible(False)
+        self.__view.set_content(None)
+        self.__main_menu = None
+        self.__bins_view = None
         self._state_store.update(
             view={"title": "", "mode": ViewMode.NONE, "view": None},
             modules={"items": []},
@@ -118,19 +127,57 @@ class AppController(BaseController):
         )
         await self._event_bus.publish(AuthDialogRequested())
 
+    async def __view_requested_handler(self, event: ViewRequested) -> None:
+        if event.module_id != Module.MOBILE:
+            return
+        if event.view_key == View.BINS:
+            self.__open_bins_view()
+
     def __user_updated_listener(self, state: UserState) -> None:
         user = state.current
         if not user:
             self.__view.set_content_visible(False)
+            self.__view.set_content(None)
+            self.__main_menu = None
+            self.__bins_view = None
             self._page.update()
             return
         UserSettings.save(user.theme, user.language.symbol)
         self.__apply_user_preferences(user)
+        if self.__main_menu:
+            self.__main_menu.update_translation(self._state_store.app_state.translation.items)
+        if self.__bins_view:
+            self.__bins_view.update_translation(self._state_store.app_state.translation.items)
         self._page.update()
 
     def __apply_user_preferences(self, user: UserPlainSchema) -> None:
         self.__view.set_theme(user.theme)
 
-    def __open_empty_app_view(self) -> None:
+    def __open_main_menu_view(self) -> None:
+        self.__main_menu = MainMenuView(
+            self._state_store.app_state.translation.items,
+            on_view_selected=self.__request_mobile_view,
+        )
+        self.__bins_view = None
+        self.__view.set_content(self.__main_menu)
         self.__view.set_content_visible(True)
         self._page.update()
+
+    def __open_bins_view(self) -> None:
+        self.__bins_view = BinsView(
+            translation=self._state_store.app_state.translation.items,
+            on_back=self.__open_main_menu_view,
+        )
+        self.__view.set_content(self.__bins_view)
+        self.__view.set_content_visible(True)
+        self._page.update()
+
+    def __request_mobile_view(self, view_key: View) -> None:
+        self._page.run_task(
+            self._event_bus.publish,
+            ViewRequested(
+                module_id=Module.MOBILE,
+                view_key=view_key,
+                mode=ViewMode.STATIC,
+            ),
+        )

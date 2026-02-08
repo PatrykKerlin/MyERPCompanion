@@ -21,10 +21,27 @@ class AppView:
 
     def update_translation(self, translation: Translation) -> None:
         self.__translation = translation
+        content = self.__content_container.content
+        if content is not None and hasattr(content, "update_translation"):
+            update_translation = getattr(content, "update_translation")
+            if callable(update_translation):
+                update_translation(translation)
 
     def set_auth_view(self, component: ft.Control | None) -> None:
-        self.__auth_container.content = component
+        if component is None:
+            self.__auth_container.content = None
+        else:
+            self.__auth_container.content = ft.Column(
+                controls=[component],
+                tight=True,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            )
         self.__auth_container.visible = component is not None
+
+    def set_content(self, component: ft.Control | None) -> None:
+        self.__content_container.content = component
+        if self.__content_container.page:
+            self.__content_container.update()
 
     def set_theme(self, theme: str) -> None:
         self.__theme = theme
@@ -44,16 +61,27 @@ class AppView:
         page.theme_mode = self._resolve_theme_mode(self.__theme)
         page.padding = 0
         page.adaptive = True
-        platform = str(getattr(page, "platform", "")).lower()
-        if platform in {"linux", "windows", "macos"}:
+        platform = getattr(page, "platform", None)
+        platform_value = getattr(platform, "value", str(platform)).lower()
+        if platform_value in {"linux", "windows", "macos"}:
+            target_width = 393
+            target_height = 852
             if hasattr(page.window, "width"):
-                page.window.width = 430
+                page.window.width = target_width
             if hasattr(page.window, "height"):
-                page.window.height = 932
+                page.window.height = target_height
             if hasattr(page.window, "min_width"):
-                page.window.min_width = 360
+                page.window.min_width = target_width
             if hasattr(page.window, "min_height"):
-                page.window.min_height = 640
+                page.window.min_height = target_height
+            if hasattr(page.window, "max_width"):
+                page.window.max_width = target_width
+            if hasattr(page.window, "max_height"):
+                page.window.max_height = target_height
+            if hasattr(page.window, "resizable"):
+                page.window.resizable = False
+            if hasattr(page.window, "maximizable"):
+                page.window.maximizable = False
 
     def _resolve_theme_mode(self, theme: str) -> ft.ThemeMode:
         if theme == "dark":

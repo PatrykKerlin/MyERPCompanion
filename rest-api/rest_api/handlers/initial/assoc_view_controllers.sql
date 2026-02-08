@@ -123,4 +123,7 @@ VALUES
 (33, 17, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (33, 18, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (33, 9, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-(33, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id);
+(33, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+
+
+(34, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id);

@@ -67,11 +67,11 @@ class AuthView(ft.Container):
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
         )
-        hero_card = ft.Card(content=hero_body, width=360)
+        hero_card = ft.Card(content=hero_body, width=320)
 
         ft.Container.__init__(
             self,
             content=hero_card,
             alignment=ft.Alignment.CENTER,
-            expand=True,
+            padding=ft.Padding.symmetric(horizontal=12, vertical=16),
         )
