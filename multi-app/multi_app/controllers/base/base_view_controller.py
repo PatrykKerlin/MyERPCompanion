@@ -373,8 +373,6 @@ class BaseViewController(
         if not data_row:
             return
         api_url = self._settings.API_URL
-        if self._settings.CLIENT == "web" and self._settings.PUBLIC_API_URL:
-            api_url = self._settings.PUBLIC_API_URL
         images = data_row.get("images")
         if isinstance(images, list):
             for image in images:

@@ -7,11 +7,10 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     API_URL: str
-    CLIENT: Literal["desktop", "mobile"]
+    PUBLIC_API_URL: str | None = None
+    CLIENT: Literal["web"] = "web"
     LANGUAGE: str = Field(default_factory=lambda: Settings.__get_system_language())
     THEME: str = "system"
-    API_CHECK_DELAY: int = 60
-    TIMEZONE: str | None = None
 
     model_config = {"env_file": ".env"}
 

@@ -86,8 +86,25 @@ services:
       - PUBLIC_API_URL=http://localhost:8000/api
     command:
       sh -c "flet run main_desktop.py & \
-      /project/bin/python /multi_app/main_mobile.py & \
-      /project/bin/python /multi_app/main_web.py"
+      /project/bin/python /multi_app/main_mobile.py"
+
+  web-app:
+    build:
+      context: ./web-app
+      dockerfile: dockerfile-web
+    networks:
+      - project_net
+    volumes:
+      - ./web-app/web_app/:/web_app
+    environment:
+      - API_URL=http://rest-api:8000/api
+      - PUBLIC_API_URL=http://localhost:8000/api
+      - FLET_SERVER_HOST=0.0.0.0
+      - FLET_SERVER_PORT=8550
+    depends_on:
+      - rest-api
+    command:
+      sh -c "/project/bin/python /web_app/main.py"
     ports:
       - "8550:8550"
 

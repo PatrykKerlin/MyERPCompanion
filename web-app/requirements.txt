@@ -1,0 +1,11 @@
+flet[all]
+matplotlib
+seaborn
+pydantic
+pydantic-settings
+pydantic[email]
+httpx
+black
+pyright
+ruff
+isort
