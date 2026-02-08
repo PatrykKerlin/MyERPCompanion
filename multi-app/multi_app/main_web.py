@@ -3,12 +3,14 @@ import os
 
 import flet as ft
 
+from config.context import Context
 from config.settings import Settings
-from controllers import components, core, web
+from controllers import core, web
 from controllers.base.base_controller import BaseController
-from controllers.business import hr, logistic, trade
+from controllers.components.auth_dialog_controller import AuthDialogController
 from events.event_bus import EventBus
 from events.events import AppStarted
+from services.base.base_service import BaseService
 from states.state_store import StateStore
 from states.states import (
     AppState,
@@ -22,8 +24,6 @@ from states.states import (
 from utils.enums import ViewMode
 from utils.translation import Translation
 from utils.user_settings import UserSettings
-from config.context import Context
-from services.base.base_service import BaseService
 
 
 class App:
@@ -33,7 +33,6 @@ class App:
             format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
         )
 
-        self.__settings = Settings(CLIENT="web")  # type: ignore
         self.__logger = logging.getLogger("app")
         self.__contexts: dict[int, Context] = {}
         self.__controllers_by_session: dict[int, list[BaseController]] = {}
@@ -74,56 +73,17 @@ class App:
         )
         self.__contexts[session_id] = context
         self.__event_bus_by_session[session_id] = event_bus
-        app_controller = core.AppController(context)
+        app_controller = web.AppController(context)
         core_controllers = [
             app_controller,
             core.TranslationController(context),
-            core.GroupController(context),
-            core.LanguageController(context),
-            core.ModuleController(context),
-            core.UserController(context),
-            components.AuthDialogController(context),
-            components.MenuBarController(context),
-            components.ToolbarController(context),
-            components.SideMenuController(context),
-            components.FooterController(context),
-            components.TabsBarController(context),
+            AuthDialogController(context),
         ]
         web_controllers = [
             web.CreateOrderController(context),
             web.OrdersController(context),
         ]
-        hr_controllers = [
-            hr.DepartmentController(context),
-            hr.PositionController(context),
-            hr.EmployeeController(context),
-        ]
-        logistic_controllers = [
-            logistic.BinController(context),
-            logistic.BinTransferController(context),
-            logistic.CarrierController(context),
-            logistic.CategoryController(context),
-            logistic.DeliveryMethodController(context),
-            logistic.ItemController(context),
-            logistic.UnitController(context),
-            logistic.WarehouseController(context),
-        ]
-        trade_controllers = [
-            trade.CurrencyController(context),
-            trade.CustomerController(context),
-            trade.DiscountController(context),
-            trade.ExchangeRateController(context),
-            trade.InvoiceController(context),
-            trade.OrderPickingController(context),
-            trade.PurchaseOrderController(context),
-            trade.SalesOrderController(context),
-            trade.StatusController(context),
-            trade.StockReceivingController(context),
-            trade.SupplierController(context),
-        ]
-        self.__controllers_by_session[session_id] = (
-            core_controllers + web_controllers + hr_controllers + logistic_controllers + trade_controllers
-        )
+        self.__controllers_by_session[session_id] = core_controllers + web_controllers
         async def on_window_event(event: ft.WindowEvent) -> None:
             await self.__on_window_event(session_id, event)
 

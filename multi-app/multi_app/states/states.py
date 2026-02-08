@@ -7,6 +7,7 @@ from utils.translation import Translation
 from views.base.base_view import BaseView
 
 import flet as ft
+from pydantic import Field
 
 
 class ShellState(BaseState):
@@ -56,7 +57,7 @@ class AppState(BaseState):
     tokens: TokensState
     user: UserState
     modules: ModulesState
-    shell: ShellState
+    shell: ShellState = Field(default_factory=ShellState)
     view: ViewState
 
 

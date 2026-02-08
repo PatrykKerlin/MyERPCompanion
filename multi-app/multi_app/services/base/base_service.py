@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from functools import wraps
 from logging import Logger
-import asyncio
 from typing import Any, Awaitable, Callable, Generic, TypeVar
 from fastapi import HTTPException, status
 

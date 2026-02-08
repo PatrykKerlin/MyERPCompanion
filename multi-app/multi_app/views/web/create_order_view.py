@@ -276,9 +276,6 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             expand=True,
         )
 
-    def __resolve_item_discount(self, discounts: list[OrderViewDiscountSchema]) -> str | None:
-        return "0"
-
     def __build_dropdown(
         self,
         key: str,
@@ -293,11 +290,6 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         if value is not None:
             dropdown.value = value
         return container, dropdown
-
-    def __set_dropdown_options(self, dropdown: ft.Dropdown, options: list[tuple[int | str, str]]) -> None:
-        dropdown.options = [ft.dropdown.Option(key="0", text="")] + [
-            ft.dropdown.Option(key=str(option[0]), text=option[1]) for option in options
-        ]
 
     def __wrap_dropdown(self, dropdown: ft.Dropdown) -> FieldGroup:
         return FieldGroup(

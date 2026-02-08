@@ -165,10 +165,6 @@ class AppView:
     def set_logout_handler(self, on_logout: Callable[[], None]) -> None:
         self.__on_logout = on_logout
 
-    def __handle_create_order(self) -> None:
-        if self.__on_create_order:
-            self.__on_create_order()
-
     def __handle_browse_orders(self) -> None:
         if self.__on_browse_orders:
             self.__on_browse_orders()

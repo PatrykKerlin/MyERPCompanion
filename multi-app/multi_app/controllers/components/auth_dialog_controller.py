@@ -6,10 +6,11 @@ from controllers.base.base_component_controller import BaseComponentController
 from controllers.base.base_controller import BaseController
 from services.core.auth_service import AuthService
 from views.components.auth_dialog_component import AuthDialogComponent
-from views.web.auth_view import AuthView
 from events.events import AuthDialogRequested, AuthViewReady
 from utils.enums import ApiActionError, Endpoint
 from events.events import UserAuthenticated
+from views.mobile.auth_view import AuthView as MobileAuthView
+from views.web.auth_view import AuthView as WebAuthView
 
 if TYPE_CHECKING:
     from config.context import Context
@@ -27,7 +28,11 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
     async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
         translation_state = self._state_store.app_state.translation
         if self._settings.CLIENT == "web":
-            self._component = AuthView(controller=self, translation=translation_state.items)
+            self._component = WebAuthView(controller=self, translation=translation_state.items)
+            await self._event_bus.publish(AuthViewReady(component=self._component))
+            return
+        if self._settings.CLIENT == "mobile":
+            self._component = MobileAuthView(controller=self, translation=translation_state.items)
             await self._event_bus.publish(AuthViewReady(component=self._component))
             return
         self._component = AuthDialogComponent(controller=self, translation=translation_state.items)
@@ -37,10 +42,12 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
         self._page.run_task(self._page.window.destroy)
 
     def on_login_click(self, username: str, password: str) -> None:
-        if self._settings.CLIENT == "desktop":
+        if self._settings.CLIENT in {"desktop", "mobile"}:
             self._page.run_task(self.__handle_login, "employee001", "test1234")
-        else:
+        elif self._settings.CLIENT == "web":
             self._page.run_task(self.__handle_login, "customer001", "test1234")
+        else:
+            self._page.run_task(self.__handle_login, username, password)
 
     async def __handle_login(self, username: str, password: str) -> None:
         tokens = await self.__perform_fetch_tokens(username, password)
@@ -53,6 +60,10 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
         user = await self.__perform_get_current_user()
         if not user:
             return
+        if self._settings.CLIENT in {"desktop", "mobile"} and user.employee_id is None:
+            self._state_store.update(tokens={"access": None, "refresh": None})
+            self._open_error_dialog(message_key="employee_login_required")
+            return
         user_groups_set = {group.id for group in user.groups}
         user_modules: list[ModulePlainSchema] = []
         for module in all_modules:
@@ -61,9 +72,9 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
                 user_modules.append(module)
         self._state_store.update(modules={"items": user_modules})
         self._state_store.update(user={"current": user})
-        if self._component and self._settings.CLIENT != "web":
+        if self._component and self._settings.CLIENT == "desktop":
             self._page.pop_dialog()
-        if self._settings.CLIENT == "web":
+        if self._settings.CLIENT in {"web", "mobile"}:
             await self._event_bus.publish(AuthViewReady(component=None))
         await self._event_bus.publish(UserAuthenticated())
 

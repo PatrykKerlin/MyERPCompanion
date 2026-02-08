@@ -34,7 +34,7 @@ class Auth:
         is_superuser = user_schema.is_superuser
         has_employee = user_schema.employee_id is not None
         has_customer = user_schema.customer_id is not None
-        if client == "desktop":
+        if client in {"desktop", "mobile"}:
             allowed = is_superuser or has_employee
         elif client == "web":
             allowed = is_superuser or has_customer
