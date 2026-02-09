@@ -127,7 +127,9 @@ VALUES
 
 (34, 4, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (34, 5, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(34, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (34, 9, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+(34, 10, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (34, 15, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (34, 16, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 (34, 18, TRUE, CURRENT_TIMESTAMP, :superuser_id),

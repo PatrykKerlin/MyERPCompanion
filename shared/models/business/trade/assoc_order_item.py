@@ -17,23 +17,6 @@ if TYPE_CHECKING:
 
 class AssocOrderItem(BaseModel):
     __tablename__ = "order_items"
-    __table_args__ = (
-        Index(
-            "uq_order_items_order_item_null_bin",
-            "order_id",
-            "item_id",
-            unique=True,
-            postgresql_where=text("bin_id IS NULL AND is_active"),
-        ),
-        Index(
-            "uq_order_items_order_item_bin",
-            "order_id",
-            "item_id",
-            "bin_id",
-            unique=True,
-            postgresql_where=text("bin_id IS NOT NULL AND is_active"),
-        ),
-    )
 
     quantity: Mapped[int] = Fields.integer()
     total_net: Mapped[float] = Fields.numeric_10_2()

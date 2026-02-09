@@ -312,6 +312,11 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
     def __pick_linux_file(self) -> str | None:
         translation = self._state_store.app_state.translation.items
         cwd = os.getcwd()
+        env = os.environ.copy()
+        env["WAYLAND_DISPLAY"] = env.get("WAYLAND_DISPLAY", "wayland-0")
+        env["XDG_RUNTIME_DIR"] = env.get("XDG_RUNTIME_DIR", "/mnt/wslg/runtime-dir")
+        env["XDG_SESSION_TYPE"] = "wayland"
+        env["GDK_BACKEND"] = "wayland"
         args = [
             "zenity",
             "--file-selection",
@@ -319,8 +324,11 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
             f"--filename={cwd}/",
             "--file-filter=Images | *.png *.jpg *.jpeg",
         ]
-        result = subprocess.run(args, capture_output=True, text=True)
+        result = subprocess.run(args, capture_output=True, text=True, env=env)
         if result.returncode != 0:
+            stderr = result.stderr.strip()
+            if stderr:
+                self._logger.warning("Zenity file picker returned non-zero code with stderr: %s", stderr)
             return None
         return result.stdout.strip() or None
 

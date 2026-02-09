@@ -58,7 +58,7 @@ services:
       - MODULE_HEADER=X-View-Module
       - MEDIA_DIR=/media
       - MEDIA_URL=http://rest-api:8000/media
-      - CORS_ORIGINS=http://localhost:8550,http://127.0.0.1:8550
+      - CORS_ORIGINS=http://localhost:8550,http://127.0.0.1:8550,http://localhost:8551,http://127.0.0.1:8551
       - SUPERUSER_USERNAME=admin
       - SUPERUSER_PASSWORD=admin123
     depends_on:
@@ -75,13 +75,16 @@ services:
       - project_net
     volumes:
       - ./multi-app/multi_app/:/multi_app
-      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /mnt/wslg/runtime-dir:/mnt/wslg/runtime-dir
     environment:
-      - DISPLAY=${DISPLAY}
       - API_URL=http://rest-api:8000/api
       - PUBLIC_API_URL=http://localhost:8000/api
       - FLET_SERVER_HOST=0.0.0.0
       - FLET_SERVER_PORT=8551
+      - WAYLAND_DISPLAY=wayland-0
+      - XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir
+      - XDG_SESSION_TYPE=wayland
+      - GDK_BACKEND=wayland
     depends_on:
       - rest-api
     command:
