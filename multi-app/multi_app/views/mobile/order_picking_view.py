@@ -49,26 +49,33 @@ class OrderPickingView(BaseView):
         "discount_ids",
         "discounts",
     }
+    __HIDDEN_DETAIL_FIELDS = {
+        "category_id",
+        "unit_id",
+        "is_available",
+        "is_returnable",
+        "min_stock_level",
+        "max_stock_level",
+        "to_process",
+        "is_active",
+        "is_package",
+    }
     __DETAIL_FIELDS_ORDER = [
         "index",
         "name",
         "ean",
         "description",
         "category_name",
-        "is_available",
+        "unit_name",
         "is_fragile",
-        "is_returnable",
         "stock_quantity",
         "reserved_quantity",
         "outbound_quantity",
-        "min_stock_level",
-        "max_stock_level",
         "width",
         "height",
         "length",
         "weight",
         "expiration_date",
-        "to_process",
     ]
 
     __GALLERY_WINDOW_SIZE = 3
@@ -93,7 +100,9 @@ class OrderPickingView(BaseView):
 
         self.__pick_item: ItemPlainSchema | None = None
         self.__pick_to_process: int = 0
+        self.__pick_bin_outbound_by_id: dict[int, int] = {}
         self.__pick_bin_available_by_id: dict[int, int] = {}
+        self.__pick_unit_name: str | None = None
         self.__gallery_start_index = 0
 
         self.__title = ft.Text(size=20, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER)
@@ -200,29 +209,32 @@ class OrderPickingView(BaseView):
         )
 
         self.__pick_item_title = ft.Text(size=16, weight=ft.FontWeight.W_600)
-        self.__pick_gallery_container = ft.Container()
         self.__pick_details_container = ft.Container()
+        self.__pick_gallery_container = ft.Container()
+        self.__pick_bin_info_text = ft.Text(size=13)
         self.__pick_buttons_row = ft.Row(
             controls=[],
-            alignment=ft.MainAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=10,
+            expand=True,
         )
 
         self.__pick_save_button = ft.Button(on_click=self.__on_pick_save_clicked, width=140)
-        self.__pick_cancel_button = ft.Button(on_click=self.__on_pick_cancel_clicked, width=140)
-        self.__pick_buttons_row.controls = [self.__pick_save_button, self.__pick_cancel_button]
+        self.__pick_back_button = ft.Button(on_click=self.__on_pick_cancel_clicked, width=140)
+        self.__pick_buttons_row.controls = [self.__pick_back_button, self.__pick_save_button]
 
         self.__pick_section = ft.Column(
             controls=[
                 self.__pick_item_title,
-                self.__pick_gallery_container,
+                pick_bin_container,
+                self.__pick_bin_info_text,
+                pick_quantity_container,
+                self.__pick_buttons_row,
                 ft.Divider(height=1),
                 self.__pick_details_container,
                 ft.Divider(height=1),
-                pick_bin_container,
-                pick_quantity_container,
-                self.__pick_buttons_row,
+                self.__pick_gallery_container,
             ],
             expand=True,
             spacing=8,
@@ -292,6 +304,7 @@ class OrderPickingView(BaseView):
 
     def show_items_list(self) -> None:
         self.__mode = self.__MODE_LIST
+        self.__orders_row.visible = True
         self.__pick_section.visible = False
         self.__list_section.visible = True
         self.__back_button.visible = True
@@ -304,22 +317,25 @@ class OrderPickingView(BaseView):
         self,
         item: ItemPlainSchema,
         to_process: int,
-        bin_options: list[tuple[int, str, int]],
+        bin_options: list[tuple[int, str, int, int]],
         default_bin_id: int,
         default_quantity: int,
+        unit_name: str | None,
     ) -> None:
         self.__mode = self.__MODE_PICK
         self.__pick_item = item
         self.__pick_to_process = max(0, to_process)
+        self.__pick_unit_name = unit_name
         self.__gallery_start_index = 0
-        self.__pick_bin_available_by_id = {bin_id: available for bin_id, _, available in bin_options}
+        self.__pick_bin_outbound_by_id = {bin_id: outbound for bin_id, _, outbound, _ in bin_options}
+        self.__pick_bin_available_by_id = {bin_id: available for bin_id, _, _, available in bin_options}
 
         self.__pick_bin_input.options = [
             ft.dropdown.Option(
                 key=str(bin_id),
-                text=f"{location} ({self._translation.get('available')}: {available})",
+                text=location,
             )
-            for bin_id, location, available in bin_options
+            for bin_id, location, _outbound, _available in bin_options
         ]
 
         if default_bin_id in self.__pick_bin_available_by_id:
@@ -335,7 +351,9 @@ class OrderPickingView(BaseView):
         normalized_quantity = max(1, min(default_quantity, max_quantity))
         self.__pick_quantity_input.set_limits(1, max_quantity)
         self.__pick_quantity_input.value = normalized_quantity
+        self.__update_pick_bin_info()
 
+        self.__orders_row.visible = False
         self.__list_section.visible = False
         self.__pick_section.visible = True
         self.__back_button.visible = False
@@ -352,8 +370,8 @@ class OrderPickingView(BaseView):
         self.__item_filter_input.label = self._translation.get("item_filter")
         self.__pick_bin_input.label = self._translation.get("source_bin")
         self.__back_button.content = self._translation.get("back_to_menu")
+        self.__pick_back_button.content = self.__resolve_pick_back_label()
         self.__pick_save_button.content = self._translation.get("save")
-        self.__pick_cancel_button.content = self._translation.get("cancel")
 
     def __render_subtitle(self) -> None:
         if self.__mode == self.__MODE_PICK and self.__pick_item is not None:
@@ -394,24 +412,23 @@ class OrderPickingView(BaseView):
     def __render_pick_form(self) -> None:
         if self.__pick_item is None:
             return
-        self.__pick_item_title.value = (
-            f"{self._translation.get('index')}: {self.__pick_item.index} | "
-            f"{self.__to_process_label()}: {self.__pick_to_process}"
-        )
+        self.__pick_item_title.value = f"{self._translation.get('index')}: {self.__pick_item.index}"
+        detail_rows = self.__build_detail_rows(self.__pick_item)
+        self.__pick_details_container.content = self.__build_detail_columns(detail_rows)
         image_urls = self.__resolve_image_urls(self.__pick_item)
         self.__pick_gallery_container.content = self.__build_gallery_section(image_urls)
-        detail_rows = self.__build_detail_rows(self.__pick_item, self.__pick_to_process)
-        self.__pick_details_container.content = self.__build_detail_columns(detail_rows)
+        self.__update_pick_bin_info()
 
         self.__safe_update(self.__pick_item_title)
+        self.__safe_update(self.__pick_bin_info_text)
         self.__safe_update(self.__pick_gallery_container)
         self.__safe_update(self.__pick_details_container)
         self.__safe_update(self.__pick_bin_input)
         self.__safe_update(self.__pick_quantity_input)
 
-    def __build_detail_rows(self, item: ItemPlainSchema, to_process: int) -> list[tuple[str, str]]:
+    def __build_detail_rows(self, item: ItemPlainSchema) -> list[tuple[str, str]]:
         data = item.model_dump()
-        data["to_process"] = to_process
+        data["unit_name"] = self.__pick_unit_name if self.__pick_unit_name else str(item.unit_id)
         rows: list[tuple[str, str]] = []
         used_keys: set[str] = set()
 
@@ -434,12 +451,13 @@ class OrderPickingView(BaseView):
             or key in self.__META_FIELDS
             or key in self.__FINANCIAL_FIELDS
             or key in self.__BIN_AND_DISCOUNT_FIELDS
+            or key in self.__HIDDEN_DETAIL_FIELDS
         )
 
     def __resolve_label(self, key: str) -> str:
         label_overrides = {
             "category_name": self._translation.get("category"),
-            "to_process": self.__to_process_label(),
+            "unit_name": self.__resolve_unit_label(),
         }
         if key in label_overrides:
             return label_overrides[key]
@@ -452,6 +470,18 @@ class OrderPickingView(BaseView):
         translated = self._translation.get("to_process")
         if translated == "to_process":
             return "To process"
+        return translated
+
+    def __resolve_pick_back_label(self) -> str:
+        translated = self._translation.get("back")
+        if translated == "back":
+            return "Back"
+        return translated
+
+    def __resolve_unit_label(self) -> str:
+        translated = self._translation.get("unit")
+        if translated == "unit":
+            return "Unit"
         return translated
 
     def __format_value(self, value: Any) -> str:
@@ -629,7 +659,19 @@ class OrderPickingView(BaseView):
         current_quantity = self.__parse_quantity(self.__pick_quantity_input.value) or 1
         self.__pick_quantity_input.set_limits(1, max_quantity)
         self.__pick_quantity_input.value = max(1, min(current_quantity, max_quantity))
+        self.__update_pick_bin_info()
         self.__safe_update(self.__pick_quantity_input)
+        self.__safe_update(self.__pick_bin_info_text)
+
+    def __update_pick_bin_info(self) -> None:
+        selected_bin_id = self.__parse_optional_int(self.__pick_bin_input.value)
+        outbound_available = (
+            self.__pick_bin_outbound_by_id.get(selected_bin_id, 0) if selected_bin_id is not None else 0
+        )
+        self.__pick_bin_info_text.value = (
+            f"{self._translation.get('available')}: {outbound_available} | "
+            f"{self.__to_process_label()}: {self.__pick_to_process}"
+        )
 
     def __resolve_selected_bin_available(self) -> int:
         selected_bin_id = self.__parse_optional_int(self.__pick_bin_input.value)

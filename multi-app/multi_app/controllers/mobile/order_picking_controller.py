@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import base64
-import binascii
-import json
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
@@ -14,13 +11,14 @@ from events.events import MobileMainMenuRequested, ViewRequested
 from schemas.business.logistic.assoc_bin_item_schema import AssocBinItemPlainSchema, AssocBinItemStrictSchema
 from schemas.business.logistic.bin_schema import BinPlainSchema
 from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
+from schemas.business.logistic.unit_schema import UnitPlainSchema
 from schemas.business.trade.assoc_order_item_schema import AssocOrderItemPlainSchema, AssocOrderItemStrictSchema
 from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusPlainSchema, AssocOrderStatusStrictSchema
 from schemas.business.trade.customer_schema import CustomerPlainSchema
 from schemas.business.trade.order_schema import OrderPlainSchema, OrderStrictSchema
 from schemas.business.trade.status_schema import StatusPlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
-from services.business.logistic import AssocBinItemService, BinService, ItemService
+from services.business.logistic import AssocBinItemService, BinService, ItemService, UnitService
 from services.business.trade import AssocOrderItemService, AssocOrderStatusService, CustomerService, OrderService, StatusService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
@@ -61,8 +59,10 @@ class OrderPickingController(
         self.__status_service = StatusService(self._settings, self._logger, self._tokens_accessor)
         self.__customer_service = CustomerService(self._settings, self._logger, self._tokens_accessor)
         self.__item_service = ItemService(self._settings, self._logger, self._tokens_accessor)
+        self.__unit_service = UnitService(self._settings, self._logger, self._tokens_accessor)
         self.__bin_item_service = AssocBinItemService(self._settings, self._logger, self._tokens_accessor)
         self.__bin_service = BinService(self._settings, self._logger, self._tokens_accessor)
+        self.__units_by_id: dict[int, UnitPlainSchema] = {}
 
         self.__orders: list[OrderPlainSchema] = []
         self.__selected_order_date: date | None = date.today()
@@ -234,14 +234,30 @@ class OrderPickingController(
 
         self.__active_pick_item_id = item_id
         self.__active_pick_bin_options = {option.bin_id: option for option in bin_options}
+        unit_name = await self.__resolve_unit_name(item_schema.unit_id)
         self._view.show_pick_form(
             item=item_schema,
             to_process=selected_row.to_process,
-            bin_options=[(option.bin_id, option.location, option.available_quantity) for option in bin_options],
+            bin_options=[
+                (option.bin_id, option.location, option.bin_item_quantity, option.available_quantity)
+                for option in bin_options
+            ],
             default_bin_id=default_bin_id,
             default_quantity=default_quantity,
+            unit_name=unit_name,
         )
         self._page.update()
+
+    async def __resolve_unit_name(self, unit_id: int) -> str | None:
+        unit_schema = self.__units_by_id.get(unit_id)
+        if unit_schema is not None:
+            return unit_schema.name
+        unit_schemas = await self.__perform_get_units() or []
+        self.__units_by_id = {schema.id: schema for schema in unit_schemas}
+        unit_schema = self.__units_by_id.get(unit_id)
+        if unit_schema is None:
+            return None
+        return unit_schema.name
 
     async def __load_pick_bin_options(self, item_id: int, max_quantity: int) -> list[OrderPickingBinOption]:
         bin_item_schemas = await self.__perform_get_bin_items_for_item(item_id) or []
@@ -482,26 +498,6 @@ class OrderPickingController(
         user = self._state_store.app_state.user.current
         if user and user.warehouse_id is not None:
             return user.warehouse_id
-        tokens = self._tokens_accessor.read()
-        if not tokens or not tokens.access:
-            return None
-        return self.__decode_warehouse_id(tokens.access)
-
-    @staticmethod
-    def __decode_warehouse_id(access_token: str) -> int | None:
-        token_parts = access_token.split(".")
-        if len(token_parts) < 2:
-            return None
-        payload = token_parts[1]
-        padding = "=" * (-len(payload) % 4)
-        try:
-            payload_json = base64.urlsafe_b64decode(f"{payload}{padding}").decode("utf-8")
-            payload_data = json.loads(payload_json)
-        except (UnicodeDecodeError, ValueError, json.JSONDecodeError, binascii.Error):
-            return None
-        warehouse_id = payload_data.get("warehouse_id")
-        if isinstance(warehouse_id, int):
-            return warehouse_id
         return None
 
     async def __check_and_update_order_status(self, order_id: int, touched_item_ids: set[int]) -> None:
@@ -601,6 +597,10 @@ class OrderPickingController(
             return []
         body_params = IdsPayloadSchema(ids=bin_ids)
         return await self.__bin_service.get_bulk(Endpoint.BINS_GET_BULK, None, None, body_params, self._module_id)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_units(self) -> list[UnitPlainSchema]:
+        return await self.__unit_service.get_all(Endpoint.UNITS, None, None, None, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_statuses(self) -> list[StatusPlainSchema]:
