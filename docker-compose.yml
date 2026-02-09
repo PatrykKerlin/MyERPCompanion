@@ -79,8 +79,6 @@ services:
     environment:
       - API_URL=http://rest-api:8000/api
       - PUBLIC_API_URL=http://localhost:8000/api
-      - FLET_SERVER_HOST=0.0.0.0
-      - FLET_SERVER_PORT=8551
       - WAYLAND_DISPLAY=wayland-0
       - XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir
       - XDG_SESSION_TYPE=wayland
@@ -88,7 +86,25 @@ services:
     depends_on:
       - rest-api
     command:
-      sh -c "FLET_SERVER_HOST=127.0.0.1 FLET_SERVER_PORT=8552 flet run main_desktop.py & /project/bin/python /multi_app/main_mobile.py"
+      sh -c "flet run main_desktop.py"
+
+  mobile-app:
+    build:
+      context: ./mobile-app
+      dockerfile: dockerfile-mobile
+    networks:
+      - project_net
+    volumes:
+      - ./mobile-app/mobile_app/:/mobile_app
+    environment:
+      - API_URL=http://rest-api:8000/api
+      - PUBLIC_API_URL=http://localhost:8000/api
+      - FLET_SERVER_HOST=0.0.0.0
+      - FLET_SERVER_PORT=8551
+    depends_on:
+      - rest-api
+    command:
+      sh -c "/project/bin/python /mobile_app/main_mobile.py"
     ports:
       - "8551:8551"
 
