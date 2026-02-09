@@ -357,11 +357,24 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
             size,
         )
 
-    def _get_date_picker(self, key: str, size: int) -> tuple[ft.Container, int]:
+    def _get_date_picker(
+        self,
+        key: str,
+        size: int,
+        callbacks: list[Callable[..., None]] | None = None,
+        value: date | None = None,
+        min_date: date | None = None,
+        max_date: date | None = None,
+        read_only: bool = True,
+    ) -> tuple[ft.Container, int]:
         return (
             ft.Container(
                 content=DateField(
-                    on_change=lambda event: self._controller.on_value_changed(event, key),
+                    value=value,
+                    min_date=min_date,
+                    max_date=max_date,
+                    read_only=read_only,
+                    on_change=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
                     expand=True,
                 ),
                 col={"sm": float(size)},

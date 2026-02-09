@@ -8,6 +8,7 @@ from sqlalchemy.sql.elements import ColumnElement
 from models.business.trade import Order
 from models.business.trade.assoc_order_item import AssocOrderItem
 from models.business.trade.assoc_order_status import AssocOrderStatus
+from models.business.trade.status import Status
 from repositories.base.base_repository import BaseRepository
 
 
@@ -43,6 +44,24 @@ class OrderRepository(BaseRepository[Order]):
             .scalar_subquery()
         )
         return cls._expr(latest_status_subquery == status_id)
+
+    @classmethod
+    def __latest_status_order_in_filter(cls, status_orders: tuple[int, ...]) -> ColumnElement[bool]:
+        latest_status_order_subquery = (
+            select(Status.order)
+            .select_from(AssocOrderStatus)
+            .join(Status, Status.id == AssocOrderStatus.status_id)
+            .where(
+                AssocOrderStatus.order_id == cls._model_cls.id,
+                AssocOrderStatus.is_active.is_(True),
+                Status.is_active.is_(True),
+            )
+            .order_by(AssocOrderStatus.created_at.desc(), AssocOrderStatus.id.desc())
+            .limit(1)
+            .correlate(cls._model_cls)
+            .scalar_subquery()
+        )
+        return cls._expr(latest_status_order_subquery.in_(status_orders))
 
     @classmethod
     async def get_all_sales(
@@ -127,6 +146,53 @@ class OrderRepository(BaseRepository[Order]):
         return await cls._count_all(
             session=session,
             params_filters=filters_without_status,
+            additional_filters=additional_filters,
+        )
+
+    @classmethod
+    async def get_all_picking_eligible(
+        cls,
+        session: AsyncSession,
+        offset: int,
+        limit: int,
+        filters: Mapping[str, str] | None = None,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
+        status_orders: tuple[int, ...] = (2, 3),
+    ) -> Sequence[Order]:
+        additional_filters = [
+            *cls.__is_sales_filter(True),
+            cls._expr(cls._model_cls.customer_id.is_not(None)),
+            cls.__latest_status_order_in_filter(status_orders),
+        ]
+        query = (
+            cls._build_query(
+                params_filters=filters,
+                additional_filters=additional_filters,
+                sort_by=sort_by,
+                sort_order=sort_order,
+            )
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await session.execute(query)
+        return result.scalars().all()
+
+    @classmethod
+    async def count_all_picking_eligible(
+        cls,
+        session: AsyncSession,
+        filters: Mapping[str, str] | None = None,
+        status_orders: tuple[int, ...] = (2, 3),
+    ) -> int:
+        additional_filters = [
+            *cls.__is_sales_filter(True),
+            cls._expr(cls._model_cls.customer_id.is_not(None)),
+            cls.__latest_status_order_in_filter(status_orders),
+        ]
+        return await cls._count_all(
+            session=session,
+            params_filters=filters,
             additional_filters=additional_filters,
         )
 

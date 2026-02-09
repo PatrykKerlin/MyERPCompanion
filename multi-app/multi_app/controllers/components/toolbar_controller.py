@@ -21,7 +21,6 @@ from events.events import (
 )
 from utils.enums import TabNavigationDirection
 
-
 if TYPE_CHECKING:
     from config.context import Context
 
@@ -192,13 +191,6 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
 
     def __set_read_mode(self) -> None:
         if not self._component:
-            return
-        view_state = self._state_store.app_state.view
-        if view_state.view:
-            self._component.set_lock_view_button_icon(unlocked=False)
-            self._component.set_lock_view_button_state(disabled=True)
-            self._component.set_delete_button_state(disabled=False)
-            self._component.set_navigation_buttons_state(disabled=False)
             return
         self._component.set_lock_view_button_icon(unlocked=False)
         self._component.set_lock_view_button_state(disabled=False)

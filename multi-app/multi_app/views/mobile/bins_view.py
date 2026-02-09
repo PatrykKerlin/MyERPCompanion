@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import flet as ft
 
 from utils.enums import View, ViewMode
+from utils.field_group import FieldGroup
 from utils.translation import Translation
 from views.base.base_view import BaseView
 
@@ -36,10 +37,19 @@ class BinsView(BaseView):
 
         self.__title = ft.Text(size=20, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER)
         self.__subtitle = ft.Text(size=14, text_align=ft.TextAlign.CENTER)
-        self.__filter_field = ft.TextField(
-            on_change=self.__on_filter_changed,
-            dense=True,
-            prefix_icon=ft.Icons.SEARCH,
+        filter_container, _ = self._get_text_input("filter_query", 12)
+        self.__filter_field = cast(ft.TextField, filter_container.content)
+        self.__filter_field.on_change = self.__on_filter_changed
+        self.__filter_field.dense = True
+        self.__filter_field.prefix_icon = ft.Icons.SEARCH
+        self._add_to_inputs(
+            {
+                "filter_query": FieldGroup(
+                    label=(ft.Container(), 0),
+                    input=(filter_container, 12),
+                    marker=(ft.Container(), 0),
+                )
+            }
         )
         self.__list = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=8)
         self.__back_button = ft.Button(on_click=self.__on_back_click, width=220)
@@ -47,7 +57,7 @@ class BinsView(BaseView):
         self._master_column.controls = [
             self.__title,
             self.__subtitle,
-            self.__filter_field,
+            filter_container,
             ft.Divider(height=1),
             self.__list,
             ft.Container(height=8),

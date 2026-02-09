@@ -40,6 +40,14 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
             status_code=status.HTTP_200_OK,
             dependencies=self._restrict_access(permissions=[Permission.CAN_READ], secured=True),
         )
+        self.router.add_api_route(
+            path="/picking-eligible",
+            endpoint=self.get_all_picking_eligible,
+            methods=["GET"],
+            response_model=PaginatedResponseSchema[OrderPlainSchema],
+            status_code=status.HTTP_200_OK,
+            dependencies=self._restrict_access(permissions=[Permission.CAN_READ], secured=True),
+        )
         self._register_routes(
             output_schema=OrderPlainSchema,
             include={
@@ -119,4 +127,42 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
             raise
         except SQLAlchemyError as err:
             self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.get_all_purchase.__qualname__}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+
+    async def get_all_picking_eligible(
+        self,
+        request: Request,
+        pagination: Annotated[PaginationParamsSchema, Depends()],
+        filters: Annotated[FilterParamsSchema, Depends(FilterParamsParser())],
+        sorting: Annotated[SortingParamsSchema, Depends()],
+    ) -> PaginatedResponseSchema[OrderPlainSchema]:
+        try:
+            session = BaseController._get_request_session(request)
+            offset, limit = BaseController._get_offset_and_limit(pagination)
+            items, total = await self._service.get_all_picking_eligible(
+                session=session,
+                filters=filters.filters,
+                offset=offset,
+                limit=limit,
+                sort_by=sorting.sort_by,
+                sort_order=sorting.order,
+            )
+            has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
+            return PaginatedResponseSchema[OrderPlainSchema](
+                items=items,
+                total=total,
+                page=pagination.page,
+                page_size=pagination.page_size,
+                has_next=has_next,
+                has_prev=has_prev,
+            )
+        except HTTPException:
+            self._logger.exception(
+                f"HTTPException in {self.__class__.__name__}.{self.get_all_picking_eligible.__qualname__}"
+            )
+            raise
+        except SQLAlchemyError as err:
+            self._logger.exception(
+                f"SQLAlchemyError in {self.__class__.__name__}.{self.get_all_picking_eligible.__qualname__}"
+            )
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))

@@ -78,7 +78,7 @@ class DateField(ft.Row):
     @error.setter
     def error(self, message: str | None) -> None:
         self.__text_field.error = message
-        self.__text_field.update()
+        self.__safe_update(self.__text_field)
 
     @property
     def read_only(self) -> bool:
@@ -89,18 +89,22 @@ class DateField(ft.Row):
         self.__read_only = new_value
         self.__open_button.disabled = self.__read_only
         self.__clear_button.disabled = self.__read_only or self.__value is None
-        self.__open_button.update()
-        self.__clear_button.update()
+        self.__safe_update(self.__open_button)
+        self.__safe_update(self.__clear_button)
 
     def __emit_value(self) -> None:
         if not self.__on_change:
+            return
+        try:
+            page = self.page
+        except RuntimeError:
             return
         proxy = SimpleNamespace(
             target="",
             name="change",
             data=None,
             control=self.__text_field,
-            page=self.page,
+            page=page,
         )
         self.__on_change(cast(ft.ControlEvent, proxy))
 
@@ -117,17 +121,21 @@ class DateField(ft.Row):
     def __set_value(self, new_value: date | None) -> None:
         self.__value = new_value
         self.__text_field.value = self.__format_value(self.__value)
-        self.__text_field.update()
+        self.__safe_update(self.__text_field)
         if self.__picker.value != self.__value:
             self.__picker.value = self.__value
         self.__clear_button.disabled = self.__read_only or self.__value is None
-        self.__clear_button.update()
+        self.__safe_update(self.__clear_button)
 
     def __open_picker(self, _: ft.Event[ft.IconButton]) -> None:
-        if not self.page:
+        try:
+            page = self.page
+        except RuntimeError:
+            return
+        if not page:
             return
         self.__picker.open = True
-        self.__picker.update()
+        self.__safe_update(self.__picker)
 
     def __handle_picker_change(self, _: ft.Event[ft.DatePicker]) -> None:
         picked_raw = getattr(self.__picker, "value", None)
@@ -138,3 +146,14 @@ class DateField(ft.Row):
     def __clear_date(self, _: ft.Event[ft.IconButton]) -> None:
         self.__set_value(None)
         self.__emit_value()
+
+    @staticmethod
+    def __safe_update(control: ft.Control) -> None:
+        try:
+            _ = control.page
+        except RuntimeError:
+            return
+        try:
+            control.update()
+        except RuntimeError:
+            return

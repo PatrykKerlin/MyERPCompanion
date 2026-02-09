@@ -178,16 +178,24 @@ class OrderPickingController(
         return await self.__status_service.get_all(Endpoint.STATUSES, None, None, None, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_get_order_statuses_by_status_id(self, status_id: int) -> list[AssocOrderStatusPlainSchema]:
-        return await self.__order_status_service.get_all(
-            Endpoint.ORDER_STATUSES, None, {"status_id": status_id}, None, self._module_id
+    async def __perform_get_eligible_orders(
+        self, order_date: date | None, customer_id: int | None
+    ) -> list[OrderPlainSchema]:
+        query_params: dict[str, str | int] = {
+            "sort_by": "number",
+            "order": "asc",
+        }
+        if order_date is not None:
+            query_params["order_date"] = order_date.isoformat()
+        if customer_id is not None:
+            query_params["customer_id"] = customer_id
+        return await self.__order_service.get_all(
+            Endpoint.ORDERS_PICKING_ELIGIBLE,
+            None,
+            query_params,
+            None,
+            self._module_id,
         )
-
-    async def __perform_get_orders_by_ids(self, order_ids: list[int]) -> list[OrderPlainSchema]:
-        if not order_ids:
-            return []
-        body_params = IdsPayloadSchema(ids=order_ids)
-        return await self.__order_service.get_bulk(Endpoint.ORDERS_GET_BULK, None, None, body_params, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_order_statuses(self, order_id: int) -> list[AssocOrderStatusPlainSchema]:
@@ -261,43 +269,7 @@ class OrderPickingController(
         await self.__order_status_service.create(Endpoint.ORDER_STATUSES, None, None, payload, self._module_id)
 
     async def __load_eligible_orders(self, order_date: date | None, customer_id: int | None) -> list[OrderPlainSchema]:
-        statuses = await self.__perform_get_all_statuses()
-        status_by_id = {status.id: status for status in statuses}
-        status_ids = [status.id for status in statuses if status.order in {2, 3}]
-        if not status_ids:
-            return []
-        status_batches = await asyncio.gather(
-            *(self.__perform_get_order_statuses_by_status_id(status_id) for status_id in status_ids)
-        )
-        order_ids = {assoc.order_id for batch in status_batches for assoc in (batch or [])}
-        if not order_ids:
-            return []
-        orders = await self.__perform_get_orders_by_ids(list(order_ids))
-        orders = [
-            order
-            for order in orders
-            if order.is_sales is True
-            and order.customer_id is not None
-            and (order_date is None or order.order_date == order_date)
-            and (customer_id is None or order.customer_id == customer_id)
-        ]
-        if not orders:
-            return []
-        status_tasks = {order.id: self.__perform_get_order_statuses(order.id) for order in orders}
-        status_results = await asyncio.gather(*status_tasks.values())
-        order_statuses_by_id = {
-            order_id: (statuses or []) for order_id, statuses in zip(status_tasks.keys(), status_results, strict=False)
-        }
-        eligible: list[OrderPlainSchema] = []
-        for order in orders:
-            order_statuses = order_statuses_by_id.get(order.id, [])
-            if not order_statuses:
-                continue
-            latest_status = max(order_statuses, key=lambda status: status.created_at)
-            status = status_by_id.get(latest_status.status_id)
-            if status and status.order in {2, 3}:
-                eligible.append(order)
-        return eligible
+        return await self.__perform_get_eligible_orders(order_date, customer_id)
 
     async def __load_package_items(self, view: OrderPickingView | None = None) -> None:
         items = await self.__perform_get_all_items()

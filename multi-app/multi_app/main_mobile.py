@@ -9,6 +9,9 @@ from controllers.base.base_controller import BaseController
 from controllers.components.auth_dialog_controller import AuthDialogController
 from controllers.core.translation_controller import TranslationController
 from controllers.mobile.app_controller import AppController
+from controllers.mobile.bins_controller import BinsController
+from controllers.mobile.items_controller import ItemsController
+from controllers.mobile.order_picking_controller import OrderPickingController
 from events.event_bus import EventBus
 from events.events import AppStarted
 from services.base.base_service import BaseService
@@ -73,6 +76,9 @@ class App:
         app_controller = AppController(self.__context)
         self.__controllers = [
             app_controller,
+            BinsController(self.__context),
+            ItemsController(self.__context),
+            OrderPickingController(self.__context),
             TranslationController(self.__context),
             AuthDialogController(self.__context),
         ]

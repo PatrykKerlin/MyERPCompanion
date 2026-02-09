@@ -36,50 +36,48 @@ class OrderPickingView(BaseDesktopView):
         super().__init__(controller, translation, mode, key, None, 0, 12)
         self._master_column.scroll = None
 
-        self.__order_date_input = DateField(
+        order_date_container, _ = self._get_date_picker(
+            "order_date",
+            4,
+            callbacks=[self.__handle_order_date_changed],
             value=default_order_date,
             read_only=False,
-            on_change=self.__handle_order_date_changed,
-            expand=True,
         )
-        order_date_container = ft.Container(
-            content=ft.Column(
-                controls=[self.__order_date_input],
-                spacing=4,
-            ),
-            col={"sm": 4.0},
-            alignment=self._base_alignment,
-            expand=True,
-        )
+        self.__order_date_input = cast(DateField, order_date_container.content)
 
-        self.__customer_input = ft.Dropdown(
-            options=(
-                [ft.dropdown.Option(key="0", text="")]
-                + [ft.dropdown.Option(key=str(customer_id), text=label) for customer_id, label in customers]
-            ),
-            value="0",
-            on_select=self.__handle_customer_changed,
-            expand=True,
-            editable=True,
-            enable_search=True,
-            enable_filter=True,
+        customer_container, _ = self._get_dropdown(
+            "customer_id",
+            4,
+            customers,
+            callbacks=[self.__handle_customer_changed],
         )
+        self.__customer_input = cast(ft.Dropdown, customer_container.content)
         self.__customer_input.label = self._translation.get("customer")
-        customer_container = ft.Container(
-            content=self.__customer_input,
-            col={"sm": 4.0},
-            alignment=self._base_alignment,
-            expand=True,
-        )
+        self.__customer_input.value = "0"
+        customer_container.expand = True
 
         order_container, _ = self._get_dropdown("order_id", 4, orders, callbacks=[self.__handle_order_changed])
         self.__order_input = cast(ft.Dropdown, order_container.content)
         self.__order_input.label = self._translation.get("order")
         order_container.expand = True
-        self._inputs["order_id"] = FieldGroup(
-            label=self._get_label("order", 0, colon=False),
-            input=(order_container, 4),
-            marker=self._get_marker("order_id", 0),
+        self._add_to_inputs(
+            {
+                "order_date": FieldGroup(
+                    label=self._get_label("order_date", 0, colon=False),
+                    input=(order_date_container, 4),
+                    marker=self._get_marker("order_date", 0),
+                ),
+                "customer_id": FieldGroup(
+                    label=self._get_label("customer", 0, colon=False),
+                    input=(customer_container, 4),
+                    marker=self._get_marker("customer_id", 0),
+                ),
+                "order_id": FieldGroup(
+                    label=self._get_label("order", 0, colon=False),
+                    input=(order_container, 4),
+                    marker=self._get_marker("order_id", 0),
+                ),
+            }
         )
 
         self.__item_bulk_transfer = BulkTransfer(
@@ -178,10 +176,10 @@ class OrderPickingView(BaseDesktopView):
     def __handle_order_changed(self) -> None:
         self._controller.on_order_changed(self.__order_input.value)
 
-    def __handle_order_date_changed(self, _: ft.ControlEvent) -> None:
+    def __handle_order_date_changed(self) -> None:
         self._controller.on_order_date_changed(self.__order_date_input.value)
 
-    def __handle_customer_changed(self, _: ft.Event[ft.Dropdown]) -> None:
+    def __handle_customer_changed(self) -> None:
         self._controller.on_customer_changed(self.__customer_input.value)
 
     def set_source_rows(self, rows: list[tuple[int, list[Any]]]) -> None:

@@ -6,8 +6,6 @@ import flet as ft
 
 from config.context import Context
 from controllers.base.base_controller import BaseController
-from controllers.mobile.bins_controller import BinsController
-from controllers.mobile.items_controller import ItemsController
 from events.base.base_event import BaseEvent
 from events.events import (
     ApiStatusChecked,
@@ -39,8 +37,6 @@ class AppController(BaseController):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self.__service = AppService(self._settings, self._logger, self._tokens_accessor)
-        self.__bins_controller = BinsController(context)
-        self.__items_controller = ItemsController(context)
         self.__view = MobileAppView(self._state_store.app_state.translation.items, self._settings.THEME)
         self.__view.set_navigation_handler(self.__request_mobile_view)
         self.__main_menu: MainMenuView | None = None
@@ -64,11 +60,6 @@ class AppController(BaseController):
                 "user": self.__user_updated_listener,
             }
         )
-
-    async def dispose(self) -> None:
-        await self.__bins_controller.dispose()
-        await self.__items_controller.dispose()
-        await super().dispose()
 
     def build_root(self) -> ft.Control:
         return self.__view.build()
@@ -140,7 +131,7 @@ class AppController(BaseController):
         await self._event_bus.publish(AuthDialogRequested())
 
     async def __view_ready_handler(self, event: ViewReady) -> None:
-        if event.view_key not in {View.BINS, View.ITEMS}:
+        if event.view_key not in {View.BINS, View.ITEMS, View.ORDER_PICKING}:
             return
         self.__view.set_navigation_visible(True)
         self.__main_menu = None

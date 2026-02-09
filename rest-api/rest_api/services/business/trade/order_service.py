@@ -54,3 +54,24 @@ class OrderService(BaseService[Order, OrderRepository, OrderStrictSchema, OrderP
         total = await self._repository_cls.count_all_purchase(session=session, filters=filters)
         schemas = [self._output_schema_cls.model_validate(model) for model in models]
         return schemas, total
+
+    async def get_all_picking_eligible(
+        self,
+        session: AsyncSession,
+        filters: Mapping[str, str] | None = None,
+        offset: int = 0,
+        limit: int = 100,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
+    ) -> tuple[list[OrderPlainSchema], int]:
+        models = await self._repository_cls.get_all_picking_eligible(
+            session=session,
+            filters=filters,
+            offset=offset,
+            limit=limit,
+            sort_by=sort_by,
+            sort_order=sort_order,
+        )
+        total = await self._repository_cls.count_all_picking_eligible(session=session, filters=filters)
+        schemas = [self._output_schema_cls.model_validate(model) for model in models]
+        return schemas, total

@@ -50,8 +50,11 @@ class SalesForecastReportView(BaseDesktopView):
         self.__net_monthly_chart_dialog = net_monthly_chart_dialog
         self.__gross_monthly_chart_dialog = gross_monthly_chart_dialog
 
-        self.__date_from_input = DateField(value=date_from, read_only=False, on_change=lambda _: None, expand=True)
-        self.__date_to_input = DateField(value=date_to, read_only=False, on_change=lambda _: None, expand=True)
+        date_from_container, _ = self._get_date_picker("date_from", 2, value=date_from, read_only=False)
+        self.__date_from_input = cast(DateField, date_from_container.content)
+
+        date_to_container, _ = self._get_date_picker("date_to", 2, value=date_to, read_only=False)
+        self.__date_to_input = cast(DateField, date_to_container.content)
 
         currency_container, _ = self._get_dropdown("currency_id", 2, currency_options)
         self.__currency_input = cast(ft.Dropdown, currency_container.content)
@@ -85,6 +88,16 @@ class SalesForecastReportView(BaseDesktopView):
 
         self._inputs.update(
             {
+                "date_from": FieldGroup(
+                    label=(ft.Container(), 0),
+                    input=(date_from_container, 0),
+                    marker=(ft.Container(), 0),
+                ),
+                "date_to": FieldGroup(
+                    label=(ft.Container(), 0),
+                    input=(date_to_container, 0),
+                    marker=(ft.Container(), 0),
+                ),
                 "currency_id": FieldGroup(
                     label=(ft.Container(), 0),
                     input=(currency_container, 0),

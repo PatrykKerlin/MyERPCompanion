@@ -30,7 +30,6 @@ class PopulateDatabase:
                 await self.__populate_superuser(session)
                 await self.__populate_from_sql(session)
                 await self.__update_superuser(session)
-                await self.__apply_incremental_updates(session)
             except Exception:
                 await session.rollback()
                 raise
@@ -112,65 +111,6 @@ class PopulateDatabase:
             self.__superuser.modified_by = self.__superuser.id
             session.add(self.__superuser)
             await session.commit()
-
-    async def __apply_incremental_updates(self, session: AsyncSession) -> None:
-        created_by = self.__superuser.id if self.__superuser else None
-        await session.execute(
-            text(
-                """
-                INSERT INTO controllers (name, is_active, created_at, created_by)
-                SELECT 'SalesForecastReportController', TRUE, CURRENT_TIMESTAMP, :created_by
-                WHERE NOT EXISTS (
-                    SELECT 1
-                    FROM controllers
-                    WHERE name = 'SalesForecastReportController'
-                );
-                """
-            ),
-            {"created_by": created_by},
-        )
-        await session.execute(
-            text(
-                """
-                INSERT INTO views (key, description, "order", module_id, is_active, created_at, created_by)
-                SELECT 'sales_forecast_report', 'Sales forecast report view', 2, m.id, TRUE, CURRENT_TIMESTAMP, :created_by
-                FROM modules AS m
-                WHERE m.key = 'reporting'
-                AND NOT EXISTS (
-                    SELECT 1
-                    FROM views
-                    WHERE key = 'sales_forecast_report'
-                );
-                """
-            ),
-            {"created_by": created_by},
-        )
-        await session.execute(
-            text(
-                """
-                INSERT INTO view_controllers (view_id, controller_id, is_active, created_at, created_by)
-                SELECT v.id, c.id, TRUE, CURRENT_TIMESTAMP, :created_by
-                FROM views AS v
-                JOIN controllers AS c
-                    ON c.name IN (
-                        'SalesForecastReportController',
-                        'CurrencyController',
-                        'CustomerController',
-                        'ItemController',
-                        'CategoryController'
-                    )
-                WHERE v.key = 'sales_forecast_report'
-                AND NOT EXISTS (
-                    SELECT 1
-                    FROM view_controllers AS vc
-                    WHERE vc.view_id = v.id
-                    AND vc.controller_id = c.id
-                );
-                """
-            ),
-            {"created_by": created_by},
-        )
-        await session.commit()
 
     @staticmethod
     async def __try_acquire_lock(session: AsyncSession) -> bool:

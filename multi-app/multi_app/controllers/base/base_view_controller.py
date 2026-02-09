@@ -171,7 +171,17 @@ class BaseViewController(
             callback()
 
     def set_field_value(self, key: str, value: str | int | float | bool | date | None) -> None:
-        self.__set_field_value_no_history(key, value)
+        normalized_value: str | int | float | bool | date | None = value
+        if self._view:
+            field = self._view.inputs.get(key)
+            control = field.input.content if field else None
+            if isinstance(control, ft.Dropdown):
+                if value is None:
+                    normalized_value = None
+                else:
+                    value_stripped = str(value).strip()
+                    normalized_value = None if value_stripped in {"", "0"} else value_stripped
+        self.__set_field_value_no_history(key, normalized_value)
 
     def on_undo_clicked(self) -> None:
         if not self._view or not self._request_data.undo_stack:

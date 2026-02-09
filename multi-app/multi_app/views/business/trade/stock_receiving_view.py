@@ -34,12 +34,25 @@ class StockReceivingView(BaseDesktopView):
         self.__order_input = cast(ft.Dropdown, order_container.content)
         self.__order_input.label = self._translation.get("order")
         order_container.expand = True
-        self._inputs["order_id"] = FieldGroup(
-            label=self._get_label("order", 0, colon=False),
-            input=(order_container, 12),
-            marker=self._get_marker("order_id", 0),
+        target_container, _ = self._get_text_input("target_bin", 12)
+        self.__target_input = cast(ft.TextField, target_container.content)
+        self.__target_input.label = self._translation.get("target_bin")
+        self.__target_input.on_submit = on_target_submitted
+        target_container.expand = True
+        self._add_to_inputs(
+            {
+                "order_id": FieldGroup(
+                    label=self._get_label("order", 0, colon=False),
+                    input=(order_container, 12),
+                    marker=self._get_marker("order_id", 0),
+                ),
+                "target_bin": FieldGroup(
+                    label=self._get_label("target_bin", 0, colon=False),
+                    input=(target_container, 12),
+                    marker=self._get_marker("target_bin", 0),
+                ),
+            }
         )
-        self.__target_input = ft.TextField(label=self._translation.get("target_bin"), on_submit=on_target_submitted)
 
         self.__bulk_transfer = BulkTransfer(
             on_save_clicked=on_save_clicked,
@@ -64,7 +77,7 @@ class StockReceivingView(BaseDesktopView):
             controls=[
                 order_container,
                 ft.Container(expand=True),
-                ft.Container(content=self.__target_input, expand=True),
+                target_container,
             ],
             vertical_alignment=ft.CrossAxisAlignment.START,
         )

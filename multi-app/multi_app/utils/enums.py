@@ -144,6 +144,7 @@ class Endpoint(StrEnum):
     EXCHANGE_RATES = "exchange-rates"
     INVOICES = "invoices"
     ORDERS = "orders"
+    ORDERS_PICKING_ELIGIBLE = "orders/picking-eligible"
     ORDERS_GET_BULK = "orders/get-bulk"
     ORDERS_UPDATE_BULK = "orders/update-bulk"
     ORDER_UPDATE_BULK = "orders/update-bulk"

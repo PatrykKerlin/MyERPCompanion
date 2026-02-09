@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Callable, cast
 import flet as ft
 
 from utils.enums import View, ViewMode
+from utils.field_group import FieldGroup
 
 from views.base.base_desktop_view import BaseDesktopView
 from utils.translation import Translation
@@ -30,8 +31,32 @@ class BinTransferView(BaseDesktopView):
         super().__init__(controller, translation, mode, key, None, 0, 12)
         self._master_column.scroll = None
 
-        self.__source_input = ft.TextField(label=self._translation.get("source_bin"), on_submit=on_source_submitted)
-        self.__target_input = ft.TextField(label=self._translation.get("target_bin"), on_submit=on_target_submitted)
+        source_container, _ = self._get_text_input("source_bin", 12)
+        self.__source_input = cast(ft.TextField, source_container.content)
+        self.__source_input.label = self._translation.get("source_bin")
+        self.__source_input.on_submit = on_source_submitted
+        source_container.expand = True
+
+        target_container, _ = self._get_text_input("target_bin", 12)
+        self.__target_input = cast(ft.TextField, target_container.content)
+        self.__target_input.label = self._translation.get("target_bin")
+        self.__target_input.on_submit = on_target_submitted
+        target_container.expand = True
+
+        self._add_to_inputs(
+            {
+                "source_bin": FieldGroup(
+                    label=self._get_label("source_bin", 0, colon=False),
+                    input=(source_container, 12),
+                    marker=self._get_marker("source_bin", 0),
+                ),
+                "target_bin": FieldGroup(
+                    label=self._get_label("target_bin", 0, colon=False),
+                    input=(target_container, 12),
+                    marker=self._get_marker("target_bin", 0),
+                ),
+            }
+        )
 
         self.__bulk_transfer = BulkTransfer(
             on_save_clicked=on_save_clicked,
@@ -45,9 +70,9 @@ class BinTransferView(BaseDesktopView):
 
         inputs_row = ft.Row(
             controls=[
-                ft.Container(content=self.__source_input, expand=True),
+                source_container,
                 ft.Container(expand=True),
-                ft.Container(content=self.__target_input, expand=True),
+                target_container,
             ],
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
