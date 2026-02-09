@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 from typing import Callable, cast
 import flet as ft
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 
 class DateField(ft.Row):
@@ -137,15 +137,36 @@ class DateField(ft.Row):
         self.__picker.open = True
         self.__safe_update(self.__picker)
 
-    def __handle_picker_change(self, _: ft.Event[ft.DatePicker]) -> None:
-        picked_raw = getattr(self.__picker, "value", None)
-        picked = self.__normalize_input(picked_raw)
+    def __handle_picker_change(self, event: ft.Event[ft.DatePicker]) -> None:
+        picked_raw_from_picker = getattr(self.__picker, "value", None)
+        picked_raw_from_event = getattr(event, "data", None)
+        picked = self.__normalize_event_data(picked_raw_from_event)
+        if picked is None:
+            picked = self.__normalize_input(picked_raw_from_picker)
         self.__set_value(picked)
         self.__emit_value()
 
     def __clear_date(self, _: ft.Event[ft.IconButton]) -> None:
         self.__set_value(None)
         self.__emit_value()
+
+    @staticmethod
+    def __normalize_event_data(raw_value: str | date | datetime | None) -> date | None:
+        if raw_value is None:
+            return None
+        if isinstance(raw_value, datetime):
+            if raw_value.tzinfo is not None and raw_value.utcoffset() == timedelta(0) and raw_value.hour >= 12:
+                return (raw_value + timedelta(days=1)).date()
+            return raw_value.date()
+        if isinstance(raw_value, date):
+            return raw_value
+        raw_value_stripped = raw_value.strip()
+        if len(raw_value_stripped) < 10:
+            return None
+        try:
+            return date.fromisoformat(raw_value_stripped[:10])
+        except ValueError:
+            return None
 
     @staticmethod
     def __safe_update(control: ft.Control) -> None:

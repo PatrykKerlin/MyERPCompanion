@@ -72,7 +72,6 @@ class FooterController(BaseComponentController[FooterComponent, FooterRequested]
             raise
         except RuntimeError as error:
             if "destroyed session" in str(error).lower():
-                self._logger.debug("Footer status loop stopped after session was destroyed.")
                 return
             raise
 
@@ -87,7 +86,6 @@ class FooterController(BaseComponentController[FooterComponent, FooterRequested]
             raise
         except RuntimeError as error:
             if "destroyed session" in str(error).lower():
-                self._logger.debug("Footer clock loop stopped after session was destroyed.")
                 return
             raise
 

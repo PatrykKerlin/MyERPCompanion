@@ -65,7 +65,7 @@ class OrderPickingController(
         self.__units_by_id: dict[int, UnitPlainSchema] = {}
 
         self.__orders: list[OrderPlainSchema] = []
-        self.__selected_order_date: date | None = date.today()
+        self.__selected_order_date: str | None = date.today().isoformat()
         self.__selected_customer_id: int | None = None
         self.__selected_order_id: int | None = None
         self.__order_items_request_id = 0
@@ -89,7 +89,7 @@ class OrderPickingController(
             view_key=event.view_key,
             data_row=event.data,
             customers=customer_pairs,
-            default_order_date=self.__selected_order_date,
+            default_order_date=self.__selected_order_date_for_view(),
             selected_customer_id=self.__selected_customer_id,
         )
         view.set_orders(
@@ -112,8 +112,9 @@ class OrderPickingController(
         request_id = self.__order_items_request_id
         self._page.run_task(self.__load_items_for_selected_order, order_id, request_id)
 
-    def on_order_date_changed(self, value: date | None) -> None:
-        self.__selected_order_date = value
+    def on_order_date_changed(self, value: str | None) -> None:
+        normalized_value = self.__normalize_order_date_string(value)
+        self.__selected_order_date = normalized_value
         self._page.run_task(self.__reload_orders)
 
     def on_customer_changed(self, value: str | None) -> None:
@@ -171,7 +172,7 @@ class OrderPickingController(
         self._page.update()
 
     async def __load_eligible_orders(
-        self, order_date: date | None, customer_id: int | None
+        self, order_date: str | None, customer_id: int | None
     ) -> list[OrderPlainSchema]:
         return await self.__perform_get_eligible_orders(order_date, customer_id)
 
@@ -544,14 +545,14 @@ class OrderPickingController(
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_eligible_orders(
-        self, order_date: date | None, customer_id: int | None
+        self, order_date: str | None, customer_id: int | None
     ) -> list[OrderPlainSchema]:
         query_params: dict[str, str | int] = {
             "sort_by": "number",
             "order": "asc",
         }
         if order_date is not None:
-            query_params["order_date"] = order_date.isoformat()
+            query_params["order_date"] = order_date
         if customer_id is not None:
             query_params["customer_id"] = customer_id
         return await self._service.get_all(
@@ -658,6 +659,33 @@ class OrderPickingController(
             return customer.company_name
         name_parts = [part for part in [customer.first_name, customer.last_name] if part]
         return " ".join(name_parts) if name_parts else str(customer.id)
+
+    def __selected_order_date_for_view(self) -> date | None:
+        if self.__selected_order_date is None:
+            return None
+        return self.__parse_iso_date(self.__selected_order_date)
+
+    @staticmethod
+    def __normalize_order_date_string(value: str | None) -> str | None:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            return None
+        value_stripped = value.strip()
+        if value_stripped == "":
+            return None
+        parsed = OrderPickingController.__parse_iso_date(value_stripped)
+        if parsed is None:
+            return None
+        return parsed.isoformat()
+
+    @staticmethod
+    def __parse_iso_date(value: str) -> date | None:
+        candidate = value[:10]
+        try:
+            return date.fromisoformat(candidate)
+        except ValueError:
+            return None
 
     @staticmethod
     def __build_item_update(item: ItemPlainSchema, stock_quantity: int) -> ItemStrictSchema:

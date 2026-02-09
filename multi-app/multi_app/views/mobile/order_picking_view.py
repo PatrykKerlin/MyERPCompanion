@@ -637,7 +637,8 @@ class OrderPickingView(BaseView):
         ]
 
     def __handle_order_date_changed(self) -> None:
-        self._controller.on_order_date_changed(self.__order_date_input.value)
+        selected_date = self.__order_date_input.value
+        self._controller.on_order_date_changed(selected_date.isoformat() if selected_date else None)
 
     def __handle_customer_changed(self) -> None:
         self._controller.on_customer_changed(self.__customer_input.value)

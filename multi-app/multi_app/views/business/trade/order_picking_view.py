@@ -44,6 +44,7 @@ class OrderPickingView(BaseDesktopView):
             read_only=False,
         )
         self.__order_date_input = cast(DateField, order_date_container.content)
+        order_date_container.expand = True
 
         customer_container, _ = self._get_dropdown(
             "customer_id",
@@ -132,12 +133,16 @@ class OrderPickingView(BaseDesktopView):
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
 
-        inputs_row = ft.Row(
+        inputs_row = ft.ResponsiveRow(
+            columns=12,
+            spacing=8,
+            run_spacing=8,
             controls=[
                 order_date_container,
                 customer_container,
                 order_container,
             ],
+            alignment=ft.MainAxisAlignment.START,
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
 
