@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 from controllers.base.base_component_controller import BaseComponentController
@@ -24,14 +25,16 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
         super().__init__(context)
         self.__service = AuthService(self._settings, self._logger, self._tokens_accessor)
         self.__mobile_login_warehouses_request_id = 0
+        self.__mobile_login_warehouses_username: str | None = None
         self._subscribe_event_handlers({AuthDialogRequested: self._component_requested_handler})
 
     async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
         translation_state = self._state_store.app_state.translation
         if self._settings.CLIENT == "mobile":
+            self.__mobile_login_warehouses_username = None
             self._component = MobileAuthView(controller=self, translation=translation_state.items)
             await self._event_bus.publish(AuthViewReady(component=self._component))
-            self.on_mobile_username_changed(None)
+            self.on_mobile_username_changed(None, force=True)
             return
         self._component = AuthDialogComponent(controller=self, translation=translation_state.items)
         self._queue_dialog(self._component)
@@ -45,12 +48,27 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
         else:
             self._page.run_task(self.__handle_login, username, password, warehouse_id)
 
-    def on_mobile_username_changed(self, username: str | None) -> None:
+    def on_mobile_username_changed(self, username: str | None, force: bool = False) -> None:
         if self._settings.CLIENT != "mobile":
             return
+        normalized_username = (username or "").strip() or None
+        if not force and normalized_username == self.__mobile_login_warehouses_username:
+            return
+        self.__mobile_login_warehouses_username = normalized_username
         self.__mobile_login_warehouses_request_id += 1
         request_id = self.__mobile_login_warehouses_request_id
-        self._page.run_task(self.__load_mobile_login_warehouses, username, request_id)
+        self.__schedule_mobile_login_warehouses_load(normalized_username, request_id)
+
+    def __schedule_mobile_login_warehouses_load(self, username: str | None, request_id: int) -> None:
+        try:
+            self._page.run_task(self.__load_mobile_login_warehouses, username, request_id)
+            return
+        except (AttributeError, RuntimeError):
+            pass
+        try:
+            asyncio.create_task(self.__load_mobile_login_warehouses(username, request_id))
+        except RuntimeError:
+            self._logger.exception("Unable to schedule mobile login warehouse load.")
 
     async def __handle_login(self, username: str, password: str, warehouse_id: int | None = None) -> None:
         tokens = await self.__perform_fetch_tokens(username, password, warehouse_id)

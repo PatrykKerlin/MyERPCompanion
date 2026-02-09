@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.business.trade.order import Order
 from repositories.business.trade.order_repository import OrderRepository
-from schemas.business.trade.order_schema import OrderPlainSchema, OrderStrictSchema
+from schemas.business.trade.order_schema import OrderPickingSummarySchema, OrderPlainSchema, OrderStrictSchema
 from services.base.base_service import BaseService
 
 
@@ -75,3 +75,18 @@ class OrderService(BaseService[Order, OrderRepository, OrderStrictSchema, OrderP
         total = await self._repository_cls.count_all_picking_eligible(session=session, filters=filters)
         schemas = [self._output_schema_cls.model_validate(model) for model in models]
         return schemas, total
+
+    async def get_picking_summary(
+        self,
+        session: AsyncSession,
+        filters: Mapping[str, str] | None = None,
+    ) -> OrderPickingSummarySchema:
+        orders_count, items_count, pieces_count = await self._repository_cls.get_picking_summary(
+            session=session,
+            filters=filters,
+        )
+        return OrderPickingSummarySchema(
+            orders_count=orders_count,
+            items_count=items_count,
+            pieces_count=pieces_count,
+        )

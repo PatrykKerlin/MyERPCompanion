@@ -31,14 +31,24 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
         return TokenPlainSchema(**response.json())
 
     async def get_login_warehouses(self, username: str | None = None) -> list[WarehouseLoginOptionSchema]:
-        query_params = {"username": username} if username else None
-        original_plain_schema_cls = self._plain_schema_cls
-        self._plain_schema_cls = _WarehouseLoginOptionFetchSchema
-        try:
-            # Public endpoint does not require auth token, so we bypass token-refresh wrapper.
-            rows = await BaseService.get_all.__wrapped__(self, Endpoint.WAREHOUSES_BY_USERNAME, None, query_params, None, None, None)
-        finally:
-            self._plain_schema_cls = original_plain_schema_cls
+        params: dict[str, Any] = {"page": 1}
+        if username:
+            params["username"] = username
+
+        rows: list[_WarehouseLoginOptionFetchSchema] = []
+        while True:
+            response = await self._get(
+                endpoint=Endpoint.WAREHOUSES_BY_USERNAME,
+                query_params=params,
+                tokens=None,
+                module_id=None,
+            )
+            data = response.json()
+            rows.extend(_WarehouseLoginOptionFetchSchema(**row) for row in data.get("items", []))
+            if not data.get("has_next", False):
+                break
+            params["page"] += 1
+
         return [WarehouseLoginOptionSchema.model_construct(**row.model_dump(mode="python")) for row in rows]
 
     @BaseService.handle_token_refresh

@@ -251,8 +251,7 @@ class BaseController:
     def _queue_dialog(self, dialog: Any, wait_for_future: Awaitable[Any] | None = None) -> None:
         try:
             self._page.run_task(self._show_dialog_serialized, dialog, wait_for_future)
-        except (AttributeError, RuntimeError):
-            # Fallback when run_task is unavailable in the active runtime.
+        except AttributeError, RuntimeError:
             self._logger.warning("Dialog fallback: showing without run_task", exc_info=True)
             self._page.show_dialog(dialog)
 
@@ -260,7 +259,7 @@ class BaseController:
     def queue_dialog(cls, page: Any, dialog: Any, wait_for_future: Awaitable[Any] | None = None) -> None:
         try:
             page.run_task(cls._show_dialog_serialized_static, page, dialog, wait_for_future)
-        except (AttributeError, RuntimeError):
+        except AttributeError, RuntimeError:
             page.show_dialog(dialog)
 
     @classmethod

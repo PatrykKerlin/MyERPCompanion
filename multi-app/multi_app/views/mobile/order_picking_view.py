@@ -15,7 +15,11 @@ from views.controls.date_field_control import DateField
 from views.controls.numeric_field_control import NumericField
 
 if TYPE_CHECKING:
-    from controllers.mobile.order_picking_controller import OrderPickingController, OrderPickingItemRow
+    from controllers.mobile.order_picking_controller import (
+        OrderPickedItemRow,
+        OrderPickingController,
+        OrderPickingItemRow,
+    )
 
 
 class OrderPickingView(BaseView):
@@ -95,18 +99,19 @@ class OrderPickingView(BaseView):
         super().__init__(controller, translation, mode, view_key, data_row, 0, 0)
         self.__mode = self.__MODE_LIST
         self.__order_rows: list[OrderPickingItemRow] = []
-        self.__order_item_filter_query = ""
+        self.__picked_rows: list[OrderPickedItemRow] = []
         self.__selected_order_id: int | None = None
 
         self.__pick_item: ItemPlainSchema | None = None
+        self.__pick_is_package = False
         self.__pick_to_process: int = 0
         self.__pick_bin_outbound_by_id: dict[int, int] = {}
         self.__pick_bin_available_by_id: dict[int, int] = {}
         self.__pick_unit_name: str | None = None
         self.__gallery_start_index = 0
 
-        self.__title = ft.Text(size=20, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER)
-        self.__subtitle = ft.Text(size=14, text_align=ft.TextAlign.CENTER)
+        self.__title = ft.Text(size=20, weight=ft.FontWeight.BOLD)
+        self.__subtitle = ft.Text(size=14)
 
         order_date_container, _ = self._get_date_picker(
             "order_date",
@@ -133,11 +138,29 @@ class OrderPickingView(BaseView):
         )
         self.__order_input = cast(ft.Dropdown, order_container.content)
 
-        filter_container, _ = self._get_text_input("item_filter_query", 12)
-        self.__item_filter_input = cast(ft.TextField, filter_container.content)
-        self.__item_filter_input.on_change = self.__handle_item_filter_changed
-        self.__item_filter_input.dense = True
-        self.__item_filter_input.prefix_icon = ft.Icons.SEARCH
+        package_item_container, _ = self._get_dropdown(
+            "package_item_id",
+            8,
+            [],
+        )
+        package_item_container.col = {"xs": 8.0, "sm": 8.0}
+        self.__package_item_input = cast(ft.Dropdown, package_item_container.content)
+        self.__package_item_input.disabled = True
+        self.__add_package_button = ft.Button(
+            on_click=self.__on_add_package_clicked,
+            disabled=True,
+        )
+        package_button_container = ft.Container(
+            content=self.__add_package_button,
+            col={"xs": 4.0, "sm": 4.0},
+            alignment=ft.Alignment.CENTER_LEFT,
+        )
+        self.__packages_row = ft.ResponsiveRow(
+            controls=[package_item_container, package_button_container],
+            columns=12,
+            alignment=ft.MainAxisAlignment.START,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        )
 
         pick_bin_container, _ = self._get_dropdown(
             "pick_bin_id",
@@ -175,9 +198,9 @@ class OrderPickingView(BaseView):
                     input=(order_container, 4),
                     marker=self._get_marker("order_id", 0),
                 ),
-                "item_filter_query": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(filter_container, 12),
+                "package_item_id": FieldGroup(
+                    label=self._get_label("packages", 0, colon=False),
+                    input=(package_item_container, 8),
                     marker=(ft.Container(), 0),
                 ),
                 "pick_bin_id": FieldGroup(
@@ -200,11 +223,24 @@ class OrderPickingView(BaseView):
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
 
-        self.__items_list = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=8)
+        self.__items_list = ft.Column(spacing=8)
+        self.__picked_items_header = ft.Text(weight=ft.FontWeight.W_600, size=14)
+        self.__picked_items_list = ft.Column(spacing=8)
+        self.__picked_items_section = ft.Column(
+            controls=[self.__picked_items_header, self.__picked_items_list],
+            spacing=8,
+        )
         self.__list_section = ft.Column(
-            controls=[filter_container, ft.Divider(height=1), self.__items_list],
+            controls=[
+                self.__packages_row,
+                ft.Divider(height=1),
+                self.__items_list,
+                ft.Divider(height=1),
+                self.__picked_items_section,
+            ],
             expand=True,
             spacing=8,
+            scroll=ft.ScrollMode.AUTO,
             visible=True,
         )
 
@@ -243,18 +279,25 @@ class OrderPickingView(BaseView):
         )
 
         self.__back_button = ft.Button(on_click=self.__on_back_to_menu_clicked, width=220)
+        self.__header_texts = ft.Column(
+            controls=[self.__title, self.__subtitle],
+            spacing=2,
+            expand=True,
+        )
+        self.__header_row = ft.Row(
+            controls=[
+                self.__header_texts,
+                ft.Container(content=self.__back_button, alignment=ft.Alignment.CENTER_RIGHT),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            vertical_alignment=ft.CrossAxisAlignment.START,
+        )
 
         self._master_column.controls = [
-            self.__title,
-            self.__subtitle,
+            self.__header_row,
             self.__orders_row,
             self.__list_section,
             self.__pick_section,
-            ft.Container(height=8),
-            ft.Row(
-                controls=[self.__back_button],
-                alignment=ft.MainAxisAlignment.CENTER,
-            ),
         ]
 
         if selected_customer_id is not None:
@@ -302,6 +345,26 @@ class OrderPickingView(BaseView):
         self.__order_rows = rows
         self.__render_items_list()
 
+    def set_picked_items(self, rows: list[OrderPickedItemRow]) -> None:
+        self.__picked_rows = rows
+        self.__render_items_list()
+
+    def set_package_options(self, options: list[tuple[int, str]], enabled: bool) -> None:
+        self.__package_item_input.options = [ft.dropdown.Option(key="0", text="")] + [
+            ft.dropdown.Option(key=str(item_id), text=label) for item_id, label in options
+        ]
+        if enabled and options:
+            valid_keys = {str(item_id) for item_id, _ in options}
+            current_value = self.__package_item_input.value
+            self.__package_item_input.value = current_value if current_value in valid_keys else str(options[0][0])
+        else:
+            self.__package_item_input.value = "0"
+        disabled = (not enabled) or (not options)
+        self.__package_item_input.disabled = disabled
+        self.__add_package_button.disabled = disabled
+        self.__safe_update(self.__package_item_input)
+        self.__safe_update(self.__add_package_button)
+
     def show_items_list(self) -> None:
         self.__mode = self.__MODE_LIST
         self.__orders_row.visible = True
@@ -321,9 +384,11 @@ class OrderPickingView(BaseView):
         default_bin_id: int,
         default_quantity: int,
         unit_name: str | None,
+        is_package_pick: bool,
     ) -> None:
         self.__mode = self.__MODE_PICK
         self.__pick_item = item
+        self.__pick_is_package = is_package_pick
         self.__pick_to_process = max(0, to_process)
         self.__pick_unit_name = unit_name
         self.__gallery_start_index = 0
@@ -345,7 +410,7 @@ class OrderPickingView(BaseView):
         else:
             self.__pick_bin_input.value = None
 
-        max_quantity = self.__resolve_selected_bin_available()
+        max_quantity = self.__selected_bin_available()
         if max_quantity < 1:
             max_quantity = 1
         normalized_quantity = max(1, min(default_quantity, max_quantity))
@@ -367,10 +432,12 @@ class OrderPickingView(BaseView):
         self.__title.value = self._translation.get("order_picking")
         self.__order_input.label = self._translation.get("order")
         self.__customer_input.label = self._translation.get("customer")
-        self.__item_filter_input.label = self._translation.get("item_filter")
+        self.__picked_items_header.value = self._translation.get("picked_items")
+        self.__package_item_input.label = self._translation.get("packages")
+        self.__add_package_button.content = self._translation.get("add_package")
         self.__pick_bin_input.label = self._translation.get("source_bin")
         self.__back_button.content = self._translation.get("back_to_menu")
-        self.__pick_back_button.content = self.__resolve_pick_back_label()
+        self.__pick_back_button.content = self._translation.get("back")
         self.__pick_save_button.content = self._translation.get("save")
 
     def __render_subtitle(self) -> None:
@@ -383,31 +450,53 @@ class OrderPickingView(BaseView):
         self.__subtitle.value = f"{self._translation.get('order')}: {self.__selected_order_id}"
 
     def __render_items_list(self) -> None:
-        filtered_rows = self.__get_filtered_rows()
-        if not filtered_rows:
+        if not self.__order_rows:
             self.__items_list.controls = [
                 ft.Text(self._translation.get("no_items"), text_align=ft.TextAlign.CENTER),
             ]
-            self.__safe_update(self.__items_list)
-            return
-
-        controls: list[ft.Control] = []
-        for row in filtered_rows:
-            controls.append(
-                ft.Card(
-                    content=ft.ListTile(
-                        title=ft.Text(row.item_name),
-                        subtitle=ft.Text(
-                            f"{self._translation.get('index')}: {row.item_index} | "
-                            f"{self.__to_process_label()}: {row.to_process}"
-                        ),
-                        trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
-                        on_click=self.__build_item_click_handler(row.item_id),
+        else:
+            controls: list[ft.Control] = []
+            for row in self.__order_rows:
+                controls.append(
+                    ft.Card(
+                        content=ft.ListTile(
+                            title=ft.Text(row.item_name),
+                            subtitle=ft.Text(
+                                f"{self._translation.get('index')}: {row.item_index} | "
+                                f"{self._translation.get('to_process')}: {row.to_process}"
+                            ),
+                            trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
+                            on_click=self.__build_item_click_handler(row.item_id),
+                        )
                     )
                 )
-            )
-        self.__items_list.controls = controls
+            self.__items_list.controls = controls
+
+        if not self.__picked_rows:
+            self.__picked_items_list.controls = [
+                ft.Text(self._translation.get("no_picked_items"), text_align=ft.TextAlign.CENTER),
+            ]
+        else:
+            picked_controls: list[ft.Control] = []
+            for row in self.__picked_rows:
+                picked_controls.append(
+                    ft.Card(
+                        content=ft.ListTile(
+                            title=ft.Text(row.item_name),
+                            subtitle=ft.Text(
+                                f"{self._translation.get('index')}: {row.item_index} | "
+                                f"{self._translation.get('location')}: {row.bin_location} | "
+                                f"{self._translation.get('quantity')}: {row.quantity}"
+                            ),
+                        )
+                    )
+                )
+            self.__picked_items_list.controls = picked_controls
+
+        self.__picked_items_header.value = self._translation.get("picked_items")
         self.__safe_update(self.__items_list)
+        self.__safe_update(self.__picked_items_header)
+        self.__safe_update(self.__picked_items_list)
 
     def __render_pick_form(self) -> None:
         if self.__pick_item is None:
@@ -415,7 +504,7 @@ class OrderPickingView(BaseView):
         self.__pick_item_title.value = f"{self._translation.get('index')}: {self.__pick_item.index}"
         detail_rows = self.__build_detail_rows(self.__pick_item)
         self.__pick_details_container.content = self.__build_detail_columns(detail_rows)
-        image_urls = self.__resolve_image_urls(self.__pick_item)
+        image_urls = self.__image_urls_for_item(self.__pick_item)
         self.__pick_gallery_container.content = self.__build_gallery_section(image_urls)
         self.__update_pick_bin_info()
 
@@ -435,13 +524,13 @@ class OrderPickingView(BaseView):
         for key in self.__DETAIL_FIELDS_ORDER:
             if key not in data or self.__is_excluded_field(key):
                 continue
-            rows.append((self.__resolve_label(key), self.__format_value(data[key])))
+            rows.append((self.__label_for_key(key), self.__format_value(data[key])))
             used_keys.add(key)
 
         for key, value in data.items():
             if key in used_keys or self.__is_excluded_field(key):
                 continue
-            rows.append((self.__resolve_label(key), self.__format_value(value)))
+            rows.append((self.__label_for_key(key), self.__format_value(value)))
 
         return rows
 
@@ -454,35 +543,14 @@ class OrderPickingView(BaseView):
             or key in self.__HIDDEN_DETAIL_FIELDS
         )
 
-    def __resolve_label(self, key: str) -> str:
+    def __label_for_key(self, key: str) -> str:
         label_overrides = {
             "category_name": self._translation.get("category"),
-            "unit_name": self.__resolve_unit_label(),
+            "unit_name": self._translation.get("unit"),
         }
         if key in label_overrides:
             return label_overrides[key]
-        translated = self._translation.get(key)
-        if translated != key:
-            return translated
-        return key.replace("_", " ").capitalize()
-
-    def __to_process_label(self) -> str:
-        translated = self._translation.get("to_process")
-        if translated == "to_process":
-            return "To process"
-        return translated
-
-    def __resolve_pick_back_label(self) -> str:
-        translated = self._translation.get("back")
-        if translated == "back":
-            return "Back"
-        return translated
-
-    def __resolve_unit_label(self) -> str:
-        translated = self._translation.get("unit")
-        if translated == "unit":
-            return "Unit"
-        return translated
+        return self._translation.get(key)
 
     def __format_value(self, value: Any) -> str:
         if value is None:
@@ -621,20 +689,9 @@ class OrderPickingView(BaseView):
             return
 
     @staticmethod
-    def __resolve_image_urls(item: ItemPlainSchema) -> list[str]:
+    def __image_urls_for_item(item: ItemPlainSchema) -> list[str]:
         ordered_images = sorted(item.images, key=lambda image: image.order)
         return [image.url for image in ordered_images if image.url]
-
-    def __get_filtered_rows(self) -> list[OrderPickingItemRow]:
-        if not self.__order_item_filter_query:
-            return self.__order_rows
-
-        query = self.__order_item_filter_query
-        return [
-            row
-            for row in self.__order_rows
-            if query in row.item_name.lower() or query in row.item_index.lower()
-        ]
 
     def __handle_order_date_changed(self) -> None:
         selected_date = self.__order_date_input.value
@@ -649,12 +706,8 @@ class OrderPickingView(BaseView):
         self.__safe_update(self.__subtitle)
         self._controller.on_order_selected(self.__selected_order_id)
 
-    def __handle_item_filter_changed(self, _: ft.ControlEvent) -> None:
-        self.__order_item_filter_query = (self.__item_filter_input.value or "").strip().lower()
-        self.__render_items_list()
-
     def __handle_pick_bin_changed(self) -> None:
-        max_quantity = self.__resolve_selected_bin_available()
+        max_quantity = self.__selected_bin_available()
         if max_quantity < 1:
             max_quantity = 1
         current_quantity = self.__parse_quantity(self.__pick_quantity_input.value) or 1
@@ -669,12 +722,15 @@ class OrderPickingView(BaseView):
         outbound_available = (
             self.__pick_bin_outbound_by_id.get(selected_bin_id, 0) if selected_bin_id is not None else 0
         )
-        self.__pick_bin_info_text.value = (
-            f"{self._translation.get('available')}: {outbound_available} | "
-            f"{self.__to_process_label()}: {self.__pick_to_process}"
-        )
+        if self.__pick_is_package:
+            self.__pick_bin_info_text.value = f"{self._translation.get('available')}: {outbound_available}"
+        else:
+            self.__pick_bin_info_text.value = (
+                f"{self._translation.get('available')}: {outbound_available} | "
+                f"{self._translation.get('to_process')}: {self.__pick_to_process}"
+            )
 
-    def __resolve_selected_bin_available(self) -> int:
+    def __selected_bin_available(self) -> int:
         selected_bin_id = self.__parse_optional_int(self.__pick_bin_input.value)
         if selected_bin_id is None:
             return 0
@@ -690,6 +746,10 @@ class OrderPickingView(BaseView):
         selected_bin_id = self.__parse_optional_int(self.__pick_bin_input.value)
         quantity = self.__parse_quantity(self.__pick_quantity_input.value)
         self._controller.on_pick_form_saved(selected_bin_id, quantity)
+
+    def __on_add_package_clicked(self, _: ft.ControlEvent) -> None:
+        package_item_id = self.__parse_optional_int(self.__package_item_input.value)
+        self._controller.on_package_item_selected(package_item_id)
 
     def __build_item_click_handler(self, item_id: int):
         return lambda _: self._controller.on_order_item_selected(item_id)

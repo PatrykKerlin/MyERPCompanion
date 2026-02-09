@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
+from typing import Annotated
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
-from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.base.base_schema import BasePlainSchema, BaseSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
 
 
@@ -87,3 +88,9 @@ class OrderPlainSchema(BasePlainSchema):
 
     item_ids: list[int]
     status_ids: list[int]
+
+
+class OrderPickingSummarySchema(BaseSchema):
+    orders_count: int = 0
+    items_count: int = 0
+    pieces_count: int = 0

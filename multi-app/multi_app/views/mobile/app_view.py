@@ -45,7 +45,7 @@ class AppView:
             ),
         )
 
-        self.__body_container = ft.Container(expand=True, alignment=ft.Alignment.TOP_CENTER)
+        self.__body_container = ft.Container(expand=True, alignment=ft.Alignment.TOP_LEFT)
         self.__content = ft.Column(
             controls=[self.__top_bar, self.__body_container],
             expand=True,
@@ -70,8 +70,11 @@ class AppView:
         self.__title_text.value = self.__translation.get("my_erp_companion")
         self.__refresh_drawer_controls()
         content = self.__body_container.content
-        if content is not None and hasattr(content, "update_translation"):
-            update_translation = getattr(content, "update_translation")
+        target = content
+        if isinstance(content, ft.Container):
+            target = content.content
+        if target is not None and hasattr(target, "update_translation"):
+            update_translation = getattr(target, "update_translation")
             if callable(update_translation):
                 update_translation(translation)
 
@@ -84,11 +87,25 @@ class AppView:
         self.__safe_update(self.__top_bar)
 
     def set_auth_view(self, component: ft.Control | None) -> None:
-        self.__auth_container.content = component
+        if component is None:
+            self.__auth_container.content = None
+        else:
+            self.__auth_container.content = ft.Container(
+                content=component,
+                alignment=ft.Alignment.CENTER,
+                expand=False,
+            )
         self.__auth_container.visible = component is not None
 
     def set_content(self, component: ft.Control | None) -> None:
-        self.__body_container.content = component
+        if component is None:
+            self.__body_container.content = None
+        else:
+            self.__body_container.content = ft.Container(
+                content=component,
+                expand=True,
+                alignment=ft.Alignment.TOP_LEFT,
+            )
         self.__safe_update(self.__body_container)
 
     def set_theme(self, theme: str) -> None:

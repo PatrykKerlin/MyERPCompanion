@@ -285,7 +285,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
         include: Mapping[Action, bool] | None = None,
         path: str = "",
     ) -> None:
-        id_param = "/{model_id}"
+        id_param = "/{model_id:int}"
         mapping = self._default_actions if include is None else include
         if Action.GET_ALL in mapping:
             self.router.add_api_route(

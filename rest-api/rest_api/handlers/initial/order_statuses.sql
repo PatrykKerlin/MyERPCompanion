@@ -1,7 +1,12 @@
-WITH status_flow AS (
+WITH sales_status_flow AS (
     SELECT id, "order"
     FROM statuses
     WHERE key IN ('new', 'approved', 'in_progress', 'packed', 'invoiced')
+),
+purchase_status_flow AS (
+    SELECT id, "order"
+    FROM statuses
+    WHERE key IN ('new', 'completed')
 )
 INSERT INTO order_statuses (order_id, status_id, is_active, created_at, created_by)
 SELECT
@@ -11,5 +16,14 @@ SELECT
     o.order_date::timestamp + ((sf."order" - 1) * INTERVAL '2 hours') AS created_at,
     CAST(:superuser_id AS INTEGER)
 FROM orders o
-JOIN status_flow sf ON TRUE
-ORDER BY o.id, sf."order";
+JOIN sales_status_flow sf ON o.is_sales IS TRUE
+UNION ALL
+SELECT
+    o.id,
+    pf.id AS status_id,
+    TRUE,
+    o.order_date::timestamp + ((pf."order" - 1) * INTERVAL '2 hours') AS created_at,
+    CAST(:superuser_id AS INTEGER)
+FROM orders o
+JOIN purchase_status_flow pf ON o.is_sales IS FALSE
+ORDER BY 1, 4;

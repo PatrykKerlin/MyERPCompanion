@@ -82,13 +82,27 @@ class AuthView(ft.Container):
             ),
         )
         hero_card = ft.Card(content=hero_body, width=self.__CARD_WIDTH)
+        hero_wrapper = ft.Container(
+            content=hero_card,
+            alignment=ft.Alignment.CENTER,
+            padding=ft.Padding.symmetric(horizontal=12, vertical=20),
+        )
+        centered_layout = ft.Column(
+            controls=[
+                ft.Container(expand=True),
+                hero_wrapper,
+                ft.Container(expand=True),
+            ],
+            expand=True,
+            spacing=0,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
 
         ft.Container.__init__(
             self,
-            content=hero_card,
+            content=centered_layout,
             expand=True,
             alignment=ft.Alignment.CENTER,
-            padding=ft.Padding.symmetric(horizontal=12, vertical=20),
         )
 
     def set_warehouse_options(self, options: list[tuple[int, str]]) -> None:

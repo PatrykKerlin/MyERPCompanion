@@ -34,6 +34,15 @@ class OrderPickingItemRow:
 
 
 @dataclass(frozen=True)
+class OrderPickedItemRow:
+    item_id: int
+    item_index: str
+    item_name: str
+    bin_location: str
+    quantity: int
+
+
+@dataclass(frozen=True)
 class OrderPickingBinOption:
     bin_item_id: int
     bin_id: int
@@ -72,8 +81,10 @@ class OrderPickingController(
 
         self.__current_rows: list[OrderPickingItemRow] = []
         self.__items_by_id: dict[int, ItemPlainSchema] = {}
+        self.__package_items_by_id: dict[int, ItemPlainSchema] = {}
 
         self.__active_pick_item_id: int | None = None
+        self.__active_pick_is_package = False
         self.__active_pick_bin_options: dict[int, OrderPickingBinOption] = {}
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> OrderPickingView:
@@ -96,9 +107,15 @@ class OrderPickingController(
             orders=[(schema.id, schema.number) for schema in self.__orders],
             selected_order_id=self.__selected_order_id,
         )
+        package_options = await self.__load_package_picker_options(self.__selected_order_id)
+        view.set_package_options(
+            options=package_options,
+            enabled=self.__selected_order_id is not None and bool(package_options),
+        )
         if self.__selected_order_id is not None:
-            rows = await self.__load_order_item_rows(self.__selected_order_id)
-            view.set_order_items(rows)
+            to_pick_rows, picked_rows = await self.__load_order_item_rows(self.__selected_order_id)
+            view.set_order_items(to_pick_rows)
+            view.set_picked_items(picked_rows)
         return view
 
     def on_back_to_menu(self) -> None:
@@ -107,6 +124,7 @@ class OrderPickingController(
     def on_order_selected(self, order_id: int | None) -> None:
         self.__selected_order_id = order_id
         self.__active_pick_item_id = None
+        self.__active_pick_is_package = False
         self.__active_pick_bin_options = {}
         self.__order_items_request_id += 1
         request_id = self.__order_items_request_id
@@ -130,29 +148,50 @@ class OrderPickingController(
     def on_order_item_selected(self, item_id: int) -> None:
         self._page.run_task(self.__open_item_pick_form, item_id)
 
+    def on_package_item_selected(self, item_id: int | None) -> None:
+        if self.__selected_order_id is None:
+            return
+        if item_id is None:
+            self._open_error_dialog(message_key="value_required")
+            return
+        self._page.run_task(self.__open_item_pick_form, item_id, True)
+
     def on_pick_form_cancelled(self) -> None:
         if not isinstance(self._view, OrderPickingView):
             return
         self.__active_pick_item_id = None
+        self.__active_pick_is_package = False
         self.__active_pick_bin_options = {}
         self._view.show_items_list()
         self._page.update()
 
     def on_pick_form_saved(self, bin_id: int | None, quantity: int | None) -> None:
+        if self.__active_pick_is_package:
+            self._page.run_task(self.__save_package_pick, bin_id, quantity)
+            return
         self._page.run_task(self.__save_item_pick, bin_id, quantity)
 
     async def __load_items_for_selected_order(self, order_id: int | None, request_id: int) -> None:
-        rows: list[OrderPickingItemRow] = []
+        to_pick_rows: list[OrderPickingItemRow] = []
+        picked_rows: list[OrderPickedItemRow] = []
+        package_options: list[tuple[int, str]] = []
         if order_id is not None:
-            rows = await self.__load_order_item_rows(order_id)
+            to_pick_rows, picked_rows = await self.__load_order_item_rows(order_id)
+            package_options = await self.__load_package_picker_options(order_id)
         if request_id != self.__order_items_request_id:
             return
         if not isinstance(self._view, OrderPickingView):
             return
         self.__active_pick_item_id = None
+        self.__active_pick_is_package = False
         self.__active_pick_bin_options = {}
         self._view.show_items_list()
-        self._view.set_order_items(rows)
+        self._view.set_package_options(
+            options=package_options,
+            enabled=order_id is not None and bool(package_options),
+        )
+        self._view.set_order_items(to_pick_rows)
+        self._view.set_picked_items(picked_rows)
         self._page.update()
 
     async def __reload_orders(self) -> None:
@@ -161,14 +200,18 @@ class OrderPickingController(
         self.__orders = await self.__load_eligible_orders(self.__selected_order_date, self.__selected_customer_id)
         self.__selected_order_id = None
         self.__active_pick_item_id = None
+        self.__active_pick_is_package = False
         self.__active_pick_bin_options = {}
         self.__current_rows = []
         self.__items_by_id = {}
+        self.__package_items_by_id = {}
         self.__order_items_request_id += 1
         self._view.set_orders(orders=[(schema.id, schema.number) for schema in self.__orders], selected_order_id=None)
         self._view.reset_order_selection()
+        self._view.set_package_options([], enabled=False)
         self._view.show_items_list()
         self._view.set_order_items([])
+        self._view.set_picked_items([])
         self._page.update()
 
     async def __load_eligible_orders(
@@ -176,19 +219,20 @@ class OrderPickingController(
     ) -> list[OrderPlainSchema]:
         return await self.__perform_get_eligible_orders(order_date, customer_id)
 
-    async def __load_order_item_rows(self, order_id: int) -> list[OrderPickingItemRow]:
+    async def __load_order_item_rows(self, order_id: int) -> tuple[list[OrderPickingItemRow], list[OrderPickedItemRow]]:
         order_items = await self.__perform_get_order_items(order_id) or []
-        remaining_items = [schema for schema in order_items if schema.to_process > 0]
-        if not remaining_items:
+        if not order_items:
             self.__current_rows = []
             self.__items_by_id = {}
-            return []
+            return [], []
 
-        item_ids = sorted({schema.item_id for schema in remaining_items})
+        remaining_items = [schema for schema in order_items if schema.to_process > 0]
+
+        item_ids = sorted({schema.item_id for schema in order_items})
         items = await self.__perform_get_items_by_ids(item_ids) or []
         self.__items_by_id = {schema.id: schema for schema in items}
 
-        rows: list[OrderPickingItemRow] = []
+        to_pick_rows: list[OrderPickingItemRow] = []
         quantity_by_item: dict[int, int] = {}
         for order_item in remaining_items:
             quantity_by_item[order_item.item_id] = quantity_by_item.get(order_item.item_id, 0) + max(0, order_item.to_process)
@@ -196,7 +240,7 @@ class OrderPickingController(
             item_schema = self.__items_by_id.get(item_id)
             if not item_schema or item_schema.is_package:
                 continue
-            rows.append(
+            to_pick_rows.append(
                 OrderPickingItemRow(
                     item_id=item_schema.id,
                     item_index=item_schema.index,
@@ -204,41 +248,94 @@ class OrderPickingController(
                     to_process=to_process,
                 )
             )
-        rows = sorted(rows, key=lambda row: (row.item_index.lower(), row.item_name.lower()))
-        self.__current_rows = rows
-        return rows
+        to_pick_rows = sorted(to_pick_rows, key=lambda row: (row.item_index.lower(), row.item_name.lower()))
 
-    async def __open_item_pick_form(self, item_id: int) -> None:
+        picked_quantity_by_item_bin: dict[tuple[int, int], int] = {}
+        for order_item in order_items:
+            if order_item.bin_id is None:
+                continue
+            item_schema = self.__items_by_id.get(order_item.item_id)
+            if not item_schema:
+                continue
+            picked_quantity = max(order_item.quantity - order_item.to_process, 0)
+            if picked_quantity <= 0:
+                continue
+            key = (order_item.item_id, order_item.bin_id)
+            picked_quantity_by_item_bin[key] = picked_quantity_by_item_bin.get(key, 0) + picked_quantity
+
+        bin_ids = sorted({bin_id for _, bin_id in picked_quantity_by_item_bin.keys()})
+        bins = await self.__perform_get_bins_by_ids(bin_ids) if bin_ids else []
+        locations_by_bin_id = {schema.id: schema.location for schema in bins}
+
+        picked_rows: list[OrderPickedItemRow] = []
+        for (item_id, bin_id), quantity in picked_quantity_by_item_bin.items():
+            item_schema = self.__items_by_id.get(item_id)
+            if item_schema is None:
+                continue
+            picked_rows.append(
+                OrderPickedItemRow(
+                    item_id=item_id,
+                    item_index=item_schema.index,
+                    item_name=item_schema.name,
+                    bin_location=locations_by_bin_id.get(bin_id, str(bin_id)),
+                    quantity=quantity,
+                )
+            )
+        picked_rows = sorted(
+            picked_rows,
+            key=lambda row: (row.item_index.lower(), row.item_name.lower(), row.bin_location.lower()),
+        )
+
+        self.__current_rows = to_pick_rows
+        return to_pick_rows, picked_rows
+
+    async def __open_item_pick_form(self, item_id: int, is_package_pick: bool = False) -> None:
         if not isinstance(self._view, OrderPickingView) or self.__selected_order_id is None:
             return
-        selected_row = next((row for row in self.__current_rows if row.item_id == item_id), None)
-        if not selected_row or selected_row.to_process <= 0:
-            return
-        item_schema = self.__items_by_id.get(item_id)
-        if item_schema is None:
-            items = await self.__perform_get_items_by_ids([item_id]) or []
-            if not items:
+        max_pick_quantity = 0
+        item_schema: ItemPlainSchema | None = None
+        if is_package_pick:
+            item_schema = self.__package_items_by_id.get(item_id)
+            if item_schema is None:
+                items = await self.__perform_get_items_by_ids([item_id]) or []
+                if not items:
+                    return
+                item_schema = items[0]
+                self.__package_items_by_id[item_id] = item_schema
+            max_pick_quantity = self.__resolve_package_pick_limit(item_schema)
+        else:
+            selected_row = next((row for row in self.__current_rows if row.item_id == item_id), None)
+            if not selected_row or selected_row.to_process <= 0:
                 return
-            item_schema = items[0]
-            self.__items_by_id[item_id] = item_schema
+            item_schema = self.__items_by_id.get(item_id)
+            if item_schema is None:
+                items = await self.__perform_get_items_by_ids([item_id]) or []
+                if not items:
+                    return
+                item_schema = items[0]
+                self.__items_by_id[item_id] = item_schema
+            max_pick_quantity = selected_row.to_process
 
-        bin_options = await self.__load_pick_bin_options(item_id=item_id, max_quantity=selected_row.to_process)
+        bin_options = await self.__load_pick_bin_options(item_id=item_id, max_quantity=max_pick_quantity)
         if not bin_options:
             self._open_error_dialog(message_key="no_bins")
             return
 
         default_bin_id = bin_options[0].bin_id
-        default_quantity = min(selected_row.to_process, bin_options[0].available_quantity)
+        default_quantity = (
+            1 if is_package_pick and bin_options[0].available_quantity > 0 else min(max_pick_quantity, bin_options[0].available_quantity)
+        )
         if default_quantity <= 0:
             self._open_error_dialog(message_key="insufficient_stock")
             return
 
         self.__active_pick_item_id = item_id
+        self.__active_pick_is_package = is_package_pick
         self.__active_pick_bin_options = {option.bin_id: option for option in bin_options}
         unit_name = await self.__resolve_unit_name(item_schema.unit_id)
         self._view.show_pick_form(
             item=item_schema,
-            to_process=selected_row.to_process,
+            to_process=max_pick_quantity,
             bin_options=[
                 (option.bin_id, option.location, option.bin_item_quantity, option.available_quantity)
                 for option in bin_options
@@ -246,8 +343,13 @@ class OrderPickingController(
             default_bin_id=default_bin_id,
             default_quantity=default_quantity,
             unit_name=unit_name,
+            is_package_pick=is_package_pick,
         )
         self._page.update()
+
+    @staticmethod
+    def __resolve_package_pick_limit(item_schema: ItemPlainSchema) -> int:
+        return max(1, item_schema.outbound_quantity, item_schema.stock_quantity)
 
     async def __resolve_unit_name(self, unit_id: int) -> str | None:
         unit_schema = self.__units_by_id.get(unit_id)
@@ -347,10 +449,91 @@ class OrderPickingController(
 
         await self.__check_and_update_order_status(self.__selected_order_id, {active_item_id})
         self.__active_pick_item_id = None
+        self.__active_pick_is_package = False
         self.__active_pick_bin_options = {}
         self._view.show_items_list()
-        rows = await self.__load_order_item_rows(self.__selected_order_id)
-        self._view.set_order_items(rows)
+        to_pick_rows, picked_rows = await self.__load_order_item_rows(self.__selected_order_id)
+        self._view.set_order_items(to_pick_rows)
+        self._view.set_picked_items(picked_rows)
+        self._page.update()
+
+    async def __save_package_pick(self, bin_id: int | None, quantity: int | None) -> None:
+        if not isinstance(self._view, OrderPickingView):
+            return
+        if self.__selected_order_id is None or self.__active_pick_item_id is None:
+            return
+        if bin_id is None:
+            self._open_error_dialog(message_key="value_required")
+            return
+        if quantity is None or quantity <= 0:
+            self._open_error_dialog(message_key="value_required")
+            return
+        selected_option = self.__active_pick_bin_options.get(bin_id)
+        if selected_option is None:
+            self._open_error_dialog(message_key="value_required")
+            return
+        effective_quantity = min(quantity, selected_option.available_quantity)
+        if effective_quantity <= 0:
+            self._open_error_dialog(message_key="insufficient_stock")
+            return
+
+        new_bin_quantity = max(0, selected_option.bin_item_quantity - effective_quantity)
+        if new_bin_quantity > 0:
+            await self.__perform_update_bin_items(
+                [
+                    AssocBinItemStrictSchema(
+                        id=selected_option.bin_item_id,
+                        bin_id=selected_option.bin_id,
+                        item_id=self.__active_pick_item_id,
+                        quantity=new_bin_quantity,
+                    )
+                ]
+            )
+        else:
+            await self.__perform_delete_bin_items([selected_option.bin_item_id])
+
+        await self.__perform_create_order_items(
+            [
+                AssocOrderItemStrictSchema(
+                    order_id=self.__selected_order_id,
+                    item_id=self.__active_pick_item_id,
+                    quantity=effective_quantity,
+                    total_net=0,
+                    total_vat=0,
+                    total_gross=0,
+                    total_discount=0,
+                    to_process=0,
+                    bin_id=selected_option.bin_id,
+                    category_discount_id=None,
+                    customer_discount_id=None,
+                    item_discount_id=None,
+                )
+            ]
+        )
+
+        package_item_schema = self.__package_items_by_id.get(self.__active_pick_item_id)
+        if package_item_schema is None:
+            package_items = await self.__perform_get_items_by_ids([self.__active_pick_item_id]) or []
+            if package_items:
+                package_item_schema = package_items[0]
+                self.__package_items_by_id[self.__active_pick_item_id] = package_item_schema
+        if package_item_schema is not None:
+            new_stock = max(0, package_item_schema.stock_quantity - effective_quantity)
+            await self.__perform_update_item(
+                self.__active_pick_item_id,
+                self.__build_item_update(package_item_schema, new_stock),
+            )
+
+        await self.__check_and_update_order_status(self.__selected_order_id, set())
+        self.__active_pick_item_id = None
+        self.__active_pick_is_package = False
+        self.__active_pick_bin_options = {}
+        self._view.show_items_list()
+        to_pick_rows, picked_rows = await self.__load_order_item_rows(self.__selected_order_id)
+        self._view.set_order_items(to_pick_rows)
+        self._view.set_picked_items(picked_rows)
+        package_options = await self.__load_package_picker_options(self.__selected_order_id)
+        self._view.set_package_options(options=package_options, enabled=bool(package_options))
         self._page.update()
 
     async def __apply_pick_updates(
@@ -534,6 +717,23 @@ class OrderPickingController(
         if has_pending_items:
             return
 
+        item_ids = sorted({order_item.item_id for order_item in order_items})
+        item_schemas = await self.__perform_get_items_by_ids(item_ids) or []
+        items_by_id = {item.id: item for item in item_schemas}
+        has_picked_packages = any(
+            (
+                (item_schema := items_by_id.get(order_item.item_id)) is not None
+                and item_schema.is_package
+                and order_item.bin_id is not None
+                and max(order_item.quantity - order_item.to_process, 0) > 0
+            )
+            for order_item in order_items
+        )
+        if not has_picked_packages:
+            if touched_item_ids:
+                self._open_message_dialog(message_key="package_required_to_complete")
+            return
+
         has_final_status = any(status.status_id == final_status.id for status in order_statuses)
         if has_final_status:
             return
@@ -572,6 +772,10 @@ class OrderPickingController(
         return await self.__order_item_service.get_all(
             Endpoint.ORDER_ITEMS, None, {"order_id": order_id}, None, self._module_id
         )
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_all_items(self) -> list[ItemPlainSchema]:
+        return await self.__item_service.get_all(Endpoint.ITEMS, None, None, None, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_items_by_ids(self, item_ids: list[int]) -> list[ItemPlainSchema]:
@@ -659,6 +863,20 @@ class OrderPickingController(
             return customer.company_name
         name_parts = [part for part in [customer.first_name, customer.last_name] if part]
         return " ".join(name_parts) if name_parts else str(customer.id)
+
+    async def __load_package_picker_options(self, order_id: int | None) -> list[tuple[int, str]]:
+        if order_id is None:
+            self.__package_items_by_id = {}
+            return []
+        all_items = await self.__perform_get_all_items() or []
+        package_items = [
+            item
+            for item in all_items
+            if item.is_package and item.outbound_quantity > 0
+        ]
+        package_items = sorted(package_items, key=lambda item: (item.index.lower(), item.name.lower()))
+        self.__package_items_by_id = {item.id: item for item in package_items}
+        return [(item.id, f"{item.index} | {item.name}") for item in package_items]
 
     def __selected_order_date_for_view(self) -> date | None:
         if self.__selected_order_date is None:

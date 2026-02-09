@@ -9,9 +9,11 @@ from controllers.base.base_controller import BaseController
 from controllers.components.auth_dialog_controller import AuthDialogController
 from controllers.core.translation_controller import TranslationController
 from controllers.mobile.app_controller import AppController
+from controllers.mobile.bin_transfer_controller import BinTransferController
 from controllers.mobile.bins_controller import BinsController
 from controllers.mobile.items_controller import ItemsController
 from controllers.mobile.order_picking_controller import OrderPickingController
+from controllers.mobile.stock_receiving_controller import StockReceivingController
 from events.event_bus import EventBus
 from events.events import AppStarted
 from services.base.base_service import BaseService
@@ -78,7 +80,9 @@ class App:
             app_controller,
             BinsController(self.__context),
             ItemsController(self.__context),
+            BinTransferController(self.__context),
             OrderPickingController(self.__context),
+            StockReceivingController(self.__context),
             TranslationController(self.__context),
             AuthDialogController(self.__context),
         ]
@@ -100,12 +104,15 @@ class App:
 
 
 def start() -> None:
-    app = App()
+    async def main(page: ft.Page) -> None:
+        app = App()
+        await app.run(page)
+
     os.environ.setdefault("FLET_FORCE_WEB_SERVER", "1")
     host = os.getenv("FLET_SERVER_HOST", "0.0.0.0")
     port = int(os.getenv("FLET_SERVER_PORT", "8551"))
     view = getattr(ft.AppView, "WEB_SERVER", ft.AppView.WEB_BROWSER)
-    ft.run(app.run, view=view, host=host, port=port)
+    ft.run(main, view=view, host=host, port=port)
 
 
 if __name__ == "__main__":

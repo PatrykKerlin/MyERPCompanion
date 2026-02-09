@@ -34,37 +34,72 @@ class BinsView(BaseView):
         self.__items: list[ItemPlainSchema] = []
         self.__item_quantities: dict[int, int] = {}
         self.__filter_query = ""
+        self.__bin_direction_filter = "all"
 
-        self.__title = ft.Text(size=20, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER)
-        self.__subtitle = ft.Text(size=14, text_align=ft.TextAlign.CENTER)
-        filter_container, _ = self._get_text_input("filter_query", 12)
+        self.__title = ft.Text(size=20, weight=ft.FontWeight.BOLD)
+        self.__subtitle = ft.Text(size=14)
+        filter_container, _ = self._get_text_input("filter_query", 8)
         self.__filter_field = cast(ft.TextField, filter_container.content)
         self.__filter_field.on_change = self.__on_filter_changed
         self.__filter_field.dense = True
         self.__filter_field.prefix_icon = ft.Icons.SEARCH
+
+        direction_container, _ = self._get_dropdown(
+            "bin_direction_filter",
+            4,
+            [
+                ("all", "All"),
+                ("inbound", "Inbound"),
+                ("outbound", "Outbound"),
+            ],
+            callbacks=[self.__on_bin_direction_filter_changed],
+        )
+        self.__direction_filter_field = cast(ft.Dropdown, direction_container.content)
+        self.__direction_filter_field.value = "all"
+        self.__direction_filter_container = direction_container
+
+        self.__filters_row = ft.ResponsiveRow(
+            controls=[filter_container, direction_container],
+            columns=12,
+            alignment=ft.MainAxisAlignment.START,
+            vertical_alignment=ft.CrossAxisAlignment.START,
+        )
+
         self._add_to_inputs(
             {
                 "filter_query": FieldGroup(
                     label=(ft.Container(), 0),
-                    input=(filter_container, 12),
+                    input=(filter_container, 8),
+                    marker=(ft.Container(), 0),
+                ),
+                "bin_direction_filter": FieldGroup(
+                    label=(ft.Container(), 0),
+                    input=(direction_container, 4),
                     marker=(ft.Container(), 0),
                 )
             }
         )
         self.__list = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=8)
         self.__back_button = ft.Button(on_click=self.__on_back_click, width=220)
+        self.__header_texts = ft.Column(
+            controls=[self.__title, self.__subtitle],
+            spacing=2,
+            expand=True,
+        )
+        self.__header_row = ft.Row(
+            controls=[
+                self.__header_texts,
+                ft.Container(content=self.__back_button, alignment=ft.Alignment.CENTER_RIGHT),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            vertical_alignment=ft.CrossAxisAlignment.START,
+        )
 
         self._master_column.controls = [
-            self.__title,
-            self.__subtitle,
-            filter_container,
+            self.__header_row,
+            self.__filters_row,
             ft.Divider(height=1),
             self.__list,
-            ft.Container(height=8),
-            ft.Row(
-                controls=[self.__back_button],
-                alignment=ft.MainAxisAlignment.CENTER,
-            ),
         ]
         self.__render()
 
@@ -98,33 +133,31 @@ class BinsView(BaseView):
         self.__update_if_attached()
 
     def __render(self) -> None:
-        self.__title.value = self.__resolve_title()
-        self.__subtitle.value = self.__resolve_subtitle()
-        self.__filter_field.label = self.__resolve_filter_label()
-        self.__back_button.content = self.__resolve_back_label()
+        if self.__mode == self.__MODE_BINS:
+            self.__title.value = self._translation.get("bins")
+            self.__subtitle.value = self._translation.get("select_bin")
+            self.__filter_field.label = self._translation.get("bin_filter")
+            self.__back_button.content = self._translation.get("back_to_menu")
+        else:
+            self.__title.value = self._translation.get("items")
+            if self.__selected_bin:
+                self.__subtitle.value = f"{self._translation.get('location')}: {self.__selected_bin.location}"
+            else:
+                self.__subtitle.value = ""
+            self.__filter_field.label = self._translation.get("item_filter")
+            self.__back_button.content = self._translation.get("back_to_bins")
+        self.__direction_filter_field.label = self._translation.get("bin_type_filter")
+        self.__direction_filter_field.options = self.__build_direction_filter_options()
+        self.__direction_filter_field.value = self.__bin_direction_filter
+        self.__direction_filter_container.visible = self.__mode == self.__MODE_BINS
         self.__list.controls = self.__build_list_controls()
 
-    def __resolve_title(self) -> str:
-        if self.__mode == self.__MODE_BINS:
-            return self._translation.get("bins")
-        return self._translation.get("items")
-
-    def __resolve_subtitle(self) -> str:
-        if self.__mode == self.__MODE_BINS:
-            return self._translation.get("select_bin")
-        if self.__selected_bin:
-            return f"{self._translation.get('location')}: {self.__selected_bin.location}"
-        return ""
-
-    def __resolve_back_label(self) -> str:
-        if self.__mode == self.__MODE_BINS:
-            return self._translation.get("back_to_menu")
-        return self._translation.get("back_to_bins")
-
-    def __resolve_filter_label(self) -> str:
-        if self.__mode == self.__MODE_BINS:
-            return self._translation.get("bin_filter")
-        return self._translation.get("item_filter")
+    def __build_direction_filter_options(self) -> list[ft.DropdownOption]:
+        return [
+            ft.dropdown.Option(key="all", text=self._translation.get("all")),
+            ft.dropdown.Option(key="inbound", text=self._translation.get("inbound")),
+            ft.dropdown.Option(key="outbound", text=self._translation.get("outbound")),
+        ]
 
     def __build_list_controls(self) -> list[ft.Control]:
         if self.__mode == self.__MODE_BINS:
@@ -174,11 +207,19 @@ class BinsView(BaseView):
     def __reset_filter(self) -> None:
         self.__filter_query = ""
         self.__filter_field.value = ""
+        self.__bin_direction_filter = "all"
+        self.__direction_filter_field.value = "all"
 
     def __get_filtered_bins(self) -> list[BinPlainSchema]:
+        bins = self.__bins
+        if self.__bin_direction_filter == "inbound":
+            bins = [bin_schema for bin_schema in bins if bin_schema.is_inbound]
+        elif self.__bin_direction_filter == "outbound":
+            bins = [bin_schema for bin_schema in bins if bin_schema.is_outbound]
+
         if not self.__filter_query:
-            return self.__bins
-        return [bin_schema for bin_schema in self.__bins if self.__filter_query in bin_schema.location.lower()]
+            return bins
+        return [bin_schema for bin_schema in bins if self.__filter_query in bin_schema.location.lower()]
 
     def __get_filtered_items(self) -> list[ItemPlainSchema]:
         if not self.__filter_query:
@@ -193,6 +234,16 @@ class BinsView(BaseView):
 
     def __on_filter_changed(self, _: ft.ControlEvent) -> None:
         self.__filter_query = (self.__filter_field.value or "").strip().lower()
+        self.__list.controls = self.__build_list_controls()
+        self.__update_if_attached()
+
+    def __on_bin_direction_filter_changed(self) -> None:
+        selected = self.__direction_filter_field.value
+        if selected in {"all", "inbound", "outbound"}:
+            self.__bin_direction_filter = selected
+        else:
+            self.__bin_direction_filter = "all"
+            self.__direction_filter_field.value = "all"
         self.__list.controls = self.__build_list_controls()
         self.__update_if_attached()
 

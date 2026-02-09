@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from config.context import Context
 from controllers.base.base_controller import BaseController
-from schemas.business.trade.order_schema import OrderPlainSchema, OrderStrictSchema
+from schemas.business.trade.order_schema import OrderPickingSummarySchema, OrderPlainSchema, OrderStrictSchema
 from schemas.core.param_schema import (
     FilterParamsSchema,
     PaginatedResponseSchema,
@@ -45,6 +45,14 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
             endpoint=self.get_all_picking_eligible,
             methods=["GET"],
             response_model=PaginatedResponseSchema[OrderPlainSchema],
+            status_code=status.HTTP_200_OK,
+            dependencies=self._restrict_access(permissions=[Permission.CAN_READ], secured=True),
+        )
+        self.router.add_api_route(
+            path="/picking-summary",
+            endpoint=self.get_picking_summary,
+            methods=["GET"],
+            response_model=OrderPickingSummarySchema,
             status_code=status.HTTP_200_OK,
             dependencies=self._restrict_access(permissions=[Permission.CAN_READ], secured=True),
         )
@@ -137,6 +145,13 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
         sorting: Annotated[SortingParamsSchema, Depends()],
     ) -> PaginatedResponseSchema[OrderPlainSchema]:
         try:
+            token_client = getattr(request.state, "token_client", None)
+            if token_client == "mobile":
+                token_warehouse_id = getattr(request.state, "token_warehouse_id", None)
+                if isinstance(token_warehouse_id, int):
+                    filters.filters["warehouse_id"] = str(token_warehouse_id)
+                else:
+                    filters.filters["warehouse_id"] = "0"
             session = BaseController._get_request_session(request)
             offset, limit = BaseController._get_offset_and_limit(pagination)
             items, total = await self._service.get_all_picking_eligible(
@@ -164,5 +179,29 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
         except SQLAlchemyError as err:
             self._logger.exception(
                 f"SQLAlchemyError in {self.__class__.__name__}.{self.get_all_picking_eligible.__qualname__}"
+            )
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+
+    async def get_picking_summary(
+        self,
+        request: Request,
+        filters: Annotated[FilterParamsSchema, Depends(FilterParamsParser())],
+    ) -> OrderPickingSummarySchema:
+        try:
+            token_client = getattr(request.state, "token_client", None)
+            if token_client == "mobile":
+                token_warehouse_id = getattr(request.state, "token_warehouse_id", None)
+                if isinstance(token_warehouse_id, int):
+                    filters.filters["warehouse_id"] = str(token_warehouse_id)
+                else:
+                    filters.filters["warehouse_id"] = "0"
+            session = BaseController._get_request_session(request)
+            return await self._service.get_picking_summary(session=session, filters=filters.filters)
+        except HTTPException:
+            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.get_picking_summary.__qualname__}")
+            raise
+        except SQLAlchemyError as err:
+            self._logger.exception(
+                f"SQLAlchemyError in {self.__class__.__name__}.{self.get_picking_summary.__qualname__}"
             )
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))

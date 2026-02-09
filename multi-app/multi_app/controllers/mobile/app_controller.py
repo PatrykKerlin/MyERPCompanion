@@ -22,8 +22,10 @@ from events.events import (
     ViewReady,
     ViewRequested,
 )
+from schemas.business.trade.order_schema import OrderPickingSummarySchema
 from services.core.app_service import AppService
-from utils.enums import ApiActionError, Module, View, ViewMode
+from services.business.trade import OrderService
+from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
 from utils.user_settings import UserSettings
 from views.mobile.app_view import AppView as MobileAppView
 from views.mobile.main_menu_view import MainMenuView
@@ -37,6 +39,7 @@ class AppController(BaseController):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self.__service = AppService(self._settings, self._logger, self._tokens_accessor)
+        self.__order_service = OrderService(self._settings, self._logger, self._tokens_accessor)
         self.__view = MobileAppView(self._state_store.app_state.translation.items, self._settings.THEME)
         self.__view.set_navigation_handler(self.__request_mobile_view)
         self.__main_menu: MainMenuView | None = None
@@ -88,7 +91,7 @@ class AppController(BaseController):
     async def __translation_ready_handler(self, event: TranslationReady) -> None:
         self._close_loading_dialog()
         if event.user_authenticated:
-            self.__open_main_menu_view()
+            await self.__open_main_menu_view()
             return
         await self._event_bus.publish(AuthDialogRequested())
 
@@ -107,7 +110,7 @@ class AppController(BaseController):
 
         translation_state = self._state_store.app_state.translation
         if user.language.symbol == translation_state.language:
-            self.__open_main_menu_view()
+            await self.__open_main_menu_view()
             return
 
         await self._open_loading_dialog()
@@ -131,7 +134,7 @@ class AppController(BaseController):
         await self._event_bus.publish(AuthDialogRequested())
 
     async def __view_ready_handler(self, event: ViewReady) -> None:
-        if event.view_key not in {View.BINS, View.ITEMS, View.ORDER_PICKING}:
+        if event.view_key not in {View.BINS, View.ITEMS, View.BIN_TRANSFER, View.ORDER_PICKING, View.STOCK_RECEIVING}:
             return
         self.__view.set_navigation_visible(True)
         self.__main_menu = None
@@ -140,7 +143,7 @@ class AppController(BaseController):
         self._page.update()
 
     async def __mobile_main_menu_requested_handler(self, _: MobileMainMenuRequested) -> None:
-        self.__open_main_menu_view()
+        await self.__open_main_menu_view()
 
     def __user_updated_listener(self, state: UserState) -> None:
         user = state.current
@@ -158,12 +161,33 @@ class AppController(BaseController):
     def __apply_user_preferences(self, user: UserPlainSchema) -> None:
         self.__view.set_theme(user.theme)
 
-    def __open_main_menu_view(self) -> None:
+    async def __open_main_menu_view(self) -> None:
         self.__main_menu = MainMenuView(self._state_store.app_state.translation.items)
+        summary = await self.__load_mobile_picking_summary()
+        self.__main_menu.set_summary(
+            orders_count=summary.orders_count,
+            items_count=summary.items_count,
+            pieces_count=summary.pieces_count,
+        )
         self.__view.set_navigation_visible(True)
         self.__view.set_content(self.__main_menu)
         self.__view.set_content_visible(True)
         self._page.update()
+
+    async def __load_mobile_picking_summary(self) -> OrderPickingSummarySchema:
+        if self._state_store.app_state.user.current is None:
+            return OrderPickingSummarySchema()
+        try:
+            return await self.__order_service.get_picking_summary(
+                Endpoint.ORDERS_PICKING_SUMMARY,
+                None,
+                None,
+                None,
+                Module.MOBILE,
+            )
+        except Exception:
+            self._logger.exception("Failed to load mobile picking summary.")
+            return OrderPickingSummarySchema()
 
     def __request_mobile_view(self, view_key: View) -> None:
         self._page.run_task(
