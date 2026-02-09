@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from dataclasses import dataclass
 
 from events.base.base_event import BaseEvent
 from utils.enums import TabNavigationDirection, View, ViewMode
-from views.base.base_view import BaseView
-from views.components.footer_component import FooterComponent
-from views.components.menu_bar_component import MenuBarComponent
-from views.components.side_menu_component import SideMenuComponent
-from views.components.tabs_bar_component import TabsBarComponent
-from views.components.toolbar_component import ToolbarComponent
+
+if TYPE_CHECKING:
+    from views.base.base_view import BaseView
+    from views.components.footer_component import FooterComponent
+    from views.components.menu_bar_component import MenuBarComponent
+    from views.components.side_menu_component import SideMenuComponent
+    from views.components.tabs_bar_component import TabsBarComponent
+    from views.components.toolbar_component import ToolbarComponent
 
 
 @dataclass(frozen=True)

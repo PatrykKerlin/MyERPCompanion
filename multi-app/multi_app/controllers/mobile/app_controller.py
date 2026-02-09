@@ -42,6 +42,7 @@ class AppController(BaseController):
         self.__bins_controller = BinsController(context)
         self.__items_controller = ItemsController(context)
         self.__view = MobileAppView(self._state_store.app_state.translation.items, self._settings.THEME)
+        self.__view.set_navigation_handler(self.__request_mobile_view)
         self.__main_menu: MainMenuView | None = None
 
         self._subscribe_event_handlers(
@@ -109,6 +110,7 @@ class AppController(BaseController):
         if not user:
             return
         self.__view.set_auth_view(None)
+        self.__view.set_navigation_visible(True)
         self.__apply_user_preferences(user)
         self._page.update()
 
@@ -125,6 +127,7 @@ class AppController(BaseController):
         self._page.update()
 
     async def __logout_requested_handler(self, _: LogoutRequested) -> None:
+        self.__view.set_navigation_visible(False)
         self.__view.set_content_visible(False)
         self.__view.set_content(None)
         self.__main_menu = None
@@ -139,6 +142,7 @@ class AppController(BaseController):
     async def __view_ready_handler(self, event: ViewReady) -> None:
         if event.view_key not in {View.BINS, View.ITEMS}:
             return
+        self.__view.set_navigation_visible(True)
         self.__main_menu = None
         self.__view.set_content(event.view)
         self.__view.set_content_visible(True)
@@ -150,6 +154,7 @@ class AppController(BaseController):
     def __user_updated_listener(self, state: UserState) -> None:
         user = state.current
         if not user:
+            self.__view.set_navigation_visible(False)
             self.__view.set_content_visible(False)
             self.__view.set_content(None)
             self.__main_menu = None
@@ -163,10 +168,8 @@ class AppController(BaseController):
         self.__view.set_theme(user.theme)
 
     def __open_main_menu_view(self) -> None:
-        self.__main_menu = MainMenuView(
-            self._state_store.app_state.translation.items,
-            on_view_selected=self.__request_mobile_view,
-        )
+        self.__main_menu = MainMenuView(self._state_store.app_state.translation.items)
+        self.__view.set_navigation_visible(True)
         self.__view.set_content(self.__main_menu)
         self.__view.set_content_visible(True)
         self._page.update()

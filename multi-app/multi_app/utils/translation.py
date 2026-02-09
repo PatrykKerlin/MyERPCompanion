@@ -37,6 +37,7 @@ class Translation:
             "bin_transfer": "Bin transfer",
             "order_picking": "Order picking",
             "stock_receiving": "Stock receiving",
+            "mobile_main_menu_hint": "Open the top menu to choose a view.",
             "select_bin": "Select a bin",
             "bin_filter": "Filter bins",
             "no_bins": "No bins.",

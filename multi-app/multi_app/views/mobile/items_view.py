@@ -33,6 +33,12 @@ class ItemsView(BaseView):
         "lead_time",
         "moq",
     }
+    __BIN_AND_DISCOUNT_FIELDS = {
+        "bin_ids",
+        "bins",
+        "discount_ids",
+        "discounts",
+    }
     __DETAIL_FIELDS_ORDER = [
         "name",
         "index",
@@ -57,8 +63,6 @@ class ItemsView(BaseView):
         "length",
         "weight",
         "expiration_date",
-        "bin_ids",
-        "discount_ids",
     ]
     __GALLERY_WINDOW_SIZE = 3
     __THUMBNAIL_SIZE = 88
@@ -145,8 +149,8 @@ class ItemsView(BaseView):
         def update_buttons() -> None:
             left_button.disabled = self.__gallery_start_index <= 0
             right_button.disabled = self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE >= len(image_urls)
-            self.__update_control_if_attached(left_button)
-            self.__update_control_if_attached(right_button)
+            self.__safe_update(left_button)
+            self.__safe_update(right_button)
 
         def render_thumbnails() -> None:
             thumbnails_row.controls.clear()
@@ -165,7 +169,7 @@ class ItemsView(BaseView):
                         on_click=lambda _, image_url=url: self.__open_image_dialog(image_url),
                     )
                 )
-            self.__update_control_if_attached(thumbnails_row)
+            self.__safe_update(thumbnails_row)
             update_buttons()
 
         def move_left(_: ft.ControlEvent) -> None:
@@ -237,14 +241,17 @@ class ItemsView(BaseView):
         return rows
 
     def __is_excluded_field(self, key: str) -> bool:
-        return key == "images" or key in self.__META_FIELDS or key in self.__FINANCIAL_FIELDS
+        return (
+            key == "images"
+            or key in self.__META_FIELDS
+            or key in self.__FINANCIAL_FIELDS
+            or key in self.__BIN_AND_DISCOUNT_FIELDS
+        )
 
     def __resolve_label(self, key: str) -> str:
         label_overrides = {
             "quantity": self._translation.get("quantity"),
             "category_name": self._translation.get("category"),
-            "bin_ids": self._translation.get("bins"),
-            "discount_ids": self._translation.get("discounts"),
         }
         if key in label_overrides:
             return label_overrides[key]
@@ -310,7 +317,11 @@ class ItemsView(BaseView):
             return
 
     @staticmethod
-    def __update_control_if_attached(control: ft.Control) -> None:
+    def __safe_update(control: ft.Control) -> None:
+        try:
+            _ = control.page
+        except RuntimeError:
+            return
         try:
             control.update()
         except RuntimeError:

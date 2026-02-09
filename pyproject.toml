@@ -24,4 +24,4 @@ exclude = '''
 [tool.isort]
 profile = "black"
 line_length = 120
-skip = [".vscode-server", "migrations/versions"]
+skip = [".vscode-server", "migrations/versions", ".cache"]

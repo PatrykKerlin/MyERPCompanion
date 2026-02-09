@@ -1,7 +1,7 @@
-flet
+flet[all]
 matplotlib
 seaborn
 pydantic
 pydantic-settings
-email-validator
+pydantic[email]
 httpx

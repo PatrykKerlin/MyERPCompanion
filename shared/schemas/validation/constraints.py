@@ -1,45 +1,13 @@
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 
-from email_validator import EmailNotValidError, validate_email
-from pydantic import BeforeValidator, Field, HttpUrl, PlainSerializer
+from pydantic import BeforeValidator, EmailStr, Field, HttpUrl, PlainSerializer
 
 
 class Constraints:
     __digits_only_regex = r"^\d+$"
     __phone_number_regex = r"^\+?\d[\d\s]*$"
     __postal_code_regex = r"^\d{2}-\d{3}$"
-
-    @staticmethod
-    def __none_to_zero(value: Any) -> Any:
-        return 0.0 if value is None else value
-
-    @staticmethod
-    def __validate_email(value: Any) -> str:
-        if not isinstance(value, str):
-            raise ValueError("Invalid email value type.")
-        try:
-            validated = validate_email(value, check_deliverability=False)
-        except EmailNotValidError as error:
-            raise ValueError(str(error)) from error
-        normalized = validated.normalized
-        if len(normalized) > 100:
-            raise ValueError("Email length must be at most 100 characters.")
-        return normalized
-
-    @staticmethod
-    def __validate_email_optional(value: Any) -> str | None:
-        if value is None:
-            return None
-        if not isinstance(value, str):
-            raise ValueError("Invalid email value type.")
-        try:
-            validated = validate_email(value, check_deliverability=False)
-        except EmailNotValidError as error:
-            raise ValueError(str(error)) from error
-        normalized = validated.normalized
-        if len(normalized) > 100:
-            raise ValueError("Email length must be at most 100 characters.")
-        return normalized
+    __none_to_zero = lambda value: 0.0 if value is None else value
 
     Key = Annotated[str, Field(min_length=1, max_length=25, pattern=r"^[a-z_]+$")]
     Name = Annotated[str, Field(min_length=1, max_length=50)]
@@ -75,12 +43,8 @@ class Constraints:
     BankAccount = Annotated[str, Field(min_length=28, max_length=28, pattern=r"^[A-Z]{2}\d{26}$")]
     BankSwift = Annotated[str, Field(min_length=8, max_length=11, pattern=r"^[A-Z0-9]+$")]
     Ean = Annotated[str, Field(min_length=1, max_length=100, pattern=__digits_only_regex)]
-    Email = Annotated[str, BeforeValidator(__validate_email)]
-    EmailOptional = Annotated[
-        str | None,
-        BeforeValidator(__validate_email_optional),
-        Field(default=None),
-    ]
+    Email = Annotated[EmailStr, Field(min_length=1, max_length=100)]
+    EmailOptional = Annotated[EmailStr | None, Field(min_length=1, max_length=100)]
     IdDocumentOptional = Annotated[str | None, Field(min_length=9, max_length=9)]
     Password = Annotated[str, Field(min_length=8, max_length=100)]
     PasswordOptional = Annotated[str | None, Field(min_length=8, max_length=100)]

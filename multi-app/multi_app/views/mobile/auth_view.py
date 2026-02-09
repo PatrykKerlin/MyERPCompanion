@@ -11,10 +11,13 @@ if TYPE_CHECKING:
 
 
 class AuthView(ft.Container):
+    __FORM_WIDTH = 320
+    __CARD_WIDTH = 344
+
     def __init__(self, controller: AuthDialogController, translation: Translation) -> None:
         self.__controller = controller
         self.__translation = translation
-        form_width = 320
+        form_width = self.__FORM_WIDTH
 
         self.__login_field = ft.TextField(
             label=self.__translation.get("login"),
@@ -78,13 +81,14 @@ class AuthView(ft.Container):
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
         )
-        hero_card = ft.Card(content=hero_body, width=form_width)
+        hero_card = ft.Card(content=hero_body, width=self.__CARD_WIDTH)
 
         ft.Container.__init__(
             self,
             content=hero_card,
+            expand=True,
             alignment=ft.Alignment.CENTER,
-            padding=ft.Padding.symmetric(horizontal=12, vertical=16),
+            padding=ft.Padding.symmetric(horizontal=12, vertical=20),
         )
 
     def set_warehouse_options(self, options: list[tuple[int, str]]) -> None:
@@ -99,7 +103,7 @@ class AuthView(ft.Container):
         else:
             self.__warehouse_dropdown.value = None
             self.__warehouse_dropdown.disabled = True
-        self.__update_control_if_attached(self.__warehouse_dropdown)
+        self.__safe_update(self.__warehouse_dropdown)
 
     def __on_username_changed(self, _: ft.ControlEvent) -> None:
         self.__controller.on_mobile_username_changed(self.__login_field.value)
@@ -121,7 +125,11 @@ class AuthView(ft.Container):
             return None
 
     @staticmethod
-    def __update_control_if_attached(control: ft.Control) -> None:
+    def __safe_update(control: ft.Control) -> None:
+        try:
+            _ = control.page
+        except RuntimeError:
+            return
         try:
             control.update()
         except RuntimeError:

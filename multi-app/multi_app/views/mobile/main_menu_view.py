@@ -1,51 +1,38 @@
-from __future__ import annotations
-
-from collections.abc import Callable
-
 import flet as ft
 
-from utils.enums import View
 from utils.translation import Translation
 
 
 class MainMenuView(ft.Container):
-    def __init__(self, translation: Translation, on_view_selected: Callable[[View], None]) -> None:
+    def __init__(self, translation: Translation) -> None:
         self.__translation = translation
-        self.__on_view_selected = on_view_selected
-        self.__menu_items: list[tuple[View, str]] = [
-            (View.BINS, "bins"),
-            (View.ITEMS, "items"),
-            (View.BIN_TRANSFER, "bin_transfer"),
-            (View.ORDER_PICKING, "order_picking"),
-            (View.STOCK_RECEIVING, "stock_receiving"),
-        ]
-        self.__buttons: dict[View, ft.Button] = {}
-        for view_key, label_key in self.__menu_items:
-            self.__buttons[view_key] = ft.Button(
-                content=self.__translation.get(label_key),
-                expand=True,
-                on_click=self.__build_on_click(view_key),
-            )
+        self.__title = ft.Text(
+            self.__translation.get("my_erp_companion"),
+            size=20,
+            weight=ft.FontWeight.BOLD,
+            text_align=ft.TextAlign.CENTER,
+        )
+        self.__hint = ft.Text(
+            self.__translation.get("mobile_main_menu_hint"),
+            text_align=ft.TextAlign.CENTER,
+        )
         ft.Container.__init__(
             self,
             expand=True,
             alignment=ft.Alignment.CENTER,
             content=ft.Column(
-                controls=[button for button in self.__buttons.values()],
+                controls=[self.__title, self.__hint],
                 tight=True,
-                spacing=12,
-                horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
-                width=320,
+                spacing=10,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
         )
 
     def update_translation(self, translation: Translation) -> None:
         self.__translation = translation
-        for view_key, label_key in self.__menu_items:
-            button = self.__buttons[view_key]
-            button.content = self.__translation.get(label_key)
-            if button.page:
-                button.update()
-
-    def __build_on_click(self, view_key: View) -> Callable[[ft.ControlEvent], None]:
-        return lambda _: self.__on_view_selected(view_key)
+        self.__title.value = self.__translation.get("my_erp_companion")
+        self.__hint.value = self.__translation.get("mobile_main_menu_hint")
+        try:
+            self.update()
+        except RuntimeError:
+            return
