@@ -63,11 +63,6 @@ class UserAuthenticated(BaseEvent):
 
 
 @dataclass(frozen=True)
-class MobileMainMenuRequested(BaseEvent):
-    pass
-
-
-@dataclass(frozen=True)
 class CartUpdated(BaseEvent):
     count: int
 

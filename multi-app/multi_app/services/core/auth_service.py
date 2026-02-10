@@ -1,6 +1,5 @@
 from typing import Any
-from schemas.base.base_schema import BasePlainSchema, BaseSchema, BaseStrictSchema
-from schemas.business.logistic.warehouse_schema import WarehouseLoginOptionSchema
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.core.user_schema import UserPlainSchema
 from schemas.core.token_schema import TokenPlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
@@ -16,40 +15,17 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
         self,
         username: str,
         password: str,
-        warehouse_id: int | None = None,
     ) -> TokenPlainSchema:
         payload: dict[str, Any] = {
             "username": username,
             "password": password,
             "client": self._settings.CLIENT,
-            "warehouse_id": warehouse_id,
         }
         response = await self._post(
             Endpoint.TOKEN,
             payload,
         )
         return TokenPlainSchema(**response.json())
-
-    async def get_login_warehouses(self, username: str | None = None) -> list[WarehouseLoginOptionSchema]:
-        params: dict[str, Any] = {"page": 1}
-        if username:
-            params["username"] = username
-
-        rows: list[_WarehouseLoginOptionFetchSchema] = []
-        while True:
-            response = await self._get(
-                endpoint=Endpoint.WAREHOUSES_BY_USERNAME,
-                query_params=params,
-                tokens=None,
-                module_id=None,
-            )
-            data = response.json()
-            rows.extend(_WarehouseLoginOptionFetchSchema(**row) for row in data.get("items", []))
-            if not data.get("has_next", False):
-                break
-            params["page"] += 1
-
-        return [WarehouseLoginOptionSchema.model_construct(**row.model_dump(mode="python")) for row in rows]
 
     @BaseService.handle_token_refresh
     async def get_all_modules(
@@ -87,8 +63,3 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
     ) -> UserPlainSchema:
         response = await self._get(endpoint=endpoint, tokens=tokens, module_id=module_id)
         return UserPlainSchema(**response.json(), is_superuser=False, password="")
-
-
-class _WarehouseLoginOptionFetchSchema(BaseSchema):
-    id: int
-    name: str

@@ -23,8 +23,6 @@ services:
       - project_net
     volumes:
       - ./ai-app/ai_app/:/ai_app
-      - ./shared/models:/ai_app/models
-      - ./shared/database:/ai_app/database
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:changeme@postgres/MyERPCompanion
     depends_on:
@@ -42,12 +40,6 @@ services:
       - "8000:8000"
     volumes:
       - ./rest-api/rest_api/:/rest_api
-      - ./shared/models:/rest_api/models
-      - ./shared/database:/rest_api/database
-      - ./shared/schemas/business:/rest_api/schemas/business
-      - ./shared/schemas/core:/rest_api/schemas/core
-      - ./shared/schemas/validation:/rest_api/schemas/validation
-      - ./rest-api/rest_api/schemas/base:/rest_api/schemas/base
       - media-data:/media
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:changeme@postgres/MyERPCompanion

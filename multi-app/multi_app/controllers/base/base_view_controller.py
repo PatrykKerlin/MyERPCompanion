@@ -383,9 +383,7 @@ class BaseViewController(
         if not data_row:
             return
         api_url = self._settings.API_URL
-        if self._settings.PUBLIC_API_URL and (
-            self._settings.CLIENT == "mobile" or bool(getattr(self._page, "web", False))
-        ):
+        if self._settings.PUBLIC_API_URL and bool(getattr(self._page, "web", False)):
             api_url = self._settings.PUBLIC_API_URL
         images = data_row.get("images")
         if isinstance(images, list):

@@ -6,4 +6,3 @@ class AuthStrictSchema(BaseStrictSchema):
     username: Constraints.Username
     password: Constraints.Password
     client: Constraints.AuthClient
-    warehouse_id: Constraints.PositiveIntegerOptional

@@ -1,0 +1,41 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Index, text
+from sqlalchemy.orm import Mapped
+
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
+
+if TYPE_CHECKING:
+    from models.core.assoc_module_group import AssocModuleGroup
+    from models.core.group import Group
+    from models.core.view import View
+
+
+class Module(BaseModel):
+    __tablename__ = "modules"
+    __table_args__ = (Index("ux_module_key_active_true", "key", unique=True, postgresql_where=text("is_active")),)
+
+    key: Mapped[str] = Fields.key(unique=False)
+    description: Mapped[str | None] = Fields.string_1000(nullable=True)
+    in_side_menu: Mapped[bool] = Fields.boolean(default=True)
+    order: Mapped[int] = Fields.integer()
+
+    views: Mapped[list[View]] = Fields.relationship(
+        argument="View",
+        back_populates="module",
+        foreign_keys="View.module_id",
+        cascade_soft_delete=True,
+    )
+    module_groups: Mapped[list[AssocModuleGroup]] = Fields.relationship(
+        argument="AssocModuleGroup",
+        back_populates="module",
+        foreign_keys="AssocModuleGroup.module_id",
+        cascade_soft_delete=True,
+    )
+
+    @property
+    def groups(self) -> list[Group]:
+        return [row.group for row in self.module_groups]
