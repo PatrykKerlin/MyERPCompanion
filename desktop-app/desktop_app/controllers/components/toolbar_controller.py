@@ -49,13 +49,6 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
             }
         )
 
-    async def _component_requested_handler(self, _: ToolbarRequested) -> None:
-        translation = self._state_store.app_state.translation.items
-        self._component = ToolbarComponent(controller=self, translation=translation)
-        current = self._state_store.app_state.user.current
-        self._component.set_current_user(current.username if current else None)
-        await self._event_bus.publish(ToolbarReady(self._component))
-
     def on_toggle_menu_clicked(self) -> None:
         self._page.run_task(self._event_bus.publish, SideMenuToggleRequested())
 
@@ -154,6 +147,13 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
 
     def on_logout_clicked(self) -> None:
         self._page.run_task(self._event_bus.publish, LogoutRequested())
+
+    async def _component_requested_handler(self, _: ToolbarRequested) -> None:
+        translation = self._state_store.app_state.translation.items
+        self._component = ToolbarComponent(controller=self, translation=translation)
+        current = self._state_store.app_state.user.current
+        self._component.set_current_user(current.username if current else None)
+        await self._event_bus.publish(ToolbarReady(self._component))
 
     def __user_updated_listener(self, state) -> None:
         if not self._component:

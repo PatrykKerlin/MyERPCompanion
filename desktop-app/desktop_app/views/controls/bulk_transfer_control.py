@@ -211,15 +211,6 @@ class BulkTransfer(ft.Container):
         self.__render_target_table()
         self.__update_action_buttons()
 
-    def __restore_target_row(self, target_id: int) -> None:
-        initial_values = self.__initial_target_rows.get(target_id)
-        if initial_values is None:
-            return
-        for index, (item_id, _) in enumerate(self.__target_rows):
-            if item_id == target_id:
-                self.__target_rows[index] = (item_id, initial_values[:])
-                return
-
     def prepend_target_items(self, items: list[tuple[int, list[Any]]], highlight: bool) -> None:
         if not items:
             return
@@ -289,6 +280,48 @@ class BulkTransfer(ft.Container):
 
     def get_pending_targets(self) -> list[tuple[int, int]]:
         return list(self.__pending_target_map.items())
+
+    def move_source_items(self, ids_to_add: list[int], highlight: bool) -> list[int]:
+        if not ids_to_add:
+            return []
+        created_target_ids: list[int] = []
+        if self.__allow_duplicate_targets:
+            items_to_move = self.get_source_items_by_ids(ids_to_add)
+            if not items_to_move:
+                return []
+            for source_id, label in items_to_move:
+                created_target_ids.append(self.add_target_row(source_id, label, highlight=highlight))
+            return created_target_ids
+        existing_ids = [item_id for item_id in ids_to_add if self.has_target_item(item_id)]
+        new_ids = [item_id for item_id in ids_to_add if item_id not in existing_ids]
+        if existing_ids:
+            self.mark_source_items_as_moved(existing_ids)
+            self.__render_target_table()
+        if not new_ids:
+            return []
+        items_to_move = self.get_source_items_by_ids(new_ids)
+        if not items_to_move:
+            return []
+        actual_ids = [item_id for item_id, _ in items_to_move]
+        if not actual_ids:
+            return []
+        for item_id in actual_ids:
+            self.__pending_target_map[item_id] = item_id
+        self.prepend_target_items(items_to_move, highlight=highlight)
+        self.__selected_source_ids.clear()
+        self.__selected_target_ids.clear()
+        self.__selected_target_ids.update(actual_ids)
+        self.__update_save_button_state()
+        return actual_ids
+
+    def __restore_target_row(self, target_id: int) -> None:
+        initial_values = self.__initial_target_rows.get(target_id)
+        if initial_values is None:
+            return
+        for index, (item_id, _) in enumerate(self.__target_rows):
+            if item_id == target_id:
+                self.__target_rows[index] = (item_id, initial_values[:])
+                return
 
     def __render_source_table(self) -> None:
         if not self.__source_container:
@@ -421,39 +454,6 @@ class BulkTransfer(ft.Container):
             self.__on_move_requested(selected_ids)
             return
         self.move_source_items(selected_ids, highlight=True)
-
-    def move_source_items(self, ids_to_add: list[int], highlight: bool) -> list[int]:
-        if not ids_to_add:
-            return []
-        created_target_ids: list[int] = []
-        if self.__allow_duplicate_targets:
-            items_to_move = self.get_source_items_by_ids(ids_to_add)
-            if not items_to_move:
-                return []
-            for source_id, label in items_to_move:
-                created_target_ids.append(self.add_target_row(source_id, label, highlight=highlight))
-            return created_target_ids
-        existing_ids = [item_id for item_id in ids_to_add if self.has_target_item(item_id)]
-        new_ids = [item_id for item_id in ids_to_add if item_id not in existing_ids]
-        if existing_ids:
-            self.mark_source_items_as_moved(existing_ids)
-            self.__render_target_table()
-        if not new_ids:
-            return []
-        items_to_move = self.get_source_items_by_ids(new_ids)
-        if not items_to_move:
-            return []
-        actual_ids = [item_id for item_id, _ in items_to_move]
-        if not actual_ids:
-            return []
-        for item_id in actual_ids:
-            self.__pending_target_map[item_id] = item_id
-        self.prepend_target_items(items_to_move, highlight=highlight)
-        self.__selected_source_ids.clear()
-        self.__selected_target_ids.clear()
-        self.__selected_target_ids.update(actual_ids)
-        self.__update_save_button_state()
-        return actual_ids
 
     def __handle_delete_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         selected_ids = self.get_selected_target_ids()

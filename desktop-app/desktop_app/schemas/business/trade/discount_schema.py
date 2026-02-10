@@ -28,7 +28,7 @@ class DiscountStrictSchema(BaseStrictSchema):
     currency_id: Constraints.PositiveIntegerOptional
 
     @model_validator(mode="after")
-    def _validate_data(self) -> DiscountStrictSchema:
+    def __validate_data(self) -> DiscountStrictSchema:
         if self.end_date and self.end_date <= self.start_date:
             raise ValueError("End date must be greater than start date.")
 

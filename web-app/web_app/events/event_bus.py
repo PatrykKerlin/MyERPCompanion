@@ -21,20 +21,6 @@ class EventBus:
         self.__started = False
         self.__subs_lock = RLock()
 
-    def subscribe(self, event: type[BaseEvent], handler: Callable[[TEvent], Awaitable[None]]) -> Callable[[], None]:
-        with self.__subs_lock:
-            self.__subscriptions.setdefault(event, []).append(handler)
-
-        def unsubscribe() -> None:
-            with self.__subs_lock:
-                handlers = self.__subscriptions.get(event, [])
-                if handler in handlers:
-                    handlers.remove(handler)
-                if not handlers and event in self.__subscriptions:
-                    del self.__subscriptions[event]
-
-        return unsubscribe
-
     async def publish(self, event: BaseEvent) -> None:
         await self.__event_queue.put(event)
 
@@ -74,6 +60,20 @@ class EventBus:
                 self.__handler_queue.task_done()
             except asyncio.QueueEmpty:
                 break
+
+    def subscribe(self, event: type[BaseEvent], handler: Callable[[TEvent], Awaitable[None]]) -> Callable[[], None]:
+        with self.__subs_lock:
+            self.__subscriptions.setdefault(event, []).append(handler)
+
+        def unsubscribe() -> None:
+            with self.__subs_lock:
+                handlers = self.__subscriptions.get(event, [])
+                if handler in handlers:
+                    handlers.remove(handler)
+                if not handlers and event in self.__subscriptions:
+                    del self.__subscriptions[event]
+
+        return unsubscribe
 
     async def __run_event_worker(self) -> None:
         while True:

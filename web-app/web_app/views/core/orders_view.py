@@ -160,10 +160,6 @@ class OrdersView(BaseView["OrdersController"]):
         self.__selected_order_id = order_id
         self.__render_orders()
 
-    def set_status_loading(self, loading: bool) -> None:
-        self.__is_status_loading = loading
-        self.__render_status()
-
     def set_status_history(
         self,
         order_meta: dict[str, str],
@@ -174,6 +170,138 @@ class OrdersView(BaseView["OrdersController"]):
         self.__order_items = list(order_items)
         self.__status_history = list(status_history)
         self.__render_status()
+
+    def set_status_loading(self, loading: bool) -> None:
+        self.__is_status_loading = loading
+        self.__render_status()
+
+    def __apply_card_size(self) -> None:
+        if not self.__card:
+            return
+        page = self._controller._page
+        viewport_width = page.width or page.window.width
+        viewport_height = page.height or page.window.height
+        if not viewport_width or not viewport_height:
+            return
+        self.__card.width = int(viewport_width * 0.75)
+        self.__card.height = int(viewport_height * 0.75)
+        self.__safe_update(self.__card)
+
+    def __open_image_dialog(self, url: str) -> None:
+        dialog = BaseDialog(
+            title=None,
+            controls=[ft.Image(src=url, width=800, height=800, fit=ft.BoxFit.CONTAIN)],
+            actions=[
+                ft.TextButton(self._translation.get("ok"), on_click=lambda _: self._controller._page.pop_dialog()),
+            ],
+        )
+        self._controller._queue_dialog(dialog)
+
+    def __open_item_dialog(self, item: dict[str, Any]) -> None:
+        is_fragile = item.get("is_fragile")
+        detail_rows: list[tuple[str, str]] = [
+            ("name", str(item.get("name") or "")),
+            ("index", str(item.get("index") or "")),
+            ("ean", str(item.get("ean") or "")),
+            ("description", str(item.get("description") or "")),
+            (
+                "is_fragile",
+                ""
+                if is_fragile is None
+                else self._translation.get("yes")
+                if bool(is_fragile)
+                else self._translation.get("no"),
+            ),
+            ("expiration_date", str(item.get("expiration_date") or "")),
+            ("category_name", str(item.get("category_name") or "")),
+            ("available", str(item.get("available") or "")),
+            ("vat_rate", str(item.get("vat_rate") or "")),
+            ("moq", str(item.get("moq") or "")),
+            ("dimensions", str(item.get("dimensions") or "")),
+            ("weight", str(item.get("weight") or "")),
+        ]
+        labels_column = ft.Column(
+            controls=[ft.Text(self._translation.get(key)) for key, _ in detail_rows],
+            tight=True,
+        )
+        values_column = ft.Column(
+            controls=[ft.Text(value) for _, value in detail_rows],
+            tight=True,
+            expand=True,
+        )
+        raw_images = item.get("images")
+        image_urls = [url for url in raw_images if isinstance(url, str)] if isinstance(raw_images, list) else []
+        gallery_row: ft.Control | None
+        if image_urls:
+            start_index = 0
+            thumbnails_row = ft.Row(spacing=8, run_spacing=8)
+
+            def update_buttons() -> None:
+                left_button.disabled = start_index <= 0
+                right_button.disabled = start_index + 3 >= len(image_urls)
+                self.__safe_update(left_button)
+                self.__safe_update(right_button)
+
+            def render_thumbnails() -> None:
+                thumbnails_row.controls.clear()
+                window = image_urls[start_index : start_index + 3]
+                for url in window:
+                    thumbnails_row.controls.append(
+                        ft.Container(
+                            content=ft.Image(src=url, width=96, height=96, fit=ft.BoxFit.CONTAIN),
+                            on_click=lambda _, u=url: self.__open_image_dialog(u),
+                        )
+                    )
+                self.__safe_update(thumbnails_row)
+                update_buttons()
+
+            def move_left(_: ft.ControlEvent) -> None:
+                nonlocal start_index
+                if start_index <= 0:
+                    return
+                start_index -= 1
+                render_thumbnails()
+
+            def move_right(_: ft.ControlEvent) -> None:
+                nonlocal start_index
+                if start_index + 3 >= len(image_urls):
+                    return
+                start_index += 1
+                render_thumbnails()
+
+            left_button = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT, on_click=move_left, disabled=True)
+            right_button = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT, on_click=move_right, disabled=True)
+            render_thumbnails()
+            gallery_row = ft.Row(controls=[left_button, thumbnails_row, right_button], spacing=8)
+        else:
+            gallery_row = ft.Container(
+                content=ft.Text(self._translation.get("no_images")),
+                padding=8,
+            )
+        controls: list[ft.Control] = [ft.Row(controls=[labels_column, values_column], spacing=16, expand=True)]
+        controls.append(gallery_row)
+        dialog = BaseDialog(
+            title=self._translation.get("item_details"),
+            controls=controls,
+            actions=[
+                ft.TextButton(self._translation.get("ok"), on_click=lambda _: self._controller._page.pop_dialog()),
+            ],
+        )
+        self._controller._queue_dialog(dialog)
+
+    def __register_card_resize_handler(self) -> None:
+        page = self._controller._page
+        if self.__card_resize_handler is not None:
+            return
+        previous_handler = getattr(page, "on_resize", None)
+
+        def handle_resize(event: ft.ControlEvent) -> None:
+            if callable(previous_handler):
+                previous_handler(event)
+            self.__apply_card_size()
+
+        self.__card_resize_handler = handle_resize
+        setattr(page, "on_resize", handle_resize)
 
     def __render_orders(self) -> None:
         self.__orders_list.controls.clear()
@@ -418,131 +546,3 @@ class OrdersView(BaseView["OrdersController"]):
         except RuntimeError:
             return
         control.update()
-
-    def __apply_card_size(self) -> None:
-        if not self.__card:
-            return
-        page = self._controller._page
-        viewport_width = page.width or page.window.width
-        viewport_height = page.height or page.window.height
-        if not viewport_width or not viewport_height:
-            return
-        self.__card.width = int(viewport_width * 0.75)
-        self.__card.height = int(viewport_height * 0.75)
-        self.__safe_update(self.__card)
-
-    def __register_card_resize_handler(self) -> None:
-        page = self._controller._page
-        if self.__card_resize_handler is not None:
-            return
-        previous_handler = getattr(page, "on_resize", None)
-
-        def handle_resize(event: ft.ControlEvent) -> None:
-            if callable(previous_handler):
-                previous_handler(event)
-            self.__apply_card_size()
-
-        self.__card_resize_handler = handle_resize
-        setattr(page, "on_resize", handle_resize)
-
-    def __open_item_dialog(self, item: dict[str, Any]) -> None:
-        is_fragile = item.get("is_fragile")
-        detail_rows: list[tuple[str, str]] = [
-            ("name", str(item.get("name") or "")),
-            ("index", str(item.get("index") or "")),
-            ("ean", str(item.get("ean") or "")),
-            ("description", str(item.get("description") or "")),
-            (
-                "is_fragile",
-                ""
-                if is_fragile is None
-                else self._translation.get("yes")
-                if bool(is_fragile)
-                else self._translation.get("no"),
-            ),
-            ("expiration_date", str(item.get("expiration_date") or "")),
-            ("category_name", str(item.get("category_name") or "")),
-            ("available", str(item.get("available") or "")),
-            ("vat_rate", str(item.get("vat_rate") or "")),
-            ("moq", str(item.get("moq") or "")),
-            ("dimensions", str(item.get("dimensions") or "")),
-            ("weight", str(item.get("weight") or "")),
-        ]
-        labels_column = ft.Column(
-            controls=[ft.Text(self._translation.get(key)) for key, _ in detail_rows],
-            tight=True,
-        )
-        values_column = ft.Column(
-            controls=[ft.Text(value) for _, value in detail_rows],
-            tight=True,
-            expand=True,
-        )
-        raw_images = item.get("images")
-        image_urls = [url for url in raw_images if isinstance(url, str)] if isinstance(raw_images, list) else []
-        gallery_row: ft.Control | None
-        if image_urls:
-            start_index = 0
-            thumbnails_row = ft.Row(spacing=8, run_spacing=8)
-
-            def update_buttons() -> None:
-                left_button.disabled = start_index <= 0
-                right_button.disabled = start_index + 3 >= len(image_urls)
-                self.__safe_update(left_button)
-                self.__safe_update(right_button)
-
-            def render_thumbnails() -> None:
-                thumbnails_row.controls.clear()
-                window = image_urls[start_index : start_index + 3]
-                for url in window:
-                    thumbnails_row.controls.append(
-                        ft.Container(
-                            content=ft.Image(src=url, width=96, height=96, fit=ft.BoxFit.CONTAIN),
-                            on_click=lambda _, u=url: self.__open_image_dialog(u),
-                        )
-                    )
-                self.__safe_update(thumbnails_row)
-                update_buttons()
-
-            def move_left(_: ft.ControlEvent) -> None:
-                nonlocal start_index
-                if start_index <= 0:
-                    return
-                start_index -= 1
-                render_thumbnails()
-
-            def move_right(_: ft.ControlEvent) -> None:
-                nonlocal start_index
-                if start_index + 3 >= len(image_urls):
-                    return
-                start_index += 1
-                render_thumbnails()
-
-            left_button = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT, on_click=move_left, disabled=True)
-            right_button = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT, on_click=move_right, disabled=True)
-            render_thumbnails()
-            gallery_row = ft.Row(controls=[left_button, thumbnails_row, right_button], spacing=8)
-        else:
-            gallery_row = ft.Container(
-                content=ft.Text(self._translation.get("no_images")),
-                padding=8,
-            )
-        controls: list[ft.Control] = [ft.Row(controls=[labels_column, values_column], spacing=16, expand=True)]
-        controls.append(gallery_row)
-        dialog = BaseDialog(
-            title=self._translation.get("item_details"),
-            controls=controls,
-            actions=[
-                ft.TextButton(self._translation.get("ok"), on_click=lambda _: self._controller._page.pop_dialog()),
-            ],
-        )
-        self._controller._queue_dialog(dialog)
-
-    def __open_image_dialog(self, url: str) -> None:
-        dialog = BaseDialog(
-            title=None,
-            controls=[ft.Image(src=url, width=800, height=800, fit=ft.BoxFit.CONTAIN)],
-            actions=[
-                ft.TextButton(self._translation.get("ok"), on_click=lambda _: self._controller._page.pop_dialog()),
-            ],
-        )
-        self._controller._queue_dialog(dialog)

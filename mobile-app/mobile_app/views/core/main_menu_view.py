@@ -62,14 +62,6 @@ class MainMenuView(ft.Container):
             ),
         )
 
-    @staticmethod
-    def __build_summary_row(label: ft.Text, value: ft.Text) -> ft.Control:
-        return ft.Row(
-            controls=[label, value],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-        )
-
     def set_summary(self, orders_count: int, items_count: int, pieces_count: int) -> None:
         self.__orders_value.value = str(max(0, orders_count))
         self.__items_value.value = str(max(0, items_count))
@@ -85,6 +77,14 @@ class MainMenuView(ft.Container):
         self.__items_label.value = self.__translation.get("distinct_items_to_pick")
         self.__pieces_label.value = self.__translation.get("total_pieces_to_pick")
         self.__safe_update()
+
+    @staticmethod
+    def __build_summary_row(label: ft.Text, value: ft.Text) -> ft.Control:
+        return ft.Row(
+            controls=[label, value],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        )
 
     def __safe_update(self) -> None:
         try:

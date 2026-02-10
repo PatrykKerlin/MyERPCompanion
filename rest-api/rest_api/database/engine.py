@@ -22,12 +22,6 @@ class Engine:
     __initialized: bool = False
     __base = Base
 
-    def __new__(cls, _: EngineSettings) -> Engine:
-        if cls.__instance is None:
-            cls.__instance = super().__new__(cls)
-            cls.__instance.__initialized = False
-        return cls.__instance
-
     def __init__(self, settings: EngineSettings) -> None:
         if not self.__initialized:
             self.engine: AsyncEngine = create_async_engine(
@@ -52,3 +46,9 @@ class Engine:
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         async with self.__async_session_maker() as session:
             yield session
+
+    def __new__(cls, _: EngineSettings) -> Engine:
+        if cls.__instance is None:
+            cls.__instance = super().__new__(cls)
+            cls.__instance.__initialized = False
+        return cls.__instance

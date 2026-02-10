@@ -100,19 +100,8 @@ class AppView:
 
     def build(self) -> ft.Control:
         page = ft.context.page
-        self._apply_page_settings(page)
+        self.__apply_page_settings(page)
         return self.__root
-
-    def update_translation(self, translation: Translation) -> None:
-        self.__translation = translation
-        self.__app_name.value = self.__translation.get("my_erp_companion")
-        self.__cart_button.tooltip = self.__translation.get("cart")
-        self.__logout_button.tooltip = self.__translation.get("log_out")
-        self.__footer_app_name.value = self.__translation.get("my_erp_companion")
-        self.__footer_portal.value = self.__translation.get("footer_web_portal")
-        self.__footer_copy.value = self.__build_footer_copy()
-        if not self.__username_text.value:
-            self.__username_text.value = self.__translation.get("username")
 
     def set_auth_view(self, component: ft.Control | None) -> None:
         if component is None:
@@ -125,6 +114,20 @@ class AppView:
             )
         self.__auth_container.visible = component is not None
 
+    def set_cart_count(self, count: int) -> None:
+        self.__cart_count_text.value = str(max(count, 0))
+        if self.__cart_count_text.page:
+            self.__cart_count_text.update()
+
+    def set_cart_handler(self, on_cart: Callable[[], None]) -> None:
+        self.__on_cart = on_cart
+
+    def set_logout_handler(self, on_logout: Callable[[], None]) -> None:
+        self.__on_logout = on_logout
+
+    def set_nav_handlers(self, on_browse_orders: Callable[[], None]) -> None:
+        self.__on_browse_orders = on_browse_orders
+
     def set_stack_item(self, view: BaseView | None) -> None:
         self.__content_container.content = view
 
@@ -133,8 +136,11 @@ class AppView:
         page = self.__root.page
         if not page:
             return
-        page.theme_mode = self._resolve_theme_mode(theme)
+        page.theme_mode = self.__resolve_theme_mode(theme)
         page.update()
+
+    def set_user_settings_handler(self, on_user_settings: Callable[[], None]) -> None:
+        self.__on_user_settings = on_user_settings
 
     def set_username(self, username: str | None) -> None:
         if username:
@@ -146,22 +152,26 @@ class AppView:
         if self.__top_bar.page:
             self.__top_bar.update()
 
-    def set_cart_count(self, count: int) -> None:
-        self.__cart_count_text.value = str(max(count, 0))
-        if self.__cart_count_text.page:
-            self.__cart_count_text.update()
+    def update_translation(self, translation: Translation) -> None:
+        self.__translation = translation
+        self.__app_name.value = self.__translation.get("my_erp_companion")
+        self.__cart_button.tooltip = self.__translation.get("cart")
+        self.__logout_button.tooltip = self.__translation.get("log_out")
+        self.__footer_app_name.value = self.__translation.get("my_erp_companion")
+        self.__footer_portal.value = self.__translation.get("footer_web_portal")
+        self.__footer_copy.value = self.__build_footer_copy()
+        if not self.__username_text.value:
+            self.__username_text.value = self.__translation.get("username")
 
-    def set_nav_handlers(self, on_browse_orders: Callable[[], None]) -> None:
-        self.__on_browse_orders = on_browse_orders
+    def __apply_page_settings(self, page: ft.Page) -> None:
+        page.title = self.__translation.get("my_erp_companion")
+        page.theme_mode = self.__resolve_theme_mode(self.__theme)
 
-    def set_cart_handler(self, on_cart: Callable[[], None]) -> None:
-        self.__on_cart = on_cart
-
-    def set_user_settings_handler(self, on_user_settings: Callable[[], None]) -> None:
-        self.__on_user_settings = on_user_settings
-
-    def set_logout_handler(self, on_logout: Callable[[], None]) -> None:
-        self.__on_logout = on_logout
+    def __build_footer_copy(self) -> str:
+        year = datetime.now().year
+        app_name = self.__translation.get("my_erp_companion")
+        rights = self.__translation.get("all_rights_reserved")
+        return f"(c) {year} {app_name}. {rights}"
 
     def __handle_browse_orders(self) -> None:
         if self.__on_browse_orders:
@@ -171,27 +181,17 @@ class AppView:
         if self.__on_cart:
             self.__on_cart()
 
-    def __handle_user_settings(self) -> None:
-        if self.__on_user_settings:
-            self.__on_user_settings()
-
     def __handle_logout(self) -> None:
         if self.__on_logout:
             self.__on_logout()
 
-    def _apply_page_settings(self, page: ft.Page) -> None:
-        page.title = self.__translation.get("my_erp_companion")
-        page.theme_mode = self._resolve_theme_mode(self.__theme)
+    def __handle_user_settings(self) -> None:
+        if self.__on_user_settings:
+            self.__on_user_settings()
 
-    def _resolve_theme_mode(self, theme: str) -> ft.ThemeMode:
+    def __resolve_theme_mode(self, theme: str) -> ft.ThemeMode:
         if theme == "dark":
             return ft.ThemeMode.DARK
         if theme == "light":
             return ft.ThemeMode.LIGHT
         return ft.ThemeMode.SYSTEM
-
-    def __build_footer_copy(self) -> str:
-        year = datetime.now().year
-        app_name = self.__translation.get("my_erp_companion")
-        rights = self.__translation.get("all_rights_reserved")
-        return f"(c) {year} {app_name}. {rights}"

@@ -51,6 +51,33 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         self.__target_rows: list[tuple[int, list[Any]]] = []
         self.__pending_order_ids: set[int] = set()
 
+    def on_value_changed(self, event: ft.ControlEvent, key: str, *after_change: Callable[[], None]) -> None:
+        super().on_value_changed(event, key, *after_change)
+        if self._view and self._view.mode == ViewMode.CREATE:
+            if key == "customer_id":
+                self.__update_due_date_for_customer()
+            if key in {"customer_id", "currency_id"}:
+                self._page.run_task(self.__reload_orders_for_selection)
+
+    def on_orders_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
+        if not self._view:
+            return
+        self._page.run_task(self.__handle_orders_save)
+
+    def on_orders_delete_clicked(self, order_ids: list[int]) -> None:
+        if not self._view or not order_ids:
+            return
+        self._page.run_task(self.__handle_orders_delete, order_ids)
+
+    def on_create_mode_requested(self) -> None:
+        self._page.run_task(self.__refresh_create_defaults)
+
+    def on_read_mode_requested(self) -> None:
+        self._page.run_task(self.__reload_orders_for_selection)
+
+    def get_create_defaults(self) -> dict[str, Any]:
+        return self.__build_create_defaults()
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> InvoiceView:
         currencies, customers, statuses = await asyncio.gather(
             self.__perform_get_all_currencies(),
@@ -76,6 +103,36 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         return view
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def _perform_create(
+        self,
+        service: BaseService[InvoicePlainSchema, InvoiceStrictSchema],
+        endpoint: Endpoint,
+        payload: InvoiceStrictSchema,
+    ) -> InvoicePlainSchema:
+        try:
+            issue_date = payload.issue_date
+        except Exception:
+            issue_date = date.today()
+        if not payload.number or payload.number == self.__prefetched_create_number:
+            next_number = await self.__generate_invoice_number(issue_date)
+            payload = payload.model_copy(update={"number": next_number})
+        response = await self.__perform_create_invoice(payload)
+        if response:
+            await self.__assign_invoice_to_orders(response.id)
+        return response
+
+    async def _perform_update(
+        self,
+        id: int,
+        service: BaseService[InvoicePlainSchema, InvoiceStrictSchema],
+        endpoint: Endpoint,
+        payload: InvoiceStrictSchema,
+    ) -> InvoicePlainSchema:
+        response = await self.__perform_update_invoice(id, payload)
+        if response:
+            await self.__assign_invoice_to_orders(response.id)
+        return response
+
     async def __perform_get_all_currencies(self) -> list[tuple[int, str]]:
         schemas = await self.__currency_service.get_all(Endpoint.CURRENCIES, None, None, None, self._module_id)
         return [(schema.id, schema.code) for schema in schemas]
@@ -151,33 +208,6 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         return await self.__order_status_service.create_bulk(
             Endpoint.ORDER_STATUSES_CREATE_BULK, None, None, payload, self._module_id
         )
-
-    def on_value_changed(self, event: ft.ControlEvent, key: str, *after_change: Callable[[], None]) -> None:
-        super().on_value_changed(event, key, *after_change)
-        if self._view and self._view.mode == ViewMode.CREATE:
-            if key == "customer_id":
-                self.__update_due_date_for_customer()
-            if key in {"customer_id", "currency_id"}:
-                self._page.run_task(self.__reload_orders_for_selection)
-
-    def on_orders_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
-        if not self._view:
-            return
-        self._page.run_task(self.__handle_orders_save)
-
-    def on_orders_delete_clicked(self, order_ids: list[int]) -> None:
-        if not self._view or not order_ids:
-            return
-        self._page.run_task(self.__handle_orders_delete, order_ids)
-
-    def on_create_mode_requested(self) -> None:
-        self._page.run_task(self.__refresh_create_defaults)
-
-    def on_read_mode_requested(self) -> None:
-        self._page.run_task(self.__reload_orders_for_selection)
-
-    def get_create_defaults(self) -> dict[str, Any]:
-        return self.__build_create_defaults()
 
     def __build_create_defaults(self) -> dict[str, Any]:
         today = date.today()
@@ -474,36 +504,6 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
     def __format_invoice_number(issue_date: date, sequence: int) -> str:
         date_part = issue_date.strftime("%Y/%m/%d")
         return f"{date_part}/{sequence:04d}"
-
-    async def _perform_create(
-        self,
-        service: BaseService[InvoicePlainSchema, InvoiceStrictSchema],
-        endpoint: Endpoint,
-        payload: InvoiceStrictSchema,
-    ) -> InvoicePlainSchema:
-        try:
-            issue_date = payload.issue_date
-        except Exception:
-            issue_date = date.today()
-        if not payload.number or payload.number == self.__prefetched_create_number:
-            next_number = await self.__generate_invoice_number(issue_date)
-            payload = payload.model_copy(update={"number": next_number})
-        response = await self.__perform_create_invoice(payload)
-        if response:
-            await self.__assign_invoice_to_orders(response.id)
-        return response
-
-    async def _perform_update(
-        self,
-        id: int,
-        service: BaseService[InvoicePlainSchema, InvoiceStrictSchema],
-        endpoint: Endpoint,
-        payload: InvoiceStrictSchema,
-    ) -> InvoicePlainSchema:
-        response = await self.__perform_update_invoice(id, payload)
-        if response:
-            await self.__assign_invoice_to_orders(response.id)
-        return response
 
     async def __assign_invoice_to_orders(self, invoice_id: int) -> None:
         if not self.__selected_order_ids:

@@ -14,6 +14,22 @@ class ModuleRepository(BaseRepository[Module]):
     _model_cls = Module
 
     @classmethod
+    async def get_controller_names(cls, session: AsyncSession, module_id: int) -> list[str]:
+        result = await session.execute(
+            select(Controller.name)
+            .distinct()
+            .join(AssocViewController, AssocViewController.controller_id == Controller.id)
+            .join(View, View.id == AssocViewController.view_id)
+            .where(
+                Controller.is_active.is_(True),
+                AssocViewController.is_active.is_(True),
+                View.is_active.is_(True),
+                View.module_id == module_id,
+            )
+        )
+        return sorted(result.scalars().all())
+
+    @classmethod
     def _build_query(
         cls,
         params_filters: Mapping[str, str] | None = None,
@@ -30,19 +46,3 @@ class ModuleRepository(BaseRepository[Module]):
             with_loader_criteria(View, cls._expr(View.is_active.is_(True))),
             with_loader_criteria(AssocViewController, cls._expr(AssocViewController.is_active.is_(True))),
         )
-
-    @classmethod
-    async def get_controller_names(cls, session: AsyncSession, module_id: int) -> list[str]:
-        result = await session.execute(
-            select(Controller.name)
-            .distinct()
-            .join(AssocViewController, AssocViewController.controller_id == Controller.id)
-            .join(View, View.id == AssocViewController.view_id)
-            .where(
-                Controller.is_active.is_(True),
-                AssocViewController.is_active.is_(True),
-                View.is_active.is_(True),
-                View.module_id == module_id,
-            )
-        )
-        return sorted(result.scalars().all())

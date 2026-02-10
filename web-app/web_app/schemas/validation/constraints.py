@@ -3,11 +3,14 @@ from typing import Annotated, Literal
 from pydantic import BeforeValidator, EmailStr, Field, HttpUrl, PlainSerializer
 
 
+def _none_to_zero(value: float | None) -> float:
+    return 0.0 if value is None else value
+
+
 class Constraints:
     __digits_only_regex = r"^\d+$"
     __phone_number_regex = r"^\+?\d[\d\s]*$"
     __postal_code_regex = r"^\d{2}-\d{3}$"
-    __none_to_zero = lambda value: 0.0 if value is None else value
 
     Key = Annotated[str, Field(min_length=1, max_length=25, pattern=r"^[a-z_]+$")]
     Name = Annotated[str, Field(min_length=1, max_length=50)]
@@ -16,14 +19,14 @@ class Constraints:
     BooleanFalse = Annotated[bool, Field(default=False)]
     BooleanTrue = Annotated[bool, Field(default=True)]
     PositiveFloat = Annotated[float, Field(gt=0)]
-    NonNegativeInteger = Annotated[int, BeforeValidator(__none_to_zero), Field(ge=0, default=0)]
+    NonNegativeInteger = Annotated[int, BeforeValidator(_none_to_zero), Field(ge=0, default=0)]
     PositiveInteger = Annotated[int, Field(ge=1)]
     PositiveIntegerOptional = Annotated[int | None, Field(ge=1, default=None)]
     PositiveIntegerList = Annotated[list[Annotated[int, Field(ge=1)]], Field(min_length=1)]
     PositiveIntegerListOptional = Annotated[list[Annotated[int, Field(ge=1)]] | None, Field(min_length=1, default=None)]
 
     PositiveNumeric_6_3 = Annotated[float, Field(gt=0, lt=1000)]
-    NonNegativeNumeric_10_2 = Annotated[float, BeforeValidator(__none_to_zero), Field(ge=0, lt=100000000, default=0)]
+    NonNegativeNumeric_10_2 = Annotated[float, BeforeValidator(_none_to_zero), Field(ge=0, lt=100000000, default=0)]
     PositiveNumeric_10_2 = Annotated[float, Field(gt=0, lt=100000000)]
     PositiveNumericOptional_10_2 = Annotated[float | None, Field(gt=0, lt=100000000)]
     PositiveNumeric_11_3 = Annotated[float, Field(gt=0, lt=100000000)]

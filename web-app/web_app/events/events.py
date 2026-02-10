@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from events.base.base_event import BaseEvent
 from utils.enums import View, ViewMode
@@ -34,7 +35,7 @@ class AuthDialogRequested(BaseEvent):
 
 @dataclass(frozen=True)
 class AuthViewReady(BaseEvent):
-    component: object | None
+    component: Any | None
 
 
 @dataclass(frozen=True)

@@ -38,23 +38,6 @@ class BinTransferController(
         self.__source_request_id = 0
         self.__target_request_id = 0
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinTransferView:
-        self.__source_bin = None
-        self.__target_bin = None
-        self.__source_items = {}
-        self.__target_items = {}
-        self.__pending_move_quantities = {}
-        self.__source_request_id = 0
-        self.__target_request_id = 0
-
-        return BinTransferView(
-            controller=self,
-            translation=translation,
-            mode=ViewMode.STATIC,
-            view_key=event.view_key,
-            data_row=event.data,
-        )
-
     def on_back_to_menu(self) -> None:
         self._page.run_task(self._event_bus.publish, MobileMainMenuRequested())
 
@@ -119,6 +102,23 @@ class BinTransferController(
 
     def on_save_clicked(self) -> None:
         self._page.run_task(self.__handle_save)
+
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinTransferView:
+        self.__source_bin = None
+        self.__target_bin = None
+        self.__source_items = {}
+        self.__target_items = {}
+        self.__pending_move_quantities = {}
+        self.__source_request_id = 0
+        self.__target_request_id = 0
+
+        return BinTransferView(
+            controller=self,
+            translation=translation,
+            mode=ViewMode.STATIC,
+            view_key=event.view_key,
+            data_row=event.data,
+        )
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
     async def __perform_create_bin_items(self, items: list[AssocBinItemStrictSchema]) -> None:

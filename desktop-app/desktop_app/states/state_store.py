@@ -13,34 +13,34 @@ TState = TypeVar("TState", bound=BaseState)
 
 class StateStore(Generic[TBaseModel]):
     def __init__(self, initial: AppState) -> None:
-        self._state: AppState = initial
-        self._listeners: dict[str, list[Callable[[Any], None]]] = {}
+        self.__state: AppState = initial
+        self.__listeners: dict[str, list[Callable[[Any], None]]] = {}
 
     @property
     def app_state(self) -> AppState:
-        return self._state
+        return self.__state
 
     def update(self, **attrs: dict[str, Any]) -> None:
         if not attrs:
             return
         updates: dict[str, Any] = {}
         for name, payload in attrs.items():
-            current_attr = getattr(self._state, name)
+            current_attr = getattr(self.__state, name)
             new_attr = current_attr.model_copy(update=payload)
             updates[name] = new_attr
-        self._state = self._state.model_copy(update=updates)
+        self.__state = self.__state.model_copy(update=updates)
         for name, value in updates.items():
-            for func in self._listeners.get(name, []):
+            for func in self.__listeners.get(name, []):
                 func(value)
 
     def subscribe(self, attr: str, func: Callable[[TState], None]) -> Callable[[], None]:
         def unsubscribe() -> None:
             try:
-                self._listeners[attr].remove(func)
-                if not self._listeners[attr]:
-                    del self._listeners[attr]
+                self.__listeners[attr].remove(func)
+                if not self.__listeners[attr]:
+                    del self.__listeners[attr]
             except (ValueError, KeyError):
                 pass
 
-        self._listeners.setdefault(attr, []).append(func)
+        self.__listeners.setdefault(attr, []).append(func)
         return unsubscribe

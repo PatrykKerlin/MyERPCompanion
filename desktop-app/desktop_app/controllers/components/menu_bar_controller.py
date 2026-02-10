@@ -30,12 +30,6 @@ class MenuBarController(BaseComponentController[MenuBarComponent, MenuBarRequest
         super().__init__(context)
         self._subscribe_event_handlers({MenuBarRequested: self._component_requested_handler})
 
-    async def _component_requested_handler(self, _: MenuBarRequested) -> None:
-        translation_state = self._state_store.app_state.translation
-        self._component = MenuBarComponent(controller=self, translation=translation_state.items)
-        await self._event_bus.publish(MenuBarReady(self._component))
-        self._page.on_keyboard_event = self.__on_keyboard_event
-
     def on_new_clicked(self) -> None:
         view_state = self._state_store.app_state.view
         if not view_state.view:
@@ -127,6 +121,12 @@ class MenuBarController(BaseComponentController[MenuBarComponent, MenuBarRequest
 
     def on_check_api_status_clicked(self) -> None:
         self._page.run_task(self._event_bus.publish, ApiStatusRequested())
+
+    async def _component_requested_handler(self, _: MenuBarRequested) -> None:
+        translation_state = self._state_store.app_state.translation
+        self._component = MenuBarComponent(controller=self, translation=translation_state.items)
+        await self._event_bus.publish(MenuBarReady(self._component))
+        self._page.on_keyboard_event = self.__on_keyboard_event
 
     def __on_keyboard_event(self, event: ft.KeyboardEvent) -> None:
         ctrl = event.ctrl or event.meta

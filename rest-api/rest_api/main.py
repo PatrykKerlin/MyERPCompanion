@@ -34,6 +34,13 @@ class App:
         self.__app.mount("/media", StaticFiles(directory="/media", check_dir=False), name="media")
         self.__include_routers()
 
+    def get_app(self) -> FastAPI:
+        return self.__app
+
+    async def startup(self) -> None:
+        async with self.__database.engine.begin() as conn:
+            await conn.run_sync(Engine.get_base().metadata.create_all)
+
     def __include_routers(self) -> None:
         api_router = APIRouter(prefix="/api")
         endpoints: list[dict[str, Any]] = []
@@ -130,13 +137,6 @@ class App:
             api_router.include_router(**endpoint)
 
         self.__app.include_router(api_router)
-
-    async def startup(self) -> None:
-        async with self.__database.engine.begin() as conn:
-            await conn.run_sync(Engine.get_base().metadata.create_all)
-
-    def get_app(self) -> FastAPI:
-        return self.__app
 
 
 def create_app() -> FastAPI:

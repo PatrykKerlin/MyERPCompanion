@@ -51,7 +51,7 @@ class SalesForecastService:
         rows.sort(key=lambda row: row["period_start"])
         min_period = rows[0]["period_start"]
         max_period = rows[-1]["period_start"]
-        period_span = SalesForecastService._months_between(min_period, max_period)
+        period_span = SalesForecastService.__months_between(min_period, max_period)
         if period_span <= 0:
             logger.info(f"Only one unique month in dataset ({min_period}), skipped")
             return None
@@ -69,7 +69,7 @@ class SalesForecastService:
             customer_id = int(row["customer_id"])
             category_id = int(row["category_id"])
             currency_id = int(row["currency_id"])
-            period_index = float(SalesForecastService._months_between(min_period, row["period_start"])) / period_scale
+            period_index = float(SalesForecastService.__months_between(min_period, row["period_start"])) / period_scale
             discount_ratio = min(max(float(row["discount_ratio"]), 0.0), 0.90)
             train_features.append(
                 [
@@ -109,8 +109,8 @@ class SalesForecastService:
         predict_features: list[list[float]] = []
         prediction_points: list[dict[str, Any]] = []
         for month_offset in range(1, self._horizon_months + 1):
-            predicted_date = SalesForecastService._add_months(max_period, month_offset)
-            period_index = float(SalesForecastService._months_between(min_period, predicted_date)) / period_scale
+            predicted_date = SalesForecastService.__add_months(max_period, month_offset)
+            period_index = float(SalesForecastService.__months_between(min_period, predicted_date)) / period_scale
             for item_id, customer_id, category_id, currency_id in prediction_keys:
                 for discount_rate in self._prediction_discount_rates:
                     predict_features.append(
@@ -200,11 +200,11 @@ class SalesForecastService:
         )
 
     @staticmethod
-    def _months_between(start: date, end: date) -> int:
+    def __months_between(start: date, end: date) -> int:
         return (end.year - start.year) * 12 + (end.month - start.month)
 
     @staticmethod
-    def _add_months(value: date, months: int) -> date:
+    def __add_months(value: date, months: int) -> date:
         month_zero_based = value.month - 1 + months
         year = value.year + month_zero_based // 12
         month = month_zero_based % 12 + 1

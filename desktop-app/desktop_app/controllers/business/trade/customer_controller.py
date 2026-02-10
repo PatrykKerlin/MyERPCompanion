@@ -41,6 +41,16 @@ class CustomerController(
             self._settings, self._logger, self._tokens_accessor
         )
 
+    def on_discount_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
+        if not self._view:
+            return
+        self._page.run_task(self.__handle_discount_save)
+
+    def on_discount_delete_clicked(self, discount_ids: list[int]) -> None:
+        if not self._view or not discount_ids:
+            return
+        self._page.run_task(self.__handle_discount_delete, discount_ids)
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> CustomerView:
         discount_source_items: list[tuple[int, str]] = []
         discount_target_items: list[tuple[int, str]] = []
@@ -86,16 +96,6 @@ class CustomerController(
     @property
     def _user_link_entity_key(self) -> str:
         return "customer_id"
-
-    def on_discount_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
-        if not self._view:
-            return
-        self._page.run_task(self.__handle_discount_save)
-
-    def on_discount_delete_clicked(self, discount_ids: list[int]) -> None:
-        if not self._view or not discount_ids:
-            return
-        self._page.run_task(self.__handle_discount_delete, discount_ids)
 
     async def __handle_discount_save(self) -> None:
         if not self._view or not self._view.data_row:

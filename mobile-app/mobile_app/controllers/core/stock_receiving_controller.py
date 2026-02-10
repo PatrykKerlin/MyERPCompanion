@@ -57,31 +57,6 @@ class StockReceivingController(
         self.__target_rows: list[tuple[int, list[str]]] = []
         self.__current_order_id: int | None = None
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> StockReceivingView:
-        self.__target_bin = None
-        self.__order_items = {}
-        self.__order_item_quantities = {}
-        self.__order_item_original_quantities = {}
-        self.__order_item_labels = {}
-        self.__items_by_id = {}
-        self.__target_items = {}
-        self.__target_bin_item_by_id = {}
-        self.__pending_move_quantities = {}
-        self.__pending_move_item_ids = {}
-        self.__target_rows = []
-        self.__current_order_id = None
-
-        orders = await self.__load_mobile_eligible_orders()
-        order_pairs = [(order.id, order.tracking_number or order.number) for order in orders]
-        return StockReceivingView(
-            controller=self,
-            translation=translation,
-            mode=ViewMode.STATIC,
-            view_key=event.view_key,
-            data_row=event.data,
-            orders=order_pairs,
-        )
-
     def on_order_changed(self, value: str | None) -> None:
         if not isinstance(self._view, StockReceivingView):
             return
@@ -121,6 +96,31 @@ class StockReceivingController(
 
     def on_save_clicked(self) -> None:
         self._page.run_task(self.__handle_save)
+
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> StockReceivingView:
+        self.__target_bin = None
+        self.__order_items = {}
+        self.__order_item_quantities = {}
+        self.__order_item_original_quantities = {}
+        self.__order_item_labels = {}
+        self.__items_by_id = {}
+        self.__target_items = {}
+        self.__target_bin_item_by_id = {}
+        self.__pending_move_quantities = {}
+        self.__pending_move_item_ids = {}
+        self.__target_rows = []
+        self.__current_order_id = None
+
+        orders = await self.__load_mobile_eligible_orders()
+        order_pairs = [(order.id, order.tracking_number or order.number) for order in orders]
+        return StockReceivingView(
+            controller=self,
+            translation=translation,
+            mode=ViewMode.STATIC,
+            view_key=event.view_key,
+            data_row=event.data,
+            orders=order_pairs,
+        )
 
     async def __handle_save(self) -> None:
         await self.__handle_bulk_transfer_save()

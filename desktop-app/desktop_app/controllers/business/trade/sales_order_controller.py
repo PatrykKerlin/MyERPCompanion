@@ -83,6 +83,93 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__prefetched_create_number: str | None = None
         self.__number_request_counter = 0
 
+    def on_order_items_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
+        if not self._view:
+            return
+        self._page.run_task(self.__handle_order_items_save)
+
+    def on_order_items_move_requested(self, selected_ids: list[int]) -> None:
+        if not self._view or not selected_ids:
+            return
+        item_id = selected_ids[0]
+        self._page.run_task(self.__handle_move_with_quantity, item_id)
+
+    def on_order_items_delete_clicked(self, item_ids: list[int]) -> None:
+        if not self._view or not item_ids:
+            return
+        self._page.run_task(self.__handle_order_items_delete, item_ids)
+
+    def on_order_items_pending_reverted(self, target_ids: list[int]) -> None:
+        for target_id in target_ids:
+            self.__pending_move_quantities.pop(target_id, None)
+        self.__recalculate_order_totals()
+
+    def on_value_changed(self, event: ft.ControlEvent, key: str, *after_change: Callable[[], None]) -> None:
+        super().on_value_changed(event, key, *after_change)
+        if key == "order_date" and self._view and self._view.mode == ViewMode.CREATE:
+            self._page.run_task(self.__refresh_order_number_for_date)
+
+    def get_create_defaults(self) -> dict[str, Any]:
+        return self.__build_create_defaults()
+
+    def set_hidden_field_value(self, key: str, value: Any) -> None:
+        self._request_data.input_values[key] = value
+
+    def set_field_value(self, key: str, value: str | int | float | bool | date | None) -> None:
+        if key == "is_sales":
+            value = True
+        if key == "currency_id":
+            if isinstance(value, str):
+                value = value.strip()
+                if value in {"", "0"}:
+                    value = None
+                elif value.isdigit():
+                    value = int(value)
+        super().set_field_value(key, value)
+        if key == "delivery_method_id":
+            self.__recalculate_shipping_cost()
+        if key == "currency_id":
+            self.__recalculate_order_totals()
+
+    def set_customer_discount_id(self, discount_id: int | None) -> None:
+        if not self.__is_customer_discount_editable():
+            self.__selected_customer_discount_id = discount_id
+            return
+        persisted_item_ids = {item_id for _, (item_id, _) in self.__order_items.items()}
+        pending_item_ids = set()
+        if self._view:
+            pending_item_ids.update(item_id for _, item_id in self._view.get_pending_targets())
+        all_item_ids = persisted_item_ids | pending_item_ids
+        if discount_id == self.__selected_customer_discount_id and all(
+            self.__target_customer_discount_ids.get(item_id) == discount_id for item_id in all_item_ids
+        ):
+            return
+        should_auto_save = any(
+            self.__target_customer_discount_ids.get(item_id) != discount_id for item_id in persisted_item_ids
+        )
+        self.__selected_customer_discount_id = discount_id
+        for item_id in all_item_ids:
+            self.__target_customer_discount_ids[item_id] = discount_id
+        self.__recalculate_order_totals()
+        if not should_auto_save or not self._view or not self._view.data_row or not self.__order_items:
+            return
+        order_id = self._view.data_row["id"]
+        self._page.run_task(self.__auto_save_customer_discount, order_id)
+
+    def set_item_discount_id(self, item_id: int, discount_id: int | None) -> None:
+        self.__selected_item_discount_ids[item_id] = discount_id
+        self.__recalculate_order_totals()
+
+    def set_category_discount_for_items(
+        self, category_id: int | None, discount_id: int | None, item_ids: list[int]
+    ) -> None:
+        if category_id is None or not item_ids:
+            return
+        for item_id in item_ids:
+            self.__target_category_discount_ids[item_id] = discount_id
+        self.__pending_category_discount_item_ids.update(item_ids)
+        self.__recalculate_order_totals()
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> SalesOrderView:
         order_id = event.data.get("id") if event.data else None
         view_data = await self.__perform_get_sales_view(order_id)
@@ -208,98 +295,43 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
                 )
         return view
 
-    def on_order_items_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
-        if not self._view:
-            return
-        self._page.run_task(self.__handle_order_items_save)
-
-    def on_order_items_move_requested(self, selected_ids: list[int]) -> None:
-        if not self._view or not selected_ids:
-            return
-        item_id = selected_ids[0]
-        self._page.run_task(self.__handle_move_with_quantity, item_id)
-
-    def on_order_items_delete_clicked(self, item_ids: list[int]) -> None:
-        if not self._view or not item_ids:
-            return
-        self._page.run_task(self.__handle_order_items_delete, item_ids)
-
-    def on_order_items_pending_reverted(self, target_ids: list[int]) -> None:
-        for target_id in target_ids:
-            self.__pending_move_quantities.pop(target_id, None)
-        self.__recalculate_order_totals()
-
-    def on_value_changed(self, event: ft.ControlEvent, key: str, *after_change: Callable[[], None]) -> None:
-        super().on_value_changed(event, key, *after_change)
-        if key == "order_date" and self._view and self._view.mode == ViewMode.CREATE:
-            self._page.run_task(self.__refresh_order_number_for_date)
-
     async def _perform_get_page(
         self, service: BaseService[OrderPlainSchema, SalesOrderStrictSchema], endpoint: Endpoint
     ) -> PaginatedResponseSchema[OrderPlainSchema]:
         return await super()._perform_get_page(service, Endpoint.SALES_ORDERS)
 
-    def get_create_defaults(self) -> dict[str, Any]:
-        return self.__build_create_defaults()
+    async def _perform_create(
+        self,
+        service: BaseService[OrderPlainSchema, SalesOrderStrictSchema],
+        endpoint: Endpoint,
+        payload: SalesOrderStrictSchema,
+    ) -> OrderPlainSchema:
+        payload = payload.model_copy(update={"is_sales": True})
+        response = await super()._perform_create(service, endpoint, payload)
+        status_id = self._request_data.input_values.get("status_id", self.__default_status_id)
+        if status_id is not None:
+            await self.__perform_create_order_status(
+                AssocOrderStatusStrictSchema(order_id=response.id, status_id=status_id)
+            )
+        return response
 
-    def set_hidden_field_value(self, key: str, value: Any) -> None:
-        self._request_data.input_values[key] = value
+    @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def _perform_update(
+        self,
+        id: int,
+        service: BaseService[OrderPlainSchema, SalesOrderStrictSchema],
+        endpoint: Endpoint,
+        payload: SalesOrderStrictSchema,
+    ) -> OrderPlainSchema:
+        payload = payload.model_copy(update={"is_sales": True})
+        response = await super()._perform_update(id, service, endpoint, payload)
+        status_id = self._request_data.input_values.get("status_id")
+        if status_id is not None and status_id != self.__current_status_id:
+            await self.__perform_create_order_status(AssocOrderStatusStrictSchema(order_id=id, status_id=status_id))
+            self.__current_status_id = status_id
+        return response
 
-    def set_field_value(self, key: str, value: str | int | float | bool | date | None) -> None:
-        if key == "is_sales":
-            value = True
-        if key == "currency_id":
-            if isinstance(value, str):
-                value = value.strip()
-                if value in {"", "0"}:
-                    value = None
-                elif value.isdigit():
-                    value = int(value)
-        super().set_field_value(key, value)
-        if key == "delivery_method_id":
-            self.__recalculate_shipping_cost()
-        if key == "currency_id":
-            self.__recalculate_order_totals()
-
-    def set_customer_discount_id(self, discount_id: int | None) -> None:
-        if not self.__is_customer_discount_editable():
-            self.__selected_customer_discount_id = discount_id
-            return
-        persisted_item_ids = {item_id for _, (item_id, _) in self.__order_items.items()}
-        pending_item_ids = set()
-        if self._view:
-            pending_item_ids.update(item_id for _, item_id in self._view.get_pending_targets())
-        all_item_ids = persisted_item_ids | pending_item_ids
-        if discount_id == self.__selected_customer_discount_id and all(
-            self.__target_customer_discount_ids.get(item_id) == discount_id for item_id in all_item_ids
-        ):
-            return
-        should_auto_save = any(
-            self.__target_customer_discount_ids.get(item_id) != discount_id for item_id in persisted_item_ids
-        )
-        self.__selected_customer_discount_id = discount_id
-        for item_id in all_item_ids:
-            self.__target_customer_discount_ids[item_id] = discount_id
-        self.__recalculate_order_totals()
-        if not should_auto_save or not self._view or not self._view.data_row or not self.__order_items:
-            return
-        order_id = self._view.data_row["id"]
-        self._page.run_task(self.__auto_save_customer_discount, order_id)
-
-    def set_item_discount_id(self, item_id: int, discount_id: int | None) -> None:
-        self.__selected_item_discount_ids[item_id] = discount_id
-        self.__recalculate_order_totals()
-
-    def set_category_discount_for_items(
-        self, category_id: int | None, discount_id: int | None, item_ids: list[int]
-    ) -> None:
-        if category_id is None or not item_ids:
-            return
-        for item_id in item_ids:
-            self.__target_category_discount_ids[item_id] = discount_id
-        self.__pending_category_discount_item_ids.update(item_ids)
-        self.__recalculate_order_totals()
-
+    @staticmethod
     async def __auto_save_customer_discount(self, order_id: int) -> None:
         try:
             context = self.__build_discount_context()
@@ -1098,38 +1130,6 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         return f"{date_part}/{suffix}/{sequence:04d}"
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def _perform_create(
-        self,
-        service: BaseService[OrderPlainSchema, SalesOrderStrictSchema],
-        endpoint: Endpoint,
-        payload: SalesOrderStrictSchema,
-    ) -> OrderPlainSchema:
-        payload = payload.model_copy(update={"is_sales": True})
-        response = await super()._perform_create(service, endpoint, payload)
-        status_id = self._request_data.input_values.get("status_id", self.__default_status_id)
-        if status_id is not None:
-            await self.__perform_create_order_status(
-                AssocOrderStatusStrictSchema(order_id=response.id, status_id=status_id)
-            )
-        return response
-
-    @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def _perform_update(
-        self,
-        id: int,
-        service: BaseService[OrderPlainSchema, SalesOrderStrictSchema],
-        endpoint: Endpoint,
-        payload: SalesOrderStrictSchema,
-    ) -> OrderPlainSchema:
-        payload = payload.model_copy(update={"is_sales": True})
-        response = await super()._perform_update(id, service, endpoint, payload)
-        status_id = self._request_data.input_values.get("status_id")
-        if status_id is not None and status_id != self.__current_status_id:
-            await self.__perform_create_order_status(AssocOrderStatusStrictSchema(order_id=id, status_id=status_id))
-            self.__current_status_id = status_id
-        return response
-
-    @staticmethod
     def __get_latest_status_id(order_statuses: list[OrderViewStatusHistorySchema]) -> int | None:
         if not order_statuses:
             return None

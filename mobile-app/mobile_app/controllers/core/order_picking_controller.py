@@ -87,37 +87,6 @@ class OrderPickingController(
         self.__active_pick_is_package = False
         self.__active_pick_bin_options: dict[int, OrderPickingBinOption] = {}
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> OrderPickingView:
-        customers = await self.__perform_get_customers() or []
-        customer_pairs = [(customer.id, self.__format_customer_label(customer)) for customer in customers]
-        self.__orders = await self.__load_eligible_orders(self.__selected_order_date, self.__selected_customer_id)
-        self.__selected_order_id = self.__resolve_selected_order_id(event.data)
-
-        view = OrderPickingView(
-            controller=self,
-            translation=translation,
-            mode=ViewMode.STATIC,
-            view_key=event.view_key,
-            data_row=event.data,
-            customers=customer_pairs,
-            default_order_date=self.__selected_order_date_for_view(),
-            selected_customer_id=self.__selected_customer_id,
-        )
-        view.set_orders(
-            orders=[(schema.id, schema.number) for schema in self.__orders],
-            selected_order_id=self.__selected_order_id,
-        )
-        package_options = await self.__load_package_picker_options(self.__selected_order_id)
-        view.set_package_options(
-            options=package_options,
-            enabled=self.__selected_order_id is not None and bool(package_options),
-        )
-        if self.__selected_order_id is not None:
-            to_pick_rows, picked_rows = await self.__load_order_item_rows(self.__selected_order_id)
-            view.set_order_items(to_pick_rows)
-            view.set_picked_items(picked_rows)
-        return view
-
     def on_back_to_menu(self) -> None:
         self._page.run_task(self._event_bus.publish, MobileMainMenuRequested())
 
@@ -170,6 +139,37 @@ class OrderPickingController(
             self._page.run_task(self.__save_package_pick, bin_id, quantity)
             return
         self._page.run_task(self.__save_item_pick, bin_id, quantity)
+
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> OrderPickingView:
+        customers = await self.__perform_get_customers() or []
+        customer_pairs = [(customer.id, self.__format_customer_label(customer)) for customer in customers]
+        self.__orders = await self.__load_eligible_orders(self.__selected_order_date, self.__selected_customer_id)
+        self.__selected_order_id = self.__resolve_selected_order_id(event.data)
+
+        view = OrderPickingView(
+            controller=self,
+            translation=translation,
+            mode=ViewMode.STATIC,
+            view_key=event.view_key,
+            data_row=event.data,
+            customers=customer_pairs,
+            default_order_date=self.__selected_order_date_for_view(),
+            selected_customer_id=self.__selected_customer_id,
+        )
+        view.set_orders(
+            orders=[(schema.id, schema.number) for schema in self.__orders],
+            selected_order_id=self.__selected_order_id,
+        )
+        package_options = await self.__load_package_picker_options(self.__selected_order_id)
+        view.set_package_options(
+            options=package_options,
+            enabled=self.__selected_order_id is not None and bool(package_options),
+        )
+        if self.__selected_order_id is not None:
+            to_pick_rows, picked_rows = await self.__load_order_item_rows(self.__selected_order_id)
+            view.set_order_items(to_pick_rows)
+            view.set_picked_items(picked_rows)
+        return view
 
     async def __load_items_for_selected_order(self, order_id: int | None, request_id: int) -> None:
         to_pick_rows: list[OrderPickingItemRow] = []

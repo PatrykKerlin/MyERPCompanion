@@ -178,15 +178,6 @@ class OrderPickingView(BaseDesktopView):
         if self.__order_input.page:
             self.__order_input.update()
 
-    def __handle_order_changed(self) -> None:
-        self._controller.on_order_changed(self.__order_input.value)
-
-    def __handle_order_date_changed(self) -> None:
-        self._controller.on_order_date_changed(self.__order_date_input.value)
-
-    def __handle_customer_changed(self) -> None:
-        self._controller.on_customer_changed(self.__customer_input.value)
-
     def set_source_rows(self, rows: list[tuple[int, list[Any]]]) -> None:
         self.__item_bulk_transfer.set_source_rows(rows)
 
@@ -239,3 +230,12 @@ class OrderPickingView(BaseDesktopView):
 
     def update_existing_package_target(self, target_id: int, source_id: int, values: list[str]) -> None:
         self.__package_bulk_transfer.update_existing_target(target_id, source_id, cast(list[Any], values))
+    def __handle_order_changed(self) -> None:
+        self._controller.on_order_changed(self.__order_input.value)
+
+    def __handle_order_date_changed(self) -> None:
+        self._controller.on_order_date_changed(self.__order_date_input.value)
+
+    def __handle_customer_changed(self) -> None:
+        self._controller.on_customer_changed(self.__customer_input.value)
+

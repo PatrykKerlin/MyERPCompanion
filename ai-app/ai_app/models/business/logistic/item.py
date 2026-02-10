@@ -94,6 +94,13 @@ class Item(BaseModel):
         cascade_soft_delete=True,
     )
 
+    category_name = column_property(
+        select(Category.name)
+        .where(Category.id == literal_column("items.category_id"))
+        .where(Category.is_active.is_(True))
+        .scalar_subquery()
+    )
+
     @property
     def bin_ids(self) -> list[int]:
         return [row.bin_id for row in self.item_bins]
@@ -101,10 +108,3 @@ class Item(BaseModel):
     @property
     def discount_ids(self) -> list[int]:
         return [row.discount_id for row in self.item_discounts]
-    
-    category_name = column_property(
-        select(Category.name)
-        .where(Category.id == literal_column("items.category_id"))
-        .where(Category.is_active.is_(True))
-        .scalar_subquery()
-    )

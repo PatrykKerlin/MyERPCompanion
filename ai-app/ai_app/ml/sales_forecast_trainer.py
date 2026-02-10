@@ -37,18 +37,18 @@ class SalesForecastTrainer:
             input_dim=int(x_train.shape[1]),
             output_dim=2,
         )
-        self._load_checkpoint_if_exists(model)
+        self.__load_checkpoint_if_exists(model)
         optimizer = torch.optim.Adam(
             model.parameters(),
             lr=SalesForecastTrainer._learning_rate,
             weight_decay=SalesForecastTrainer._weight_decay,
         )
         loss_fn = nn.MSELoss()
-        train_x, train_y, val_x, val_y = SalesForecastTrainer._split_train_validation(
+        train_x, train_y, val_x, val_y = SalesForecastTrainer.__split_train_validation(
             x_train,
             y_train,
         )
-        train_loader = SalesForecastTrainer._build_train_loader(train_x, train_y)
+        train_loader = SalesForecastTrainer.__build_train_loader(train_x, train_y)
         best_state: dict[str, torch.Tensor] | None = None
         best_val_loss = math.inf
         patience_counter = 0
@@ -89,7 +89,7 @@ class SalesForecastTrainer:
 
         if best_state is not None:
             model.load_state_dict(best_state)
-        self._save_checkpoint(model)
+        self.__save_checkpoint(model)
         training_seconds = time.perf_counter() - started_at
         best_val_loss_text = f"{best_val_loss:.6f}" if best_val_loss != math.inf else "n/a"
         logger.info(
@@ -108,7 +108,7 @@ class SalesForecastTrainer:
         return np.maximum(preds, 0.0)
 
     @staticmethod
-    def _build_train_loader(
+    def __build_train_loader(
         train_x: torch.Tensor,
         train_y: torch.Tensor,
     ) -> DataLoader[tuple[torch.Tensor, torch.Tensor]]:
@@ -124,7 +124,7 @@ class SalesForecastTrainer:
         )
 
     @staticmethod
-    def _split_train_validation(
+    def __split_train_validation(
         x_train: torch.Tensor,
         y_train: torch.Tensor,
     ) -> tuple[
@@ -150,7 +150,7 @@ class SalesForecastTrainer:
         )
 
     @classmethod
-    def _load_checkpoint_if_exists(cls, model: nn.Module) -> None:
+    def __load_checkpoint_if_exists(cls, model: nn.Module) -> None:
         if not cls._checkpoint_path.exists():
             logger.info(f"No model checkpoint found at {cls._checkpoint_path}, starting from current weights")
             return
@@ -162,6 +162,6 @@ class SalesForecastTrainer:
         model.load_state_dict(state_dict, strict=True)
 
     @classmethod
-    def _save_checkpoint(cls, model: nn.Module) -> None:
+    def __save_checkpoint(cls, model: nn.Module) -> None:
         cls._checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
         torch.save({"state_dict": model.state_dict()}, cls._checkpoint_path)

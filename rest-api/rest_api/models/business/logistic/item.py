@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from models.business.logistic.unit import Unit
     from models.business.trade.assoc_item_discount import AssocItemDiscount
     from models.business.trade.assoc_order_item import AssocOrderItem
-    from models.business.trade.order import Order
     from models.business.trade.supplier import Supplier
     from models.core.image import Image
 
@@ -94,6 +93,13 @@ class Item(BaseModel):
         cascade_soft_delete=True,
     )
 
+    category_name = column_property(
+        select(Category.name)
+        .where(Category.id == literal_column("items.category_id"))
+        .where(Category.is_active.is_(True))
+        .scalar_subquery()
+    )
+
     @property
     def bin_ids(self) -> list[int]:
         return [row.bin_id for row in self.item_bins]
@@ -101,10 +107,3 @@ class Item(BaseModel):
     @property
     def discount_ids(self) -> list[int]:
         return [row.discount_id for row in self.item_discounts]
-    
-    category_name = column_property(
-        select(Category.name)
-        .where(Category.id == literal_column("items.category_id"))
-        .where(Category.is_active.is_(True))
-        .scalar_subquery()
-    )

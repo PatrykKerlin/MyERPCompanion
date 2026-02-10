@@ -37,7 +37,7 @@ class UserStrictCreateAppSchema(BaseStrictSchema, UserStrictBaseSchema):
     password_repeat: Annotated[Constraints.Password, Field(exclude=True)]
 
     @model_validator(mode="after")
-    def _validate_passwords(self):
+    def __validate_passwords(self):
         if self.password != self.password_repeat:
             raise ValueError("passwords_do_not_match")
         return self
@@ -52,7 +52,7 @@ class UserStrictUpdateAppSchema(BaseStrictSchema, UserStrictBaseSchema):
     password_repeat: Annotated[Constraints.PasswordOptional, Field(exclude=True)]
 
     @model_validator(mode="after")
-    def _validate_passwords(self):
+    def __validate_passwords(self):
         if self.password is None and self.password_repeat is None:
             return self
         if self.password is None or self.password_repeat is None:

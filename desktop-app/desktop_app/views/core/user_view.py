@@ -119,6 +119,18 @@ class UserView(BaseDesktopView, GroupBulkTransferMixin):
         self._rows.append(self._buttons_row)
         self._master_column.controls.extend(self._rows)
 
+    def set_mode(self, mode: ViewMode) -> None:
+        super().set_mode(mode)
+        if mode in {ViewMode.CREATE, ViewMode.EDIT} and self.__password_validation_ready:
+            self.__validate_password_fields()
+
+    def did_mount(self):
+        self.__password_validation_ready = True
+        if self._mode in {ViewMode.CREATE, ViewMode.EDIT}:
+            self.__validate_password_fields()
+        if hasattr(self, "_group_bulk_transfer"):
+            self._mount_group_bulk_transfer()
+        return super().did_mount()
     def __handle_employee_changed(self) -> None:
         field = self._inputs.get("employee_id")
         if not field:
@@ -219,15 +231,3 @@ class UserView(BaseDesktopView, GroupBulkTransferMixin):
         if self.__password_validation_ready:
             self.__validate_password_fields()
 
-    def set_mode(self, mode: ViewMode) -> None:
-        super().set_mode(mode)
-        if mode in {ViewMode.CREATE, ViewMode.EDIT} and self.__password_validation_ready:
-            self.__validate_password_fields()
-
-    def did_mount(self):
-        self.__password_validation_ready = True
-        if self._mode in {ViewMode.CREATE, ViewMode.EDIT}:
-            self.__validate_password_fields()
-        if hasattr(self, "_group_bulk_transfer"):
-            self._mount_group_bulk_transfer()
-        return super().did_mount()

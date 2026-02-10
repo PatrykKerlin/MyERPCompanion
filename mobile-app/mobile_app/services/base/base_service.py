@@ -331,6 +331,12 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         new_access = response.json()["access"]
         return TokenPlainSchema(access=new_access, refresh=tokens.refresh)
 
+    @classmethod
+    async def close_client(cls) -> None:
+        if cls._shared_client and not cls._shared_client.is_closed:
+            await cls._shared_client.aclose()
+        cls._shared_client = None
+
     async def _get(
         self,
         endpoint: str,
@@ -415,9 +421,3 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
                 timeout=self.__build_timeout(),
             )
         return BaseService._shared_client
-
-    @classmethod
-    async def close_client(cls) -> None:
-        if cls._shared_client and not cls._shared_client.is_closed:
-            await cls._shared_client.aclose()
-        cls._shared_client = None

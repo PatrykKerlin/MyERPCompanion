@@ -16,20 +16,6 @@ from utils.enums import ApiActionError, Endpoint, View, ViewMode
 
 
 class UserLinkControllerMixin:
-    def _init_user_link_mixin(self) -> None:
-        self._subscribe_event_handlers({CallerActionRequested: self._handle_user_link_caller_action})
-        self._user_link_user_service = UserService(self._settings, self._logger, self._tokens_accessor)
-        self._user_link_employee_service = EmployeeService(self._settings, self._logger, self._tokens_accessor)
-        self._user_link_customer_service = CustomerService(self._settings, self._logger, self._tokens_accessor)
-
-    @property
-    def _user_link_view_key(self) -> View:
-        raise NotImplementedError
-
-    @property
-    def _user_link_entity_key(self) -> str:
-        raise NotImplementedError
-
     def on_add_user_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         if not self._view or self._view.mode != ViewMode.READ:
             return
@@ -58,6 +44,20 @@ class UserLinkControllerMixin:
         marker_state = bool(getattr(event.control, "value", False))
         dropdown.disabled = not marker_state
         dropdown.update()
+
+    def _init_user_link_mixin(self) -> None:
+        self._subscribe_event_handlers({CallerActionRequested: self._handle_user_link_caller_action})
+        self._user_link_user_service = UserService(self._settings, self._logger, self._tokens_accessor)
+        self._user_link_employee_service = EmployeeService(self._settings, self._logger, self._tokens_accessor)
+        self._user_link_customer_service = CustomerService(self._settings, self._logger, self._tokens_accessor)
+
+    @property
+    def _user_link_view_key(self) -> View:
+        raise NotImplementedError
+
+    @property
+    def _user_link_entity_key(self) -> str:
+        raise NotImplementedError
 
     async def _open_user_create_tab(self) -> None:
         if not self._view or self._view.mode != ViewMode.READ:

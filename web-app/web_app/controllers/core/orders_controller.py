@@ -36,6 +36,19 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
         self.__order_view_service = OrderViewService(self._settings, self._logger, self._tokens_accessor)
         self.__visible_order_ids: set[int] = set()
 
+    def on_new_order_clicked(self) -> None:
+        self._page.run_task(
+            self._event_bus.publish,
+            ViewRequested(
+                module_id=Module.WEB,
+                view_key=View.WEB_CREATE_ORDER,
+                mode=ViewMode.STATIC,
+            ),
+        )
+
+    def on_order_selected(self, order_id: int) -> None:
+        self._page.run_task(self.__handle_order_selected, order_id)
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> OrdersView:
         current_user = self._state_store.app_state.user.current
         customer_id = current_user.customer_id if current_user else None
@@ -71,18 +84,133 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
             status_history=status_history,
         )
 
-    def on_new_order_clicked(self) -> None:
-        self._page.run_task(
-            self._event_bus.publish,
-            ViewRequested(
-                module_id=Module.WEB,
-                view_key=View.WEB_CREATE_ORDER,
-                mode=ViewMode.STATIC,
-            ),
-        )
+    @staticmethod
+    def __build_discount_label_map(view_data: OrderViewResponseSchema) -> dict[int, str]:
+        def absorb(discounts: list[OrderViewDiscountSchema], result: dict[int, str]) -> None:
+            for discount in discounts:
+                if discount.id not in result:
+                    result[discount.id] = discount.code
 
-    def on_order_selected(self, order_id: int) -> None:
-        self._page.run_task(self.__handle_order_selected, order_id)
+        result: dict[int, str] = {}
+        for customer in view_data.customers:
+            absorb(customer.discounts, result)
+        for category in view_data.categories:
+            absorb(category.discounts, result)
+        for item in view_data.source_items:
+            absorb(item.discounts, result)
+        return result
+
+    def __build_images_map(self, items: list[OrderViewSourceItemSchema]) -> dict[int, list[str]]:
+        api_url = self._settings.API_URL
+        if self._settings.PUBLIC_API_URL:
+            api_url = self._settings.PUBLIC_API_URL
+        result: dict[int, list[str]] = {}
+        for item in items:
+            urls: list[str] = []
+            for image in item.images:
+                if image.url:
+                    resolved_url = MediaUrl.normalize(image.url, api_url)
+                    urls.append(resolved_url or image.url)
+            result[item.id] = urls
+        return result
+
+    @staticmethod
+    def __build_order_items(
+        items: list[OrderViewTargetItemSchema],
+        source_item_map: dict[int, OrderViewSourceItemSchema],
+        images_map: dict[int, list[str]],
+        discount_label_map: dict[int, str],
+    ) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        for item in sorted(items, key=lambda row: (row.index, row.name, row.id)):
+            source = source_item_map.get(item.item_id)
+            discount_labels = OrdersController.__resolve_item_discount_labels(item, discount_label_map)
+            width = source.width if source else item.width
+            height = source.height if source else item.height
+            length = source.length if source else item.length
+            weight = source.weight if source else item.weight
+            is_fragile = source.is_fragile if source else None
+            expiration_date = source.expiration_date if source else None
+            description = source.description if source else None
+            category_name = source.category_name if source else None
+            moq = source.moq if source else 1
+            vat_rate = source.vat_rate if source else item.vat_rate
+            ean = source.ean if source else "-"
+            available = (
+                max(0, source.stock_quantity - source.reserved_quantity)
+                if source
+                else None
+            )
+            rows.append(
+                {
+                    "item_id": item.item_id,
+                    "index": item.index,
+                    "name": item.name,
+                    "ean": ean,
+                    "quantity": str(item.quantity),
+                    "discounts": ", ".join(discount_labels) if discount_labels else "-",
+                    "description": description or "",
+                    "is_fragile": is_fragile,
+                    "expiration_date": str(expiration_date) if expiration_date else "",
+                    "category_name": category_name or "",
+                    "available": str(available) if available is not None else "",
+                    "vat_rate": str(vat_rate),
+                    "moq": str(moq),
+                    "dimensions": f"{width}x{height}x{length}",
+                    "weight": str(weight),
+                    "images": images_map.get(item.item_id, []),
+                }
+            )
+        return rows
+
+    def __build_order_meta(self, view_data: OrderViewResponseSchema, discount_label_map: dict[int, str]) -> dict[str, str]:
+        order = view_data.order
+        if not order:
+            return {}
+        currency_map = {row.id: row.label for row in view_data.currencies}
+        delivery_method_map = {row.id: row.label for row in view_data.delivery_methods}
+        currency = currency_map.get(order.currency_id, "-")
+        delivery_method = (
+            delivery_method_map.get(order.delivery_method_id, "-") if order.delivery_method_id is not None else "-"
+        )
+        invoice_number = order.invoice_number.strip() if order.invoice_number else ""
+        customer_discount = self.__resolve_customer_discount_label(view_data.target_items, discount_label_map)
+        total_with_shipping = order.total_gross + order.shipping_cost
+        meta = {
+            "number": order.number,
+            "order_date": self.__format_date(order.order_date),
+            "currency": currency,
+            "delivery_method": delivery_method,
+            "customer_discount": customer_discount,
+            "total_net": f"{order.total_net:.2f}",
+            "total_vat": f"{order.total_vat:.2f}",
+            "total_gross": f"{order.total_gross:.2f}",
+            "total_discount": f"{order.total_discount:.2f}",
+            "shipping_cost": f"{order.shipping_cost:.2f}",
+            "total_with_shipping": f"{total_with_shipping:.2f}",
+        }
+        if invoice_number:
+            meta["invoice_number"] = invoice_number
+        return meta
+
+    @staticmethod
+    def __build_status_history(
+        history: list[OrderViewStatusHistorySchema], translation: Translation
+    ) -> list[dict[str, str]]:
+        rows: list[dict[str, str]] = []
+        for row in sorted(history, key=lambda item: item.created_at):
+            status_label = translation.get(row.key)
+            created = OrdersController.__format_datetime(row.created_at)
+            rows.append({"status": status_label, "created_at": created})
+        return rows
+
+    @staticmethod
+    def __format_date(value: date) -> str:
+        return value.strftime("%Y-%m-%d")
+
+    @staticmethod
+    def __format_datetime(value: datetime) -> str:
+        return value.strftime("%Y-%m-%d %H:%M:%S")
 
     async def __handle_order_selected(self, order_id: int) -> None:
         if not self._view:
@@ -135,140 +263,6 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
         return await self.__order_view_service.get_view(Endpoint.ORDER_VIEW_SALES, order_id, None, None, self._module_id)
 
     @staticmethod
-    def __resolve_selected_order_id(orders: list[dict[str, Any]]) -> int | None:
-        if not orders:
-            return None
-        first_id = orders[0].get("id")
-        return int(first_id) if isinstance(first_id, int) else None
-
-    def __to_order_summary(self, order: OrderPlainSchema) -> dict[str, Any]:
-        return {
-            "id": order.id,
-            "number": order.number,
-            "order_date": self.__format_date(order.order_date),
-        }
-
-    def __build_order_meta(self, view_data: OrderViewResponseSchema, discount_label_map: dict[int, str]) -> dict[str, str]:
-        order = view_data.order
-        if not order:
-            return {}
-        currency_map = {row.id: row.label for row in view_data.currencies}
-        delivery_method_map = {row.id: row.label for row in view_data.delivery_methods}
-        currency = currency_map.get(order.currency_id, "-")
-        delivery_method = (
-            delivery_method_map.get(order.delivery_method_id, "-") if order.delivery_method_id is not None else "-"
-        )
-        invoice_number = order.invoice_number.strip() if order.invoice_number else ""
-        customer_discount = self.__resolve_customer_discount_label(view_data.target_items, discount_label_map)
-        total_with_shipping = order.total_gross + order.shipping_cost
-        meta = {
-            "number": order.number,
-            "order_date": self.__format_date(order.order_date),
-            "currency": currency,
-            "delivery_method": delivery_method,
-            "customer_discount": customer_discount,
-            "total_net": f"{order.total_net:.2f}",
-            "total_vat": f"{order.total_vat:.2f}",
-            "total_gross": f"{order.total_gross:.2f}",
-            "total_discount": f"{order.total_discount:.2f}",
-            "shipping_cost": f"{order.shipping_cost:.2f}",
-            "total_with_shipping": f"{total_with_shipping:.2f}",
-        }
-        if invoice_number:
-            meta["invoice_number"] = invoice_number
-        return meta
-
-    @staticmethod
-    def __build_order_items(
-        items: list[OrderViewTargetItemSchema],
-        source_item_map: dict[int, OrderViewSourceItemSchema],
-        images_map: dict[int, list[str]],
-        discount_label_map: dict[int, str],
-    ) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
-        for item in sorted(items, key=lambda row: (row.index, row.name, row.id)):
-            source = source_item_map.get(item.item_id)
-            discount_labels = OrdersController.__resolve_item_discount_labels(item, discount_label_map)
-            width = source.width if source else item.width
-            height = source.height if source else item.height
-            length = source.length if source else item.length
-            weight = source.weight if source else item.weight
-            is_fragile = source.is_fragile if source else None
-            expiration_date = source.expiration_date if source else None
-            description = source.description if source else None
-            category_name = source.category_name if source else None
-            moq = source.moq if source else 1
-            vat_rate = source.vat_rate if source else item.vat_rate
-            ean = source.ean if source else "-"
-            available = (
-                max(0, source.stock_quantity - source.reserved_quantity)
-                if source
-                else None
-            )
-            rows.append(
-                {
-                    "item_id": item.item_id,
-                    "index": item.index,
-                    "name": item.name,
-                    "ean": ean,
-                    "quantity": str(item.quantity),
-                    "discounts": ", ".join(discount_labels) if discount_labels else "-",
-                    "description": description or "",
-                    "is_fragile": is_fragile,
-                    "expiration_date": str(expiration_date) if expiration_date else "",
-                    "category_name": category_name or "",
-                    "available": str(available) if available is not None else "",
-                    "vat_rate": str(vat_rate),
-                    "moq": str(moq),
-                    "dimensions": f"{width}x{height}x{length}",
-                    "weight": str(weight),
-                    "images": images_map.get(item.item_id, []),
-                }
-            )
-        return rows
-
-    def __build_images_map(self, items: list[OrderViewSourceItemSchema]) -> dict[int, list[str]]:
-        api_url = self._settings.API_URL
-        if self._settings.PUBLIC_API_URL:
-            api_url = self._settings.PUBLIC_API_URL
-        result: dict[int, list[str]] = {}
-        for item in items:
-            urls: list[str] = []
-            for image in item.images:
-                if image.url:
-                    resolved_url = MediaUrl.normalize(image.url, api_url)
-                    urls.append(resolved_url or image.url)
-            result[item.id] = urls
-        return result
-
-    @staticmethod
-    def __build_discount_label_map(view_data: OrderViewResponseSchema) -> dict[int, str]:
-        def absorb(discounts: list[OrderViewDiscountSchema], result: dict[int, str]) -> None:
-            for discount in discounts:
-                if discount.id not in result:
-                    result[discount.id] = discount.code
-
-        result: dict[int, str] = {}
-        for customer in view_data.customers:
-            absorb(customer.discounts, result)
-        for category in view_data.categories:
-            absorb(category.discounts, result)
-        for item in view_data.source_items:
-            absorb(item.discounts, result)
-        return result
-
-    @staticmethod
-    def __resolve_item_discount_labels(item: OrderViewTargetItemSchema, discount_label_map: dict[int, str]) -> list[str]:
-        labels: list[str] = []
-        for discount_id in (item.item_discount_id, item.category_discount_id, item.customer_discount_id):
-            if not isinstance(discount_id, int):
-                continue
-            label = discount_label_map.get(discount_id)
-            if label and label not in labels:
-                labels.append(label)
-        return labels
-
-    @staticmethod
     def __resolve_customer_discount_label(items: list[OrderViewTargetItemSchema], discount_label_map: dict[int, str]) -> str:
         labels: list[str] = []
         for item in items:
@@ -283,20 +277,26 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
         return ", ".join(labels)
 
     @staticmethod
-    def __build_status_history(
-        history: list[OrderViewStatusHistorySchema], translation: Translation
-    ) -> list[dict[str, str]]:
-        rows: list[dict[str, str]] = []
-        for row in sorted(history, key=lambda item: item.created_at):
-            status_label = translation.get(row.key)
-            created = OrdersController.__format_datetime(row.created_at)
-            rows.append({"status": status_label, "created_at": created})
-        return rows
+    def __resolve_item_discount_labels(item: OrderViewTargetItemSchema, discount_label_map: dict[int, str]) -> list[str]:
+        labels: list[str] = []
+        for discount_id in (item.item_discount_id, item.category_discount_id, item.customer_discount_id):
+            if not isinstance(discount_id, int):
+                continue
+            label = discount_label_map.get(discount_id)
+            if label and label not in labels:
+                labels.append(label)
+        return labels
 
     @staticmethod
-    def __format_date(value: date) -> str:
-        return value.strftime("%Y-%m-%d")
+    def __resolve_selected_order_id(orders: list[dict[str, Any]]) -> int | None:
+        if not orders:
+            return None
+        first_id = orders[0].get("id")
+        return int(first_id) if isinstance(first_id, int) else None
 
-    @staticmethod
-    def __format_datetime(value: datetime) -> str:
-        return value.strftime("%Y-%m-%d %H:%M:%S")
+    def __to_order_summary(self, order: OrderPlainSchema) -> dict[str, Any]:
+        return {
+            "id": order.id,
+            "number": order.number,
+            "order_date": self.__format_date(order.order_date),
+        }

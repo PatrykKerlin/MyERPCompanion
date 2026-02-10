@@ -100,9 +100,9 @@ class OrderViewService(ItemQuantityMixin):
                 for row in delivery_methods
             ],
             statuses=[OrderViewLookupSchema(id=row.id, label=row.key, status_number=row.order) for row in statuses],
-            source_items=self._build_source_items(source_items, reserved_by_id, outbound_by_id),
-            target_items=self._build_target_items(order_items),
-            status_history=self._build_status_history(order_statuses),
+            source_items=self.__build_source_items(source_items, reserved_by_id, outbound_by_id),
+            target_items=self.__build_target_items(order_items),
+            status_history=self.__build_status_history(order_statuses),
             categories=[
                 OrderViewCategorySchema(
                     id=row.id,
@@ -138,7 +138,7 @@ class OrderViewService(ItemQuantityMixin):
         return response
 
     @staticmethod
-    def _build_source_items(
+    def __build_source_items(
         items: Sequence[Item], reserved_by_id: dict[int, int], outbound_by_id: dict[int, int]
     ) -> list[OrderViewSourceItemSchema]:
         return [
@@ -192,7 +192,7 @@ class OrderViewService(ItemQuantityMixin):
         ]
 
     @staticmethod
-    def _build_target_items(items: Sequence[AssocOrderItem]) -> list[OrderViewTargetItemSchema]:
+    def __build_target_items(items: Sequence[AssocOrderItem]) -> list[OrderViewTargetItemSchema]:
         results: list[OrderViewTargetItemSchema] = []
         for assoc in items:
             item = assoc.item
@@ -220,7 +220,7 @@ class OrderViewService(ItemQuantityMixin):
         return results
 
     @staticmethod
-    def _build_status_history(items: Sequence[AssocOrderStatus]) -> list[OrderViewStatusHistorySchema]:
+    def __build_status_history(items: Sequence[AssocOrderStatus]) -> list[OrderViewStatusHistorySchema]:
         sorted_items = sorted(items, key=lambda row: row.created_at)
         return [
             OrderViewStatusHistorySchema(

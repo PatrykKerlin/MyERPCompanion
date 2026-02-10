@@ -81,36 +81,9 @@ class BaseController:
 
         return decorator
 
-    def _subscribe_event_handlers(self, event_handlers: dict[type[Any], Callable[[Any], Awaitable[None]]]) -> None:
-        for event, handler in event_handlers.items():
-            unsubscriber = self._event_bus.subscribe(event, handler)
-            self.__add_unsubscriber(unsubscriber)
-
-    def _subscribe_state_listeners(self, state_listeners: dict[str, Callable[[Any], None]]) -> None:
-        for state, listener in state_listeners.items():
-            unsubscriber = self._state_store.subscribe(state, listener)
-            self.__add_unsubscriber(unsubscriber)
-
-    async def _open_loading_dialog(self) -> None:
-        acquired = await self._try_acquire_dialog_slot()
-        if not acquired:
-            return
-        self.__loading_lock_acquired = True
-        translation = self._state_store.app_state.translation.items
-        self._loading_dialog = LoadingDialogComponent(
-            translation,
-            min_visible_seconds=self._loading_min_visible_seconds,
-        )
-        self.__loading_opened_at = time.monotonic()
-        try:
-            self._page.show_dialog(self._loading_dialog)
-        except Exception:
-            self._loading_dialog = None
-            self.__loading_opened_at = None
-            if self.__loading_lock_acquired:
-                self._release_dialog_slot()
-                self.__loading_lock_acquired = False
-            raise
+    async def _acquire_dialog_slot(self) -> None:
+        await BaseController._dialog_lock.acquire()
+        await self._wait_for_dialog_clear()
 
     def _close_loading_dialog(self) -> None:
         if not self._loading_dialog:
@@ -141,6 +114,27 @@ class BaseController:
         )
         self._queue_dialog(error_dialog)
 
+    async def _open_loading_dialog(self) -> None:
+        acquired = await self._try_acquire_dialog_slot()
+        if not acquired:
+            return
+        self.__loading_lock_acquired = True
+        translation = self._state_store.app_state.translation.items
+        self._loading_dialog = LoadingDialogComponent(
+            translation,
+            min_visible_seconds=self._loading_min_visible_seconds,
+        )
+        self.__loading_opened_at = time.monotonic()
+        try:
+            self._page.show_dialog(self._loading_dialog)
+        except Exception:
+            self._loading_dialog = None
+            self.__loading_opened_at = None
+            if self.__loading_lock_acquired:
+                self._release_dialog_slot()
+                self.__loading_lock_acquired = False
+            raise
+
     def _open_message_dialog(self, message_key: str) -> None:
         translation = self._state_store.app_state.translation.items
         message_dialog = MessageDialogComponent(
@@ -150,32 +144,41 @@ class BaseController:
         )
         self._queue_dialog(message_dialog)
 
-    def __add_unsubscriber(self, func: Callable[[], None]) -> None:
-        self.__unsubscribers.append(func)
-
-    async def __close_loading_after_delay(self, delay: float) -> None:
+    def _queue_dialog(self, dialog: Any, wait_for_future: Awaitable[Any] | None = None) -> None:
         try:
-            await asyncio.sleep(max(delay, 0))
-        finally:
-            self.__finalize_loading_close()
-
-    def __finalize_loading_close(self) -> None:
-        if self._loading_dialog:
-            self._page.pop_dialog()
-        self._loading_dialog = None
-        self.__loading_opened_at = None
-        self.__loading_close_task = None
-        if self.__loading_lock_acquired:
-            self._release_dialog_slot()
-            self.__loading_lock_acquired = False
-
-    async def _acquire_dialog_slot(self) -> None:
-        await BaseController._dialog_lock.acquire()
-        await self._wait_for_dialog_clear()
+            self._page.run_task(self._show_dialog_serialized, dialog, wait_for_future)
+        except (AttributeError, RuntimeError):
+            self._logger.warning("Dialog fallback: showing without run_task", exc_info=True)
+            self._page.show_dialog(dialog)
 
     def _release_dialog_slot(self) -> None:
         if BaseController._dialog_lock.locked():
             BaseController._dialog_lock.release()
+
+    async def _show_dialog_serialized(
+        self,
+        dialog: Any,
+        wait_for_future: Awaitable[Any] | None = None,
+    ) -> None:
+        await self._acquire_dialog_slot()
+        try:
+            self._page.show_dialog(dialog)
+            if wait_for_future is not None:
+                await wait_for_future
+            else:
+                await self._wait_for_dialog_closed(dialog)
+        finally:
+            self._release_dialog_slot()
+
+    def _subscribe_event_handlers(self, event_handlers: dict[type[Any], Callable[[Any], Awaitable[None]]]) -> None:
+        for event, handler in event_handlers.items():
+            unsubscriber = self._event_bus.subscribe(event, handler)
+            self.__add_unsubscriber(unsubscriber)
+
+    def _subscribe_state_listeners(self, state_listeners: dict[str, Callable[[Any], None]]) -> None:
+        for state, listener in state_listeners.items():
+            unsubscriber = self._state_store.subscribe(state, listener)
+            self.__add_unsubscriber(unsubscriber)
 
     async def _try_acquire_dialog_slot(self) -> bool:
         if BaseController._dialog_lock.locked():
@@ -209,24 +212,21 @@ class BaseController:
                 return
             await asyncio.sleep(0.05)
 
-    async def _show_dialog_serialized(
-        self,
-        dialog: Any,
-        wait_for_future: Awaitable[Any] | None = None,
-    ) -> None:
-        await self._acquire_dialog_slot()
-        try:
-            self._page.show_dialog(dialog)
-            if wait_for_future is not None:
-                await wait_for_future
-            else:
-                await self._wait_for_dialog_closed(dialog)
-        finally:
-            self._release_dialog_slot()
+    def __add_unsubscriber(self, func: Callable[[], None]) -> None:
+        self.__unsubscribers.append(func)
 
-    def _queue_dialog(self, dialog: Any, wait_for_future: Awaitable[Any] | None = None) -> None:
+    async def __close_loading_after_delay(self, delay: float) -> None:
         try:
-            self._page.run_task(self._show_dialog_serialized, dialog, wait_for_future)
-        except (AttributeError, RuntimeError):
-            self._logger.warning("Dialog fallback: showing without run_task", exc_info=True)
-            self._page.show_dialog(dialog)
+            await asyncio.sleep(max(delay, 0))
+        finally:
+            self.__finalize_loading_close()
+
+    def __finalize_loading_close(self) -> None:
+        if self._loading_dialog:
+            self._page.pop_dialog()
+        self._loading_dialog = None
+        self.__loading_opened_at = None
+        self.__loading_close_task = None
+        if self.__loading_lock_acquired:
+            self._release_dialog_slot()
+            self.__loading_lock_acquired = False

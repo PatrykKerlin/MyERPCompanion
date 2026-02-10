@@ -22,11 +22,6 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
         self.__service = AuthService(self._settings, self._logger, self._tokens_accessor)
         self._subscribe_event_handlers({AuthDialogRequested: self._component_requested_handler})
 
-    async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
-        translation_state = self._state_store.app_state.translation
-        self._component = AuthDialogComponent(controller=self, translation=translation_state.items)
-        self._queue_dialog(self._component)
-
     def on_cancel_click(self) -> None:
         self._page.run_task(self._page.window.destroy)
 
@@ -35,6 +30,11 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
             self._page.run_task(self.__handle_login, "employee001", "test1234")
         else:
             self._page.run_task(self.__handle_login, username, password)
+
+    async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
+        translation_state = self._state_store.app_state.translation
+        self._component = AuthDialogComponent(controller=self, translation=translation_state.items)
+        self._queue_dialog(self._component)
 
     async def __handle_login(self, username: str, password: str) -> None:
         tokens = await self.__perform_fetch_tokens(username, password)

@@ -186,71 +186,9 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
             if input:
                 input.update()
 
-    def _build_field_groups(self, definitions: list[dict[str, Any]]) -> dict[str, FieldGroup]:
-        return {definition["key"]: self.__build_field_group(**definition) for definition in definitions}
-
-    def _build_grid(self, fields: dict[str, FieldGroup], inline: bool = False) -> list[ft.Control]:
-        if not fields:
-            return []
-        if inline:
-            total_columns = sum(group.columns for group in fields.values())
-            inline_controls = [part for group in fields.values() for part in group]
-            return [
-                ft.ResponsiveRow(
-                    columns=total_columns,
-                    controls=cast(list[ft.Control], inline_controls),
-                    alignment=ft.MainAxisAlignment.START,
-                    vertical_alignment=ft.CrossAxisAlignment.START,
-                )
-            ]
-        return [
-            ft.ResponsiveRow(
-                columns=group.columns,
-                controls=[part for part in group],
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.START,
-            )
-            for group in fields.values()
-        ]
-
     def _add_to_inputs(self, *fields: dict[str, FieldGroup]) -> None:
         for field in fields:
             self._inputs.update(field)
-
-    def _get_meta_grid(self, label_size: int, id_size: int, text_size: int, columns: int = 12) -> list[ft.Control]:
-        free_columns = columns - label_size
-        id_marker_size = free_columns - id_size
-        text_marker_size = free_columns - text_size
-        meta_fields = {
-            "id": FieldGroup(
-                label=self._get_label("id", label_size),
-                input=self._get_text_input("id", id_size),
-                marker=self._get_marker("id", id_marker_size),
-            ),
-            "created_by_username": FieldGroup(
-                label=self._get_label("created_by_username", label_size),
-                input=self._get_text_input("created_by_username", text_size),
-                marker=self._get_marker("created_by_username", text_marker_size),
-            ),
-            "created_at": FieldGroup(
-                label=self._get_label("created_at", label_size),
-                input=self._get_text_input("created_at", text_size),
-                marker=self._get_marker("created_at", text_marker_size),
-            ),
-            "modified_by_username": FieldGroup(
-                label=self._get_label("modified_by_username", label_size),
-                input=self._get_text_input("modified_by_username", text_size),
-                marker=self._get_marker("modified_by_username", text_marker_size),
-            ),
-            "modified_at": FieldGroup(
-                label=self._get_label("modified_at", label_size),
-                input=self._get_text_input("modified_at", text_size),
-                marker=self._get_marker("modified_at", text_marker_size),
-            ),
-        }
-        self._inputs.update(meta_fields)
-
-        return self._build_grid(meta_fields)
 
     def _get_label(self, key: str, size: int, colon: bool = True) -> tuple[ft.Container, int]:
         text_value = self._translation.get(key)
@@ -274,22 +212,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                     on_change=lambda event: self._controller.on_value_changed(event, key),
                     min_lines=lines,
                     max_lines=lines,
-                    expand=True,
-                ),
-                col={"sm": float(size)},
-                alignment=self._base_alignment,
-            ),
-            size,
-        )
-
-    def _get_password_input(self, key: str, size: int) -> tuple[ft.Container, int]:
-        return (
-            ft.Container(
-                content=ft.TextField(
-                    value="",
-                    password=True,
-                    can_reveal_password=True,
-                    on_change=lambda event: self._controller.on_value_changed(event, key),
                     expand=True,
                 ),
                 col={"sm": float(size)},
@@ -383,7 +305,100 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
             size,
         )
 
-    def _get_radio_group(
+    def _get_marker(self, key: str, size: int) -> tuple[ft.Container, int]:
+        return (
+            ft.Container(
+                content=ft.Checkbox(
+                    on_change=lambda event, key=key: self._controller.on_marker_clicked(event, key),
+                    tooltip=self._translation.get("check_to_search"),
+                    animate_size=300,
+                    value=False,
+                ),
+                col={"sm": float(size)},
+                alignment=self._base_alignment,
+            ),
+            size,
+        )
+
+    def __build_field_groups(self, definitions: list[dict[str, Any]]) -> dict[str, FieldGroup]:
+        return {definition["key"]: self.__build_field_group(**definition) for definition in definitions}
+
+    def __build_grid(self, fields: dict[str, FieldGroup], inline: bool = False) -> list[ft.Control]:
+        if not fields:
+            return []
+        if inline:
+            total_columns = sum(group.columns for group in fields.values())
+            inline_controls = [part for group in fields.values() for part in group]
+            return [
+                ft.ResponsiveRow(
+                    columns=total_columns,
+                    controls=cast(list[ft.Control], inline_controls),
+                    alignment=ft.MainAxisAlignment.START,
+                    vertical_alignment=ft.CrossAxisAlignment.START,
+                )
+            ]
+        return [
+            ft.ResponsiveRow(
+                columns=group.columns,
+                controls=[part for part in group],
+                alignment=ft.MainAxisAlignment.START,
+                vertical_alignment=ft.CrossAxisAlignment.START,
+            )
+            for group in fields.values()
+        ]
+
+    def __get_meta_grid(self, label_size: int, id_size: int, text_size: int, columns: int = 12) -> list[ft.Control]:
+        free_columns = columns - label_size
+        id_marker_size = free_columns - id_size
+        text_marker_size = free_columns - text_size
+        meta_fields = {
+            "id": FieldGroup(
+                label=self._get_label("id", label_size),
+                input=self._get_text_input("id", id_size),
+                marker=self._get_marker("id", id_marker_size),
+            ),
+            "created_by_username": FieldGroup(
+                label=self._get_label("created_by_username", label_size),
+                input=self._get_text_input("created_by_username", text_size),
+                marker=self._get_marker("created_by_username", text_marker_size),
+            ),
+            "created_at": FieldGroup(
+                label=self._get_label("created_at", label_size),
+                input=self._get_text_input("created_at", text_size),
+                marker=self._get_marker("created_at", text_marker_size),
+            ),
+            "modified_by_username": FieldGroup(
+                label=self._get_label("modified_by_username", label_size),
+                input=self._get_text_input("modified_by_username", text_size),
+                marker=self._get_marker("modified_by_username", text_marker_size),
+            ),
+            "modified_at": FieldGroup(
+                label=self._get_label("modified_at", label_size),
+                input=self._get_text_input("modified_at", text_size),
+                marker=self._get_marker("modified_at", text_marker_size),
+            ),
+        }
+        self._inputs.update(meta_fields)
+
+        return self.__build_grid(meta_fields)
+
+    def __get_password_input(self, key: str, size: int) -> tuple[ft.Container, int]:
+        return (
+            ft.Container(
+                content=ft.TextField(
+                    value="",
+                    password=True,
+                    can_reveal_password=True,
+                    on_change=lambda event: self._controller.on_value_changed(event, key),
+                    expand=True,
+                ),
+                col={"sm": float(size)},
+                alignment=self._base_alignment,
+            ),
+            size,
+        )
+
+    def __get_radio_group(
         self,
         key: str,
         size: int,
@@ -410,7 +425,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
             size,
         )
 
-    def _get_checkbox(self, key: str, size: int, value: bool | None = None) -> tuple[ft.Container, int]:
+    def __get_checkbox(self, key: str, size: int, value: bool | None = None) -> tuple[ft.Container, int]:
         return (
             ft.Container(
                 content=ft.Checkbox(
@@ -418,21 +433,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                     animate_size=300,
                     value=value,
                     shape=ft.CircleBorder(),
-                ),
-                col={"sm": float(size)},
-                alignment=self._base_alignment,
-            ),
-            size,
-        )
-
-    def _get_marker(self, key: str, size: int) -> tuple[ft.Container, int]:
-        return (
-            ft.Container(
-                content=ft.Checkbox(
-                    on_change=lambda event, key=key: self._controller.on_marker_clicked(event, key),
-                    tooltip=self._translation.get("check_to_search"),
-                    animate_size=300,
-                    value=False,
                 ),
                 col={"sm": float(size)},
                 alignment=self._base_alignment,

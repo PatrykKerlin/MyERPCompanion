@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from datetime import date, datetime
-from typing import Annotated
+from datetime import date
 
-from pydantic import Field, model_validator
+from pydantic import model_validator
 
 from schemas.base.base_schema import BasePlainSchema, BaseSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
@@ -36,7 +35,7 @@ class OrderStrictSchema(OrderStrictBaseSchema):
     supplier_id: Constraints.PositiveIntegerOptional
 
     @model_validator(mode="after")
-    def _validate_data(self) -> "OrderStrictSchema":
+    def __validate_data(self) -> "OrderStrictSchema":
         if not self.customer_id and not self.supplier_id:
             raise ValueError("either customer_id or supplier_id must be provided")
 

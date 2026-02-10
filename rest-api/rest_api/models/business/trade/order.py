@@ -78,6 +78,13 @@ class Order(BaseModel):
         cascade_soft_delete=True,
     )
 
+    invoice_number = column_property(
+        select(Invoice.number)
+        .where(Invoice.id == literal_column("orders.invoice_id"))
+        .where(Invoice.is_active.is_(True))
+        .scalar_subquery()
+    )
+
     @property
     def item_ids(self) -> list[int]:
         return [row.item_id for row in self.order_items]
@@ -85,10 +92,3 @@ class Order(BaseModel):
     @property
     def status_ids(self) -> list[int]:
         return [row.status_id for row in self.order_statuses]
-    
-    invoice_number = column_property(
-        select(Invoice.number)
-        .where(Invoice.id == literal_column("orders.invoice_id"))
-        .where(Invoice.is_active.is_(True))
-        .scalar_subquery()
-    )

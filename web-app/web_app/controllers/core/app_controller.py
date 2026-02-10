@@ -68,9 +68,9 @@ class AppController(BaseController):
     def build_root(self) -> ft.Control:
         return self.__view.build()
 
-    def __translation_updated_listener(self, state: TranslationState) -> None:
-        self.__view.update_translation(state.items)
-        self._page.update()
+    async def __api_not_responding_handler(self, _: TranslationFailed) -> None:
+        self._close_loading_dialog()
+        self._open_error_dialog(message_key="api_not_responding")
 
     async def __app_started_handler(self, _: AppStarted) -> None:
         await self._open_loading_dialog()
@@ -80,39 +80,9 @@ class AppController(BaseController):
             return
         self._open_error_dialog(message_key="api_not_responding")
 
-    @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_api_health_check(self) -> bool:
-        await self.__service.api_health_check()
-        return True
-
-    async def __translation_ready_handler(self, event: TranslationReady) -> None:
-        self._close_loading_dialog()
-        if event.user_authenticated:
-            await self.__open_orders_async()
-            return
-        await self._event_bus.publish(AuthDialogRequested())
-
-    async def __api_not_responding_handler(self, _: TranslationFailed) -> None:
-        self._close_loading_dialog()
-        self._open_error_dialog(message_key="api_not_responding")
-
-    async def __user_authenticated_handler(self, _: UserAuthenticated) -> None:
-        user = self._state_store.app_state.user.current
-        if not user:
-            return
-        self.__view.set_auth_view(None)
-        self.__apply_user_preferences(user)
-        self.__view.set_cart_count(0)
-        await self.__save_web_user_settings(user)
-        self._page.update()
-
-        translation_state = self._state_store.app_state.translation
-        if user.language.symbol == translation_state.language:
-            await self.__open_orders_async()
-            return
-
-        await self._open_loading_dialog()
-        await self._event_bus.publish(TranslationRequested(user.language.symbol, True))
+    def __apply_user_preferences(self, user: UserPlainSchema) -> None:
+        self.__view.set_theme(user.theme)
+        self.__view.set_username(user.username)
 
     async def __auth_view_ready_handler(self, event: AuthViewReady) -> None:
         self.__view.set_auth_view(event.component)
@@ -120,45 +90,6 @@ class AppController(BaseController):
 
     async def __cart_updated_handler(self, event: CartUpdated) -> None:
         self.__view.set_cart_count(event.count)
-
-    async def __logout_requested_handler(self, _: LogoutRequested) -> None:
-        self._state_store.update(
-            view={"title": "", "mode": ViewMode.NONE, "view": None},
-            modules={"items": []},
-            user={"current": None},
-            tokens={"access": None, "refresh": None},
-        )
-        await self._event_bus.publish(AuthDialogRequested())
-
-    def __view_updated_listener(self, state: ViewState) -> None:
-        self.__view.set_stack_item(state.view)
-        self._page.update()
-
-    def __user_updated_listener(self, state: UserState) -> None:
-        user = state.current
-        if not user:
-            self.__view.set_username(None)
-            self.__view.set_cart_count(0)
-            self._page.update()
-            return
-        self.__apply_user_preferences(user)
-        self._page.update()
-
-    def __apply_user_preferences(self, user: UserPlainSchema) -> None:
-        self.__view.set_theme(user.theme)
-        self.__view.set_username(user.username)
-
-    def __open_orders(self) -> None:
-        self._page.run_task(self.__open_orders_async)
-
-    async def __open_orders_async(self) -> None:
-        await self._event_bus.publish(
-            ViewRequested(
-                module_id=Module.WEB,
-                view_key=View.WEB_ORDERS,
-                mode=ViewMode.STATIC,
-            )
-        )
 
     async def __handle_web_reconnect(self, _: ft.ControlEvent) -> None:
         current_user = self._state_store.app_state.user.current
@@ -177,6 +108,15 @@ class AppController(BaseController):
             )
         )
 
+    async def __logout_requested_handler(self, _: LogoutRequested) -> None:
+        self._state_store.update(
+            view={"title": "", "mode": ViewMode.NONE, "view": None},
+            modules={"items": []},
+            user={"current": None},
+            tokens={"access": None, "refresh": None},
+        )
+        await self._event_bus.publish(AuthDialogRequested())
+
     def __open_cart(self) -> None:
         view = self._state_store.app_state.view.view
         if not view or view.view_key != View.WEB_CREATE_ORDER:
@@ -184,9 +124,6 @@ class AppController(BaseController):
         open_handler = getattr(view, "open_cart_dialog", None)
         if callable(open_handler):
             open_handler()
-
-    def __request_logout(self) -> None:
-        self._page.run_task(self._event_bus.publish, LogoutRequested())
 
     def __open_current_user_settings(self) -> None:
         self._page.run_task(self.__open_current_user_settings_dialog)
@@ -297,6 +234,43 @@ class AppController(BaseController):
         )
         self._queue_dialog(dialog)
 
+    def __open_orders(self) -> None:
+        self._page.run_task(self.__open_orders_async)
+
+    async def __open_orders_async(self) -> None:
+        await self._event_bus.publish(
+            ViewRequested(
+                module_id=Module.WEB,
+                view_key=View.WEB_ORDERS,
+                mode=ViewMode.STATIC,
+            )
+        )
+
+    @staticmethod
+    def __parse_optional_int(value: str | None) -> int | None:
+        if value in {None, "", "0"}:
+            return None
+        try:
+            return int(value)
+        except ValueError:
+            return None
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_api_health_check(self) -> bool:
+        await self.__service.api_health_check()
+        return True
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_all_languages(self) -> list[LanguagePlainSchema] | None:
+        return await self.__language_service.get_all(Endpoint.LANGUAGES, None, None, None, Module.CORE)
+
+    @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def __perform_update_user(self, user_id: int, payload: UserStrictUpdateAppSchema) -> UserPlainSchema | None:
+        return await self.__user_service.update(Endpoint.USERS, user_id, None, payload, Module.WEB)
+
+    def __request_logout(self) -> None:
+        self._page.run_task(self._event_bus.publish, LogoutRequested())
+
     async def __save_current_user_settings(
         self,
         dialog: BaseDialog,
@@ -362,25 +336,51 @@ class AppController(BaseController):
         await UserSettings.save_web(user.theme, user.language.symbol)
 
     @staticmethod
-    def __parse_optional_int(value: str | None) -> int | None:
-        if value in {None, "", "0"}:
-            return None
-        try:
-            return int(value)
-        except ValueError:
-            return None
-
-    @staticmethod
     def __to_none_if_empty(value: str | None) -> str | None:
         if value is None:
             return None
         stripped = value.strip()
         return stripped if stripped else None
 
-    @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_get_all_languages(self) -> list[LanguagePlainSchema] | None:
-        return await self.__language_service.get_all(Endpoint.LANGUAGES, None, None, None, Module.CORE)
+    async def __translation_ready_handler(self, event: TranslationReady) -> None:
+        self._close_loading_dialog()
+        if event.user_authenticated:
+            await self.__open_orders_async()
+            return
+        await self._event_bus.publish(AuthDialogRequested())
 
-    @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_update_user(self, user_id: int, payload: UserStrictUpdateAppSchema) -> UserPlainSchema | None:
-        return await self.__user_service.update(Endpoint.USERS, user_id, None, payload, Module.WEB)
+    def __translation_updated_listener(self, state: TranslationState) -> None:
+        self.__view.update_translation(state.items)
+        self._page.update()
+
+    async def __user_authenticated_handler(self, _: UserAuthenticated) -> None:
+        user = self._state_store.app_state.user.current
+        if not user:
+            return
+        self.__view.set_auth_view(None)
+        self.__apply_user_preferences(user)
+        self.__view.set_cart_count(0)
+        await self.__save_web_user_settings(user)
+        self._page.update()
+
+        translation_state = self._state_store.app_state.translation
+        if user.language.symbol == translation_state.language:
+            await self.__open_orders_async()
+            return
+
+        await self._open_loading_dialog()
+        await self._event_bus.publish(TranslationRequested(user.language.symbol, True))
+
+    def __user_updated_listener(self, state: UserState) -> None:
+        user = state.current
+        if not user:
+            self.__view.set_username(None)
+            self.__view.set_cart_count(0)
+            self._page.update()
+            return
+        self.__apply_user_preferences(user)
+        self._page.update()
+
+    def __view_updated_listener(self, state: ViewState) -> None:
+        self.__view.set_stack_item(state.view)
+        self._page.update()

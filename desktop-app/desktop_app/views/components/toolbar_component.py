@@ -171,6 +171,19 @@ class ToolbarComponent(BaseComponent, ft.Container):
                 button.disabled = False
             button.update()
 
+    def did_mount(self):
+        if self.__pending_username is not None:
+            self.__apply_pending_username()
+        return super().did_mount()
+
+    def set_current_user(self, username: str | None) -> None:
+        self.__pending_username = username
+        try:
+            page = self.page
+        except RuntimeError:
+            return
+        if page is not None:
+            self.__apply_pending_username()
     def __apply_pending_username(self) -> None:
         username = self.__pending_username
         if username:
@@ -185,16 +198,3 @@ class ToolbarComponent(BaseComponent, ft.Container):
         self.__user_button.update()
         self.__logout_button.update()
 
-    def did_mount(self):
-        if self.__pending_username is not None:
-            self.__apply_pending_username()
-        return super().did_mount()
-
-    def set_current_user(self, username: str | None) -> None:
-        self.__pending_username = username
-        try:
-            page = self.page
-        except RuntimeError:
-            return
-        if page is not None:
-            self.__apply_pending_username()

@@ -61,14 +61,6 @@ class NumericField(ft.Row):
         ]
 
     @property
-    def value(self) -> int | float | None:
-        return None if self.__value == 0 else self.__value
-
-    @value.setter
-    def value(self, new_value: int | float) -> None:
-        self.__set_value(new_value)
-
-    @property
     def error(self) -> ft.StrOrControl | None:
         return self.__text_field.error
 
@@ -91,6 +83,14 @@ class NumericField(ft.Row):
         self.__decrement_button.update()
         self.__increment_button.update()
 
+    @property
+    def value(self) -> int | float | None:
+        return None if self.__value == 0 else self.__value
+
+    @value.setter
+    def value(self, new_value: int | float) -> None:
+        self.__set_value(new_value)
+
     def set_limits(self, min_value: int | float | None, max_value: int | float | None) -> None:
         if self.__is_float:
             self.__min_value = float(min_value) if min_value is not None else 0.0
@@ -99,6 +99,11 @@ class NumericField(ft.Row):
             self.__min_value = int(min_value) if min_value is not None else 0
             self.__max_value = int(max_value) if max_value is not None else sys.maxsize
         self.__set_value(self.__value)
+
+    def __decrement(self, _: ft.Event[ft.IconButton]) -> None:
+        current = self.__parse_value(self.__text_field.value or "") or self.__value
+        self.__set_value(current - self.__step)
+        self.__emit_value(self.__value)
 
     def __emit_value(self, value: int | float | None) -> None:
         if not self.__on_change:
@@ -116,10 +121,19 @@ class NumericField(ft.Row):
     def __format_value(self, value: int | float) -> str:
         return f"{value:.{self.__precision}f}" if self.__is_float else str(int(value))
 
-    def __revert_to_last(self) -> None:
-        self.__text_field.value = self.__format_value(self.__last_valid_value)
-        self.__text_field.update()
-        self.__emit_value(self.__last_valid_value)
+    def __handle_text_change(self, event: ft.Event[ft.TextField]) -> None:
+        raw = getattr(event.control, "value", "")
+        parsed = self.__parse_value(raw if raw is not None else "")
+        if parsed is None:
+            self.__revert_to_last()
+            return
+        self.__set_value(parsed)
+        self.__emit_value(self.__value)
+
+    def __increment(self, _: ft.Event[ft.IconButton]) -> None:
+        current = self.__parse_value(self.__text_field.value or "") or self.__value
+        self.__set_value(current + self.__step)
+        self.__emit_value(self.__value)
 
     def __parse_value(self, value: int | float | str) -> int | float | None:
         if isinstance(value, (int, float)):
@@ -129,6 +143,11 @@ class NumericField(ft.Row):
             return parsed
         except (ValueError, TypeError):
             return None
+
+    def __revert_to_last(self) -> None:
+        self.__text_field.value = self.__format_value(self.__last_valid_value)
+        self.__text_field.update()
+        self.__emit_value(self.__last_valid_value)
 
     def __set_value(self, new_value: int | float | str) -> None:
         parsed_new_value = self.__parse_value(new_value)
@@ -140,22 +159,3 @@ class NumericField(ft.Row):
         self.__last_valid_value = bounded
         self.__text_field.value = self.__format_value(bounded)
         self.__text_field.update()
-
-    def __increment(self, _: ft.Event[ft.IconButton]) -> None:
-        current = self.__parse_value(self.__text_field.value or "") or self.__value
-        self.__set_value(current + self.__step)
-        self.__emit_value(self.__value)
-
-    def __decrement(self, _: ft.Event[ft.IconButton]) -> None:
-        current = self.__parse_value(self.__text_field.value or "") or self.__value
-        self.__set_value(current - self.__step)
-        self.__emit_value(self.__value)
-
-    def __handle_text_change(self, event: ft.Event[ft.TextField]) -> None:
-        raw = getattr(event.control, "value", "")
-        parsed = self.__parse_value(raw if raw is not None else "")
-        if parsed is None:
-            self.__revert_to_last()
-            return
-        self.__set_value(parsed)
-        self.__emit_value(self.__value)

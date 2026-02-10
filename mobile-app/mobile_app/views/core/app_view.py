@@ -62,7 +62,7 @@ class AppView:
 
     def build(self) -> ft.Control:
         page = ft.context.page
-        self._apply_page_settings(page)
+        self.__apply_page_settings(page)
         return self.__root
 
     def update_translation(self, translation: Translation) -> None:
@@ -113,16 +113,16 @@ class AppView:
         page = self.__root.page
         if not page:
             return
-        page.theme_mode = self._resolve_theme_mode(theme)
+        page.theme_mode = self.__resolve_theme_mode(theme)
         page.update()
 
     def set_content_visible(self, visible: bool) -> None:
         self.__content.visible = visible
         self.__safe_update(self.__content)
 
-    def _apply_page_settings(self, page: ft.Page) -> None:
+    def __apply_page_settings(self, page: ft.Page) -> None:
         page.title = self.__translation.get("my_erp_companion")
-        page.theme_mode = self._resolve_theme_mode(self.__theme)
+        page.theme_mode = self.__resolve_theme_mode(self.__theme)
         page.padding = 0
         page.spacing = 0
         page.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
@@ -139,7 +139,7 @@ class AppView:
         page.window.min_height = self.__MOBILE_HEIGHT
         page.window.resizable = False
 
-    def _resolve_theme_mode(self, theme: str) -> ft.ThemeMode:
+    def __resolve_theme_mode(self, theme: str) -> ft.ThemeMode:
         if theme == "dark":
             return ft.ThemeMode.DARK
         if theme == "light":

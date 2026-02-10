@@ -41,6 +41,9 @@ class TabsBarComponent(BaseComponent, ft.Container):
     def active_tab(self, active_tab: str) -> None:
         self.__active_tab = active_tab
 
+    def refresh(self) -> None:
+        self.__build_controls()
+        self.update()
     def __build_controls(self) -> None:
         controls = [
             ft.Row(
@@ -60,6 +63,3 @@ class TabsBarComponent(BaseComponent, ft.Container):
         ]
         cast(ft.Row, self.content).controls = cast(list[ft.Control], controls)
 
-    def refresh(self) -> None:
-        self.__build_controls()
-        self.update()

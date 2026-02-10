@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import cast
+from typing import Any, cast
 
 import flet as ft
 
@@ -9,14 +9,14 @@ from utils.field_group import FieldGroup
 
 
 class UserLinkViewMixin:
+    _base_alignment: ft.Alignment
+    _data_row: dict[str, Any] | None
+    _inputs: dict[str, FieldGroup]
+    _mode: ViewMode
+
     def _get_dropdown(self, key: str, size: int, options: list[tuple[int, str]]) -> tuple[ft.Container, int]: ...
     def _get_label(self, key: str, size: int) -> tuple[ft.Container, int]: ...
     def _get_marker(self, key: str, size: int) -> tuple[ft.Container, int]: ...
-
-    _base_alignment: ft.Alignment
-    _data_row: dict[str, object] | None
-    _inputs: dict[str, FieldGroup]
-    _mode: ViewMode
 
     def _init_user_link_field(
         self,

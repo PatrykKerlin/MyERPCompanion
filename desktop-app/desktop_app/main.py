@@ -137,7 +137,7 @@ class App:
     async def __dispose(self) -> None:
         for controller in self.__controllers:
             await controller.dispose()
-        self._controllers = ()
+        self.__controllers = []
         await BaseService.close_client()
         await self.__event_bus.stop()
 

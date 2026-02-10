@@ -21,13 +21,13 @@ class AuthController(BaseController):
         self.__service = AuthService(self._settings, self._logger, self._tokens_accessor)
         self._subscribe_event_handlers({AuthDialogRequested: self.__auth_requested_handler})
 
+    def on_login_click(self, username: str, password: str) -> None:
+        self._page.run_task(self.__handle_login, "customer001", "test1234")
+
     async def __auth_requested_handler(self, _: AuthDialogRequested) -> None:
         translation_state = self._state_store.app_state.translation
         view = AuthView(controller=self, translation=translation_state.items)
         await self._event_bus.publish(AuthViewReady(component=view))
-
-    def on_login_click(self, username: str, password: str) -> None:
-        self._page.run_task(self.__handle_login, "customer001", "test1234")
 
     async def __handle_login(self, username: str, password: str) -> None:
         tokens = await self.__perform_fetch_tokens(username, password)

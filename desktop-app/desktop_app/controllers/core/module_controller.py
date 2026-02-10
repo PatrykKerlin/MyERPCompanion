@@ -36,35 +36,6 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
             self._settings, self._logger, self._tokens_accessor
         )
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> ModuleView:
-        source_rows: list[tuple[int, list[str]]] = []
-        target_rows: list[tuple[int, list[str]]] = []
-        group_source_rows: list[tuple[int, list[str]]] = []
-        group_target_rows: list[tuple[int, list[str]]] = []
-        if event.data and mode in {ViewMode.READ, ViewMode.EDIT}:
-            views, groups, group_assocs = await asyncio.gather(
-                self.__perform_get_all_views(),
-                self.__perform_get_all_groups(),
-                self.__perform_get_module_group_assocs(event.data.get("id")),
-            )
-            source_rows, target_rows = self.__build_view_rows(views, event.data)
-            group_source_rows, group_target_rows = self.__build_group_rows(groups, group_assocs)
-        return ModuleView(
-            self,
-            translation,
-            mode,
-            event.view_key,
-            event.data,
-            source_views=source_rows,
-            target_views=target_rows,
-            group_source_rows=group_source_rows,
-            group_target_rows=group_target_rows,
-            on_views_save_clicked=self.on_views_save_clicked,
-            on_views_delete_clicked=self.on_views_delete_clicked,
-            on_groups_save_clicked=self.on_groups_save_clicked,
-            on_groups_delete_clicked=self.on_groups_delete_clicked,
-        )
-
     def on_views_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         if not self._view or not self._view.data_row:
             return
@@ -93,6 +64,35 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
             return
         module_id = self._view.data_row["id"]
         self._page.run_task(self.__handle_groups_delete, module_id, group_ids)
+
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> ModuleView:
+        source_rows: list[tuple[int, list[str]]] = []
+        target_rows: list[tuple[int, list[str]]] = []
+        group_source_rows: list[tuple[int, list[str]]] = []
+        group_target_rows: list[tuple[int, list[str]]] = []
+        if event.data and mode in {ViewMode.READ, ViewMode.EDIT}:
+            views, groups, group_assocs = await asyncio.gather(
+                self.__perform_get_all_views(),
+                self.__perform_get_all_groups(),
+                self.__perform_get_module_group_assocs(event.data.get("id")),
+            )
+            source_rows, target_rows = self.__build_view_rows(views, event.data)
+            group_source_rows, group_target_rows = self.__build_group_rows(groups, group_assocs)
+        return ModuleView(
+            self,
+            translation,
+            mode,
+            event.view_key,
+            event.data,
+            source_views=source_rows,
+            target_views=target_rows,
+            group_source_rows=group_source_rows,
+            group_target_rows=group_target_rows,
+            on_views_save_clicked=self.on_views_save_clicked,
+            on_views_delete_clicked=self.on_views_delete_clicked,
+            on_groups_save_clicked=self.on_groups_save_clicked,
+            on_groups_delete_clicked=self.on_groups_delete_clicked,
+        )
 
     async def __handle_views_save(self, module_id: int, pending: list[tuple[int, int]]) -> None:
         if not self._view or not self._view.data_row:

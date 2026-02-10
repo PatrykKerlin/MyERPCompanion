@@ -59,22 +59,6 @@ class StockReceivingController(
         self.__target_rows: list[tuple[int, list[str]]] = []
         self.__current_order_id: int | None = None
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> StockReceivingView:
-        mode = ViewMode.STATIC
-        orders = await self.__load_eligible_orders()
-        order_pairs = [(order.id, order.number) for order in orders]
-        return StockReceivingView(
-            self,
-            translation,
-            mode,
-            event.view_key,
-            order_pairs,
-            self.on_target_bin_submit,
-            self.on_bulk_transfer_save_clicked,
-            self.on_bulk_transfer_move_requested,
-            self.on_bulk_transfer_pending_reverted,
-        )
-
     def on_order_changed(self, value: str | None) -> None:
         if not self._view:
             return
@@ -118,59 +102,21 @@ class StockReceivingController(
                 self.__order_item_quantities[item_id] = self.__order_item_quantities.get(item_id, 0) + quantity
         self.__refresh_source_rows()
 
-    async def _get_all_statuses(self) -> list[StatusPlainSchema]:
-        return await self.__perform_get_all_statuses()
-
-    async def _get_orders_by_ids(self, order_ids: list[int]) -> list[OrderPlainSchema]:
-        return await self.__perform_get_orders_by_ids(order_ids)
-
-    async def _get_order_statuses_by_status_id(self, status_id: int) -> list[AssocOrderStatusPlainSchema]:
-        return await self.__perform_get_order_statuses_by_status_id(status_id)
-
-    async def _get_order_statuses_for_order(self, order_id: int) -> list[AssocOrderStatusPlainSchema]:
-        return await self.__perform_get_order_statuses(order_id)
-
-    async def _get_order_items_for_order(self, order_id: int) -> list[AssocOrderItemPlainSchema]:
-        return await self.__perform_get_order_items(order_id)
-
-    async def _create_order_status(self, payload: AssocOrderStatusStrictSchema) -> None:
-        await self.__perform_create_order_status(payload)
-
-    async def _load_target_bin_for_location(self, location: str) -> None:
-        await self.__load_target_bin(location)
-
-    async def _save_bulk_transfer(self) -> None:
-        await self.__handle_bulk_transfer_save()
-
-    async def _ensure_order_item_label(self, item_id: int) -> None:
-        await self.__ensure_item_label(item_id)
-
-    def _get_current_order_id(self) -> int | None:
-        return self.__current_order_id
-
-    def _get_remaining_order_item_quantity(self, item_id: int) -> int:
-        return self.__order_item_quantities.get(item_id, 0)
-
-    def _set_remaining_order_item_quantity(self, item_id: int, quantity: int) -> None:
-        self.__order_item_quantities[item_id] = max(0, quantity)
-
-    def _get_target_item(self, item_id: int) -> tuple[str, str, int, int] | None:
-        return self.__target_items.get(item_id)
-
-    def _get_order_item_label(self, item_id: int) -> tuple[str, str]:
-        return self.__order_item_labels.get(item_id, (str(item_id), ""))
-
-    def _get_pending_quantity(self, target_id: int) -> int:
-        return self.__pending_move_quantities.get(target_id, 0)
-
-    def _set_pending_quantity(self, target_id: int, quantity: int) -> None:
-        self.__pending_move_quantities[target_id] = quantity
-
-    def _set_pending_item(self, target_id: int, item_id: int) -> None:
-        self.__pending_move_item_ids[target_id] = item_id
-
-    def _refresh_source_rows_for_view(self) -> None:
-        self.__refresh_source_rows()
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> StockReceivingView:
+        mode = ViewMode.STATIC
+        orders = await self.__load_eligible_orders()
+        order_pairs = [(order.id, order.number) for order in orders]
+        return StockReceivingView(
+            self,
+            translation,
+            mode,
+            event.view_key,
+            order_pairs,
+            self.on_target_bin_submit,
+            self.on_bulk_transfer_save_clicked,
+            self.on_bulk_transfer_move_requested,
+            self.on_bulk_transfer_pending_reverted,
+        )
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_statuses(self) -> list[StatusPlainSchema]:

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import model_validator
 
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.core.image_schema import ImagePlainSchema
@@ -42,7 +41,7 @@ class ItemStrictSchema(BaseStrictSchema):
     supplier_id: Constraints.PositiveInteger
 
     @model_validator(mode="after")
-    def _validate_data(self) -> ItemStrictSchema:
+    def __validate_data(self) -> ItemStrictSchema:
         today = date.today()
 
         if self.expiration_date is not None and self.expiration_date < today:

@@ -157,6 +157,35 @@ class PurchaseOrderView(BaseDesktopView):
             self.__pending_totals.clear()
         return result
 
+    def get_pending_targets(self) -> list[tuple[int, int]]:
+        return self.__bulk_transfer.get_pending_targets()
+
+    def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
+        self.__bulk_transfer.set_source_rows(cast(list[tuple[int, list[Any]]], rows))
+
+    def set_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
+        self.__bulk_transfer.set_target_rows(cast(list[tuple[int, list[Any]]], rows))
+
+    def add_target_row(self, source_id: int, values: list[str], highlight: bool = True) -> int:
+        return self.__bulk_transfer.add_target_row(source_id, cast(list[Any], values), highlight=highlight)
+
+    def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
+        self.__bulk_transfer.update_existing_target(target_id, source_id, cast(list[Any], values))
+
+    def set_order_totals(self, total_net: float, total_vat: float, total_gross: float, total_discount: float) -> None:
+        totals = {
+            "total_net": total_net,
+            "total_vat": total_vat,
+            "total_gross": total_gross,
+            "total_discount": total_discount,
+        }
+        if not self.__is_mounted:
+            self.__pending_totals = totals
+            for key, value in totals.items():
+                self._controller.set_field_value(key, value)
+            return
+        self.__apply_order_totals(totals)
+
     def __apply_create_defaults(self) -> None:
         for key, value in self.__create_defaults.items():
             if key in self._inputs:
@@ -230,35 +259,6 @@ class PurchaseOrderView(BaseDesktopView):
             self._controller.set_field_value("currency_id", currency_id)
         if input_control:
             input_control.update()
-
-    def get_pending_targets(self) -> list[tuple[int, int]]:
-        return self.__bulk_transfer.get_pending_targets()
-
-    def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
-        self.__bulk_transfer.set_source_rows(cast(list[tuple[int, list[Any]]], rows))
-
-    def set_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
-        self.__bulk_transfer.set_target_rows(cast(list[tuple[int, list[Any]]], rows))
-
-    def add_target_row(self, source_id: int, values: list[str], highlight: bool = True) -> int:
-        return self.__bulk_transfer.add_target_row(source_id, cast(list[Any], values), highlight=highlight)
-
-    def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
-        self.__bulk_transfer.update_existing_target(target_id, source_id, cast(list[Any], values))
-
-    def set_order_totals(self, total_net: float, total_vat: float, total_gross: float, total_discount: float) -> None:
-        totals = {
-            "total_net": total_net,
-            "total_vat": total_vat,
-            "total_gross": total_gross,
-            "total_discount": total_discount,
-        }
-        if not self.__is_mounted:
-            self.__pending_totals = totals
-            for key, value in totals.items():
-                self._controller.set_field_value(key, value)
-            return
-        self.__apply_order_totals(totals)
 
     def __apply_order_totals(self, totals: dict[str, float]) -> None:
         for key, value in totals.items():

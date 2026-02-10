@@ -33,7 +33,7 @@ class CustomerStrictSchema(BaseStrictSchema):
     shipping_country: str | None
 
     @model_validator(mode="after")
-    def _validate_data(self) -> CustomerStrictSchema:
+    def __validate_data(self) -> CustomerStrictSchema:
         shipping_required_values = [
             self.shipping_house_number,
             self.shipping_postal_code,

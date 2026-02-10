@@ -38,15 +38,6 @@ class EmployeeController(UserLinkControllerMixin, BaseViewController[EmployeeSer
         self.__positions_by_id: dict[int, PositionPlainSchema] = {}
 
     @property
-    def _user_link_view_key(self) -> View:
-        return View.EMPLOYEES
-
-    @property
-    def _user_link_entity_key(self) -> str:
-        return "employee_id"
-
-
-
     def on_department_changed(self) -> None:
         if not self._view:
             return
@@ -79,15 +70,12 @@ class EmployeeController(UserLinkControllerMixin, BaseViewController[EmployeeSer
             "is_remote",
         ]
     @staticmethod
-    def __normalize_id(value: int | str | None) -> int | None:
-        if value is None:
-            return None
-        if isinstance(value, int):
-            return value
-        value_str = str(value).strip()
-        if not value_str or value_str == '0':
-            return None
-        return int(value_str) if value_str.isdigit() else None
+    def _user_link_view_key(self) -> View:
+        return View.EMPLOYEES
+
+    @property
+    def _user_link_entity_key(self) -> str:
+        return "employee_id"
 
 
 
@@ -159,6 +147,18 @@ class EmployeeController(UserLinkControllerMixin, BaseViewController[EmployeeSer
         )
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
+    def __normalize_id(value: int | str | None) -> int | None:
+        if value is None:
+            return None
+        if isinstance(value, int):
+            return value
+        value_str = str(value).strip()
+        if not value_str or value_str == '0':
+            return None
+        return int(value_str) if value_str.isdigit() else None
+
+
+
     async def __perform_get_all_employees(self) -> list[EmployeePlainSchema]:
         return await self._service.get_all(self._endpoint, None, None, None, self._module_id)
 

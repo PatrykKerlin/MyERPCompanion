@@ -42,12 +42,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         ft.Container.__init__(self, content=None, expand=True)
 
     @property
-    def view_key(self) -> View:
-        return self._view_key
-
-    @property
-    def mode(self) -> ViewMode:
-        return self._mode
+    def caller_view_key(self) -> View | None:
+        return self._caller_view_key
 
     @property
     def data_row(self) -> dict[str, Any] | None:
@@ -58,8 +54,12 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         return self._inputs
 
     @property
-    def caller_view_key(self) -> View | None:
-        return self._caller_view_key
+    def mode(self) -> ViewMode:
+        return self._mode
+
+    @property
+    def view_key(self) -> View:
+        return self._view_key
 
     def set_mode(self, mode: ViewMode) -> None:
         self._mode = mode

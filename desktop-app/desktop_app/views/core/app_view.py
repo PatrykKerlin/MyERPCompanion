@@ -57,7 +57,7 @@ class AppView:
 
     def build(self) -> ft.Control:
         page = ft.context.page
-        self._apply_page_settings(page)
+        self.__apply_page_settings(page)
         return self.__root
 
     def update_translation(self, translation: Translation) -> None:
@@ -97,7 +97,7 @@ class AppView:
         page = self.__root.page
         if not page:
             return
-        page.theme_mode = self._resolve_theme_mode(theme)
+        page.theme_mode = self.__resolve_theme_mode(theme)
         page.update()
 
     def toggle_toolbar_visible(self) -> None:
@@ -105,21 +105,6 @@ class AppView:
 
     def toggle_tabs_bar_visible(self) -> None:
         self.__tabs_bar_container.visible = not self.__tabs_bar_container.visible
-
-    def _apply_page_settings(self, page: ft.Page) -> None:
-        page.title = self.__translation.get("my_erp_companion")
-        page.theme_mode = self._resolve_theme_mode(self.__theme)
-        page.window.width = 1600
-        page.window.height = 900
-        page.window.min_width = 1024
-        page.window.min_height = 768
-
-    def _resolve_theme_mode(self, theme: str) -> ft.ThemeMode:
-        if theme == "dark":
-            return ft.ThemeMode.DARK
-        if theme == "light":
-            return ft.ThemeMode.LIGHT
-        return ft.ThemeMode.SYSTEM
 
     def set_stack_item(self, view: BaseView | None) -> None:
         if view is None:
@@ -133,3 +118,18 @@ class AppView:
 
     def remove_stack_item(self, view: BaseView) -> None:
         self.__views_stack.controls.remove(view)
+
+    def __apply_page_settings(self, page: ft.Page) -> None:
+        page.title = self.__translation.get("my_erp_companion")
+        page.theme_mode = self.__resolve_theme_mode(self.__theme)
+        page.window.width = 1600
+        page.window.height = 900
+        page.window.min_width = 1024
+        page.window.min_height = 768
+
+    def __resolve_theme_mode(self, theme: str) -> ft.ThemeMode:
+        if theme == "dark":
+            return ft.ThemeMode.DARK
+        if theme == "light":
+            return ft.ThemeMode.LIGHT
+        return ft.ThemeMode.SYSTEM

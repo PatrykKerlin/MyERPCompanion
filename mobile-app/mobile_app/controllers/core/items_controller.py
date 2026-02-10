@@ -26,45 +26,6 @@ class ItemsController(BaseViewController[ItemService, ItemsView, ItemPlainSchema
         super().__init__(context)
         self.__category_service = CategoryService(self._settings, self._logger, self._tokens_accessor)
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> ItemsView:
-        quantity = self.__resolve_quantity(event.data)
-        item_id = self.__resolve_item_id(event.data)
-        selected_category_id = self.__resolve_category_id(event.data)
-        index_filter = self.__resolve_index_filter(event.data)
-
-        categories = await self.__perform_get_all_categories()
-        category_options = sorted(((schema.id, schema.name) for schema in categories), key=lambda item: item[1].lower())
-
-        item: ItemPlainSchema | None = None
-        items: list[ItemPlainSchema] = []
-
-        if item_id is not None:
-            fetched_item = await self._perform_get_one(item_id, self._service, self._endpoint)
-            if fetched_item is not None:
-                item_data = fetched_item.model_dump()
-                self._parse_data_row(item_data)
-                item = ItemPlainSchema.model_validate(item_data)
-                if quantity <= 0:
-                    quantity = item.stock_quantity
-        else:
-            items = await self.__perform_get_all_items()
-            items = sorted(items, key=lambda schema: (schema.index.lower(), schema.name.lower()))
-
-        return ItemsView(
-            controller=self,
-            translation=translation,
-            mode=ViewMode.STATIC,
-            view_key=event.view_key,
-            data_row=event.data,
-            item=item,
-            quantity=quantity,
-            items=items,
-            categories=category_options,
-            selected_category_id=selected_category_id,
-            index_filter=index_filter,
-            caller_view_key=event.caller_view_key,
-        )
-
     def on_item_selected(
         self,
         item_id: int,
@@ -116,6 +77,45 @@ class ItemsController(BaseViewController[ItemService, ItemsView, ItemPlainSchema
             )
             return
         self.on_back_to_menu()
+
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> ItemsView:
+        quantity = self.__resolve_quantity(event.data)
+        item_id = self.__resolve_item_id(event.data)
+        selected_category_id = self.__resolve_category_id(event.data)
+        index_filter = self.__resolve_index_filter(event.data)
+
+        categories = await self.__perform_get_all_categories()
+        category_options = sorted(((schema.id, schema.name) for schema in categories), key=lambda item: item[1].lower())
+
+        item: ItemPlainSchema | None = None
+        items: list[ItemPlainSchema] = []
+
+        if item_id is not None:
+            fetched_item = await self._perform_get_one(item_id, self._service, self._endpoint)
+            if fetched_item is not None:
+                item_data = fetched_item.model_dump()
+                self._parse_data_row(item_data)
+                item = ItemPlainSchema.model_validate(item_data)
+                if quantity <= 0:
+                    quantity = item.stock_quantity
+        else:
+            items = await self.__perform_get_all_items()
+            items = sorted(items, key=lambda schema: (schema.index.lower(), schema.name.lower()))
+
+        return ItemsView(
+            controller=self,
+            translation=translation,
+            mode=ViewMode.STATIC,
+            view_key=event.view_key,
+            data_row=event.data,
+            item=item,
+            quantity=quantity,
+            items=items,
+            categories=category_options,
+            selected_category_id=selected_category_id,
+            index_filter=index_filter,
+            caller_view_key=event.caller_view_key,
+        )
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_categories(self) -> list[CategoryPlainSchema]:

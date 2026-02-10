@@ -26,13 +26,6 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
         self.__mobile_login_warehouses_username: str | None = None
         self._subscribe_event_handlers({AuthDialogRequested: self._component_requested_handler})
 
-    async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
-        translation_state = self._state_store.app_state.translation
-        self.__mobile_login_warehouses_username = None
-        self._component = MobileAuthView(controller=self, translation=translation_state.items)
-        await self._event_bus.publish(AuthViewReady(component=self._component))
-        self.on_mobile_username_changed(None, force=True)
-
     def on_cancel_click(self) -> None:
         self._page.run_task(self._page.window.destroy)
 
@@ -47,6 +40,13 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
         self.__mobile_login_warehouses_request_id += 1
         request_id = self.__mobile_login_warehouses_request_id
         self.__schedule_mobile_login_warehouses_load(normalized_username, request_id)
+
+    async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
+        translation_state = self._state_store.app_state.translation
+        self.__mobile_login_warehouses_username = None
+        self._component = MobileAuthView(controller=self, translation=translation_state.items)
+        await self._event_bus.publish(AuthViewReady(component=self._component))
+        self.on_mobile_username_changed(None, force=True)
 
     def __schedule_mobile_login_warehouses_load(self, username: str | None, request_id: int) -> None:
         try:

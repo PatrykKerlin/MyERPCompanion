@@ -90,19 +90,16 @@ class AiApp:
             self._logger,
         )
 
-    async def run_daily(self) -> None:
-        await self._orchestrator.run_daily()
-
     async def run(self) -> None:
         self._logger.info("Running initial run_daily on startup")
         try:
-            await self.run_daily()
+            await self.__run_daily()
         except Exception:
             self._logger.exception("Initial run_daily failed")
 
         scheduler = AsyncIOScheduler(timezone=self._settings.TIMEZONE)
         scheduler.add_job(
-            self.run_daily,
+            self.__run_daily,
             CronTrigger(hour=self._settings.TRAIN_HOUR_UTC, minute=self._settings.TRAIN_MINUTE_UTC),
         )
         scheduler.start()
@@ -115,6 +112,9 @@ class AiApp:
             await asyncio.Event().wait()
         finally:
             scheduler.shutdown(wait=False)
+
+    async def __run_daily(self) -> None:
+        await self._orchestrator.run_daily()
 
 
 def main() -> None:

@@ -33,13 +33,6 @@ class FooterController(BaseComponentController[FooterComponent, FooterRequested]
             }
         )
 
-    async def _component_requested_handler(self, _: FooterRequested) -> None:
-        if self.__disposing:
-            return
-        translation_state = self._state_store.app_state.translation
-        self._component = FooterComponent(controller=self, translation=translation_state.items)
-        await self._event_bus.publish(FooterReady(self._component))
-
     async def dispose(self) -> None:
         self.__disposing = True
         await self.__cancel_task(self.__status_task)
@@ -48,6 +41,13 @@ class FooterController(BaseComponentController[FooterComponent, FooterRequested]
         self.__clock_task = None
         self._component = None
         await super().dispose()
+
+    async def _component_requested_handler(self, _: FooterRequested) -> None:
+        if self.__disposing:
+            return
+        translation_state = self._state_store.app_state.translation
+        self._component = FooterComponent(controller=self, translation=translation_state.items)
+        await self._event_bus.publish(FooterReady(self._component))
 
     def __shell_updated_listener(self, state: ShellState) -> None:
         if self.__disposing:

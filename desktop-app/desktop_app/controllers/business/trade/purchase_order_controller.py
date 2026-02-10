@@ -55,6 +55,38 @@ class PurchaseOrderController(
         self.__current_status_id: int | None = None
         self.__default_currency_id: int | None = None
 
+    def on_order_items_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
+        if not self._view:
+            return
+        self._page.run_task(self.__handle_order_items_save)
+
+    def on_order_items_move_requested(self, selected_ids: list[int]) -> None:
+        if not self._view or not selected_ids:
+            return
+        item_id = selected_ids[0]
+        self._page.run_task(self.__handle_move_with_quantity, item_id)
+
+    def on_order_items_delete_clicked(self, item_ids: list[int]) -> None:
+        if not self._view or not item_ids:
+            return
+        self._page.run_task(self.__handle_order_items_delete, item_ids)
+
+    def on_order_items_pending_reverted(self, target_ids: list[int]) -> None:
+        for target_id in target_ids:
+            self.__pending_move_quantities.pop(target_id, None)
+        self.__recalculate_order_totals()
+
+    def get_create_defaults(self) -> dict[str, Any]:
+        return self.__build_create_defaults()
+
+    def set_hidden_field_value(self, key: str, value: Any) -> None:
+        self._request_data.input_values[key] = value
+
+    def set_field_value(self, key: str, value: str | int | float | bool | date | None) -> None:
+        if key == "is_sales":
+            value = False
+        super().set_field_value(key, value)
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> PurchaseOrderView:
         order_id = event.data.get("id") if event.data else None
         view_data = await self.__perform_get_purchase_view(order_id)
@@ -122,43 +154,43 @@ class PurchaseOrderController(
                 )
         return view
 
-    def on_order_items_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
-        if not self._view:
-            return
-        self._page.run_task(self.__handle_order_items_save)
-
-    def on_order_items_move_requested(self, selected_ids: list[int]) -> None:
-        if not self._view or not selected_ids:
-            return
-        item_id = selected_ids[0]
-        self._page.run_task(self.__handle_move_with_quantity, item_id)
-
-    def on_order_items_delete_clicked(self, item_ids: list[int]) -> None:
-        if not self._view or not item_ids:
-            return
-        self._page.run_task(self.__handle_order_items_delete, item_ids)
-
-    def on_order_items_pending_reverted(self, target_ids: list[int]) -> None:
-        for target_id in target_ids:
-            self.__pending_move_quantities.pop(target_id, None)
-        self.__recalculate_order_totals()
-
     async def _perform_get_page(
         self, service: BaseService[OrderPlainSchema, PurchaseOrderStrictSchema], endpoint: Endpoint
     ) -> PaginatedResponseSchema[OrderPlainSchema]:
         return await super()._perform_get_page(service, Endpoint.PURCHASE_ORDERS)
 
-    def get_create_defaults(self) -> dict[str, Any]:
-        return self.__build_create_defaults()
+    async def _perform_create(
+        self,
+        service: BaseService[OrderPlainSchema, PurchaseOrderStrictSchema],
+        endpoint: Endpoint,
+        payload: PurchaseOrderStrictSchema,
+    ) -> OrderPlainSchema:
+        payload = payload.model_copy(update={"is_sales": False})
+        response = await super()._perform_create(service, endpoint, payload)
+        status_id = self._request_data.input_values.get("status_id", self.__default_status_id)
+        if status_id is not None:
+            await self.__perform_create_order_status(
+                AssocOrderStatusStrictSchema(order_id=response.id, status_id=status_id)
+            )
+        return response
 
-    def set_hidden_field_value(self, key: str, value: Any) -> None:
-        self._request_data.input_values[key] = value
+    @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def _perform_update(
+        self,
+        id: int,
+        service: BaseService[OrderPlainSchema, PurchaseOrderStrictSchema],
+        endpoint: Endpoint,
+        payload: PurchaseOrderStrictSchema,
+    ) -> OrderPlainSchema:
+        payload = payload.model_copy(update={"is_sales": False})
+        response = await super()._perform_update(id, service, endpoint, payload)
+        status_id = self._request_data.input_values.get("status_id")
+        if status_id is not None and status_id != self.__current_status_id:
+            await self.__perform_create_order_status(AssocOrderStatusStrictSchema(order_id=id, status_id=status_id))
+            self.__current_status_id = status_id
+        return response
 
-    def set_field_value(self, key: str, value: str | int | float | bool | date | None) -> None:
-        if key == "is_sales":
-            value = False
-        super().set_field_value(key, value)
-
+    @staticmethod
     def __build_order_item_schema(
         self, order_id: int, item_id: int, quantity: int, assoc_id: int | None
     ) -> AssocOrderItemStrictSchema:
@@ -421,38 +453,6 @@ class PurchaseOrderController(
         return defaults
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def _perform_create(
-        self,
-        service: BaseService[OrderPlainSchema, PurchaseOrderStrictSchema],
-        endpoint: Endpoint,
-        payload: PurchaseOrderStrictSchema,
-    ) -> OrderPlainSchema:
-        payload = payload.model_copy(update={"is_sales": False})
-        response = await super()._perform_create(service, endpoint, payload)
-        status_id = self._request_data.input_values.get("status_id", self.__default_status_id)
-        if status_id is not None:
-            await self.__perform_create_order_status(
-                AssocOrderStatusStrictSchema(order_id=response.id, status_id=status_id)
-            )
-        return response
-
-    @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def _perform_update(
-        self,
-        id: int,
-        service: BaseService[OrderPlainSchema, PurchaseOrderStrictSchema],
-        endpoint: Endpoint,
-        payload: PurchaseOrderStrictSchema,
-    ) -> OrderPlainSchema:
-        payload = payload.model_copy(update={"is_sales": False})
-        response = await super()._perform_update(id, service, endpoint, payload)
-        status_id = self._request_data.input_values.get("status_id")
-        if status_id is not None and status_id != self.__current_status_id:
-            await self.__perform_create_order_status(AssocOrderStatusStrictSchema(order_id=id, status_id=status_id))
-            self.__current_status_id = status_id
-        return response
-
-    @staticmethod
     def __get_latest_status_id(order_statuses: list[OrderViewStatusHistorySchema]) -> int | None:
         if not order_statuses:
             return None

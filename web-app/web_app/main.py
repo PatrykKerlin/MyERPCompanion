@@ -85,10 +85,6 @@ class App:
         event_bus.start()
         await event_bus.publish(AppStarted())
 
-    async def __on_window_event(self, session_id: int, event: ft.WindowEvent) -> None:
-        if event.type == "close":
-            await self.__dispose(session_id)
-
     async def __dispose(self, session_id: int) -> None:
         if session_id not in self.__controllers_by_session and session_id not in self.__event_bus_by_session:
             return
@@ -101,6 +97,10 @@ class App:
         await BaseService.close_client()
         if event_bus:
             await event_bus.stop()
+
+    async def __on_window_event(self, session_id: int, event: ft.WindowEvent) -> None:
+        if event.type == "close":
+            await self.__dispose(session_id)
 
 
 def main() -> None:

@@ -12,6 +12,12 @@ class UserRepository(BaseRepository[User]):
     _model_cls = User
 
     @classmethod
+    async def get_one_by_username(cls, session, username: str) -> User | None:
+        query = cls._build_query(additional_filters=[cls._expr(cls._model_cls.username == username)])
+        result = await session.execute(query)
+        return result.scalars().first()
+
+    @classmethod
     def _build_query(
         cls,
         params_filters: Mapping[str, str] | None = None,
@@ -27,9 +33,3 @@ class UserRepository(BaseRepository[User]):
             with_loader_criteria(Group, cls._expr(Group.is_active.is_(True))),
             with_loader_criteria(Language, cls._expr(Language.is_active.is_(True))),
         )
-
-    @classmethod
-    async def get_one_by_username(cls, session, username: str) -> User | None:
-        query = cls._build_query(additional_filters=[cls._expr(cls._model_cls.username == username)])
-        result = await session.execute(query)
-        return result.scalars().first()

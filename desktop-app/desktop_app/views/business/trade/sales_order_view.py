@@ -264,38 +264,6 @@ class SalesOrderView(BaseDesktopView):
                 input_control.update()
         self._controller.set_field_value("number", number)
 
-    def __apply_create_defaults(self) -> None:
-        for key, value in self.__create_defaults.items():
-            if key in self._inputs:
-                input_control = self._inputs[key].input.content
-                if hasattr(input_control, "value"):
-                    setattr(input_control, "value", value)
-                    if input_control:
-                        input_control.update()
-            if key in self._inputs:
-                self._controller.set_field_value(key, value)
-        if "is_sales" in self.__create_defaults:
-            self._controller.set_hidden_field_value("is_sales", self.__create_defaults["is_sales"])
-
-    def __apply_editable_fields(self, mode: ViewMode) -> None:
-        for key, field in self._inputs.items():
-            input_control = field.input.content
-            if mode == ViewMode.EDIT:
-                editable = key in {"status_id", "tracking_number"}
-            else:
-                editable = mode == ViewMode.CREATE and key in self.__editable_keys
-            if hasattr(input_control, "read_only"):
-                setattr(input_control, "read_only", not editable)
-            if hasattr(input_control, "disabled") and not editable:
-                setattr(input_control, "disabled", True)
-            if input_control:
-                input_control.update()
-
-    def __set_bulk_transfer_state(self, mode: ViewMode) -> None:
-        enabled = mode == ViewMode.READ and self.__bulk_transfer_enabled_in_read
-        self.__bulk_transfer.set_enabled_states(enabled, enabled, enabled)
-        self.__bulk_transfer.set_source_selectable_ids(self.__source_selectable_ids)
-
     def get_pending_targets(self) -> list[tuple[int, int]]:
         return self.__bulk_transfer.get_pending_targets()
 
@@ -440,6 +408,38 @@ class SalesOrderView(BaseDesktopView):
                 if input_control:
                     input_control.update()
         self._controller.set_field_value("shipping_cost", shipping_cost)
+
+    def __apply_create_defaults(self) -> None:
+        for key, value in self.__create_defaults.items():
+            if key in self._inputs:
+                input_control = self._inputs[key].input.content
+                if hasattr(input_control, "value"):
+                    setattr(input_control, "value", value)
+                    if input_control:
+                        input_control.update()
+            if key in self._inputs:
+                self._controller.set_field_value(key, value)
+        if "is_sales" in self.__create_defaults:
+            self._controller.set_hidden_field_value("is_sales", self.__create_defaults["is_sales"])
+
+    def __apply_editable_fields(self, mode: ViewMode) -> None:
+        for key, field in self._inputs.items():
+            input_control = field.input.content
+            if mode == ViewMode.EDIT:
+                editable = key in {"status_id", "tracking_number"}
+            else:
+                editable = mode == ViewMode.CREATE and key in self.__editable_keys
+            if hasattr(input_control, "read_only"):
+                setattr(input_control, "read_only", not editable)
+            if hasattr(input_control, "disabled") and not editable:
+                setattr(input_control, "disabled", True)
+            if input_control:
+                input_control.update()
+
+    def __set_bulk_transfer_state(self, mode: ViewMode) -> None:
+        enabled = mode == ViewMode.READ and self.__bulk_transfer_enabled_in_read
+        self.__bulk_transfer.set_enabled_states(enabled, enabled, enabled)
+        self.__bulk_transfer.set_source_selectable_ids(self.__source_selectable_ids)
 
     def __apply_order_totals(self, totals: dict[str, float]) -> None:
         for key, value in totals.items():

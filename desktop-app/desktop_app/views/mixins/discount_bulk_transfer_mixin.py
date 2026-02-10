@@ -18,6 +18,14 @@ class DiscountBulkTransferMixin:
     _discount_pending_target_items: list[tuple[int, str]]
     _discount_visible_modes: set[ViewMode]
 
+    def get_pending_discount_ids(self) -> list[int]:
+        return self._discount_bulk_transfer.get_pending_move_ids()
+
+    def set_discount_source_items(self, items: list[tuple[int, str]]) -> None:
+        self._discount_bulk_transfer.set_source_items(items)
+
+    def set_discount_target_items(self, items: list[tuple[int, str]]) -> None:
+        self._discount_bulk_transfer.set_target_items(items)
     def _init_discount_bulk_transfer(
         self,
         mode: ViewMode,
@@ -61,11 +69,3 @@ class DiscountBulkTransferMixin:
         editable = mode == ViewMode.READ
         self._discount_bulk_transfer.set_enabled_states(editable, editable, editable)
 
-    def get_pending_discount_ids(self) -> list[int]:
-        return self._discount_bulk_transfer.get_pending_move_ids()
-
-    def set_discount_source_items(self, items: list[tuple[int, str]]) -> None:
-        self._discount_bulk_transfer.set_source_items(items)
-
-    def set_discount_target_items(self, items: list[tuple[int, str]]) -> None:
-        self._discount_bulk_transfer.set_target_items(items)

@@ -46,84 +46,6 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             Action.DELETE: True,
         }
 
-    @staticmethod
-    def _get_request_session(request: Request) -> AsyncSession:
-        session = getattr(request.state, "db", None)
-        if session is None:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Database session is not initialized.",
-            )
-        return session
-
-    async def get_all(
-        self,
-        request: Request,
-        pagination: Annotated[PaginationParamsSchema, Depends()],
-        filters: Annotated[FilterParamsSchema, Depends(FilterParamsParser())],
-        sorting: Annotated[SortingParamsSchema, Depends()],
-    ) -> PaginatedResponseSchema[TOutputSchema]:
-        try:
-            session = BaseController._get_request_session(request)
-            offset, limit = BaseController._get_offset_and_limit(pagination)
-            items, total = await self._service.get_all(
-                session=session,
-                filters=filters.filters,
-                offset=offset,
-                limit=limit,
-                sort_by=sorting.sort_by,
-                sort_order=sorting.order,
-            )
-            has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
-
-            return PaginatedResponseSchema[TOutputSchema](
-                items=items,
-                total=total,
-                page=pagination.page,
-                page_size=pagination.page_size,
-                has_next=has_next,
-                has_prev=has_prev,
-            )
-        except HTTPException:
-            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.get_all.__qualname__}")
-            raise
-        except SQLAlchemyError as err:
-            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.get_all.__qualname__}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
-
-    async def get_by_id(self, request: Request, model_id: int) -> TOutputSchema:
-        try:
-            session = BaseController._get_request_session(request)
-            return await self._service.get_one_by_id(session, model_id)
-        except HTTPException:
-            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.get_by_id.__qualname__}")
-            raise
-        except NoResultFound:
-            self._logger.exception(f"NoResultFound in {self.__class__.__name__}.{self.get_by_id.__qualname__}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
-            )
-        except SQLAlchemyError as err:
-            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.get_by_id.__qualname__}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
-
-    async def get_bulk(self, request: Request) -> list[TOutputSchema]:
-        try:
-            body = await request.json()
-            payload = IdsPayloadSchema(**body)
-            session = BaseController._get_request_session(request)
-            return await self._service.get_many_by_ids(session, payload.ids)
-        except HTTPException:
-            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.get_bulk.__qualname__}")
-            raise
-        except ValidationError as err:
-            self._logger.exception(f"ValidationError in {self.__class__.__name__}.{self.get_bulk.__qualname__}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
-        except SQLAlchemyError as err:
-            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.get_bulk.__qualname__}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
-
     async def create(self, request: Request) -> TOutputSchema:
         try:
             user = request.state.user
@@ -167,6 +89,117 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
         except SQLAlchemyError as err:
             self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.create_bulk.__qualname__}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+
+    async def delete(self, request: Request, model_id: int) -> Response:
+        try:
+            user = request.state.user
+            session = BaseController._get_request_session(request)
+            await self._service.delete(session, model_id, user.id)
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+        except HTTPException:
+            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.delete.__qualname__}")
+            raise
+        except NoResultFound:
+            self._logger.exception(f"NoResultFound in {self.__class__.__name__}.{self.delete.__qualname__}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
+            )
+        except SQLAlchemyError as err:
+            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.delete.__qualname__}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+
+    async def delete_bulk(self, request: Request) -> Response:
+        try:
+            user = request.state.user
+            body = await request.json()
+            payload = IdsPayloadSchema(**body)
+            session = BaseController._get_request_session(request)
+            await self._service.delete_bulk(session=session, model_ids=payload.ids, modified_by=user.id)
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+        except HTTPException:
+            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.delete_bulk.__qualname__}")
+            raise
+        except ValidationError as err:
+            self._logger.exception(f"ValidationError in {self.__class__.__name__}.{self.delete_bulk.__qualname__}")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
+        except NoResultFound as err:
+            self._logger.exception(f"NoResultFound in {self.__class__.__name__}.{self.delete_bulk.__qualname__}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=self._404_message.format(model=self._service._model_cls.__name__, id=str(err.args[0])),
+            )
+        except SQLAlchemyError as err:
+            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.delete_bulk.__qualname__}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+
+    async def get_all(
+        self,
+        request: Request,
+        pagination: Annotated[PaginationParamsSchema, Depends()],
+        filters: Annotated[FilterParamsSchema, Depends(FilterParamsParser())],
+        sorting: Annotated[SortingParamsSchema, Depends()],
+    ) -> PaginatedResponseSchema[TOutputSchema]:
+        try:
+            session = BaseController._get_request_session(request)
+            offset, limit = BaseController._get_offset_and_limit(pagination)
+            items, total = await self._service.get_all(
+                session=session,
+                filters=filters.filters,
+                offset=offset,
+                limit=limit,
+                sort_by=sorting.sort_by,
+                sort_order=sorting.order,
+            )
+            has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
+
+            return PaginatedResponseSchema[TOutputSchema](
+                items=items,
+                total=total,
+                page=pagination.page,
+                page_size=pagination.page_size,
+                has_next=has_next,
+                has_prev=has_prev,
+            )
+        except HTTPException:
+            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.get_all.__qualname__}")
+            raise
+        except SQLAlchemyError as err:
+            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.get_all.__qualname__}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+
+    async def get_bulk(self, request: Request) -> list[TOutputSchema]:
+        try:
+            body = await request.json()
+            payload = IdsPayloadSchema(**body)
+            session = BaseController._get_request_session(request)
+            return await self._service.get_many_by_ids(session, payload.ids)
+        except HTTPException:
+            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.get_bulk.__qualname__}")
+            raise
+        except ValidationError as err:
+            self._logger.exception(f"ValidationError in {self.__class__.__name__}.{self.get_bulk.__qualname__}")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
+        except SQLAlchemyError as err:
+            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.get_bulk.__qualname__}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+
+    async def get_by_id(self, request: Request, model_id: int) -> TOutputSchema:
+        try:
+            session = BaseController._get_request_session(request)
+            return await self._service.get_one_by_id(session, model_id)
+        except HTTPException:
+            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.get_by_id.__qualname__}")
+            raise
+        except NoResultFound:
+            self._logger.exception(f"NoResultFound in {self.__class__.__name__}.{self.get_by_id.__qualname__}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
+            )
+        except SQLAlchemyError as err:
+            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.get_by_id.__qualname__}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
     async def update(self, request: Request, model_id: int) -> TOutputSchema:
@@ -231,53 +264,27 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
             self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.update_bulk.__qualname__}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
 
-    async def delete(self, request: Request, model_id: int) -> Response:
-        try:
-            user = request.state.user
-            session = BaseController._get_request_session(request)
-            await self._service.delete(session, model_id, user.id)
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
-        except HTTPException:
-            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.delete.__qualname__}")
-            raise
-        except NoResultFound:
-            self._logger.exception(f"NoResultFound in {self.__class__.__name__}.{self.delete.__qualname__}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=self._404_message.format(model=self._service._model_cls.__name__, id=model_id),
-            )
-        except SQLAlchemyError as err:
-            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.delete.__qualname__}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+    @staticmethod
+    def _get_has_next_has_prev(offset: int, limit: int, total: int, page: int) -> tuple[bool, bool]:
+        has_next = offset + limit < total
+        has_prev = page > 1
+        return has_next, has_prev
 
-    async def delete_bulk(self, request: Request) -> Response:
-        try:
-            user = request.state.user
-            body = await request.json()
-            payload = IdsPayloadSchema(**body)
-            session = BaseController._get_request_session(request)
-            await self._service.delete_bulk(session=session, model_ids=payload.ids, modified_by=user.id)
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
-        except HTTPException:
-            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.delete_bulk.__qualname__}")
-            raise
-        except ValidationError as err:
-            self._logger.exception(f"ValidationError in {self.__class__.__name__}.{self.delete_bulk.__qualname__}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.errors())
-        except NoResultFound as err:
-            self._logger.exception(f"NoResultFound in {self.__class__.__name__}.{self.delete_bulk.__qualname__}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=self._404_message.format(model=self._service._model_cls.__name__, id=str(err.args[0])),
-            )
-        except SQLAlchemyError as err:
-            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.delete_bulk.__qualname__}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+    @staticmethod
+    def _get_offset_and_limit(pagination: PaginationParamsSchema) -> tuple[int, int]:
+        offset = (pagination.page - 1) * pagination.page_size
+        limit = pagination.page_size
+        return offset, limit
 
-    def _restrict_access(self, permissions: list[Permission], secured: bool) -> list[DependsParam]:
-        if not secured:
-            return []
-        return [Depends(self._auth.restrict_access(permissions=permissions, controller=self.__class__.__name__))]
+    @staticmethod
+    def _get_request_session(request: Request) -> AsyncSession:
+        session = getattr(request.state, "db", None)
+        if session is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database session is not initialized.",
+            )
+        return session
 
     def _register_routes(
         self,
@@ -379,14 +386,7 @@ class BaseController(Generic[TService, TInputSchema, TOutputSchema]):
                 ),
             )
 
-    @staticmethod
-    def _get_offset_and_limit(pagination: PaginationParamsSchema) -> tuple[int, int]:
-        offset = (pagination.page - 1) * pagination.page_size
-        limit = pagination.page_size
-        return offset, limit
-
-    @staticmethod
-    def _get_has_next_has_prev(offset: int, limit: int, total: int, page: int) -> tuple[bool, bool]:
-        has_next = offset + limit < total
-        has_prev = page > 1
-        return has_next, has_prev
+    def _restrict_access(self, permissions: list[Permission], secured: bool) -> list[DependsParam]:
+        if not secured:
+            return []
+        return [Depends(self._auth.restrict_access(permissions=permissions, controller=self.__class__.__name__))]

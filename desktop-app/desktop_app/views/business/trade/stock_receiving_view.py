@@ -97,9 +97,6 @@ class StockReceivingView(BaseDesktopView):
         if self.__order_input.page:
             self.__order_input.update()
 
-    def __handle_order_changed(self) -> None:
-        self._controller.on_order_changed(self.__order_input.value)
-
     def set_target_error(self, message: str | None) -> None:
         self.__target_input.error = message
         if self.__target_input.page:
@@ -128,3 +125,6 @@ class StockReceivingView(BaseDesktopView):
 
     def set_target_enabled(self, enabled: bool) -> None:
         self.__bulk_transfer.set_target_enabled(enabled)
+    def __handle_order_changed(self) -> None:
+        self._controller.on_order_changed(self.__order_input.value)
+

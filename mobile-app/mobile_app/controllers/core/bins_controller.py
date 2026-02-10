@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
@@ -31,6 +33,30 @@ class BinsController(BaseViewController[BinService, BinsView, BinPlainSchema, Bi
         self.__item_quantities: dict[int, int] = {}
         self.__bin_items_request_id = 0
 
+    def on_back_to_menu(self) -> None:
+        self._page.run_task(self._event_bus.publish, MobileMainMenuRequested())
+
+    def on_bin_selected(self, bin_id: int) -> None:
+        self.__bin_items_request_id += 1
+        request_id = self.__bin_items_request_id
+        self._page.run_task(self.__load_items_for_bin, bin_id, request_id)
+
+    def on_item_selected(self, item_id: int) -> None:
+        if not self.__selected_bin:
+            return
+        quantity = self.__item_quantities.get(item_id, 0)
+        self._page.run_task(
+            self._event_bus.publish,
+            ViewRequested(
+                module_id=self._module_id,
+                view_key=View.ITEMS,
+                mode=ViewMode.STATIC,
+                data={"item_id": item_id, "quantity": quantity},
+                caller_view_key=View.BINS,
+                caller_data={"selected_bin_id": self.__selected_bin.id},
+            ),
+        )
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinsView:
         bins = await self.__perform_get_all_bins()
         self.__bins = sorted(bins, key=lambda schema: schema.location.lower())
@@ -61,30 +87,6 @@ class BinsController(BaseViewController[BinService, BinsView, BinPlainSchema, Bi
             item_quantities=self.__item_quantities,
         )
         return view
-
-    def on_back_to_menu(self) -> None:
-        self._page.run_task(self._event_bus.publish, MobileMainMenuRequested())
-
-    def on_bin_selected(self, bin_id: int) -> None:
-        self.__bin_items_request_id += 1
-        request_id = self.__bin_items_request_id
-        self._page.run_task(self.__load_items_for_bin, bin_id, request_id)
-
-    def on_item_selected(self, item_id: int) -> None:
-        if not self.__selected_bin:
-            return
-        quantity = self.__item_quantities.get(item_id, 0)
-        self._page.run_task(
-            self._event_bus.publish,
-            ViewRequested(
-                module_id=self._module_id,
-                view_key=View.ITEMS,
-                mode=ViewMode.STATIC,
-                data={"item_id": item_id, "quantity": quantity},
-                caller_view_key=View.BINS,
-                caller_data={"selected_bin_id": self.__selected_bin.id},
-            ),
-        )
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_bins(self) -> list[BinPlainSchema]:
@@ -130,7 +132,7 @@ class BinsController(BaseViewController[BinService, BinsView, BinPlainSchema, Bi
         self.__item_quantities = item_quantities
 
     @staticmethod
-    def __resolve_selected_bin_id(data: dict[str, object] | None) -> int | None:
+    def __resolve_selected_bin_id(data: dict[str, Any] | None) -> int | None:
         if not data:
             return None
         selected_bin_id = data.get("selected_bin_id")

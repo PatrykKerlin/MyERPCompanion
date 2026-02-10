@@ -69,30 +69,6 @@ class OrderPickingController(
         self.__selected_order_date: date | None = date.today()
         self.__selected_customer_id: int | None = None
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> OrderPickingView:
-        mode = ViewMode.STATIC
-        customers = await self.__perform_get_customers()
-        customer_pairs = [(customer.id, self.__format_customer_label(customer)) for customer in customers]
-        orders = await self.__load_eligible_orders(self.__selected_order_date, self.__selected_customer_id)
-        order_pairs = [(order.id, order.number) for order in orders]
-        view = OrderPickingView(
-            self,
-            translation,
-            mode,
-            event.view_key,
-            customer_pairs,
-            self.__selected_order_date,
-            order_pairs,
-            self.on_bulk_transfer_save_clicked,
-            self.on_bulk_transfer_move_requested,
-            self.on_bulk_transfer_pending_reverted,
-            self.on_package_save_clicked,
-            self.on_package_move_requested,
-            self.on_package_pending_reverted,
-        )
-        await self.__load_package_items(view)
-        return view
-
     def on_order_changed(self, value: str | None) -> None:
         if not self._view:
             return
@@ -174,6 +150,30 @@ class OrderPickingController(
         self._page.run_task(self.__handle_complete_status)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> OrderPickingView:
+        mode = ViewMode.STATIC
+        customers = await self.__perform_get_customers()
+        customer_pairs = [(customer.id, self.__format_customer_label(customer)) for customer in customers]
+        orders = await self.__load_eligible_orders(self.__selected_order_date, self.__selected_customer_id)
+        order_pairs = [(order.id, order.number) for order in orders]
+        view = OrderPickingView(
+            self,
+            translation,
+            mode,
+            event.view_key,
+            customer_pairs,
+            self.__selected_order_date,
+            order_pairs,
+            self.on_bulk_transfer_save_clicked,
+            self.on_bulk_transfer_move_requested,
+            self.on_bulk_transfer_pending_reverted,
+            self.on_package_save_clicked,
+            self.on_package_move_requested,
+            self.on_package_pending_reverted,
+        )
+        await self.__load_package_items(view)
+        return view
+
     async def __perform_get_all_statuses(self) -> list[StatusPlainSchema]:
         return await self.__status_service.get_all(Endpoint.STATUSES, None, None, None, self._module_id)
 

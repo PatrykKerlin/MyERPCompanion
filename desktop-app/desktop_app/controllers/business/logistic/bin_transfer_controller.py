@@ -37,20 +37,6 @@ class BinTransferController(
         self.__target_items: dict[int, tuple[str, int, int]] = {}
         self.__pending_move_quantities: dict[int, int] = {}
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinTransferView:
-        mode = ViewMode.STATIC
-        return BinTransferView(
-            self,
-            translation,
-            mode,
-            event.view_key,
-            self.on_source_bin_submit,
-            self.on_target_bin_submit,
-            self.on_bulk_transfer_save_clicked,
-            self.on_bulk_transfer_move_requested,
-            self.on_bulk_transfer_pending_reverted,
-        )
-
     def on_source_bin_submit(self, event: ft.Event[ft.TextField]) -> None:
         if not self._view:
             return
@@ -91,6 +77,20 @@ class BinTransferController(
             self.__pending_move_quantities.pop(item_id, None)
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinTransferView:
+        mode = ViewMode.STATIC
+        return BinTransferView(
+            self,
+            translation,
+            mode,
+            event.view_key,
+            self.on_source_bin_submit,
+            self.on_target_bin_submit,
+            self.on_bulk_transfer_save_clicked,
+            self.on_bulk_transfer_move_requested,
+            self.on_bulk_transfer_pending_reverted,
+        )
+
     async def __perform_create_bin_items(self, items: list[AssocBinItemStrictSchema]) -> None:
         await self.__bin_item_service.create_bulk(Endpoint.BIN_ITEMS_CREATE_BULK, None, None, items, self._module_id)
 

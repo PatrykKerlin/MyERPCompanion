@@ -62,6 +62,28 @@ class SalesReportController(
         self.__item_id: int | None = None
         self.__category_id: int | None = None
 
+    def on_apply_filters_clicked(
+        self,
+        date_from: date | None,
+        date_to: date | None,
+        currency_id: str | None,
+        customer_id: str | None,
+        item_id: str | None,
+        category_id: str | None,
+    ) -> None:
+        self._page.run_task(
+            self.__handle_apply_filters,
+            date_from,
+            date_to,
+            currency_id,
+            customer_id,
+            item_id,
+            category_id,
+        )
+
+    def on_clear_filters_clicked(self) -> None:
+        self._page.run_task(self.__handle_clear_filters)
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> SalesReportView:
         mode = ViewMode.STATIC
         currencies, customers, items, categories, response = await asyncio.gather(
@@ -101,28 +123,6 @@ class SalesReportController(
             category_chart_dialog=category_chart_dialog,
             daily_chart_dialog=daily_chart_dialog,
         )
-
-    def on_apply_filters_clicked(
-        self,
-        date_from: date | None,
-        date_to: date | None,
-        currency_id: str | None,
-        customer_id: str | None,
-        item_id: str | None,
-        category_id: str | None,
-    ) -> None:
-        self._page.run_task(
-            self.__handle_apply_filters,
-            date_from,
-            date_to,
-            currency_id,
-            customer_id,
-            item_id,
-            category_id,
-        )
-
-    def on_clear_filters_clicked(self) -> None:
-        self._page.run_task(self.__handle_clear_filters)
 
     async def __handle_apply_filters(
         self,

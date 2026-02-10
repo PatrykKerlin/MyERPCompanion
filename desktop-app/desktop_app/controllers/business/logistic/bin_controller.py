@@ -37,11 +37,11 @@ class BinController(BaseViewController[BinService, BinView, BinPlainSchema, BinS
         )
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinView:
-        warehouses = await self._perform_get_all_warehouses()
+        warehouses = await self.__perform_get_all_warehouses()
         if event.data:
             item_schemas, bin_item_quantities = await asyncio.gather(
-                self._perform_get_items_for_ids(event.data["item_ids"]),
-                self._perform_get_bin_item_quantities(event.data["id"]),
+                self.__perform_get_items_for_ids(event.data["item_ids"]),
+                self.__perform_get_bin_item_quantities(event.data["id"]),
             )
             items = []
             for item_schema in item_schemas:
@@ -53,17 +53,17 @@ class BinController(BaseViewController[BinService, BinView, BinPlainSchema, BinS
         return BinView(self, translation, mode, event.view_key, event.data, warehouses, items)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def _perform_get_all_warehouses(self) -> list[tuple[int, str]]:
+    async def __perform_get_all_warehouses(self) -> list[tuple[int, str]]:
         schemas = await self.__warehouse_service.get_all(Endpoint.WAREHOUSES, None, None, None, self._module_id)
         return [(schema.id, schema.name) for schema in schemas]
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def _perform_get_items_for_ids(self, item_ids: list[int]) -> list[ItemPlainSchema]:
+    async def __perform_get_items_for_ids(self, item_ids: list[int]) -> list[ItemPlainSchema]:
         body_params = IdsPayloadSchema(ids=item_ids)
         return await self.__item_service.get_bulk(Endpoint.ITEMS_GET_BULK, None, None, body_params, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def _perform_get_bin_item_quantities(self, bin_id: int) -> dict[int, int]:
+    async def __perform_get_bin_item_quantities(self, bin_id: int) -> dict[int, int]:
         query_params = {"bin_id": bin_id}
         bin_item_schemas = await self.__bin_item_service.get_all(
             Endpoint.BIN_ITEMS, None, query_params, None, self._module_id

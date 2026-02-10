@@ -84,9 +84,6 @@ class BaseViewController(
     def meta_fields(self) -> set[str]:
         return self.__meta_fields
 
-    @abstractmethod
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> TView: ...
-
     def on_marker_clicked(self, event: ft.ControlEvent, key: str) -> None:
         if not self._view:
             return
@@ -206,6 +203,9 @@ class BaseViewController(
     def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
         return available_fields
 
+    @abstractmethod
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> TView: ...
+
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def _perform_get_page(
         self, service: BaseService[TServicePlainSchema, TServiceStrictSchema], endpoint: Endpoint
@@ -280,6 +280,41 @@ class BaseViewController(
                 record_data=data,
             )
         )
+
+    def _parse_data_row(self, data_row: dict[str, Any], is_list: bool = False) -> None:
+        if not data_row:
+            return
+        api_url = self._settings.API_URL
+        if self._settings.PUBLIC_API_URL and (
+            self._settings.CLIENT == "mobile" or bool(getattr(self._page, "web", False))
+        ):
+            api_url = self._settings.PUBLIC_API_URL
+        images = data_row.get("images")
+        if isinstance(images, list):
+            for image in images:
+                if not isinstance(image, dict):
+                    continue
+                url = image.get("url")
+                if isinstance(url, str):
+                    image["url"] = MediaUrl.normalize(url, api_url)
+        for key, value in list(data_row.items()):
+            if isinstance(value, datetime):
+                data_row[key] = value.strftime('%Y-%m-%d %H:%M:%S')
+            elif isinstance(value, date):
+                data_row[key] = value.isoformat()
+            elif isinstance(value, (str, list, dict)):
+                continue
+        if is_list:
+            return
+
+    def __format_datetime(self, value: datetime | date | str | None) -> str:
+        if value is None:
+            return ""
+        if isinstance(value, datetime):
+            return value.strftime('%Y-%m-%d %H:%M:%S')
+        if isinstance(value, date):
+            return value.strftime('%Y-%m-%d %H:%M:%S')
+        return str(value)
 
     async def __view_requested_handler(self, event: ViewRequested) -> None:
         if event.view_key != self._view_key:
@@ -378,41 +413,6 @@ class BaseViewController(
             self._request_data = request_data
             if self._view.mode != state.mode:
                 self._view.set_mode(state.mode)
-
-    def _parse_data_row(self, data_row: dict[str, Any], is_list: bool = False) -> None:
-        if not data_row:
-            return
-        api_url = self._settings.API_URL
-        if self._settings.PUBLIC_API_URL and (
-            self._settings.CLIENT == "mobile" or bool(getattr(self._page, "web", False))
-        ):
-            api_url = self._settings.PUBLIC_API_URL
-        images = data_row.get("images")
-        if isinstance(images, list):
-            for image in images:
-                if not isinstance(image, dict):
-                    continue
-                url = image.get("url")
-                if isinstance(url, str):
-                    image["url"] = MediaUrl.normalize(url, api_url)
-        for key, value in list(data_row.items()):
-            if isinstance(value, datetime):
-                data_row[key] = value.strftime('%Y-%m-%d %H:%M:%S')
-            elif isinstance(value, date):
-                data_row[key] = value.isoformat()
-            elif isinstance(value, (str, list, dict)):
-                continue
-        if is_list:
-            return
-
-    def _format_datetime(self, value: datetime | date | str | None) -> str:
-        if value is None:
-            return ""
-        if isinstance(value, datetime):
-            return value.strftime('%Y-%m-%d %H:%M:%S')
-        if isinstance(value, date):
-            return value.strftime('%Y-%m-%d %H:%M:%S')
-        return str(value)
 
     def __parse_value(
         self, value: str | int | float | bool | date | datetime | None

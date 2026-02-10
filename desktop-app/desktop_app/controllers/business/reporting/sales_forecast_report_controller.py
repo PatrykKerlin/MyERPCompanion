@@ -70,6 +70,32 @@ class SalesForecastReportController(
         self.__discount_from: float | None = None
         self.__discount_to: float | None = None
 
+    def on_apply_filters_clicked(
+        self,
+        date_from: date | None,
+        date_to: date | None,
+        currency_id: str | None,
+        customer_id: str | None,
+        item_id: str | None,
+        category_id: str | None,
+        discount_from: str | None,
+        discount_to: str | None,
+    ) -> None:
+        self._page.run_task(
+            self.__handle_apply_filters,
+            date_from,
+            date_to,
+            currency_id,
+            customer_id,
+            item_id,
+            category_id,
+            discount_from,
+            discount_to,
+        )
+
+    def on_clear_filters_clicked(self) -> None:
+        self._page.run_task(self.__handle_clear_filters)
+
     async def _build_view(
         self,
         translation: Translation,
@@ -117,32 +143,6 @@ class SalesForecastReportController(
             net_monthly_chart_dialog=net_monthly_chart_dialog,
             gross_monthly_chart_dialog=gross_monthly_chart_dialog,
         )
-
-    def on_apply_filters_clicked(
-        self,
-        date_from: date | None,
-        date_to: date | None,
-        currency_id: str | None,
-        customer_id: str | None,
-        item_id: str | None,
-        category_id: str | None,
-        discount_from: str | None,
-        discount_to: str | None,
-    ) -> None:
-        self._page.run_task(
-            self.__handle_apply_filters,
-            date_from,
-            date_to,
-            currency_id,
-            customer_id,
-            item_id,
-            category_id,
-            discount_from,
-            discount_to,
-        )
-
-    def on_clear_filters_clicked(self) -> None:
-        self._page.run_task(self.__handle_clear_filters)
 
     async def __handle_apply_filters(
         self,

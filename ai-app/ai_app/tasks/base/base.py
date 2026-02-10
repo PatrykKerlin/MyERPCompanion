@@ -9,5 +9,4 @@ class TaskBase(ABC):
     key: str
 
     @abstractmethod
-    async def run(self, window: DataWindow, run_id: int) -> None:
-        raise NotImplementedError
+    async def run(self, window: DataWindow, run_id: int) -> None: ...

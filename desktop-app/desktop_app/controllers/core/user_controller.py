@@ -36,6 +36,28 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         self.__employee_service = EmployeeService(self._settings, self._logger, self._tokens_accessor)
         self.__customer_service = CustomerService(self._settings, self._logger, self._tokens_accessor)
 
+    def on_save_clicked(self) -> None:
+        if self._view and self._view.mode == ViewMode.CREATE:
+            self._strict_schema_cls = cast(type[UserStrictUpdateAppSchema], UserStrictCreateAppSchema)
+        else:
+            self._strict_schema_cls = UserStrictUpdateAppSchema
+        super().on_save_clicked()
+
+    def on_groups_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
+        if not self._view or not self._view.data_row:
+            return
+        user_id = self._view.data_row["id"]
+        pending = self._view.get_pending_group_targets()
+        if not pending:
+            return
+        self._page.run_task(self.__handle_groups_save, user_id, pending)
+
+    def on_groups_delete_clicked(self, group_ids: list[int]) -> None:
+        if not self._view or not group_ids or not self._view.data_row:
+            return
+        user_id = self._view.data_row["id"]
+        self._page.run_task(self.__handle_groups_delete, user_id, group_ids)
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> UserView:
         groups: list[GroupPlainSchema] = []
         is_current_user = event.caller_view_key == View.CURRENT_USER
@@ -167,28 +189,6 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
             on_groups_save_clicked=self.on_groups_save_clicked,
             on_groups_delete_clicked=self.on_groups_delete_clicked,
         )
-
-    def on_save_clicked(self) -> None:
-        if self._view and self._view.mode == ViewMode.CREATE:
-            self._strict_schema_cls = cast(type[UserStrictUpdateAppSchema], UserStrictCreateAppSchema)
-        else:
-            self._strict_schema_cls = UserStrictUpdateAppSchema
-        super().on_save_clicked()
-
-    def on_groups_save_clicked(self, _: ft.Event[ft.IconButton]) -> None:
-        if not self._view or not self._view.data_row:
-            return
-        user_id = self._view.data_row["id"]
-        pending = self._view.get_pending_group_targets()
-        if not pending:
-            return
-        self._page.run_task(self.__handle_groups_save, user_id, pending)
-
-    def on_groups_delete_clicked(self, group_ids: list[int]) -> None:
-        if not self._view or not group_ids or not self._view.data_row:
-            return
-        user_id = self._view.data_row["id"]
-        self._page.run_task(self.__handle_groups_delete, user_id, group_ids)
 
     async def __handle_groups_save(self, user_id: int, pending: list[tuple[int, int]]) -> None:
         if not self._view or not self._view.data_row:
