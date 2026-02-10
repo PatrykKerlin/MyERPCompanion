@@ -59,14 +59,14 @@ services:
       sh -lc "mkdir -p /media/images &&
       exec /project/bin/uvicorn main:start_app --host 0.0.0.0 --port 8000 --lifespan=on --workers 4"
 
-  multi-app:
+  desktop-app:
     build:
-      context: ./multi-app
-      dockerfile: dockerfile-multi
+      context: ./desktop-app
+      dockerfile: dockerfile-desktop
     networks:
       - project_net
     volumes:
-      - ./multi-app/multi_app/:/multi_app
+      - ./desktop-app/desktop_app/:/desktop_app
       - /mnt/wslg/runtime-dir:/mnt/wslg/runtime-dir
     environment:
       - API_URL=http://rest-api:8000/api
@@ -78,7 +78,7 @@ services:
     depends_on:
       - rest-api
     command:
-      sh -c "flet run main_desktop.py"
+      sh -c "flet run main.py"
 
   mobile-app:
     build:
@@ -96,7 +96,7 @@ services:
     depends_on:
       - rest-api
     command:
-      sh -c "/project/bin/python /mobile_app/main_mobile.py"
+      sh -c "/project/bin/python /mobile_app/main.py"
     ports:
       - "8551:8551"
 

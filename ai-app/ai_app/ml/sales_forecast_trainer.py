@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import logging
+import math
 import time
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 import torch
 from torch import nn
+from torch.utils.data import DataLoader, TensorDataset
 
-from ml.feed_forward_model import EmbeddedFeedForwardModel
+from ml.feed_forward_model import FeedForwardModel
 
 logger = logging.getLogger("ai")
 
@@ -23,28 +26,16 @@ class SalesForecastTrainer:
     _min_validation_rows = 20
     _early_stopping_patience = 80
     _early_stopping_min_delta = 1e-4
-    _hidden_dims = (128, 64, 32)
-    _hidden_dropout = 0.10
+    _batch_size = 64
 
     def train(
         self,
-        categorical_train: torch.Tensor,
-        numerical_train: torch.Tensor,
+        x_train: torch.Tensor,
         y_train: torch.Tensor,
-        item_vocab_size: int,
-        customer_vocab_size: int,
-        category_vocab_size: int,
-        currency_vocab_size: int,
     ) -> nn.Module:
-        model = EmbeddedFeedForwardModel(
-            item_vocab_size=item_vocab_size,
-            customer_vocab_size=customer_vocab_size,
-            category_vocab_size=category_vocab_size,
-            currency_vocab_size=currency_vocab_size,
-            numerical_dim=int(numerical_train.shape[1]),
-            hidden_dims=SalesForecastTrainer._hidden_dims,
+        model = FeedForwardModel(
+            input_dim=int(x_train.shape[1]),
             output_dim=2,
-            dropout=SalesForecastTrainer._hidden_dropout,
         )
         self._load_checkpoint_if_exists(model)
         optimizer = torch.optim.Adam(
@@ -53,13 +44,13 @@ class SalesForecastTrainer:
             weight_decay=SalesForecastTrainer._weight_decay,
         )
         loss_fn = nn.MSELoss()
-        train_cat, train_num, train_y, val_cat, val_num, val_y = SalesForecastTrainer._split_train_validation(
-            categorical_train,
-            numerical_train,
+        train_x, train_y, val_x, val_y = SalesForecastTrainer._split_train_validation(
+            x_train,
             y_train,
         )
+        train_loader = SalesForecastTrainer._build_train_loader(train_x, train_y)
         best_state: dict[str, torch.Tensor] | None = None
-        best_val_loss = float("inf")
+        best_val_loss = math.inf
         patience_counter = 0
         epochs_executed = 0
         started_at = time.perf_counter()
@@ -67,27 +58,25 @@ class SalesForecastTrainer:
         for epoch in range(1, SalesForecastTrainer._max_epochs + 1):
             epochs_executed = epoch
             model.train()
-            optimizer.zero_grad()
-            preds = model(train_cat, train_num)
-            loss = loss_fn(preds, train_y)
-            loss.backward()
-            optimizer.step()
+            for batch_x, batch_y in train_loader:
+                optimizer.zero_grad()
+                preds = model(batch_x)
+                loss = loss_fn(preds, batch_y)
+                loss.backward()
+                optimizer.step()
 
-            if val_cat is None or val_num is None or val_y is None:
+            if val_x is None or val_y is None:
                 continue
 
             model.eval()
             with torch.no_grad():
-                val_preds = model(val_cat, val_num)
+                val_preds = model(val_x)
                 val_loss = float(loss_fn(val_preds, val_y).item())
 
             if val_loss < best_val_loss - SalesForecastTrainer._early_stopping_min_delta:
                 best_val_loss = val_loss
                 patience_counter = 0
-                best_state = {
-                    key: value.detach().clone()
-                    for key, value in model.state_dict().items()
-                }
+                best_state = {key: value.detach().clone() for key, value in model.state_dict().items()}
                 continue
 
             patience_counter += 1
@@ -102,7 +91,7 @@ class SalesForecastTrainer:
             model.load_state_dict(best_state)
         self._save_checkpoint(model)
         training_seconds = time.perf_counter() - started_at
-        best_val_loss_text = f"{best_val_loss:.6f}" if best_val_loss != float("inf") else "n/a"
+        best_val_loss_text = f"{best_val_loss:.6f}" if best_val_loss != math.inf else "n/a"
         logger.info(
             f"Model training finished: epochs={epochs_executed} duration={training_seconds:.2f}s "
             f"best_val_loss={best_val_loss_text} checkpoint_saved={self._checkpoint_path}"
@@ -112,41 +101,51 @@ class SalesForecastTrainer:
     @staticmethod
     def predict(
         model: nn.Module,
-        categorical_predict: torch.Tensor,
-        numerical_predict: torch.Tensor,
+        x_predict: torch.Tensor,
     ) -> np.ndarray:
         with torch.no_grad():
-            preds = model(categorical_predict, numerical_predict).numpy()
+            preds = model(x_predict).numpy()
         return np.maximum(preds, 0.0)
 
     @staticmethod
+    def _build_train_loader(
+        train_x: torch.Tensor,
+        train_y: torch.Tensor,
+    ) -> DataLoader[tuple[torch.Tensor, torch.Tensor]]:
+        dataset = TensorDataset(train_x, train_y)
+        return cast(
+            DataLoader[tuple[torch.Tensor, torch.Tensor]],
+            DataLoader(
+                dataset,
+                batch_size=SalesForecastTrainer._batch_size,
+                shuffle=True,
+                drop_last=False,
+            ),
+        )
+
+    @staticmethod
     def _split_train_validation(
-        categorical_train: torch.Tensor,
-        numerical_train: torch.Tensor,
+        x_train: torch.Tensor,
         y_train: torch.Tensor,
     ) -> tuple[
         torch.Tensor,
         torch.Tensor,
-        torch.Tensor,
-        torch.Tensor | None,
         torch.Tensor | None,
         torch.Tensor | None,
     ]:
-        rows = int(categorical_train.shape[0])
+        rows = int(x_train.shape[0])
         if rows < SalesForecastTrainer._min_validation_rows:
-            return categorical_train, numerical_train, y_train, None, None, None
+            return x_train, y_train, None, None
 
         val_rows = max(1, int(rows * SalesForecastTrainer._validation_ratio))
         if val_rows >= rows:
-            return categorical_train, numerical_train, y_train, None, None, None
+            return x_train, y_train, None, None
 
         split_idx = rows - val_rows
         return (
-            categorical_train[:split_idx],
-            numerical_train[:split_idx],
+            x_train[:split_idx],
             y_train[:split_idx],
-            categorical_train[split_idx:],
-            numerical_train[split_idx:],
+            x_train[split_idx:],
             y_train[split_idx:],
         )
 
@@ -161,7 +160,6 @@ class SalesForecastTrainer:
         else:
             state_dict = checkpoint
         model.load_state_dict(state_dict, strict=True)
-        logger.info(f"Loaded model checkpoint from {cls._checkpoint_path}")
 
     @classmethod
     def _save_checkpoint(cls, model: nn.Module) -> None:

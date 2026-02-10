@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from datetime import date
-from collections.abc import Iterable
 from typing import Any
 
 import numpy as np
@@ -38,13 +37,7 @@ class SalesForecastService:
         torch.Tensor,
         torch.Tensor,
         torch.Tensor,
-        torch.Tensor,
-        torch.Tensor,
         list[dict[str, Any]],
-        int,
-        int,
-        int,
-        int,
     ] | None:
         logger.info(
             f"Building monthly training data for range [{start_date}, {end_date}], "
@@ -63,14 +56,13 @@ class SalesForecastService:
             logger.info(f"Only one unique month in dataset ({min_period}), skipped")
             return None
 
-        item_to_index = SalesForecastService.__build_embedding_index(int(row["item_id"]) for row in rows)
-        customer_to_index = SalesForecastService.__build_embedding_index(int(row["customer_id"]) for row in rows)
-        category_to_index = SalesForecastService.__build_embedding_index(int(row["category_id"]) for row in rows)
-        currency_to_index = SalesForecastService.__build_embedding_index(int(row["currency_id"]) for row in rows)
+        item_scale = float(max(int(row["item_id"]) for row in rows))
+        customer_scale = float(max(int(row["customer_id"]) for row in rows))
+        category_scale = float(max(int(row["category_id"]) for row in rows))
+        currency_scale = float(max(int(row["currency_id"]) for row in rows))
         period_scale = float(period_span)
 
-        categorical_train_values: list[list[int]] = []
-        numerical_train_values: list[list[float]] = []
+        train_features: list[list[float]] = []
         y_train_values: list[list[float]] = []
         for row in rows:
             item_id = int(row["item_id"])
@@ -79,15 +71,16 @@ class SalesForecastService:
             currency_id = int(row["currency_id"])
             period_index = float(SalesForecastService._months_between(min_period, row["period_start"])) / period_scale
             discount_ratio = min(max(float(row["discount_ratio"]), 0.0), 0.90)
-            categorical_train_values.append(
+            train_features.append(
                 [
-                    item_to_index[item_id],
-                    customer_to_index[customer_id],
-                    category_to_index[category_id],
-                    currency_to_index[currency_id],
+                    float(item_id) / item_scale,
+                    float(customer_id) / customer_scale,
+                    float(category_id) / category_scale,
+                    float(currency_id) / currency_scale,
+                    period_index,
+                    discount_ratio,
                 ]
             )
-            numerical_train_values.append([period_index, discount_ratio])
             y_train_values.append(
                 [
                     float(row["total_net"]),
@@ -95,12 +88,11 @@ class SalesForecastService:
                 ]
             )
 
-        if len(categorical_train_values) < 3:
-            logger.info(f"Too few training rows ({len(categorical_train_values)}), skipped")
+        if len(train_features) < 3:
+            logger.info(f"Too few training rows ({len(train_features)}), skipped")
             return None
 
-        categorical_train = torch.tensor(categorical_train_values, dtype=torch.int64)
-        numerical_train = torch.tensor(numerical_train_values, dtype=torch.float32)
+        x_train = torch.tensor(train_features, dtype=torch.float32)
         y_train = torch.tensor(y_train_values, dtype=torch.float32)
 
         prediction_keys = list(
@@ -114,23 +106,23 @@ class SalesForecastService:
                 for row in rows
             )
         )
-        categorical_predict_values: list[list[int]] = []
-        numerical_predict_values: list[list[float]] = []
+        predict_features: list[list[float]] = []
         prediction_points: list[dict[str, Any]] = []
         for month_offset in range(1, self._horizon_months + 1):
             predicted_date = SalesForecastService._add_months(max_period, month_offset)
             period_index = float(SalesForecastService._months_between(min_period, predicted_date)) / period_scale
             for item_id, customer_id, category_id, currency_id in prediction_keys:
                 for discount_rate in self._prediction_discount_rates:
-                    categorical_predict_values.append(
+                    predict_features.append(
                         [
-                            item_to_index[item_id],
-                            customer_to_index[customer_id],
-                            category_to_index[category_id],
-                            currency_to_index[currency_id],
+                            float(item_id) / item_scale,
+                            float(customer_id) / customer_scale,
+                            float(category_id) / category_scale,
+                            float(currency_id) / currency_scale,
+                            period_index,
+                            float(discount_rate),
                         ]
                     )
-                    numerical_predict_values.append([period_index, float(discount_rate)])
                     prediction_points.append(
                         {
                             "item_id": item_id,
@@ -143,27 +135,20 @@ class SalesForecastService:
                         }
                     )
 
-        if not categorical_predict_values:
+        if not predict_features:
             logger.info("No prediction points generated, skipped")
             return None
 
-        categorical_predict = torch.tensor(categorical_predict_values, dtype=torch.int64)
-        numerical_predict = torch.tensor(numerical_predict_values, dtype=torch.float32)
+        x_predict = torch.tensor(predict_features, dtype=torch.float32)
         logger.info(
-            f"Training data ready: train_rows={len(categorical_train_values)} "
+            f"Training data ready: train_rows={len(train_features)} "
             f"prediction_points={len(prediction_points)}"
         )
         return (
-            categorical_train,
-            numerical_train,
+            x_train,
             y_train,
-            categorical_predict,
-            numerical_predict,
+            x_predict,
             prediction_points,
-            len(item_to_index),
-            len(customer_to_index),
-            len(category_to_index),
-            len(currency_to_index),
         )
 
     async def save_forecast_results(
@@ -224,8 +209,3 @@ class SalesForecastService:
         year = value.year + month_zero_based // 12
         month = month_zero_based % 12 + 1
         return date(year, month, 1)
-
-    @staticmethod
-    def __build_embedding_index(values: Iterable[int]) -> dict[int, int]:
-        unique_values = sorted(set(int(value) for value in values))
-        return {value: index for index, value in enumerate(unique_values, start=1)}

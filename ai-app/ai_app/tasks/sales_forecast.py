@@ -32,31 +32,20 @@ class SalesForecastTask(TaskBase):
             return
 
         (
-            categorical_train,
-            numerical_train,
+            x_train,
             y_train,
-            categorical_predict,
-            numerical_predict,
+            x_predict,
             prediction_points,
-            item_vocab_size,
-            customer_vocab_size,
-            category_vocab_size,
-            currency_vocab_size,
         ) = training_data
         logger.info(
             f"Task={self.key} training started (train_rows={int(y_train.shape[0])}, "
             f"prediction_points={len(prediction_points)})"
         )
         model = self._trainer.train(
-            categorical_train,
-            numerical_train,
+            x_train,
             y_train,
-            item_vocab_size=item_vocab_size,
-            customer_vocab_size=customer_vocab_size,
-            category_vocab_size=category_vocab_size,
-            currency_vocab_size=currency_vocab_size,
         )
-        forecast = self._trainer.predict(model, categorical_predict, numerical_predict)
+        forecast = self._trainer.predict(model, x_predict)
         await self._service.save_forecast_results(
             run_id=run_id,
             y_train=y_train,
