@@ -6,12 +6,14 @@ import flet as ft
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from schemas.business.logistic.warehouse_schema import WarehousePlainSchema
 from schemas.core.assoc_user_group_schema import AssocUserGroupPlainSchema, AssocUserGroupStrictSchema
 from schemas.core.group_schema import GroupPlainSchema
 from schemas.core.language_schema import LanguagePlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
 from schemas.core.user_schema import UserPlainSchema, UserStrictCreateAppSchema, UserStrictUpdateAppSchema
 from services.core import AssocUserGroupService, GroupService, LanguageService, UserService
+from services.business.logistic import WarehouseService
 from services.business.hr import EmployeeService
 from services.business.trade import CustomerService
 from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
@@ -35,6 +37,7 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         self.__assoc_user_group_service = AssocUserGroupService(self._settings, self._logger, self._tokens_accessor)
         self.__employee_service = EmployeeService(self._settings, self._logger, self._tokens_accessor)
         self.__customer_service = CustomerService(self._settings, self._logger, self._tokens_accessor)
+        self.__warehouse_service = WarehouseService(self._settings, self._logger, self._tokens_accessor)
 
     def on_save_clicked(self) -> None:
         if self._view and self._view.mode == ViewMode.CREATE:
@@ -65,6 +68,7 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         is_from_customers = event.caller_view_key == View.CUSTOMERS
         show_groups = event.module_id != Module.CORE and not is_current_user
         show_relations = event.module_id != Module.CORE and not is_current_user
+        show_warehouses = not is_current_user
         show_employee_relation = show_relations and not is_from_customers
         show_customer_relation = show_relations and not is_from_employees
         data_row = dict(event.data) if event.data else None
@@ -87,12 +91,14 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         languages = []
         employees: list = []
         customers: list = []
+        warehouses: list = []
         users: list = []
         groups = []
         need_groups = show_groups
         need_users = show_relations
         need_employees = show_employee_relation
         need_customers = show_customer_relation
+        need_warehouses = show_warehouses
         tasks: dict[str, Any] = {
             "languages": self.__perform_get_all_languages(),
         }
@@ -104,6 +110,8 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
             tasks["employees"] = self.__perform_get_all_employees()
         if need_customers:
             tasks["customers"] = self.__perform_get_all_customers()
+        if need_warehouses:
+            tasks["warehouses"] = self.__perform_get_all_warehouses()
         results = await asyncio.gather(*tasks.values())
         for key, value in zip(tasks.keys(), results):
             if key == "languages":
@@ -116,7 +124,10 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
                 employees = value
             elif key == "customers":
                 customers = value
+            elif key == "warehouses":
+                warehouses = value
         language_pairs = [(language.id, language.key) for language in languages]
+        warehouse_pairs = [(warehouse.id, warehouse.name) for warehouse in warehouses]
         used_employee_ids = {user.employee_id for user in users if user.employee_id is not None}
         used_customer_ids = {user.customer_id for user in users if user.customer_id is not None}
         current_employee_id = data_row.get("employee_id") if data_row else None
@@ -178,9 +189,12 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
             theme_pairs,
             employee_pairs,
             customer_pairs,
+            warehouse_pairs,
+            not is_current_user,
             show_relations,
             show_customer_relation,
             show_employee_relation,
+            show_warehouses,
             group_source_rows,
             group_target_rows,
             show_groups,
@@ -216,6 +230,10 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_customers(self):
         return await self.__customer_service.get_all(Endpoint.CUSTOMERS, None, None, None, self._module_id)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_all_warehouses(self) -> list[WarehousePlainSchema]:
+        return await self.__warehouse_service.get_all(Endpoint.WAREHOUSES, None, None, None, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_users(self) -> list[UserPlainSchema]:

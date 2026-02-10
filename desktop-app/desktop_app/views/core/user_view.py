@@ -25,9 +25,12 @@ class UserView(BaseDesktopView, GroupBulkTransferMixin):
         themes: list[tuple[str, str]],
         employee_pairs: list[tuple[int, str]],
         customer_pairs: list[tuple[int, str]],
+        warehouse_pairs: list[tuple[int, str]],
+        show_username: bool,
         show_relations: bool,
         show_customer_relation: bool,
         show_employee_relation: bool,
+        show_warehouses: bool,
         group_source_rows: list[tuple[int, list[str]]],
         group_target_rows: list[tuple[int, list[str]]],
         show_groups: bool,
@@ -48,12 +51,22 @@ class UserView(BaseDesktopView, GroupBulkTransferMixin):
         )
         self.__password_validation_ready = False
         main_fields_definitions = [
-            {"key": "username", "input": self._get_text_input},
             {"key": "password", "input": self._get_password_input},
             {"key": "password_repeat", "input": self._get_password_input},
             {"key": "language_id", "input": self._get_dropdown, "options": languages},
             {"key": "theme", "input": self._get_dropdown, "options": themes},
         ]
+        if show_username:
+            main_fields_definitions.insert(0, {"key": "username", "input": self._get_text_input})
+        if show_warehouses:
+            main_fields_definitions.append(
+                {
+                    "key": "warehouse_id",
+                    "label": "warehouses",
+                    "input": self._get_dropdown,
+                    "options": warehouse_pairs,
+                }
+            )
         if show_relations and show_employee_relation:
             main_fields_definitions.append(
                 {
@@ -230,4 +243,3 @@ class UserView(BaseDesktopView, GroupBulkTransferMixin):
                 control.on_blur = lambda _: self.__validate_password_fields()
         if self.__password_validation_ready:
             self.__validate_password_fields()
-

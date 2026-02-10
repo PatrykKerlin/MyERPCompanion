@@ -21,7 +21,10 @@ class AppView:
         self.__theme = theme
         self.__translation = translation
         self.__on_view_selected: Callable[[View], None] | None = None
+        self.__on_user_settings: Callable[[], None] | None = None
+        self.__on_logout: Callable[[], None] | None = None
         self.__drawer_views: list[View] = []
+        self.__current_username: str | None = None
 
         self.__title_text = ft.Text(
             self.__translation.get("my_erp_companion"),
@@ -32,16 +35,42 @@ class AppView:
             icon=ft.Icons.MENU,
             on_click=self.__open_navigation_drawer,
         )
+        self.__username_text = ft.Text(
+            self.__translation.get("username"),
+            size=14,
+        )
+        self.__user_settings_button = ft.IconButton(
+            icon=ft.Icons.ACCOUNT_CIRCLE,
+            tooltip=self.__translation.get("current_user"),
+            on_click=self.__handle_user_settings,
+        )
+        self.__logout_button = ft.IconButton(
+            icon=ft.Icons.LOGOUT,
+            tooltip=self.__translation.get("log_out"),
+            on_click=self.__handle_logout,
+        )
         self.__drawer = ft.NavigationDrawer(controls=[], on_change=self.__on_drawer_change)
         self.__top_bar = ft.Container(
             visible=False,
             padding=ft.Padding.symmetric(horizontal=12, vertical=8),
             border=ft.Border(bottom=ft.BorderSide(1, ft.Colors.OUTLINE_VARIANT)),
             content=ft.Row(
-                controls=[self.__menu_button, self.__title_text],
-                alignment=ft.MainAxisAlignment.START,
+                controls=[
+                    ft.Row(
+                        controls=[self.__menu_button, self.__title_text],
+                        alignment=ft.MainAxisAlignment.START,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=8,
+                    ),
+                    ft.Row(
+                        controls=[self.__username_text, self.__user_settings_button, self.__logout_button],
+                        alignment=ft.MainAxisAlignment.END,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=4,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=8,
             ),
         )
 
@@ -68,6 +97,12 @@ class AppView:
     def update_translation(self, translation: Translation) -> None:
         self.__translation = translation
         self.__title_text.value = self.__translation.get("my_erp_companion")
+        self.__user_settings_button.tooltip = self.__translation.get("current_user")
+        self.__logout_button.tooltip = self.__translation.get("log_out")
+        if self.__current_username:
+            self.__username_text.value = self.__current_username
+        else:
+            self.__username_text.value = self.__translation.get("username")
         self.__refresh_drawer_controls()
         content = self.__body_container.content
         target = content
@@ -82,8 +117,22 @@ class AppView:
         self.__on_view_selected = on_view_selected
         self.__refresh_drawer_controls()
 
+    def set_user_settings_handler(self, on_user_settings: Callable[[], None]) -> None:
+        self.__on_user_settings = on_user_settings
+
+    def set_logout_handler(self, on_logout: Callable[[], None]) -> None:
+        self.__on_logout = on_logout
+
     def set_navigation_visible(self, visible: bool) -> None:
         self.__top_bar.visible = visible
+        self.__safe_update(self.__top_bar)
+
+    def set_username(self, username: str | None) -> None:
+        self.__current_username = username
+        if username:
+            self.__username_text.value = username
+        else:
+            self.__username_text.value = self.__translation.get("username")
         self.__safe_update(self.__top_bar)
 
     def set_auth_view(self, component: ft.Control | None) -> None:
@@ -190,6 +239,14 @@ class AppView:
         page = self.__root.page
         if page:
             await page.close_drawer()
+
+    def __handle_user_settings(self, _: ft.ControlEvent) -> None:
+        if self.__on_user_settings:
+            self.__on_user_settings()
+
+    def __handle_logout(self, _: ft.ControlEvent) -> None:
+        if self.__on_logout:
+            self.__on_logout()
 
     @staticmethod
     def __safe_update(control: ft.Control) -> None:

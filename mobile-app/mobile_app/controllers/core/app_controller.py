@@ -42,6 +42,8 @@ class AppController(BaseController):
         self.__order_service = OrderService(self._settings, self._logger, self._tokens_accessor)
         self.__view = MobileAppView(self._state_store.app_state.translation.items, self._settings.THEME)
         self.__view.set_navigation_handler(self.__request_mobile_view)
+        self.__view.set_user_settings_handler(self.__open_current_user_settings)
+        self.__view.set_logout_handler(self.__request_logout)
         self.__main_menu: MainMenuView | None = None
 
         self._subscribe_event_handlers(
@@ -122,6 +124,7 @@ class AppController(BaseController):
 
     async def __logout_requested_handler(self, _: LogoutRequested) -> None:
         self.__view.set_navigation_visible(False)
+        self.__view.set_username(None)
         self.__view.set_content_visible(False)
         self.__view.set_content(None)
         self.__main_menu = None
@@ -134,7 +137,14 @@ class AppController(BaseController):
         await self._event_bus.publish(AuthDialogRequested())
 
     async def __view_ready_handler(self, event: ViewReady) -> None:
-        if event.view_key not in {View.BINS, View.ITEMS, View.BIN_TRANSFER, View.ORDER_PICKING, View.STOCK_RECEIVING}:
+        if event.view_key not in {
+            View.BINS,
+            View.ITEMS,
+            View.BIN_TRANSFER,
+            View.ORDER_PICKING,
+            View.STOCK_RECEIVING,
+            View.USERS,
+        }:
             return
         self.__view.set_navigation_visible(True)
         self.__main_menu = None
@@ -149,6 +159,7 @@ class AppController(BaseController):
         user = state.current
         if not user:
             self.__view.set_navigation_visible(False)
+            self.__view.set_username(None)
             self.__view.set_content_visible(False)
             self.__view.set_content(None)
             self.__main_menu = None
@@ -160,6 +171,7 @@ class AppController(BaseController):
 
     def __apply_user_preferences(self, user: UserPlainSchema) -> None:
         self.__view.set_theme(user.theme)
+        self.__view.set_username(user.username)
 
     async def __open_main_menu_view(self) -> None:
         self.__main_menu = MainMenuView(self._state_store.app_state.translation.items)
@@ -198,3 +210,21 @@ class AppController(BaseController):
                 mode=ViewMode.STATIC,
             ),
         )
+
+    def __open_current_user_settings(self) -> None:
+        current_user = self._state_store.app_state.user.current
+        if current_user is None:
+            return
+        self._page.run_task(
+            self._event_bus.publish,
+            ViewRequested(
+                module_id=Module.CORE,
+                view_key=View.USERS,
+                record_id=current_user.id,
+                mode=ViewMode.STATIC,
+                caller_view_key=View.CURRENT_USER,
+            ),
+        )
+
+    def __request_logout(self) -> None:
+        self._page.run_task(self._event_bus.publish, LogoutRequested())

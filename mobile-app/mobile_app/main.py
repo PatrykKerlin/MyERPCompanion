@@ -14,6 +14,7 @@ from controllers.core.bins_controller import BinsController
 from controllers.core.items_controller import ItemsController
 from controllers.core.order_picking_controller import OrderPickingController
 from controllers.core.stock_receiving_controller import StockReceivingController
+from controllers.core.user_controller import UserController
 from events.event_bus import EventBus
 from events.events import AppStarted
 from services.base.base_service import BaseService
@@ -83,6 +84,7 @@ class App:
             BinTransferController(self.__context),
             OrderPickingController(self.__context),
             StockReceivingController(self.__context),
+            UserController(self.__context),
             TranslationController(self.__context),
             AuthDialogController(self.__context),
         ]
