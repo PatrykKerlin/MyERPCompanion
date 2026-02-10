@@ -495,7 +495,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                     setattr(marker, "width", 0)
                 if marker:
                     marker.update()
-                # keep input read-only in search for disabled fields
+                
                 input = field.input.content
                 if hasattr(input, "read_only"):
                     setattr(input, "read_only", True)

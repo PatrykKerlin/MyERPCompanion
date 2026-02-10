@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import flet as ft
 
-# from styles import MenuStyles
+
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ class MenuBarComponent(BaseComponent, ft.MenuBar):
         BaseComponent.__init__(self, controller, translation)
         ft.MenuBar.__init__(
             self,
-            # style=MenuStyles.flat,
+            
             controls=[
                 ft.SubmenuButton(
                     content=ft.Text(self._translation.get("file")),

@@ -28,12 +28,12 @@ class CustomerView(BaseDesktopView, DiscountBulkTransferMixin, UserLinkViewMixin
         user_options: list[tuple[int, str]],
         on_discount_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
         on_discount_delete_clicked: Callable[[list[int]], None] | None = None,
-        # users: list[tuple[int, str]],
+        
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
-        # user_field_definition = [
-        #     {"key": "user_id", "input": self._get_dropdown, "options": users},
-        # ]
+        
+        
+        
         company_fields_definitions = [
             {"key": "first_name", "input": self._get_text_input},
             {"key": "last_name", "input": self._get_text_input},
@@ -104,7 +104,7 @@ class CustomerView(BaseDesktopView, DiscountBulkTransferMixin, UserLinkViewMixin
             {"key": "shipping_country", "input": self._get_text_input, "input_size": 3},
         ]
 
-        # user_field = self._build_field_groups(user_field_definition)
+        
         company_fields = self._build_field_groups(company_fields_definitions)
         financial_fields = self._build_field_groups(financial_fields_definitions)
         contact_fields = self._build_field_groups(contact_fields_definitions)
@@ -120,7 +120,7 @@ class CustomerView(BaseDesktopView, DiscountBulkTransferMixin, UserLinkViewMixin
         user_field = self._init_user_link_field(user_options, self._controller.on_add_user_clicked, input_size=7)
 
         self._add_to_inputs(
-            # user_field,
+            
             company_fields,
             financial_fields,
             contact_fields,
@@ -135,7 +135,7 @@ class CustomerView(BaseDesktopView, DiscountBulkTransferMixin, UserLinkViewMixin
             user_field,
         )
 
-        # user_grid = self._build_grid(user_field)
+        
         company_grid = self._build_grid(company_fields)
         financial_grid = self._build_grid(financial_fields)
         contact_grid = self._build_grid(contact_fields)
@@ -154,7 +154,7 @@ class CustomerView(BaseDesktopView, DiscountBulkTransferMixin, UserLinkViewMixin
         columns = [
             ft.Column(
                 controls=
-                # user_grid
+                
                 company_grid + financial_grid + contact_grid + street_grid + house_grid + city_grid + country_grid,
                 expand=3,
             ),

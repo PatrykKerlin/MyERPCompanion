@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import flet as ft
 
-# from styles import ButtonStyles
+
 from views.base.base_component import BaseComponent
 from views.base.base_dialog import BaseDialog
 
@@ -21,7 +21,7 @@ class AuthDialogComponent(BaseComponent, BaseDialog):
         cancel_button = ft.Button(
             content=translation.get("cancel"),
             on_click=lambda _: controller.on_cancel_click(),
-            # style=ButtonStyles.small_padding,
+            
         )
         login_button = ft.Button(
             content=translation.get("log_in"),
@@ -29,7 +29,7 @@ class AuthDialogComponent(BaseComponent, BaseDialog):
                 login_field.value or "",
                 password_field.value or "",
             ),
-            # style=ButtonStyles.small_padding,
+            
         )
         BaseDialog.__init__(
             self,

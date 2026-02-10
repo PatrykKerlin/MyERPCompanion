@@ -11,8 +11,8 @@ from views.components.toolbar_component import ToolbarComponent
 
 class AppView:
     def __init__(self, translation: Translation, theme: str) -> None:
-        # horizontal_divider = ft.Divider(height=1, thickness=1, color=ft.Colors.OUTLINE)
-        # vertical_divider = ft.VerticalDivider(width=1, thickness=1, color=ft.Colors.OUTLINE)
+        
+        
         self.__theme = theme
         self.__translation = translation
         self.__menu_bar_container = ft.Container(visible=False)
@@ -25,13 +25,13 @@ class AppView:
         self.__content = ft.Column(
             controls=[
                 self.__menu_bar_container,
-                # horizontal_divider,
+                
                 self.__toolbar_container,
-                # horizontal_divider,
+                
                 ft.Row(
                     controls=[
                         self.__side_menu_container,
-                        # vertical_divider,
+                        
                         ft.Column(
                             controls=[
                                 self.__tabs_bar_container,
@@ -42,7 +42,7 @@ class AppView:
                     ],
                     expand=True,
                 ),
-                # horizontal_divider,
+                
                 self.__footer_container,
             ],
             alignment=ft.MainAxisAlignment.START,

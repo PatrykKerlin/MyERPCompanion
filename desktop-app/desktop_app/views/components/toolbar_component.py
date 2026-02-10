@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import flet as ft
 
-# from styles import MenuStyles
+
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:

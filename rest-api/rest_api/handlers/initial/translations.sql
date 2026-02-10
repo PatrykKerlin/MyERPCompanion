@@ -93,9 +93,3 @@ VALUES
 ('check_to_search', 'Check to search by this field', 1, TRUE, CURRENT_TIMESTAMP, 1),
 ('check_to_search', 'Zaznacz, aby wyszukiwać według tego pola', 2, TRUE, CURRENT_TIMESTAMP, 1);
 
--- ('administration', 'Administration', 1, TRUE, CURRENT_TIMESTAMP, 1),
--- ('administration', 'Administracja', 2, TRUE, CURRENT_TIMESTAMP, 1),
--- ('groups', 'Groups', 1, TRUE, CURRENT_TIMESTAMP, 1),
--- ('groups', 'Grupy', 2, TRUE, CURRENT_TIMESTAMP, 1),
--- ('users', 'Users', 1, TRUE, CURRENT_TIMESTAMP, 1),
--- ('users', 'Użytkownicy', 2, TRUE, CURRENT_TIMESTAMP, 1);

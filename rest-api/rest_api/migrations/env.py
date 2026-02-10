@@ -16,29 +16,29 @@ import models.core  # noqa: F401
 from database.engine import Engine
 from config.settings import Settings
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+
+
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
+
+
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
+
+
+
+
 
 settings = Settings()  # type: ignore
 db = Engine(settings)
 target_metadata = db.get_base().metadata
 
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+
+
+
+
 
 
 def foreign_key_split_hook(directives: list[Any]) -> None:
