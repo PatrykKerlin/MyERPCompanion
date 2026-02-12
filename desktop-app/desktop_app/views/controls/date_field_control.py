@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from typing import Callable, cast
 
 import flet as ft
+from views.base.base_component import BaseComponent
 
 
 class DateField(ft.Row):
@@ -79,7 +80,7 @@ class DateField(ft.Row):
     @error.setter
     def error(self, message: str | None) -> None:
         self.__text_field.error = message
-        self.__safe_update(self.__text_field)
+        BaseComponent.safe_update(self.__text_field)
 
     @property
     def read_only(self) -> bool:
@@ -90,8 +91,8 @@ class DateField(ft.Row):
         self.__read_only = new_value
         self.__open_button.disabled = self.__read_only
         self.__clear_button.disabled = self.__read_only or self.__value is None
-        self.__safe_update(self.__open_button)
-        self.__safe_update(self.__clear_button)
+        BaseComponent.safe_update(self.__open_button)
+        BaseComponent.safe_update(self.__clear_button)
 
     def __emit_value(self) -> None:
         if not self.__on_change:
@@ -122,11 +123,11 @@ class DateField(ft.Row):
     def __set_value(self, new_value: date | None) -> None:
         self.__value = new_value
         self.__text_field.value = self.__format_value(self.__value)
-        self.__safe_update(self.__text_field)
+        BaseComponent.safe_update(self.__text_field)
         if self.__picker.value != self.__value:
             self.__picker.value = self.__value
         self.__clear_button.disabled = self.__read_only or self.__value is None
-        self.__safe_update(self.__clear_button)
+        BaseComponent.safe_update(self.__clear_button)
 
     def __open_picker(self, _: ft.Event[ft.IconButton]) -> None:
         try:
@@ -136,7 +137,7 @@ class DateField(ft.Row):
         if not page:
             return
         self.__picker.open = True
-        self.__safe_update(self.__picker)
+        BaseComponent.safe_update(self.__picker)
 
     def __handle_picker_change(self, event: ft.Event[ft.DatePicker]) -> None:
         picked_raw_from_picker = getattr(self.__picker, "value", None)
@@ -168,14 +169,3 @@ class DateField(ft.Row):
             return date.fromisoformat(raw_value_stripped[:10])
         except ValueError:
             return None
-
-    @staticmethod
-    def __safe_update(control: ft.Control) -> None:
-        try:
-            _ = control.page
-        except RuntimeError:
-            return
-        try:
-            control.update()
-        except RuntimeError:
-            return

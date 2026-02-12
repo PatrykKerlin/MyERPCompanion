@@ -4,14 +4,14 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 from utils.enums import View, ViewMode
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 
 if TYPE_CHECKING:
     from controllers.business.hr.department_controller import DepartmentController
     from utils.translation import Translation
 
 
-class DepartmentView(BaseDesktopView):
+class DepartmentView(BaseView):
     def __init__(
         self,
         controller: DepartmentController,

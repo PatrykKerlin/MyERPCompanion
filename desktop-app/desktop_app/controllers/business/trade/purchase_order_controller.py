@@ -6,7 +6,7 @@ from typing import Any
 import flet as ft
 from config.context import Context
 from controllers.base.base_controller import BaseController
-from controllers.base.base_view_controller import BaseViewController
+from controllers.base.base_view_controller import BaseViewController, TServicePlainSchema, TServiceStrictSchema
 from events.events import ViewRequested
 from schemas.business.logistic.item_schema import ItemPlainSchema
 from schemas.business.trade.assoc_order_item_schema import AssocOrderItemStrictSchema
@@ -154,8 +154,8 @@ class PurchaseOrderController(
         return view
 
     async def _perform_get_page(
-        self, service: BaseService[OrderPlainSchema, PurchaseOrderStrictSchema], endpoint: Endpoint
-    ) -> PaginatedResponseSchema[OrderPlainSchema]:
+        self, service: BaseService[TServicePlainSchema, TServiceStrictSchema], endpoint: Endpoint
+    ) -> PaginatedResponseSchema[TServicePlainSchema]:
         return await super()._perform_get_page(service, Endpoint.PURCHASE_ORDERS)
 
     async def _perform_create(
@@ -189,7 +189,6 @@ class PurchaseOrderController(
             self.__current_status_id = status_id
         return response
 
-    @staticmethod
     def __build_order_item_schema(
         self, order_id: int, item_id: int, quantity: int, assoc_id: int | None
     ) -> AssocOrderItemStrictSchema:
@@ -451,7 +450,7 @@ class PurchaseOrderController(
             defaults["status_id"] = self.__default_status_id
         return defaults
 
-    @BaseController.handle_api_action(ApiActionError.SAVE)
+    @staticmethod
     def __get_latest_status_id(order_statuses: list[OrderViewStatusHistorySchema]) -> int | None:
         if not order_statuses:
             return None

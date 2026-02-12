@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any, Callable, cast
 
 import flet as ft
 from utils.enums import ViewMode
@@ -13,7 +13,15 @@ class UserLinkViewMixin:
     _inputs: dict[str, FieldGroup]
     _mode: ViewMode
 
-    def _get_dropdown(self, key: str, size: int, options: list[tuple[int, str]]) -> tuple[ft.Container, int]: ...
+    def _get_dropdown(
+        self,
+        key: str,
+        size: int,
+        options: list[tuple[int, str]],
+        callbacks: list[Callable[..., None]] | None = None,
+        label: str | None = None,
+        value: int | str | None = "0",
+    ) -> tuple[ft.Container, int]: ...
     def _get_label(self, key: str, size: int) -> tuple[ft.Container, int]: ...
     def _get_marker(self, key: str, size: int) -> tuple[ft.Container, int]: ...
 

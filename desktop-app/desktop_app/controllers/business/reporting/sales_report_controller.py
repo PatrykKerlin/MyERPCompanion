@@ -4,6 +4,7 @@ import asyncio
 from collections import defaultdict
 from datetime import date
 from io import BytesIO
+from typing import Literal
 
 import flet as ft
 import matplotlib.dates as mdates
@@ -364,7 +365,7 @@ class SalesReportController(
             return SalesReportController.__dialog_chart_size, SalesReportController.__dialog_chart_dpi
         return SalesReportController.__view_chart_size, SalesReportController.__view_chart_dpi
 
-    def __get_chart_theme(self) -> str:
+    def __get_chart_theme(self) -> Literal["darkgrid", "whitegrid"]:
         if self.__is_dark_theme():
             return "darkgrid"
         return "whitegrid"

@@ -5,14 +5,14 @@ from typing import TYPE_CHECKING, Any
 import flet as ft
 from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 from views.mixins.group_bulk_transfer_mixin import GroupBulkTransferMixin
 
 if TYPE_CHECKING:
     from controllers.core.user_controller import UserController
 
 
-class UserView(BaseDesktopView, GroupBulkTransferMixin):
+class UserView(BaseView, GroupBulkTransferMixin):
     def __init__(
         self,
         controller: UserController,
@@ -179,7 +179,7 @@ class UserView(BaseDesktopView, GroupBulkTransferMixin):
     def __hide_password_markers(self) -> None:
         for key in ("password", "password_repeat"):
             field = self._inputs.get(key)
-            if not field:
+            if not field or not field.marker:
                 continue
             marker = field.marker.content
             if hasattr(marker, "visible"):

@@ -69,7 +69,7 @@ class EmployeeController(
             "is_remote",
         ]
 
-    @staticmethod
+    @property
     def _user_link_view_key(self) -> View:
         return View.EMPLOYEES
 

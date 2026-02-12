@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Awaitable, Callable
+from datetime import date
+from typing import Any, cast
 
 import flet as ft
 from controllers.base.base_controller import BaseController
@@ -15,6 +17,19 @@ from utils.enums import ApiActionError, Endpoint, View, ViewMode
 
 
 class UserLinkControllerMixin:
+    _view: Any | None
+    _page: ft.Page
+    _settings: Any
+    _logger: Any
+    _tokens_accessor: Any
+    _event_bus: Any
+    _module_id: int
+    _subscribe_event_handlers: Callable[[dict[type[Any], Callable[[Any], Awaitable[None]]]], None]
+    set_field_value: Callable[[str, str | int | float | bool | date | None], None]
+    _user_link_user_service: Any
+    _user_link_employee_service: Any
+    _user_link_customer_service: Any
+
     def on_add_user_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         if not self._view or self._view.mode != ViewMode.READ:
             return
@@ -23,7 +38,7 @@ class UserLinkControllerMixin:
         self._page.run_task(self._open_user_create_tab)
 
     def on_marker_clicked(self, event: ft.ControlEvent, key: str) -> None:
-        super().on_marker_clicked(event, key)
+        cast(Any, super()).on_marker_clicked(event, key)
         if key != "user_id" or not self._view:
             return
         field = self._view.inputs.get("user_id")

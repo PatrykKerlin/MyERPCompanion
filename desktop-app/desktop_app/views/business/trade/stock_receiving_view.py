@@ -6,14 +6,14 @@ import flet as ft
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 from views.controls.bulk_transfer_control import BulkTransfer
 
 if TYPE_CHECKING:
     from controllers.business.trade.stock_receiving_controller import StockReceivingController
 
 
-class StockReceivingView(BaseDesktopView):
+class StockReceivingView(BaseView):
     def __init__(
         self,
         controller: StockReceivingController,

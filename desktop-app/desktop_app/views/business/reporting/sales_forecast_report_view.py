@@ -7,14 +7,14 @@ import flet as ft
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 from views.controls.date_field_control import DateField
 
 if TYPE_CHECKING:
     from controllers.business.reporting.sales_forecast_report_controller import SalesForecastReportController
 
 
-class SalesForecastReportView(BaseDesktopView):
+class SalesForecastReportView(BaseView):
     def __init__(
         self,
         controller: SalesForecastReportController,
@@ -55,78 +55,70 @@ class SalesForecastReportView(BaseDesktopView):
         date_to_container, _ = self._get_date_picker("date_to", 2, value=date_to, read_only=False)
         self.__date_to_input = cast(DateField, date_to_container.content)
 
-        currency_container, _ = self._get_dropdown("currency_id", 2, currency_options)
+        currency_container, _ = self._get_dropdown(
+            "currency_id",
+            2,
+            currency_options,
+            label=self._translation.get("currency"),
+            value=currency_id,
+        )
         self.__currency_input = cast(ft.Dropdown, currency_container.content)
-        self.__currency_input.label = self._translation.get("currency")
-        self.__currency_input.value = str(currency_id) if currency_id is not None else "0"
 
-        customer_container, _ = self._get_dropdown("customer_id", 2, customer_options)
+        customer_container, _ = self._get_dropdown(
+            "customer_id",
+            2,
+            customer_options,
+            label=self._translation.get("customer"),
+            value=customer_id,
+        )
         self.__customer_input = cast(ft.Dropdown, customer_container.content)
-        self.__customer_input.label = self._translation.get("customer")
-        self.__customer_input.value = str(customer_id) if customer_id is not None else "0"
 
-        item_container, _ = self._get_dropdown("item_id", 2, item_options)
+        item_container, _ = self._get_dropdown(
+            "item_id",
+            2,
+            item_options,
+            label=self._translation.get("item"),
+            value=item_id,
+        )
         self.__item_input = cast(ft.Dropdown, item_container.content)
-        self.__item_input.label = self._translation.get("item")
-        self.__item_input.value = str(item_id) if item_id is not None else "0"
 
-        category_container, _ = self._get_dropdown("category_id", 2, category_options)
+        category_container, _ = self._get_dropdown(
+            "category_id",
+            2,
+            category_options,
+            label=self._translation.get("category"),
+            value=category_id,
+        )
         self.__category_input = cast(ft.Dropdown, category_container.content)
-        self.__category_input.label = self._translation.get("category")
-        self.__category_input.value = str(category_id) if category_id is not None else "0"
 
-        discount_from_container, _ = self._get_dropdown("discount_from", 2, discount_options)
+        discount_from_container, _ = self._get_dropdown(
+            "discount_from",
+            2,
+            discount_options,
+            label=self._translation.get("discount_from"),
+            value=discount_from_key,
+        )
         self.__discount_from_input = cast(ft.Dropdown, discount_from_container.content)
-        self.__discount_from_input.label = self._translation.get("discount_from")
-        self.__discount_from_input.value = discount_from_key
 
-        discount_to_container, _ = self._get_dropdown("discount_to", 2, discount_options)
+        discount_to_container, _ = self._get_dropdown(
+            "discount_to",
+            2,
+            discount_options,
+            label=self._translation.get("discount_to"),
+            value=discount_to_key,
+        )
         self.__discount_to_input = cast(ft.Dropdown, discount_to_container.content)
-        self.__discount_to_input.label = self._translation.get("discount_to")
-        self.__discount_to_input.value = discount_to_key
 
         self._inputs.update(
             {
-                "date_from": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(date_from_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
-                "date_to": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(date_to_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
-                "currency_id": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(currency_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
-                "customer_id": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(customer_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
-                "item_id": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(item_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
-                "category_id": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(category_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
-                "discount_from": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(discount_from_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
-                "discount_to": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(discount_to_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
+                "date_from": FieldGroup(input=(date_from_container, 0)),
+                "date_to": FieldGroup(input=(date_to_container, 0)),
+                "currency_id": FieldGroup(input=(currency_container, 0)),
+                "customer_id": FieldGroup(input=(customer_container, 0)),
+                "item_id": FieldGroup(input=(item_container, 0)),
+                "category_id": FieldGroup(input=(category_container, 0)),
+                "discount_from": FieldGroup(input=(discount_from_container, 0)),
+                "discount_to": FieldGroup(input=(discount_to_container, 0)),
             }
         )
 
@@ -166,12 +158,12 @@ class SalesForecastReportView(BaseDesktopView):
         self.__category_input.value = "0"
         self.__discount_from_input.value = "0"
         self.__discount_to_input.value = "0"
-        self.__safe_update(self.__currency_input)
-        self.__safe_update(self.__customer_input)
-        self.__safe_update(self.__item_input)
-        self.__safe_update(self.__category_input)
-        self.__safe_update(self.__discount_from_input)
-        self.__safe_update(self.__discount_to_input)
+        self.safe_update(self.__currency_input)
+        self.safe_update(self.__customer_input)
+        self.safe_update(self.__item_input)
+        self.safe_update(self.__category_input)
+        self.safe_update(self.__discount_from_input)
+        self.safe_update(self.__discount_to_input)
 
     def __build_layout(self) -> None:
         apply_button = ft.Button(
@@ -248,7 +240,7 @@ class SalesForecastReportView(BaseDesktopView):
             self.__build_total_item("total_predicted_net", self.__totals.get("total_predicted_net", "0.00")),
             self.__build_total_item("total_predicted_gross", self.__totals.get("total_predicted_gross", "0.00")),
         ]
-        self.__safe_update(self.__totals_row)
+        self.safe_update(self.__totals_row)
 
     def __build_total_item(self, label_key: str, value: str) -> ft.Container:
         return ft.Container(
@@ -272,8 +264,8 @@ class SalesForecastReportView(BaseDesktopView):
             self.__gross_monthly_chart,
             self.__gross_monthly_chart_dialog,
         )
-        self.__safe_update(self.__monthly_chart_container)
-        self.__safe_update(self.__discount_chart_container)
+        self.safe_update(self.__monthly_chart_container)
+        self.safe_update(self.__discount_chart_container)
 
     def __build_chart_content(self, title: str, chart: bytes | None, dialog_chart: bytes | None) -> ft.Control:
         if not chart:
@@ -301,38 +293,25 @@ class SalesForecastReportView(BaseDesktopView):
         )
 
     def __open_chart_dialog(self, chart: bytes, title: str) -> None:
-        content = ft.Container(
-            expand=True,
-            alignment=ft.Alignment.CENTER,
-            content=ft.Image(
-                src=chart,
-                fit=ft.BoxFit.CONTAIN,
-                expand=True,
-            ),
-        )
+        if not self.page:
+            return
+        width = int((self.page.width or 1600) * 0.98)
+        height = int((self.page.height or 900) * 0.9)
         dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text(title),
-            content=content,
+            content=ft.Container(
+                width=width,
+                height=height,
+                alignment=ft.Alignment.CENTER,
+                content=ft.Image(src=chart, fit=ft.BoxFit.CONTAIN, expand=True),
+            ),
             actions=[
                 ft.TextButton(
                     self._translation.get("close"),
-                    on_click=lambda _: self.__close_dialog(dialog),
+                    on_click=lambda _: self._controller._page.pop_dialog(),
                 )
             ],
             actions_alignment=ft.MainAxisAlignment.END,
         )
-        self.page.open(dialog)
-        self.__safe_update(self.page)
-
-    def __close_dialog(self, dialog: ft.AlertDialog) -> None:
-        self.page.close(dialog)
-        self.__safe_update(self.page)
-
-    @staticmethod
-    def __safe_update(control: ft.Control) -> None:
-        try:
-            _ = control.page
-        except RuntimeError:
-            return
-        control.update()
+        self._controller._queue_dialog(dialog)

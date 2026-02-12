@@ -7,7 +7,7 @@ import flet as ft
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 from views.controls.bulk_transfer_control import BulkTransfer
 from views.controls.date_field_control import DateField
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from controllers.business.trade.order_picking_controller import OrderPickingController
 
 
-class OrderPickingView(BaseDesktopView):
+class OrderPickingView(BaseView):
     def __init__(
         self,
         controller: OrderPickingController,

@@ -1,0 +1,23 @@
+FROM python:3.14-trixie
+LABEL maintainer="Patryk Kerlin"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    VIRTUAL_ENV=/project \
+    PATH="/project/bin:$PATH" \
+    PYTHONPATH="/web_app"
+
+COPY /web_app/requirements.txt /tmp/requirements.txt
+
+RUN python -m venv $VIRTUAL_ENV && \
+    pip install --upgrade pip && \
+    pip install -r /tmp/requirements.txt && \
+    rm -rf /tmp/requirements.txt
+
+WORKDIR /web_app
+
+RUN useradd -m -d /web_app -s /bin/bash web-app && \
+    chown -R web-app:web-app /web_app && \
+    chmod -R 755 /web_app
+
+USER web-app

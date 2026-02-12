@@ -4,14 +4,14 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 from utils.enums import View, ViewMode
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 
 if TYPE_CHECKING:
     from controllers.business.hr.position_controller import PositionController
     from utils.translation import Translation
 
 
-class PositionView(BaseDesktopView):
+class PositionView(BaseView):
     def __init__(
         self,
         controller: PositionController,

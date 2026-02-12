@@ -6,7 +6,7 @@ import flet as ft
 from controllers.base.base_controller import BaseController
 from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 from views.controls.bulk_transfer_control import BulkTransfer
 from views.mixins.group_bulk_transfer_mixin import GroupBulkTransferMixin
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from controllers.core.module_controller import ModuleController
 
 
-class ModuleView(BaseDesktopView, GroupBulkTransferMixin):
+class ModuleView(BaseView, GroupBulkTransferMixin):
     def __init__(
         self,
         controller: ModuleController,
@@ -104,7 +104,7 @@ class ModuleView(BaseDesktopView, GroupBulkTransferMixin):
             ]
         )
 
-    def get_pending_group_targets(self) -> list[tuple[int, int, bool, bool]]:
+    def get_pending_group_targets_with_permissions(self) -> list[tuple[int, int, bool, bool]]:
         pending = self._group_bulk_transfer.get_pending_targets()
         results: list[tuple[int, int, bool, bool]] = []
         for target_id, group_id in pending:
@@ -156,10 +156,10 @@ class ModuleView(BaseDesktopView, GroupBulkTransferMixin):
         can_read = ft.Checkbox(label=self._translation.get("can_read"), value=True)
         can_modify = ft.Checkbox(label=self._translation.get("can_modify"), value=False)
 
-        def on_cancel(_: ft.ControlEvent) -> None:
+        def on_cancel() -> None:
             self.page.pop_dialog()
 
-        def on_confirm(_: ft.ControlEvent) -> None:
+        def on_confirm() -> None:
             self.page.pop_dialog()
             items = self._group_bulk_transfer.get_source_items_by_ids(source_ids)
             can_read_value = bool(can_read.value) or bool(can_modify.value)
@@ -169,14 +169,16 @@ class ModuleView(BaseDesktopView, GroupBulkTransferMixin):
                 target_id = self._group_bulk_transfer.add_target_row(source_id, target_values, highlight=True)
                 self.__group_permissions[target_id] = (can_read_value, can_modify_value)
 
+        actions: list[ft.Control] = [
+            ft.TextButton(self._translation.get("cancel"), on_click=lambda _: on_cancel()),
+            ft.TextButton(self._translation.get("ok"), on_click=lambda _: on_confirm()),
+        ]
+
         dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text(self._translation.get("permissions")),
             content=ft.Column(controls=[can_read, can_modify], tight=True),
-            actions=[
-                ft.TextButton(self._translation.get("cancel"), on_click=on_cancel),
-                ft.TextButton(self._translation.get("ok"), on_click=on_confirm),
-            ],
+            actions=actions,
         )
         BaseController.queue_dialog(self.page, dialog)
 

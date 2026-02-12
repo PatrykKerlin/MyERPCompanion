@@ -6,7 +6,7 @@ import flet as ft
 from schemas.business.trade.order_view_schema import OrderViewDiscountSchema
 from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 from views.controls.bulk_transfer_control import BulkTransfer
 from views.controls.data_table_control import DataTable
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from controllers.business.trade.sales_order_controller import SalesOrderController
 
 
-class SalesOrderView(BaseDesktopView):
+class SalesOrderView(BaseView):
     def __init__(
         self,
         controller: SalesOrderController,

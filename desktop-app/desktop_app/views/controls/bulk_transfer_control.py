@@ -2,6 +2,7 @@ from typing import Any, Callable, cast
 
 import flet as ft
 from controllers.base.base_controller import BaseController
+from views.base.base_component import BaseComponent
 
 
 class BulkTransfer(ft.Container):
@@ -343,7 +344,7 @@ class BulkTransfer(ft.Container):
         )
         self.__source_container.content = table
         self.__update_action_buttons()
-        self.__safe_update()
+        BaseComponent.safe_update(self)
 
     def __render_target_table(self) -> None:
         if not self.__target_container:
@@ -365,7 +366,7 @@ class BulkTransfer(ft.Container):
         )
         self.__target_container.content = table
         self.__update_action_buttons()
-        self.__safe_update()
+        BaseComponent.safe_update(self)
 
     def __normalize_row_values(self, values: list[Any], column_count: int) -> list[Any]:
         if len(values) >= column_count:
@@ -421,12 +422,6 @@ class BulkTransfer(ft.Container):
             expand=True,
         )
         return vertical_scroller
-
-    def __safe_update(self) -> None:
-        try:
-            self.update()
-        except RuntimeError:
-            return
 
     def __toggle_source_selection(self, item_id: int) -> None:
         if item_id in self.__selected_source_ids:
@@ -490,21 +485,23 @@ class BulkTransfer(ft.Container):
             self.__render_target_table()
 
     def __show_delete_confirm(self, page: ft.Page, selected_ids: list[int]) -> None:
-        def on_cancel(_: ft.ControlEvent) -> None:
+        def on_cancel() -> None:
             page.pop_dialog()
 
-        def on_confirm(_: ft.ControlEvent) -> None:
+        def on_confirm() -> None:
             page.pop_dialog()
             self.__execute_delete(selected_ids)
+
+        actions: list[ft.Control] = [
+            ft.TextButton("Cancel", on_click=lambda _: on_cancel()),
+            ft.TextButton("OK", on_click=lambda _: on_confirm()),
+        ]
 
         dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("Confirm"),
             content=ft.Text("Delete selected item(s)?"),
-            actions=[
-                ft.TextButton("Cancel", on_click=on_cancel),
-                ft.TextButton("OK", on_click=on_confirm),
-            ],
+            actions=actions,
         )
         BaseController.queue_dialog(page, dialog)
 
@@ -514,7 +511,7 @@ class BulkTransfer(ft.Container):
     def __update_save_button_state(self) -> None:
         has_pending = bool(self.__pending_target_map)
         self.__button_save.disabled = not (self.__buttons_enabled and has_pending)
-        self.__safe_update()
+        BaseComponent.safe_update(self)
 
     def __update_action_buttons(self) -> None:
         has_source_selection = bool(self.__selected_source_ids)

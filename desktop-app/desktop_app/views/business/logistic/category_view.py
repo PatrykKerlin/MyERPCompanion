@@ -5,14 +5,14 @@ from typing import TYPE_CHECKING, Any, Callable
 import flet as ft
 from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin
 
 if TYPE_CHECKING:
     from controllers.business.logistic.category_controller import CategoryController
 
 
-class CategoryView(BaseDesktopView, DiscountBulkTransferMixin):
+class CategoryView(BaseView, DiscountBulkTransferMixin):
     def __init__(
         self,
         controller: CategoryController,

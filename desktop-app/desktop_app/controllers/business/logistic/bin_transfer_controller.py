@@ -90,6 +90,7 @@ class BinTransferController(
             self.on_bulk_transfer_pending_reverted,
         )
 
+    @BaseController.handle_api_action(ApiActionError.SAVE)
     async def __perform_create_bin_items(self, items: list[AssocBinItemStrictSchema]) -> None:
         await self.__bin_item_service.create_bulk(Endpoint.BIN_ITEMS_CREATE_BULK, None, None, items, self._module_id)
 

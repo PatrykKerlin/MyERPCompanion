@@ -7,7 +7,7 @@ from typing import Any, Callable
 import flet as ft
 from config.context import Context
 from controllers.base.base_controller import BaseController
-from controllers.base.base_view_controller import BaseViewController
+from controllers.base.base_view_controller import BaseViewController, TServicePlainSchema, TServiceStrictSchema
 from events.events import ViewRequested
 from pydantic import ValidationError
 from schemas.business.trade.assoc_order_item_schema import AssocOrderItemStrictSchema
@@ -295,8 +295,8 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         return view
 
     async def _perform_get_page(
-        self, service: BaseService[OrderPlainSchema, SalesOrderStrictSchema], endpoint: Endpoint
-    ) -> PaginatedResponseSchema[OrderPlainSchema]:
+        self, service: BaseService[TServicePlainSchema, TServiceStrictSchema], endpoint: Endpoint
+    ) -> PaginatedResponseSchema[TServicePlainSchema]:
         return await super()._perform_get_page(service, Endpoint.SALES_ORDERS)
 
     async def _perform_create(
@@ -330,7 +330,6 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             self.__current_status_id = status_id
         return response
 
-    @staticmethod
     async def __auto_save_customer_discount(self, order_id: int) -> None:
         try:
             context = self.__build_discount_context()
@@ -1126,7 +1125,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         suffix = "".join(random.choices(string.ascii_uppercase, k=3))
         return f"{date_part}/{suffix}/{sequence:04d}"
 
-    @BaseController.handle_api_action(ApiActionError.SAVE)
+    @staticmethod
     def __get_latest_status_id(order_statuses: list[OrderViewStatusHistorySchema]) -> int | None:
         if not order_statuses:
             return None

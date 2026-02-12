@@ -5,13 +5,13 @@ from typing import TYPE_CHECKING, Any
 import flet as ft
 from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 
 if TYPE_CHECKING:
     from controllers.business.trade.supplier_controller import SupplierController
 
 
-class SupplierView(BaseDesktopView):
+class SupplierView(BaseView):
     def __init__(
         self,
         controller: SupplierController,

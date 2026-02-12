@@ -20,7 +20,7 @@ class BinQuantityDialogComponent(BaseDialog):
         self.__default_quantity = max(default_quantity, 1)
         sorted_bins = sorted(bin_options, key=lambda item: item[1])
         options = [ft.dropdown.Option(key=str(bin_id), text=label) for bin_id, label, _ in sorted_bins]
-        initial_key = options[0].key if options else "0"
+        initial_key = options[0].key if options and options[0].key is not None else "0"
         self.__bin_dropdown = ft.Dropdown(
             options=options,
             value=initial_key,

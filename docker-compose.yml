@@ -15,21 +15,6 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=changeme
 
-  ai-app:
-    build:
-      context: ./ai-app
-      dockerfile: dockerfile-ai
-    networks:
-      - project_net
-    volumes:
-      - ./ai-app/ai_app/:/ai_app
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:changeme@postgres/MyERPCompanion
-    depends_on:
-      - postgres
-    command:
-      sh -c "python -m main"
-
   rest-api:
     build:
       context: ./rest-api
@@ -59,10 +44,25 @@ services:
       sh -lc "mkdir -p /media/images &&
       exec /project/bin/uvicorn main:start_app --host 0.0.0.0 --port 8000 --lifespan=on --workers 4"
 
+  ai-app:
+    build:
+      context: ./ai-app
+      dockerfile: dockerfile
+    networks:
+      - project_net
+    volumes:
+      - ./ai-app/ai_app/:/ai_app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:changeme@postgres/MyERPCompanion
+    depends_on:
+      - postgres
+    command:
+      sh -c "python -m main"
+
   desktop-app:
     build:
       context: ./desktop-app
-      dockerfile: dockerfile-desktop
+      dockerfile: dockerfile
     networks:
       - project_net
     volumes:
@@ -83,7 +83,7 @@ services:
   mobile-app:
     build:
       context: ./mobile-app
-      dockerfile: dockerfile-mobile
+      dockerfile: dockerfile
     networks:
       - project_net
     volumes:
@@ -103,7 +103,7 @@ services:
   web-app:
     build:
       context: ./web-app
-      dockerfile: dockerfile-web
+      dockerfile: dockerfile
     networks:
       - project_net
     volumes:

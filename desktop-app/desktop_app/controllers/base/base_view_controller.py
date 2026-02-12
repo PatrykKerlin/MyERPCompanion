@@ -19,6 +19,7 @@ from events.events import (
 )
 from pydantic import ValidationError
 from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.base.base_schema import BaseSchema
 from schemas.core.param_schema import PaginatedResponseSchema
 from services.base.base_service import BaseService
 from states.states import ViewState
@@ -33,8 +34,8 @@ from views.controls.numeric_field_control import NumericField
 
 TService = TypeVar("TService", bound=BaseService)
 TView = TypeVar("TView", bound=BaseView)
-TControllerPlainSchema = TypeVar("TControllerPlainSchema", bound=BasePlainSchema)
-TControllerStrictSchema = TypeVar("TControllerStrictSchema", bound=BaseStrictSchema)
+TControllerPlainSchema = TypeVar("TControllerPlainSchema", bound=BaseSchema)
+TControllerStrictSchema = TypeVar("TControllerStrictSchema", bound=BaseSchema)
 TServicePlainSchema = TypeVar("TServicePlainSchema", bound=BasePlainSchema)
 TServiceStrictSchema = TypeVar("TServiceStrictSchema", bound=BaseStrictSchema)
 
@@ -565,6 +566,7 @@ class BaseViewController(
                     self._request_data.input_values["id"], self._service, self._endpoint, payload
                 )
             if response:
+                response_with_id = cast(BasePlainSchema, response)
                 if self._request_data.caller_view_key:
                     is_current_user_settings = (
                         self._request_data.caller_view_key == View.CURRENT_USER and self._view_key == View.USERS
@@ -574,7 +576,7 @@ class BaseViewController(
                         CallerActionRequested(
                             caller_view_key=self._request_data.caller_view_key,
                             source_view_key=self._view_key,
-                            created_id=response.id,
+                            created_id=response_with_id.id,
                             record_data=response.model_dump(),
                             caller_data=self._request_data.caller_data,
                         )
@@ -584,7 +586,7 @@ class BaseViewController(
                             TabRequested(
                                 module_id=self._module_id,
                                 view_key=self._view_key,
-                                record_id=response.id,
+                                record_id=response_with_id.id,
                                 record_data=response.model_dump(),
                                 mode=ViewMode.READ,
                                 caller_view_key=View.CURRENT_USER,
@@ -597,7 +599,7 @@ class BaseViewController(
                         TabRequested(
                             module_id=self._module_id,
                             view_key=self._view_key,
-                            record_id=response.id,
+                            record_id=response_with_id.id,
                             record_data=response.model_dump(),
                             save_succeeded=True,
                         )

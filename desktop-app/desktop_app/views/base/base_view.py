@@ -22,7 +22,7 @@ TController = TypeVar(
 )
 
 
-class BaseView(BaseComponent, Generic[TController], ft.Container):
+class BaseView(BaseComponent, Generic[TController], ft.Card):
     def __init__(
         self,
         controller: TController,
@@ -64,8 +64,27 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         self.__base_columns_qty = base_columns_qty
         self.__search_results: list[dict[str, Any]] | None = None
         self.__dropdown_options: dict[str, list[ft.DropdownOption]] = {}
+        self._cancel_button = ft.Button(
+            content=self._translation.get("cancel"),
+            on_click=lambda _: self._controller.on_cancel_clicked(),
+        )
+        self._save_button = ft.Button(
+            content=self._translation.get("save"),
+            on_click=lambda _: self._controller.on_save_clicked(),
+            disabled=False,
+        )
+        self._search_button = ft.Button(
+            content=self._translation.get("search"),
+            on_click=lambda _: self._controller.on_search_clicked(),
+        )
+        self._buttons_row = ft.Row(
+            controls=[self._search_button, self._cancel_button, self._save_button],
+            alignment=ft.MainAxisAlignment.END,
+            vertical_alignment=ft.CrossAxisAlignment.START,
+        )
+        self._rows = [self._columns_row, self._spacing_row, self._buttons_row]
 
-        ft.Container.__init__(self, content=self.__scrollable_wrapper, expand=True)
+        ft.Card.__init__(self, content=self.__scrollable_wrapper, expand=True)
 
     @property
     def view_key(self) -> View:
@@ -82,6 +101,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     @property
     def inputs(self) -> dict[str, FieldGroup]:
         return self._inputs
+
+    @property
+    def buttons_row(self) -> ft.Row:
+        return self._buttons_row
 
     @property
     def caller_view_key(self) -> View | None:
@@ -116,6 +139,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                 self.__set_edit_mode()
             case ViewMode.STATIC:
                 return
+        self.__set_buttons()
 
     def set_input_state(self, input: ft.Control, enable: bool) -> None:
         if hasattr(input, "disabled"):
@@ -139,8 +163,9 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     def clear_inputs(self) -> None:
         for key, field in self._inputs.items():
             input = field.input.content
+            marker_control = field.marker
+            marker = marker_control.content if marker_control else None
             if key in self._search_disabled_fields:
-                marker = field.marker.content
                 if isinstance(input, ft.TextField):
                     input.value = ""
                 elif isinstance(input, ft.Dropdown):
@@ -333,7 +358,14 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         size: int,
         options: Sequence[tuple[int | str, str]],
         callbacks: list[Callable[..., None]] | None = None,
+        label: str | None = None,
+        value: int | str | None = "0",
     ) -> tuple[ft.Container, int]:
+        resolved_value = "0"
+        if value is not None:
+            value_text = str(value).strip()
+            if value_text not in {"", "0"}:
+                resolved_value = value_text
         return (
             ft.Container(
                 content=ft.Dropdown(
@@ -345,7 +377,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                     ),
                     on_select=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
                     expand=True,
-                    value="0",
+                    value=resolved_value,
+                    label=label,
                     editable=True,
                     enable_search=True,
                     enable_filter=True,
@@ -484,8 +517,9 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         selected_inputs = self._controller.search_params.selected_inputs
         input_values = self._controller.search_params.input_values
         for key, field in self._inputs.items():
+            marker_control = field.marker
+            marker = marker_control.content if marker_control else None
             if key in self._search_disabled_fields:
-                marker = field.marker.content
                 if hasattr(marker, "disabled"):
                     setattr(marker, "disabled", True)
                 if hasattr(marker, "value"):
@@ -504,7 +538,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                     input.update()
                 continue
             input = field.input.content
-            marker = field.marker.content
             marker_selected = bool(getattr(marker, "value", False)) if marker else False
             is_selected = key in selected_inputs or marker_selected
             if is_selected:
@@ -551,7 +584,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         self.clear_inputs()
         for key, field in self._inputs.items():
             input = field.input.content
-            marker = field.marker.content
+            marker_control = field.marker
+            marker = marker_control.content if marker_control else None
             if hasattr(input, "disabled"):
                 if key in self._controller.meta_fields:
                     setattr(input, "disabled", True)
@@ -587,7 +621,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     def __set_read_mode(self) -> None:
         for key, field in self._inputs.items():
             input = field.input.content
-            marker = field.marker.content
+            marker_control = field.marker
+            marker = marker_control.content if marker_control else None
             if hasattr(input, "read_only"):
                 setattr(input, "read_only", True)
             if hasattr(input, "disabled"):
@@ -639,6 +674,26 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                 self._controller.set_field_value(key, getattr(input, "value", ""))
             if input:
                 input.update()
+
+    def __set_buttons(self) -> None:
+        if self._mode in [ViewMode.EDIT, ViewMode.CREATE]:
+            self._cancel_button.visible = True
+            self._save_button.visible = True
+            self._search_button.visible = False
+        elif self._mode == ViewMode.SEARCH:
+            self._cancel_button.visible = False
+            self._save_button.visible = False
+            self._search_button.visible = True
+        elif self._mode == ViewMode.READ:
+            self._cancel_button.visible = False
+            self._save_button.visible = False
+            self._search_button.visible = False
+        if self._cancel_button.page:
+            self._cancel_button.update()
+        if self._save_button.page:
+            self._save_button.update()
+        if self._search_button.page:
+            self._search_button.update()
 
     def __normalize_date_value(self, value: Any) -> date | None:
         if value is None:

@@ -5,23 +5,16 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     VIRTUAL_ENV=/project \
     PATH="/project/bin:$PATH" \
-    PYTHONPATH="/desktop_app" \
-    NVM_DIR=/root/.nvm
-
+    PYTHONPATH="/desktop_app"
 
 RUN apt-get update && \
     apt-get install -y \
-    curl libgtk-3-0 libsecret-1-0 libegl1 libgles2 libegl1 libgl1 zenity && \
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash && \
-    . "$NVM_DIR/nvm.sh" && nvm install 23 && \
-    . "$NVM_DIR/nvm.sh" && nvm alias default 23 && \
-    ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/node" /usr/bin/node && \
-    ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npm" /usr/bin/npm && \
-    ln -s "$NVM_DIR/versions/node/$(. $NVM_DIR/nvm.sh && nvm version)/bin/npx" /usr/bin/npx && \
+    libgtk-3-0 libsecret-1-0 libegl1 libgles2 libgl1 zenity && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 COPY /desktop_app/requirements.txt /tmp/requirements.txt
+
 RUN python -m venv $VIRTUAL_ENV && \
     pip install --upgrade pip && \
     pip install -r /tmp/requirements.txt && \

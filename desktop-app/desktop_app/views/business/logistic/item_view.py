@@ -6,7 +6,7 @@ import flet as ft
 from controllers.base.base_controller import BaseController
 from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 from views.controls.data_table_control import DataTable
 from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from controllers.business.logistic.item_controller import ItemController
 
 
-class ItemView(BaseDesktopView, DiscountBulkTransferMixin):
+class ItemView(BaseView, DiscountBulkTransferMixin):
     def __init__(
         self,
         controller: ItemController,

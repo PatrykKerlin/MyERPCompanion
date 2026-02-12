@@ -53,7 +53,7 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
         if not self._view or not self._view.data_row:
             return
         module_id = self._view.data_row["id"]
-        pending = self._view.get_pending_group_targets()
+        pending = self._view.get_pending_group_targets_with_permissions()
         if not pending:
             return
         self._page.run_task(self.__handle_groups_save, module_id, pending)

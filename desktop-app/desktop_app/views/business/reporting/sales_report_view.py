@@ -7,14 +7,14 @@ import flet as ft
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 from views.controls.date_field_control import DateField
 
 if TYPE_CHECKING:
     from controllers.business.reporting.sales_report_controller import SalesReportController
 
 
-class SalesReportView(BaseDesktopView):
+class SalesReportView(BaseView):
     def __init__(
         self,
         controller: SalesReportController,
@@ -73,36 +73,12 @@ class SalesReportView(BaseDesktopView):
         self.__category_input.value = str(category_id) if category_id is not None else "0"
         self._inputs.update(
             {
-                "date_from": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(date_from_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
-                "date_to": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(date_to_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
-                "currency_id": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(currency_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
-                "customer_id": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(customer_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
-                "item_id": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(item_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
-                "category_id": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(category_container, 0),
-                    marker=(ft.Container(), 0),
-                ),
+                "date_from": FieldGroup(input=(date_from_container, 0)),
+                "date_to": FieldGroup(input=(date_to_container, 0)),
+                "currency_id": FieldGroup(input=(currency_container, 0)),
+                "customer_id": FieldGroup(input=(customer_container, 0)),
+                "item_id": FieldGroup(input=(item_container, 0)),
+                "category_id": FieldGroup(input=(category_container, 0)),
             }
         )
 
@@ -140,10 +116,10 @@ class SalesReportView(BaseDesktopView):
         self.__customer_input.value = "0"
         self.__item_input.value = "0"
         self.__category_input.value = "0"
-        self.__safe_update(self.__currency_input)
-        self.__safe_update(self.__customer_input)
-        self.__safe_update(self.__item_input)
-        self.__safe_update(self.__category_input)
+        self.safe_update(self.__currency_input)
+        self.safe_update(self.__customer_input)
+        self.safe_update(self.__item_input)
+        self.safe_update(self.__category_input)
 
     def __build_layout(self) -> None:
         apply_button = ft.Button(
@@ -219,7 +195,7 @@ class SalesReportView(BaseDesktopView):
             self.__build_total_item("total_gross", self.__totals.get("total_gross", "0.00")),
             self.__build_total_item("total_discount", self.__totals.get("total_discount", "0.00")),
         ]
-        self.__safe_update(self.__totals_row)
+        self.safe_update(self.__totals_row)
 
     def __build_total_item(self, label_key: str, value: str) -> ft.Container:
         return ft.Container(
@@ -243,8 +219,8 @@ class SalesReportView(BaseDesktopView):
             self.__daily_chart,
             self.__daily_chart_dialog,
         )
-        self.__safe_update(self.__category_chart_container)
-        self.__safe_update(self.__daily_chart_container)
+        self.safe_update(self.__category_chart_container)
+        self.safe_update(self.__daily_chart_container)
 
     def __build_chart_content(self, title: str, chart: bytes | None, dialog_chart: bytes | None) -> ft.Control:
         if not chart:
@@ -294,11 +270,3 @@ class SalesReportView(BaseDesktopView):
             actions_alignment=ft.MainAxisAlignment.END,
         )
         self._controller._queue_dialog(dialog)
-
-    @staticmethod
-    def __safe_update(control: ft.Control) -> None:
-        try:
-            _ = control.page
-        except RuntimeError:
-            return
-        control.update()

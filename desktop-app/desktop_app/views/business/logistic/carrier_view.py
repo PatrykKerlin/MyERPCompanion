@@ -5,14 +5,14 @@ from typing import TYPE_CHECKING, Any
 import flet as ft
 from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 from views.controls.data_table_control import DataTable
 
 if TYPE_CHECKING:
     from controllers.business.logistic.carrier_controller import CarrierController
 
 
-class CarrierView(BaseDesktopView):
+class CarrierView(BaseView):
     def __init__(
         self,
         controller: CarrierController,

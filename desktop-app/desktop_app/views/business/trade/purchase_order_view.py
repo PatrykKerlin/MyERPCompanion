@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Callable, cast
 import flet as ft
 from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_desktop_view import BaseDesktopView
+from views.base.base_view import BaseView
 from views.controls.bulk_transfer_control import BulkTransfer
 from views.controls.data_table_control import DataTable
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from controllers.business.trade.purchase_order_controller import PurchaseOrderController
 
 
-class PurchaseOrderView(BaseDesktopView):
+class PurchaseOrderView(BaseView):
     def __init__(
         self,
         controller: PurchaseOrderController,
