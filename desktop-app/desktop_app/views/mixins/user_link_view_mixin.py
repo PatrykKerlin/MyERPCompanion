@@ -120,9 +120,9 @@ class UserLinkViewMixin:
                 self._user_button.disabled = True
             if self._user_button.page:
                 self._user_button.update()
-        if isinstance(row, ft.Container):
-            row.disabled = mode in {ViewMode.CREATE, ViewMode.EDIT}
-            if row.page:
+        if row is not None and hasattr(row, "disabled"):
+            setattr(row, "disabled", mode in {ViewMode.CREATE, ViewMode.EDIT})
+            if getattr(row, "page", None):
                 row.update()
 
     def _set_user_link_dropdown_options(self, key: str, options: list[tuple[int, str]]) -> bool:

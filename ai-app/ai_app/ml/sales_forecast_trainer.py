@@ -17,8 +17,8 @@ logger = logging.getLogger("ai")
 
 class SalesForecastTrainer:
     _checkpoint_path = Path("/ai_app/.artifacts/sales_forecast.pt")
-    _max_epochs = 1200
-    _min_epochs = 150
+    _max_epochs = 2500
+    _min_epochs = 1500
     _learning_rate = 0.003
     _weight_decay = 1e-5
     _validation_ratio = 0.2
