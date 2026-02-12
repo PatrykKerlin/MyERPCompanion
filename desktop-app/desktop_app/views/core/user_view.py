@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
-
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_desktop_view import BaseDesktopView
@@ -144,6 +143,7 @@ class UserView(BaseDesktopView, GroupBulkTransferMixin):
         if hasattr(self, "_group_bulk_transfer"):
             self._mount_group_bulk_transfer()
         return super().did_mount()
+
     def __handle_employee_changed(self) -> None:
         field = self._inputs.get("employee_id")
         if not field:

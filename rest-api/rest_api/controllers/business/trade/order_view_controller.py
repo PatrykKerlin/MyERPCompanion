@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy.exc import NoResultFound, SQLAlchemyError
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from schemas.business.trade.order_view_schema import OrderViewResponseSchema
 from services.business.trade.order_view_service import OrderViewService
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from utils.auth import Auth
 from utils.enums import Permission
 
@@ -15,7 +14,9 @@ class OrderViewController:
         self._service = OrderViewService()
         self._auth = auth
         self.router = APIRouter()
-        dependencies = [Depends(auth.restrict_access(permissions=[Permission.CAN_READ], controller=self.__class__.__name__))]
+        dependencies = [
+            Depends(auth.restrict_access(permissions=[Permission.CAN_READ], controller=self.__class__.__name__))
+        ]
         self.router.add_api_route(
             path="/purchase",
             endpoint=self.get_purchase_view,

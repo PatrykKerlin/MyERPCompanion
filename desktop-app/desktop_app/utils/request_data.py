@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from utils.enums import View
 from typing import Any
+
+from utils.enums import View
 
 
 @dataclass

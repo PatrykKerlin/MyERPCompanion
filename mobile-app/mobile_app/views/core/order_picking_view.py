@@ -4,7 +4,6 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING, Any, cast
 
 import flet as ft
-
 from schemas.business.logistic.item_schema import ItemPlainSchema
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup

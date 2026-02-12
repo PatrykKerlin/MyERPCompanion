@@ -3,13 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
-
 from utils.enums import View, ViewMode
-
-from views.base.base_desktop_view import BaseDesktopView
-from views.mixins.user_link_view_mixin import UserLinkViewMixin
-from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin
 from utils.translation import Translation
+from views.base.base_desktop_view import BaseDesktopView
+from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin
+from views.mixins.user_link_view_mixin import UserLinkViewMixin
 
 if TYPE_CHECKING:
     from controllers.business.trade.customer_controller import CustomerController
@@ -28,12 +26,9 @@ class CustomerView(BaseDesktopView, DiscountBulkTransferMixin, UserLinkViewMixin
         user_options: list[tuple[int, str]],
         on_discount_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
         on_discount_delete_clicked: Callable[[list[int]], None] | None = None,
-        
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
-        
-        
-        
+
         company_fields_definitions = [
             {"key": "first_name", "input": self._get_text_input},
             {"key": "last_name", "input": self._get_text_input},
@@ -104,7 +99,6 @@ class CustomerView(BaseDesktopView, DiscountBulkTransferMixin, UserLinkViewMixin
             {"key": "shipping_country", "input": self._get_text_input, "input_size": 3},
         ]
 
-        
         company_fields = self._build_field_groups(company_fields_definitions)
         financial_fields = self._build_field_groups(financial_fields_definitions)
         contact_fields = self._build_field_groups(contact_fields_definitions)
@@ -120,7 +114,6 @@ class CustomerView(BaseDesktopView, DiscountBulkTransferMixin, UserLinkViewMixin
         user_field = self._init_user_link_field(user_options, self._controller.on_add_user_clicked, input_size=7)
 
         self._add_to_inputs(
-            
             company_fields,
             financial_fields,
             contact_fields,
@@ -135,7 +128,6 @@ class CustomerView(BaseDesktopView, DiscountBulkTransferMixin, UserLinkViewMixin
             user_field,
         )
 
-        
         company_grid = self._build_grid(company_fields)
         financial_grid = self._build_grid(financial_fields)
         contact_grid = self._build_grid(contact_fields)
@@ -153,9 +145,13 @@ class CustomerView(BaseDesktopView, DiscountBulkTransferMixin, UserLinkViewMixin
 
         columns = [
             ft.Column(
-                controls=
-                
-                company_grid + financial_grid + contact_grid + street_grid + house_grid + city_grid + country_grid,
+                controls=company_grid
+                + financial_grid
+                + contact_grid
+                + street_grid
+                + house_grid
+                + city_grid
+                + country_grid,
                 expand=3,
             ),
             self._spacing_column,
@@ -194,7 +190,6 @@ class CustomerView(BaseDesktopView, DiscountBulkTransferMixin, UserLinkViewMixin
             ]
         )
 
-
     def clear_inputs(self) -> None:
         super().clear_inputs()
         self._reset_user_link()
@@ -211,4 +206,3 @@ class CustomerView(BaseDesktopView, DiscountBulkTransferMixin, UserLinkViewMixin
     def did_mount(self):
         self._mount_discount_bulk_transfer()
         return super().did_mount()
-

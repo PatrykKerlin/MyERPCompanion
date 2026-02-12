@@ -1,24 +1,22 @@
-from datetime import date
-from typing import Any, Callable
 import math
 import random
 import string
+from datetime import date
+from typing import Any, Callable
 
 import flet as ft
-from pydantic import ValidationError
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from events.events import ViewRequested
+from pydantic import ValidationError
 from schemas.business.trade.assoc_order_item_schema import AssocOrderItemStrictSchema
 from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusStrictSchema
-from utils.discount_context import DiscountContext
 from schemas.business.trade.order_schema import OrderPlainSchema, SalesOrderStrictSchema
 from schemas.business.trade.order_view_schema import (
-    OrderViewResponseSchema,
-    OrderViewExchangeRateSchema,
     OrderViewDiscountSchema,
+    OrderViewExchangeRateSchema,
+    OrderViewResponseSchema,
     OrderViewSourceItemSchema,
     OrderViewStatusHistorySchema,
     OrderViewTargetItemSchema,
@@ -26,6 +24,7 @@ from schemas.business.trade.order_view_schema import (
 from schemas.core.param_schema import IdsPayloadSchema, PaginatedResponseSchema
 from services.base.base_service import BaseService
 from services.business.trade import AssocOrderItemService, AssocOrderStatusService, OrderService, OrderViewService
+from utils.discount_context import DiscountContext
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.trade.sales_order_view import SalesOrderView
@@ -498,9 +497,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         total_gross = round(total_net + total_vat, 2)
         return total_net, total_vat, total_gross, total_discount
 
-    def __get_discount_percent(
-        self, item_id: int, quantity: int, base_net: float, context: DiscountContext
-    ) -> float:
+    def __get_discount_percent(self, item_id: int, quantity: int, base_net: float, context: DiscountContext) -> float:
         discount_ids = self.__get_discount_ids_for_item(item_id, quantity, base_net, context)
         if not discount_ids:
             return 0.0

@@ -2,12 +2,11 @@ from abc import ABC
 from collections.abc import Mapping
 from typing import Generic, Sequence, TypeVar
 
-from sqlalchemy.exc import NoResultFound
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from models.base.base_model import BaseModel
 from repositories.base.base_repository import BaseRepository
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession
 
 TModel = TypeVar("TModel", bound=BaseModel)
 TRepository = TypeVar("TRepository", bound=BaseRepository)

@@ -1,10 +1,10 @@
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.business.trade.currency_schema import CurrencyPlainSchema, CurrencyStrictSchema
 from services.business.trade import CurrencyService
 from utils.enums import Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.trade.currency_view import CurrencyView
-from events.events import ViewRequested
 
 
 class CurrencyController(BaseViewController[CurrencyService, CurrencyView, CurrencyPlainSchema, CurrencyStrictSchema]):

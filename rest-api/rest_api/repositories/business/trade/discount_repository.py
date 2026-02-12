@@ -1,10 +1,9 @@
 from collections.abc import Mapping
 
-from sqlalchemy.sql import Select
-from sqlalchemy.sql.elements import ColumnElement
-
 from models.business.trade.discount import Discount
 from repositories.base.base_repository import BaseRepository
+from sqlalchemy.sql import Select
+from sqlalchemy.sql.elements import ColumnElement
 
 
 class DiscountRepository(BaseRepository[Discount]):

@@ -1,10 +1,10 @@
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.business.logistic.unit_schema import UnitPlainSchema, UnitStrictSchema
 from services.business.logistic import UnitService
 from utils.enums import Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.unit_view import UnitView
-from events.events import ViewRequested
 
 
 class UnitController(BaseViewController[UnitService, UnitView, UnitPlainSchema, UnitStrictSchema]):

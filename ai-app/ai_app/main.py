@@ -5,13 +5,12 @@ from datetime import UTC, datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-
 from config.settings import Settings
 from database.engine import Engine
 from ml.sales_forecast_trainer import SalesForecastTrainer
 from repositories.order_repository import OrderRepository
-from repositories.sales_prediction_repository import SalesPredictionRepository
 from repositories.sales_forecast_result_repository import SalesForecastResultRepository
+from repositories.sales_prediction_repository import SalesPredictionRepository
 from repositories.task_run_repository import TaskRunRepository
 from services.data_window_service import DataWindowService
 from services.sales_forecast_service import SalesForecastService
@@ -124,7 +123,13 @@ def main() -> None:
     )
     logger = logging.getLogger("ai")
 
-    for model_path in ("models.ai", "models.business.hr", "models.business.logistic", "models.business.trade", "models.core"):
+    for model_path in (
+        "models.ai",
+        "models.business.hr",
+        "models.business.logistic",
+        "models.business.trade",
+        "models.core",
+    ):
         importlib.import_module(model_path)
     logger.info("All SQLAlchemy models loaded")
 

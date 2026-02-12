@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 import flet as ft
-
 from controllers.base.base_controller import BaseController
 from events.events import CallerActionRequested, TabRequested
 from schemas.business.hr.employee_schema import EmployeePlainSchema

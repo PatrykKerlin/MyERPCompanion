@@ -4,11 +4,9 @@ from os import getenv
 from pathlib import Path
 
 from aiofiles import open
-from sqlalchemy import func, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from models import core as mc
-from models.base.base_model import BaseModel
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 from utils.auth import Auth
 
 

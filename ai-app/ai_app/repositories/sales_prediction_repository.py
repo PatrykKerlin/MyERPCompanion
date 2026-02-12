@@ -3,14 +3,13 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
-from sqlalchemy import cast, func, select
-from sqlalchemy import Date as SqlDate
-from sqlalchemy import Float as SqlFloat
-
 from database.engine import Engine
 from models.business.logistic.item import Item
 from models.business.trade.assoc_order_item import AssocOrderItem
 from models.business.trade.order import Order
+from sqlalchemy import Date as SqlDate
+from sqlalchemy import Float as SqlFloat
+from sqlalchemy import cast, func, select
 
 
 class SalesPredictionRepository:

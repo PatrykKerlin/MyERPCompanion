@@ -1,10 +1,10 @@
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.business.hr.department_schema import DepartmentPlainSchema, DepartmentStrictSchema
 from services.business.hr import DepartmentService
 from utils.enums import Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.hr.department_view import DepartmentView
-from events.events import ViewRequested
 
 
 class DepartmentController(

@@ -1,7 +1,6 @@
 import asyncio
 
 import flet as ft
-
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 from views.controls.numeric_field_control import NumericField

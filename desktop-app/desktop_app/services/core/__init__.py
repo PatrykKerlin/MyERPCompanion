@@ -1,7 +1,7 @@
-from schemas.core.group_schema import GroupPlainSchema, GroupStrictSchema
 from schemas.core.assoc_module_group_schema import AssocModuleGroupPlainSchema, AssocModuleGroupStrictSchema
 from schemas.core.assoc_user_group_schema import AssocUserGroupPlainSchema, AssocUserGroupStrictSchema
 from schemas.core.assoc_view_controller_schema import AssocViewControllerPlainSchema, AssocViewControllerStrictSchema
+from schemas.core.group_schema import GroupPlainSchema, GroupStrictSchema
 from schemas.core.language_schema import LanguagePlainSchema, LanguageStrictSchema
 from schemas.core.module_schema import ModulePlainSchema, ModuleStrictSchema
 from schemas.core.user_schema import UserPlainSchema, UserStrictUpdateAppSchema
@@ -11,7 +11,6 @@ from services.core.auth_service import AuthService
 from services.core.image_service import ImageService
 from services.core.translation_service import TranslationService
 from utils.service_factory import ServiceFactory
-
 
 GroupService = ServiceFactory.create(
     name_prefix="Group",

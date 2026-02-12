@@ -1,6 +1,6 @@
-import flet as ft
-from typing import Callable, cast, Any
+from typing import Any, Callable, cast
 
+import flet as ft
 from controllers.base.base_controller import BaseController
 
 

@@ -1,36 +1,35 @@
-from datetime import date, datetime
-from dataclasses import replace
 import json
 from abc import ABC, abstractmethod
+from dataclasses import replace
+from datetime import date, datetime
 from typing import Any, Callable, Generic, TypeVar, cast
 
 import flet as ft
-from pydantic import ValidationError
-
+from config.context import Context
 from controllers.base.base_controller import BaseController
 from events.events import (
-    RecordDeleteRequested,
     CallerActionRequested,
+    RecordDeleteRequested,
+    SaveSucceeded,
     TabClosed,
     TabCloseRequested,
     TabRequested,
     ViewReady,
-    SaveSucceeded,
     ViewRequested,
 )
-from schemas.base import BaseStrictSchema, BasePlainSchema
+from pydantic import ValidationError
+from schemas.base import BasePlainSchema, BaseStrictSchema
 from schemas.core.param_schema import PaginatedResponseSchema
 from services.base.base_service import BaseService
 from states.states import ViewState
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
+from utils.media_url import MediaUrl
 from utils.request_data import RequestData
 from utils.translation import Translation
-from utils.media_url import MediaUrl
 from views.base.base_view import BaseView
 from views.components.message_dialog_component import MessageDialogComponent
 from views.controls.date_field_control import DateField
 from views.controls.numeric_field_control import NumericField
-from config.context import Context
 
 TService = TypeVar("TService", bound=BaseService)
 TView = TypeVar("TView", bound=BaseView)

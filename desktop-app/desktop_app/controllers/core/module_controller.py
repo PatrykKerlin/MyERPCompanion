@@ -2,10 +2,10 @@ import asyncio
 from typing import Any
 
 import flet as ft
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.core.assoc_module_group_schema import AssocModuleGroupPlainSchema, AssocModuleGroupStrictSchema
 from schemas.core.assoc_view_controller_schema import AssocViewControllerStrictSchema
 from schemas.core.group_schema import GroupPlainSchema
@@ -16,7 +16,6 @@ from services.core import AssocModuleGroupService, AssocViewControllerService, G
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.core.module_view import ModuleView
-from events.events import ViewRequested
 
 
 class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlainSchema, ModuleStrictSchema]):

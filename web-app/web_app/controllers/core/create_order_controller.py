@@ -6,11 +6,11 @@ import string
 from datetime import date
 
 import flet as ft
-
+from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
-from events.events import ViewRequested, CartUpdated
-from utils.discount_context import DiscountContext
+from events.events import CartUpdated, ViewRequested
+from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
 from schemas.business.trade.assoc_order_item_schema import AssocOrderItemPlainSchema, AssocOrderItemStrictSchema
 from schemas.business.trade.assoc_order_status_schema import (
     AssocOrderStatusPlainSchema,
@@ -23,7 +23,6 @@ from schemas.business.trade.order_view_schema import (
     OrderViewResponseSchema,
     OrderViewSourceItemSchema,
 )
-from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
 from services.business.logistic import ItemService
 from services.business.trade import (
     AssocOrderItemService,
@@ -31,13 +30,12 @@ from services.business.trade import (
     OrderService,
     OrderViewService,
 )
+from utils.discount_context import DiscountContext
 from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
-from utils.translation import Translation
 from utils.media_url import MediaUrl
+from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 from views.core.create_order_view import CreateOrderView
-
-from config.context import Context
 
 
 class MissingExchangeRateError(RuntimeError):
@@ -552,17 +550,14 @@ class CreateOrderController(
         discount_ids: list[int] = []
 
         item_discount_id = cart_data.get("item_discount_id")
-        if (
-            isinstance(item_discount_id, int)
-            and self.__is_discount_allowed(
-                self.__item_discount_map.get(item_id, []),
-                item_discount_id,
-                quantity,
-                base_net,
-                target_currency_id,
-                track_missing,
-                raise_on_missing,
-            )
+        if isinstance(item_discount_id, int) and self.__is_discount_allowed(
+            self.__item_discount_map.get(item_id, []),
+            item_discount_id,
+            quantity,
+            base_net,
+            target_currency_id,
+            track_missing,
+            raise_on_missing,
         ):
             discount_ids.append(item_discount_id)
 
@@ -583,17 +578,14 @@ class CreateOrderController(
         ):
             discount_ids.append(category_discount_id)
 
-        if (
-            isinstance(customer_discount_id, int)
-            and self.__is_discount_allowed(
-                self.__customer_discounts,
-                customer_discount_id,
-                context.order_quantity,
-                context.order_net,
-                target_currency_id,
-                track_missing,
-                raise_on_missing,
-            )
+        if isinstance(customer_discount_id, int) and self.__is_discount_allowed(
+            self.__customer_discounts,
+            customer_discount_id,
+            context.order_quantity,
+            context.order_net,
+            target_currency_id,
+            track_missing,
+            raise_on_missing,
         ):
             discount_ids.append(customer_discount_id)
 
@@ -884,15 +876,12 @@ class CreateOrderController(
         ):
             category_discount_id = cart_category_discount_id
         resolved_customer_discount_id = None
-        if (
-            isinstance(customer_discount_id, int)
-            and self.__is_discount_allowed(
-                self.__customer_discounts,
-                customer_discount_id,
-                context.order_quantity,
-                context.order_net,
-                target_currency_id,
-            )
+        if isinstance(customer_discount_id, int) and self.__is_discount_allowed(
+            self.__customer_discounts,
+            customer_discount_id,
+            context.order_quantity,
+            context.order_net,
+            target_currency_id,
         ):
             resolved_customer_discount_id = customer_discount_id
         return item_discount_id, category_discount_id, resolved_customer_discount_id

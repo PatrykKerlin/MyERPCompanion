@@ -2,17 +2,14 @@ from collections.abc import Callable
 from typing import Awaitable
 
 from fastapi import Request, Response
+from services.core import UserService
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
-
-from services.core import UserService
 from utils.auth import Auth
 
 
 class UserMiddleware(BaseHTTPMiddleware):
-    def __init__(
-        self, app: ASGIApp, auth: Auth
-    ) -> None:
+    def __init__(self, app: ASGIApp, auth: Auth) -> None:
         super().__init__(app)
         self.__auth = auth
 

@@ -1,11 +1,10 @@
 from collections.abc import Mapping, Sequence
 
+from models.core import Translation
+from repositories.base.base_repository import BaseRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
-
-from models.core import Translation
-from repositories.base.base_repository import BaseRepository
 
 
 class TranslationRepository(BaseRepository[Translation]):

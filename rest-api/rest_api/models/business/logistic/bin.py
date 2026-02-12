@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Index, text
-from sqlalchemy.orm import Mapped
-
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
+from sqlalchemy import Index, text
+from sqlalchemy.orm import Mapped
 
 if TYPE_CHECKING:
     from models.business.logistic.assoc_bin_item import AssocBinItem
@@ -16,7 +15,9 @@ if TYPE_CHECKING:
 
 class Bin(BaseModel):
     __tablename__ = "bins"
-    __table_args__ = (Index("ux_bin_location_active_true", "location", unique=True, postgresql_where=text("is_active")),)
+    __table_args__ = (
+        Index("ux_bin_location_active_true", "location", unique=True, postgresql_where=text("is_active")),
+    )
 
     location: Mapped[str] = Fields.string_10(unique=False)
     is_inbound: Mapped[bool] = Fields.boolean(default=False)

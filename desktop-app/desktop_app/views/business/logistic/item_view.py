@@ -3,13 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
-
 from controllers.base.base_controller import BaseController
 from utils.enums import View, ViewMode
-
+from utils.translation import Translation
 from views.base.base_desktop_view import BaseDesktopView
 from views.controls.data_table_control import DataTable
-from utils.translation import Translation
 from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin
 
 if TYPE_CHECKING:

@@ -30,7 +30,7 @@ class AssocOrderItemPlainSchema(BasePlainSchema):
     order_id: int
     item_id: int
     bin_id: int | None
-    
+
     category_discount_id: int | None
     customer_discount_id: int | None
     item_discount_id: int | None

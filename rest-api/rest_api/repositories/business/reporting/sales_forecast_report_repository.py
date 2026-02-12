@@ -4,16 +4,15 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import DateTime, Select, case, cast, desc, distinct, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.elements import ColumnElement
-
 from models.ai.ai_task_run import AiTaskRun
 from models.ai.sales_forecast import SalesForecast
 from models.business.logistic.category import Category
 from models.business.logistic.item import Item
 from models.business.trade.currency import Currency
 from models.business.trade.customer import Customer
+from sqlalchemy import DateTime, Select, case, cast, desc, distinct, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import ColumnElement
 
 
 class SalesForecastReportRepository:
@@ -141,7 +140,10 @@ class SalesForecastReportRepository:
         predicted_net = func.coalesce(
             func.sum(
                 case(
-                    (SalesForecast.aggregation == SalesForecastReportRepository._aggregation_net, SalesForecast.predicted_quantity),
+                    (
+                        SalesForecast.aggregation == SalesForecastReportRepository._aggregation_net,
+                        SalesForecast.predicted_quantity,
+                    ),
                     else_=0,
                 )
             ),

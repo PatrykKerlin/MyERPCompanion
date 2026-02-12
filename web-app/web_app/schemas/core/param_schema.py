@@ -1,7 +1,6 @@
 from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
-
 from schemas.base.base_schema import BaseSchema
 
 TResponseSchema = TypeVar("TResponseSchema", bound=BaseSchema)

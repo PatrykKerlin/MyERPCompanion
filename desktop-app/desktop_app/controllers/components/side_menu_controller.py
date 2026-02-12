@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from controllers.base.base_component_controller import BaseComponentController
+from events.events import SideMenuReady, SideMenuRequested, SideMenuToggleRequested, TabRequested
 from utils.enums import View
 from views.components.side_menu_component import SideMenuComponent
-from events.events import SideMenuReady, SideMenuRequested, SideMenuToggleRequested, TabRequested
 
 if TYPE_CHECKING:
     from config.context import Context

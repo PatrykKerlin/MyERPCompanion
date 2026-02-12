@@ -7,7 +7,7 @@ class Constraints:
     __digits_only_regex = r"^\d+$"
     __phone_number_regex = r"^\+?\d[\d\s]*$"
     __postal_code_regex = r"^\d{2}-\d{3}$"
-    __none_to_zero = lambda value: 0.0 if value is None else value
+    __none_to_zero = lambda value: 0.0 if value is None else value  # noqa: E731
 
     Key = Annotated[str, Field(min_length=1, max_length=25, pattern=r"^[a-z_]+$")]
     Name = Annotated[str, Field(min_length=1, max_length=50)]

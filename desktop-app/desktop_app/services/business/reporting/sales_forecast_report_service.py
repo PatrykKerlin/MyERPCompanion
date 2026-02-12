@@ -23,6 +23,8 @@ class SalesForecastReportService(BaseService[SalesForecastReportResponseSchema, 
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> SalesForecastReportResponseSchema:
-        response = await self._get(endpoint=str(endpoint), query_params=query_params, tokens=tokens, module_id=module_id)
+        response = await self._get(
+            endpoint=str(endpoint), query_params=query_params, tokens=tokens, module_id=module_id
+        )
         data = response.json()
         return self._plain_schema_cls(**data)

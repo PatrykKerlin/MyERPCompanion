@@ -1,21 +1,15 @@
 from collections.abc import Sequence
-
 from datetime import date
-
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, with_loader_criteria
 
 from models.business.logistic.carrier import Carrier
 from models.business.logistic.category import Category
 from models.business.logistic.delivery_method import DeliveryMethod
 from models.business.logistic.item import Item
-from models.core.image import Image
-from models.business.trade.assoc_order_item import AssocOrderItem
-from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.assoc_category_discount import AssocCategoryDiscount
 from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
 from models.business.trade.assoc_item_discount import AssocItemDiscount
+from models.business.trade.assoc_order_item import AssocOrderItem
+from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.currency import Currency
 from models.business.trade.customer import Customer
 from models.business.trade.discount import Discount
@@ -23,6 +17,12 @@ from models.business.trade.exchange_rate import ExchangeRate
 from models.business.trade.order import Order
 from models.business.trade.status import Status
 from models.business.trade.supplier import Supplier
+from models.core.image import Image
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload, with_loader_criteria
+
+
 class OrderViewRepository:
     @staticmethod
     async def get_lookups(
@@ -45,7 +45,9 @@ class OrderViewRepository:
             .order_by(Customer.company_name)
             .options(
                 selectinload(Customer.customer_discounts).selectinload(AssocCustomerDiscount.discount),
-                with_loader_criteria(AssocCustomerDiscount, AssocCustomerDiscount.is_active.is_(True), include_aliases=True),
+                with_loader_criteria(
+                    AssocCustomerDiscount, AssocCustomerDiscount.is_active.is_(True), include_aliases=True
+                ),
                 with_loader_criteria(Discount, Discount.is_active.is_(True), include_aliases=True),
             )
         )
@@ -66,7 +68,9 @@ class OrderViewRepository:
             .order_by(Category.name)
             .options(
                 selectinload(Category.category_discounts).selectinload(AssocCategoryDiscount.discount),
-                with_loader_criteria(AssocCategoryDiscount, AssocCategoryDiscount.is_active.is_(True), include_aliases=True),
+                with_loader_criteria(
+                    AssocCategoryDiscount, AssocCategoryDiscount.is_active.is_(True), include_aliases=True
+                ),
                 with_loader_criteria(Discount, Discount.is_active.is_(True), include_aliases=True),
             )
         )

@@ -3,21 +3,20 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 
-from fastapi import APIRouter, FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from starlette.staticfiles import StaticFiles
-
+import models.ai  # noqa: F401
 from config.context import Context
-from database.engine import Engine
 from config.settings import Settings
 from controllers import core
-import models.ai  # noqa: F401
 from controllers.business import hr, logistic, reporting, trade
+from database.engine import Engine
+from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from handlers.check_database_state import CheckDatabaseState
 from handlers.populate_database import PopulateDatabase
 from middlewares.db_session_middleware import DbSessionMiddleware
 from middlewares.module_middleware import ModuleMiddleware
 from middlewares.user_middleware import UserMiddleware
+from starlette.staticfiles import StaticFiles
 from utils.auth import Auth
 
 

@@ -4,15 +4,14 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import Select, desc, distinct, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.elements import ColumnElement
-
 from models.business.logistic.category import Category
 from models.business.logistic.item import Item
 from models.business.trade.assoc_order_item import AssocOrderItem
 from models.business.trade.customer import Customer
 from models.business.trade.order import Order
+from sqlalchemy import Select, desc, distinct, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import ColumnElement
 
 
 class SalesReportRepository:

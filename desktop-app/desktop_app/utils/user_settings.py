@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+
 class UserSettings:
     @classmethod
     def load(cls) -> tuple[str | None, str | None]:

@@ -1,19 +1,18 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, TypeVar, cast
 from datetime import date, datetime
+from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, TypeVar, cast
 
 import flet as ft
-
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from services.base.base_service import BaseService
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
+from utils.translation import Translation
 from views.base.base_component import BaseComponent
+from views.components.search_results_component import SearchResultsComponent
 from views.controls.date_field_control import DateField
 from views.controls.numeric_field_control import NumericField
-from views.components.search_results_component import SearchResultsComponent
-from utils.translation import Translation
-from schemas.base.base_schema import BaseStrictSchema, BasePlainSchema
-from services.base.base_service import BaseService
 
 if TYPE_CHECKING:
     from controllers.base.base_view_controller import BaseViewController
@@ -495,7 +494,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                     setattr(marker, "width", 0)
                 if marker:
                     marker.update()
-                
+
                 input = field.input.content
                 if hasattr(input, "read_only"):
                     setattr(input, "read_only", True)

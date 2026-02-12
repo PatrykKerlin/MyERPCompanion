@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Index, text
-from sqlalchemy.orm import Mapped
-
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
+from sqlalchemy import Index, text
+from sqlalchemy.orm import Mapped
 
 if TYPE_CHECKING:
     from models.business.hr.employee import Employee
@@ -19,7 +18,10 @@ if TYPE_CHECKING:
 
 class User(BaseModel):
     __tablename__ = "users"
-    __table_args__ = (Index("ux_user_username_active_true", "username", unique=True, postgresql_where=text("is_active")), Index("ux_user_employee_id_active_true", "employee_id", unique=True, postgresql_where=text("is_active")),)
+    __table_args__ = (
+        Index("ux_user_username_active_true", "username", unique=True, postgresql_where=text("is_active")),
+        Index("ux_user_employee_id_active_true", "employee_id", unique=True, postgresql_where=text("is_active")),
+    )
 
     username: Mapped[str] = Fields.string_20(unique=False)
     is_superuser: Mapped[bool] = Fields.boolean(default=False)

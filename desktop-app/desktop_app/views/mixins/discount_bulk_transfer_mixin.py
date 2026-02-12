@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import flet as ft
-
 from utils.enums import ViewMode
 from views.controls.bulk_transfer_control import BulkTransfer
 
@@ -26,6 +25,7 @@ class DiscountBulkTransferMixin:
 
     def set_discount_target_items(self, items: list[tuple[int, str]]) -> None:
         self._discount_bulk_transfer.set_target_items(items)
+
     def _init_discount_bulk_transfer(
         self,
         mode: ViewMode,
@@ -68,4 +68,3 @@ class DiscountBulkTransferMixin:
     def _set_discount_bulk_transfer_state(self, mode: ViewMode) -> None:
         editable = mode == ViewMode.READ
         self._discount_bulk_transfer.set_enabled_states(editable, editable, editable)
-

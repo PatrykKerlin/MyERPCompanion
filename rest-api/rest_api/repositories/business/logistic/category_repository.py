@@ -1,13 +1,12 @@
 from typing import Mapping
 
-from sqlalchemy.orm import selectinload, with_loader_criteria
-from sqlalchemy.sql import Select
-from sqlalchemy.sql.elements import ColumnElement
-
 from models.business.logistic.category import Category
 from models.business.trade.assoc_category_discount import AssocCategoryDiscount
 from models.business.trade.discount import Discount
 from repositories.base.base_repository import BaseRepository
+from sqlalchemy.orm import selectinload, with_loader_criteria
+from sqlalchemy.sql import Select
+from sqlalchemy.sql.elements import ColumnElement
 
 
 class CategoryRepository(BaseRepository[Category]):

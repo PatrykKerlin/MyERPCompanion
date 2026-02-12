@@ -1,12 +1,11 @@
 from typing import Mapping
 
-from sqlalchemy.orm import selectinload, with_loader_criteria
-from sqlalchemy.sql import Select
-from sqlalchemy.sql.elements import ColumnElement
-
 from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.status import Status
 from repositories.base.base_repository import BaseRepository
+from sqlalchemy.orm import selectinload, with_loader_criteria
+from sqlalchemy.sql import Select
+from sqlalchemy.sql.elements import ColumnElement
 
 
 class StatusRepository(BaseRepository[Status]):

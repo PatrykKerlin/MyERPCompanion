@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from repositories.business.reporting.sales_report_repository import SalesReportRepository
 from schemas.business.reporting.sales_report_schema import (
     SalesReportFilterSchema,
     SalesReportRowSchema,
     SalesReportTotalsSchema,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class SalesReportService:

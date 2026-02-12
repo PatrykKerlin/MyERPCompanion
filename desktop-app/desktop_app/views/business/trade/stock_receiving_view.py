@@ -3,10 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Callable, cast
 
 import flet as ft
-
 from utils.enums import View, ViewMode
-from utils.translation import Translation
 from utils.field_group import FieldGroup
+from utils.translation import Translation
 from views.base.base_desktop_view import BaseDesktopView
 from views.controls.bulk_transfer_control import BulkTransfer
 
@@ -125,6 +124,6 @@ class StockReceivingView(BaseDesktopView):
 
     def set_target_enabled(self, enabled: bool) -> None:
         self.__bulk_transfer.set_target_enabled(enabled)
+
     def __handle_order_changed(self) -> None:
         self._controller.on_order_changed(self.__order_input.value)
-

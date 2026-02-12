@@ -1,11 +1,12 @@
+import asyncio
 from typing import Any
 
-import asyncio
-
+import flet as ft
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from controllers.mixins.user_link_controller_mixin import UserLinkControllerMixin
+from events.events import ViewRequested
 from schemas.business.trade.assoc_customer_discount_schema import (
     AssocCustomerDiscountPlainSchema,
     AssocCustomerDiscountStrictSchema,
@@ -13,13 +14,10 @@ from schemas.business.trade.assoc_customer_discount_schema import (
 from schemas.business.trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
 from schemas.business.trade.discount_schema import DiscountPlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
-
 from services.business.trade import AssocCustomerDiscountService, CustomerService, DiscountService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.trade.customer_view import CustomerView
-from events.events import ViewRequested
-import flet as ft
 
 
 class CustomerController(

@@ -1,13 +1,12 @@
 from schemas.business.logistic.assoc_bin_item_schema import AssocBinItemPlainSchema, AssocBinItemStrictSchema
-from schemas.business.logistic.category_schema import CategoryPlainSchema, CategoryStrictSchema
-from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
-from schemas.business.logistic.warehouse_schema import WarehousePlainSchema, WarehouseStrictSchema
 from schemas.business.logistic.bin_schema import BinPlainSchema, BinStrictSchema
 from schemas.business.logistic.carrier_schema import CarrierPlainSchema, CarrierStrictSchema
+from schemas.business.logistic.category_schema import CategoryPlainSchema, CategoryStrictSchema
 from schemas.business.logistic.delivery_method_schema import DeliveryMethodPlainSchema, DeliveryMethodStrictSchema
+from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
 from schemas.business.logistic.unit_schema import UnitPlainSchema, UnitStrictSchema
+from schemas.business.logistic.warehouse_schema import WarehousePlainSchema, WarehouseStrictSchema
 from utils.service_factory import ServiceFactory
-
 
 AssocBinItemService = ServiceFactory.create(
     name_prefix="AssocBinItem",

@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast
 
 import flet as ft
-
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -76,7 +75,7 @@ class BinsView(BaseView):
                     label=(ft.Container(), 0),
                     input=(direction_container, 4),
                     marker=(ft.Container(), 0),
-                )
+                ),
             }
         )
         self.__list = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=8)

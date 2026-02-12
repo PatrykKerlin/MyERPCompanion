@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING, Any, TypeVar, Generic
+
+from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
 
 from pydantic import BaseModel
 from states.base.base_state import BaseState

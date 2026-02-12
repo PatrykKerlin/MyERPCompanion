@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy.exc import SQLAlchemyError
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from schemas.business.reporting.sales_report_schema import SalesReportFilterSchema, SalesReportResponseSchema
 from services.business.reporting.sales_report_service import SalesReportService
+from sqlalchemy.exc import SQLAlchemyError
 from utils.auth import Auth
 from utils.enums import Permission
 
@@ -18,7 +17,9 @@ class SalesReportController:
         self._logger = context.logger
         self._service = SalesReportService()
         self.router = APIRouter()
-        dependencies = [Depends(auth.restrict_access(permissions=[Permission.CAN_READ], controller=self.__class__.__name__))]
+        dependencies = [
+            Depends(auth.restrict_access(permissions=[Permission.CAN_READ], controller=self.__class__.__name__))
+        ]
         self.router.add_api_route(
             path="",
             endpoint=self.get_sales_report,

@@ -9,7 +9,6 @@ import flet as ft
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController

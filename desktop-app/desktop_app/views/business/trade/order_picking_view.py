@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, cast
 from datetime import date
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
-
 from utils.enums import View, ViewMode
-from utils.translation import Translation
 from utils.field_group import FieldGroup
+from utils.translation import Translation
 from views.base.base_desktop_view import BaseDesktopView
 from views.controls.bulk_transfer_control import BulkTransfer
 from views.controls.date_field_control import DateField
@@ -230,6 +229,7 @@ class OrderPickingView(BaseDesktopView):
 
     def update_existing_package_target(self, target_id: int, source_id: int, values: list[str]) -> None:
         self.__package_bulk_transfer.update_existing_target(target_id, source_id, cast(list[Any], values))
+
     def __handle_order_changed(self) -> None:
         self._controller.on_order_changed(self.__order_input.value)
 
@@ -238,4 +238,3 @@ class OrderPickingView(BaseDesktopView):
 
     def __handle_customer_changed(self) -> None:
         self._controller.on_customer_changed(self.__customer_input.value)
-

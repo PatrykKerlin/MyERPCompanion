@@ -1,8 +1,7 @@
-from typing import Callable
 from datetime import datetime
+from typing import Callable
 
 import flet as ft
-
 from utils.translation import Translation
 from views.base.base_view import BaseView
 
@@ -60,7 +59,9 @@ class AppView:
                 ],
             ),
         )
-        self.__footer_app_name = ft.Text(self.__translation.get("my_erp_companion"), weight=ft.FontWeight.W_600, size=12)
+        self.__footer_app_name = ft.Text(
+            self.__translation.get("my_erp_companion"), weight=ft.FontWeight.W_600, size=12
+        )
         self.__footer_portal = ft.Text(
             self.__translation.get("footer_web_portal"),
             size=11,

@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from datetime import date, datetime
-from typing import Annotated
+from datetime import date
 
-from pydantic import Field, model_validator
-
+from pydantic import model_validator
 from schemas.base.base_schema import BasePlainSchema, BaseSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
 

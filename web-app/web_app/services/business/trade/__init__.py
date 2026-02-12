@@ -4,7 +4,6 @@ from schemas.business.trade.order_schema import OrderPlainSchema, OrderStrictSch
 from services.business.trade.order_view_service import OrderViewService
 from utils.service_factory import ServiceFactory
 
-
 AssocOrderItemService = ServiceFactory.create(
     name_prefix="AssocOrderItem",
     plain_schema_cls=AssocOrderItemPlainSchema,

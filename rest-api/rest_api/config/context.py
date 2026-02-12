@@ -3,9 +3,8 @@ from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
 from logging import Logger
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from config.settings import Settings
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @dataclass

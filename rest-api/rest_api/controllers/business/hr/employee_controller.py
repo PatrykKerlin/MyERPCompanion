@@ -1,11 +1,10 @@
-from fastapi import HTTPException, Request, status
-from pydantic import ValidationError
-from sqlalchemy.exc import NoResultFound, SQLAlchemyError
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
+from fastapi import HTTPException, Request, status
+from pydantic import ValidationError
 from schemas.business.hr.employee_schema import EmployeePlainSchema, EmployeeStrictSchema
 from services.business.hr import EmployeeService, PositionService
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from utils.auth import Auth
 
 

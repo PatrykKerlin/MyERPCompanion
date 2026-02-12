@@ -4,7 +4,6 @@ from datetime import date
 from typing import TYPE_CHECKING, cast
 
 import flet as ft
-
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation

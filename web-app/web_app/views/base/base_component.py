@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Generic, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
+
 from controllers.base.base_controller import BaseController
 
 if TYPE_CHECKING:

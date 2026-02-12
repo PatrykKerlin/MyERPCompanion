@@ -1,10 +1,10 @@
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.core.group_schema import GroupPlainSchema, GroupStrictSchema
 from services.core import GroupService
 from utils.enums import Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.core.group_view import GroupView
-from events.events import ViewRequested
 
 
 class GroupController(BaseViewController[GroupService, GroupView, GroupPlainSchema, GroupStrictSchema]):

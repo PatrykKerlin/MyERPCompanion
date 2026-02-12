@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast
 
 import flet as ft
-
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -349,9 +348,7 @@ class StockReceivingView(BaseView):
                     break
         current_value = self.__parse_quantity(self.__quantity_input.value) or 0
         should_use_available_default = (
-            selected_item_id is None
-            or selected_item_id != previous_item_id
-            or current_value > max_quantity
+            selected_item_id is None or selected_item_id != previous_item_id or current_value > max_quantity
         )
         if should_use_available_default:
             normalized_value = max_quantity

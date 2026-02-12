@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
-
 from controllers.base.base_controller import BaseController
 from events.base.base_event import BaseEvent
 from events.events import (

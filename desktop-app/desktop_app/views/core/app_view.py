@@ -1,5 +1,4 @@
 import flet as ft
-
 from utils.translation import Translation
 from views.base.base_view import BaseView
 from views.components.footer_component import FooterComponent
@@ -11,8 +10,7 @@ from views.components.toolbar_component import ToolbarComponent
 
 class AppView:
     def __init__(self, translation: Translation, theme: str) -> None:
-        
-        
+
         self.__theme = theme
         self.__translation = translation
         self.__menu_bar_container = ft.Container(visible=False)
@@ -25,13 +23,10 @@ class AppView:
         self.__content = ft.Column(
             controls=[
                 self.__menu_bar_container,
-                
                 self.__toolbar_container,
-                
                 ft.Row(
                     controls=[
                         self.__side_menu_container,
-                        
                         ft.Column(
                             controls=[
                                 self.__tabs_bar_container,
@@ -42,7 +37,6 @@ class AppView:
                     ],
                     expand=True,
                 ),
-                
                 self.__footer_container,
             ],
             alignment=ft.MainAxisAlignment.START,

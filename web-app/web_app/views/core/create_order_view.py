@@ -3,18 +3,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
-
 from schemas.business.trade.order_view_schema import (
     OrderViewCategorySchema,
     OrderViewDiscountSchema,
     OrderViewSourceItemSchema,
 )
 from utils.enums import View, ViewMode
-from utils.translation import Translation
-from views.base.base_view import BaseView
-from views.base.base_dialog import BaseDialog
-from views.controls.numeric_field_control import NumericField
 from utils.field_group import FieldGroup
+from utils.translation import Translation
+from views.base.base_dialog import BaseDialog
+from views.base.base_view import BaseView
+from views.controls.numeric_field_control import NumericField
 
 if TYPE_CHECKING:
     from controllers.core.create_order_controller import CreateOrderController
@@ -162,9 +161,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             self.__cart_resize_handler = handle_resize
             page.on_resize = handle_resize
 
-        def build_text(
-            value: str, align: ft.TextAlign | None = None, weight: ft.FontWeight | None = None
-        ) -> ft.Text:
+        def build_text(value: str, align: ft.TextAlign | None = None, weight: ft.FontWeight | None = None) -> ft.Text:
             return ft.Text(
                 value,
                 no_wrap=True,
@@ -262,9 +259,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                         build_text(f"{self._translation.get('category_discount')}: {category_label}")
                     )
                 if item_label:
-                    discount_controls.append(
-                        build_text(f"{self._translation.get('item_discount')}: {item_label}")
-                    )
+                    discount_controls.append(build_text(f"{self._translation.get('item_discount')}: {item_label}"))
                 row_controls: list[ft.Control] = [
                     ft.Container(
                         col={"sm": 12, "md": 3},
@@ -287,7 +282,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                         col={"sm": 6, "md": 1},
                         alignment=ft.Alignment.CENTER,
                         content=remove_button,
-                    )
+                    ),
                 ]
                 cart_list.controls.append(
                     ft.Container(
@@ -422,7 +417,9 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                 has_missing_rate,
             ) = self._controller.compute_checkout_summary(currency_id, customer_discount_id, delivery_method_id)
             missing_rate_text.visible = has_missing_rate
-            confirm_button.disabled = has_missing_rate or currency_id is None or not self._controller.get_cart_snapshot()
+            confirm_button.disabled = (
+                has_missing_rate or currency_id is None or not self._controller.get_cart_snapshot()
+            )
             if not has_missing_rate:
                 total_net_text.value = format_amount(total_net, label)
                 total_gross_text.value = format_amount(total_gross, label)
@@ -492,7 +489,9 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                 ft.ResponsiveRow(
                     columns=12,
                     controls=[
-                        ft.Container(col={"sm": 6, "md": 4}, content=build_text(self._translation.get("shipping_cost"))),
+                        ft.Container(
+                            col={"sm": 6, "md": 4}, content=build_text(self._translation.get("shipping_cost"))
+                        ),
                         ft.Container(
                             col={"sm": 6, "md": 8},
                             alignment=ft.Alignment.CENTER_RIGHT,
@@ -583,10 +582,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         return options
 
     def __build_discount_options(self, discounts: list[OrderViewDiscountSchema]) -> list[tuple[int | str, str]]:
-        return [
-            (discount.id, f"{discount.code} ({(discount.percent or 0) * 100:.0f}%)")
-            for discount in discounts
-        ]
+        return [(discount.id, f"{discount.code} ({(discount.percent or 0) * 100:.0f}%)") for discount in discounts]
 
     def __build_dropdown(
         self,
@@ -854,11 +850,11 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             ("description", description or ""),
             (
                 "is_fragile",
-                ""
-                if is_fragile is None
-                else self._translation.get("yes")
-                if is_fragile
-                else self._translation.get("no"),
+                (
+                    ""
+                    if is_fragile is None
+                    else self._translation.get("yes") if is_fragile else self._translation.get("no")
+                ),
             ),
             ("expiration_date", "" if expiration_date is None else str(expiration_date)),
             ("category_name", category_name or ""),
@@ -967,9 +963,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         cart_quantity = cart_quantities.get(item.id, 0)
         return max(0, base_available - cart_quantity)
 
-    def __resolve_discount_label(
-        self, discount_id: int | None, discounts: list[OrderViewDiscountSchema]
-    ) -> str | None:
+    def __resolve_discount_label(self, discount_id: int | None, discounts: list[OrderViewDiscountSchema]) -> str | None:
         if not isinstance(discount_id, int):
             return None
         for discount in discounts:

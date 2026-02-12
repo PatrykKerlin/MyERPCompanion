@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Any
 
 from schemas.base.base_schema import BaseStrictSchema
-from schemas.core.param_schema import IdsPayloadSchema
 from schemas.business.trade.order_view_schema import OrderViewResponseSchema
+from schemas.core.param_schema import IdsPayloadSchema
 from schemas.core.token_schema import TokenPlainSchema
 from services.base.base_service import BaseService
 from utils.enums import Endpoint

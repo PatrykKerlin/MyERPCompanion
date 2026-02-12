@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any, cast
 
 import flet as ft
-
 from utils.enums import ViewMode
 from utils.field_group import FieldGroup
 

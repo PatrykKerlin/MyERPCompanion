@@ -1,13 +1,12 @@
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
-
 from services.business.trade import CurrencyService, SupplierService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.trade.supplier_view import SupplierView
-from events.events import ViewRequested
 
 
 class SupplierController(BaseViewController[SupplierService, SupplierView, SupplierPlainSchema, SupplierStrictSchema]):

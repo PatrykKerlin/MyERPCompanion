@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Union
 
-from sqlalchemy.exc import NoResultFound
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from models.core import User
 from repositories.core import UserRepository
 from schemas.core.user_schema import UserPlainSchema, UserStrictCreateApiSchema, UserStrictUpdateApiSchema
 from services.base.base_service import BaseService
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession
 
 if TYPE_CHECKING:
     from utils.auth import Auth
@@ -40,7 +39,10 @@ class UserService(
         return self._output_schema_cls.model_validate(model)
 
     async def create(
-        self, session: AsyncSession, created_by: int, schema: Union[UserStrictCreateApiSchema, UserStrictUpdateApiSchema]
+        self,
+        session: AsyncSession,
+        created_by: int,
+        schema: Union[UserStrictCreateApiSchema, UserStrictUpdateApiSchema],
     ) -> UserPlainSchema:
         model = self._model_cls(**schema.model_dump(exclude={"groups"}))
         model.created_by = created_by

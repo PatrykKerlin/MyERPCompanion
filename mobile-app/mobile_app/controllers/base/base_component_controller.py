@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-from flet import Control
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from events.base.base_event import BaseEvent
+from flet import Control
 from utils.enums import Module
 
 TComponent = TypeVar("TComponent", bound=Control)

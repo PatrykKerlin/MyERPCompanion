@@ -3,23 +3,22 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from controllers.base.base_component_controller import BaseComponentController
-from states.states import ViewState
-from utils.enums import Module, View, ViewMode
-from views.components.toolbar_component import ToolbarComponent
 from events.events import (
     LogoutRequested,
     RecordDeleteRequested,
-    TabNavigateRequested,
+    SideMenuToggleRequested,
     TabCloseAllRequested,
     TabCloseOthersRequested,
+    TabNavigateRequested,
+    TabRequested,
     TabSearchRequested,
     ToolbarReady,
     ToolbarRequested,
-    SideMenuToggleRequested,
     ViewRequested,
-    TabRequested,
 )
-from utils.enums import TabNavigationDirection
+from states.states import ViewState
+from utils.enums import Module, TabNavigationDirection, View, ViewMode
+from views.components.toolbar_component import ToolbarComponent
 
 if TYPE_CHECKING:
     from config.context import Context

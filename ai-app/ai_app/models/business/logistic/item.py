@@ -3,27 +3,28 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import literal_column, select, Index, text
-from sqlalchemy.orm import Mapped, column_property
-
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
-
 from models.business.logistic.category import Category
+from sqlalchemy import Index, literal_column, select, text
+from sqlalchemy.orm import Mapped, column_property
 
 if TYPE_CHECKING:
     from models.business.logistic.assoc_bin_item import AssocBinItem
     from models.business.logistic.unit import Unit
     from models.business.trade.assoc_item_discount import AssocItemDiscount
     from models.business.trade.assoc_order_item import AssocOrderItem
-    from models.business.trade.order import Order
     from models.business.trade.supplier import Supplier
     from models.core.image import Image
 
 
 class Item(BaseModel):
     __tablename__ = "items"
-    __table_args__ = (Index("ux_item_index_active_true", "index", unique=True, postgresql_where=text("is_active")), Index("ux_item_name_active_true", "name", unique=True, postgresql_where=text("is_active")), Index("ux_item_ean_active_true", "ean", unique=True, postgresql_where=text("is_active")),)
+    __table_args__ = (
+        Index("ux_item_index_active_true", "index", unique=True, postgresql_where=text("is_active")),
+        Index("ux_item_name_active_true", "name", unique=True, postgresql_where=text("is_active")),
+        Index("ux_item_ean_active_true", "ean", unique=True, postgresql_where=text("is_active")),
+    )
 
     index: Mapped[str] = Fields.string_10(unique=False, nullable=False)
     name: Mapped[str] = Fields.name(unique=False)

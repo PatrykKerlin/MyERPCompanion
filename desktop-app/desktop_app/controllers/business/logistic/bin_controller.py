@@ -1,16 +1,16 @@
 import asyncio
+
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.business.logistic.bin_schema import BinPlainSchema, BinStrictSchema
 from schemas.business.logistic.item_schema import ItemPlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
-from services.business.logistic import AssocBinItemService, BinService, WarehouseService
-from services.business.logistic import ItemService
+from services.business.logistic import AssocBinItemService, BinService, ItemService, WarehouseService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.bin_view import BinView
-from events.events import ViewRequested
 
 
 class BinController(BaseViewController[BinService, BinView, BinPlainSchema, BinStrictSchema]):

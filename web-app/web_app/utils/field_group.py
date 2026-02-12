@@ -1,5 +1,6 @@
-import flet as ft
 from typing import Iterator
+
+import flet as ft
 
 
 class FieldGroup:

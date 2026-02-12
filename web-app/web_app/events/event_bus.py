@@ -1,7 +1,7 @@
 import asyncio
 from logging import Logger
-from typing import Awaitable, Callable, TypeVar, Any
 from threading import RLock
+from typing import Any, Awaitable, Callable, TypeVar
 
 from events.base.base_event import BaseEvent
 

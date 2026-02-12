@@ -3,12 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
-
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
-    from utils.translation import Translation
     from controllers.components.side_menu_controller import SideMenuController
+    from utils.translation import Translation
 
 
 class SideMenuComponent(BaseComponent, ft.Container):

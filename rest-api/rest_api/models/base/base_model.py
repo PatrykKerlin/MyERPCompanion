@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from models.base.base import Base
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, func, select
 from sqlalchemy.orm import Mapped, column_property, declared_attr, mapped_column
 from sqlalchemy.sql import column, table
-
-from models.base.base import Base
 
 
 class BaseModel(Base):

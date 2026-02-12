@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
-from events.events import TranslationRequested, TranslationReady, TranslationFailed, ViewRequested
-from schemas.core.translation_schema import TranslationPlainSchema, TranslationStrictSchema
+from events.events import TranslationFailed, TranslationReady, TranslationRequested, ViewRequested
 from schemas.core.language_schema import LanguagePlainSchema
+from schemas.core.translation_schema import TranslationPlainSchema, TranslationStrictSchema
 from services.core import LanguageService, TranslationService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation

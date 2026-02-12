@@ -1,9 +1,8 @@
 from typing import Annotated
 
-from fastapi import Depends, Request
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
+from fastapi import Depends, Request
 from schemas.business.logistic.bin_schema import BinPlainSchema, BinStrictSchema
 from schemas.core.param_schema import (
     FilterParamsSchema,

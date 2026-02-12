@@ -4,7 +4,6 @@ from math import ceil
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
-
 from utils.translation import Translation
 from views.base.base_component import BaseComponent
 
@@ -41,11 +40,7 @@ class SearchResultsComponent(BaseComponent, ft.Column):
             rows=[
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(
-                            ft.Text(
-                                "" if row.get(column) is None else str(row.get(column, ""))
-                            )
-                        )
+                        ft.DataCell(ft.Text("" if row.get(column) is None else str(row.get(column, ""))))
                         for column in self.__columns
                     ],
                     on_select_change=lambda _, row_id=row.get("id"): self._controller.on_row_clicked(row_id),

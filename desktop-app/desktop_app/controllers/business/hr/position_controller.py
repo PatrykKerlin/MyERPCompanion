@@ -1,14 +1,15 @@
 import asyncio
+
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.business.hr.position_schema import PositionPlainSchema, PositionStrictSchema
 from services.business.hr import DepartmentService, PositionService
 from services.business.trade import CurrencyService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.hr.position_view import PositionView
-from events.events import ViewRequested
 
 
 class PositionController(BaseViewController[PositionService, PositionView, PositionPlainSchema, PositionStrictSchema]):

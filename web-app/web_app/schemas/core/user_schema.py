@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Annotated
 
 from pydantic import BaseModel, Field, model_validator
-
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.core.group_schema import GroupPlainSchema
 from schemas.core.language_schema import LanguagePlainSchema

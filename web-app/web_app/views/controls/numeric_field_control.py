@@ -1,7 +1,8 @@
+import sys
 from types import SimpleNamespace
 from typing import Callable, cast
+
 import flet as ft
-import sys
 
 
 class NumericField(ft.Row):

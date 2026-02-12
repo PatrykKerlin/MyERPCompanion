@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Annotated
 
 from pydantic import Field
-
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
 

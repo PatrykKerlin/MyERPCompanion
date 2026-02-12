@@ -3,23 +3,22 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
-
 from controllers.base.base_component_controller import BaseComponentController
-from views.components.menu_bar_component import MenuBarComponent
 from events.events import (
     ApiStatusRequested,
-    MenuBarRequested,
     MenuBarReady,
+    MenuBarRequested,
     SideMenuToggleRequested,
     TabCloseAllRequested,
     TabCloseOthersRequested,
     TabCloseRequested,
+    TabsBarToggleRequested,
     TabSearchRequested,
     ToolbarToggleRequested,
-    TabsBarToggleRequested,
     ViewRequested,
 )
 from utils.enums import ViewMode
+from views.components.menu_bar_component import MenuBarComponent
 
 if TYPE_CHECKING:
     from config.context import Context

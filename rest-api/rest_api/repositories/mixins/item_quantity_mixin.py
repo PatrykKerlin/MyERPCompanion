@@ -1,12 +1,11 @@
 from collections.abc import Sequence
 
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from models.business.logistic.assoc_bin_item import AssocBinItem
 from models.business.logistic.bin import Bin
 from models.business.logistic.item import Item
 from models.business.trade.assoc_order_item import AssocOrderItem
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class ItemQuantityMixin:

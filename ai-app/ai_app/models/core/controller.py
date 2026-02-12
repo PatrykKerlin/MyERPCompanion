@@ -2,15 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
-from models.base.base_model import BaseModel
-from models.base.fields import Fields
-
 if TYPE_CHECKING:
     from models.core.assoc_view_controller import AssocViewController
-    from models.core.view import View
 
 
 class Controller(BaseModel):

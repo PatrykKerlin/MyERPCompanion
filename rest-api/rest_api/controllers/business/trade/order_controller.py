@@ -1,10 +1,8 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Request, status
-from sqlalchemy.exc import SQLAlchemyError
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
+from fastapi import Depends, HTTPException, Request, status
 from schemas.business.trade.order_schema import OrderPickingSummarySchema, OrderPlainSchema, OrderStrictSchema
 from schemas.core.param_schema import (
     FilterParamsSchema,
@@ -13,6 +11,7 @@ from schemas.core.param_schema import (
     SortingParamsSchema,
 )
 from services.business.trade.order_service import OrderService
+from sqlalchemy.exc import SQLAlchemyError
 from utils.auth import Auth
 from utils.enums import Action, Permission
 from utils.parsers import FilterParamsParser
@@ -198,7 +197,9 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
             session = BaseController._get_request_session(request)
             return await self._service.get_picking_summary(session=session, filters=filters.filters)
         except HTTPException:
-            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.get_picking_summary.__qualname__}")
+            self._logger.exception(
+                f"HTTPException in {self.__class__.__name__}.{self.get_picking_summary.__qualname__}"
+            )
             raise
         except SQLAlchemyError as err:
             self._logger.exception(

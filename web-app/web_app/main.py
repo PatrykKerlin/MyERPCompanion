@@ -2,7 +2,6 @@ import logging
 import os
 
 import flet as ft
-
 from config.context import Context
 from config.settings import Settings
 from controllers.base.base_controller import BaseController

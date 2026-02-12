@@ -1,10 +1,10 @@
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.business.logistic.warehouse_schema import WarehousePlainSchema, WarehouseStrictSchema
 from services.business.logistic import WarehouseService
 from utils.enums import Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.warehouse_view import WarehouseView
-from events.events import ViewRequested
 
 
 class WarehouseController(

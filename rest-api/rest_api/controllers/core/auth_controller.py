@@ -3,9 +3,8 @@ import logging
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from jose.exceptions import JWTError
-from sqlalchemy.exc import NoResultFound, SQLAlchemyError
-
 from schemas.core.auth_schema import AuthStrictSchema
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from utils.auth import Auth
 
 
@@ -31,20 +30,12 @@ class AuthController:
             )
             if not response:
                 if error == "user_not_allowed":
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN, detail="user_not_allowed"
-                    )
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user_not_allowed")
                 if error == "invalid_client":
-                    raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="invalid_client"
-                    )
+                    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="invalid_client")
                 if error in {"warehouse_required", "invalid_warehouse"}:
-                    raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error
-                    )
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_credentials"
-                )
+                    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error)
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_credentials")
             return JSONResponse(response)
         except SQLAlchemyError as err:
             self.__logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.auth.__qualname__}")

@@ -3,12 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
-
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
-
-from views.base.base_desktop_view import BaseDesktopView
 from utils.translation import Translation
+from views.base.base_desktop_view import BaseDesktopView
 from views.controls.bulk_transfer_control import BulkTransfer
 
 if TYPE_CHECKING:

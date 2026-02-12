@@ -1,11 +1,10 @@
 from typing import Mapping
 
+from models.business.trade import AssocCustomerDiscount, Customer, Discount
+from repositories.base.base_repository import BaseRepository
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
-
-from models.business.trade import AssocCustomerDiscount, Customer, Discount
-from repositories.base.base_repository import BaseRepository
 
 
 class CustomerRepository(BaseRepository[Customer]):

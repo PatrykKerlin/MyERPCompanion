@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Index, text
-from sqlalchemy.orm import Mapped
-
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
+from sqlalchemy import Index, text
+from sqlalchemy.orm import Mapped
 
 if TYPE_CHECKING:
     from models.business.logistic.item import Item
@@ -16,7 +15,9 @@ if TYPE_CHECKING:
 
 class Supplier(BaseModel):
     __tablename__ = "suppliers"
-    __table_args__ = (Index("ux_supplier_company_name_active_true", "company_name", unique=True, postgresql_where=text("is_active")),)
+    __table_args__ = (
+        Index("ux_supplier_company_name_active_true", "company_name", unique=True, postgresql_where=text("is_active")),
+    )
 
     company_name: Mapped[str] = Fields.name(unique=False)
 

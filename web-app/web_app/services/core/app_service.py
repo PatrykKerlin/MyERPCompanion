@@ -1,6 +1,7 @@
 import asyncio
-from utils.enums import Endpoint
+
 from services.base.base_service import BaseService
+from utils.enums import Endpoint
 
 
 class AppService(BaseService):

@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import flet as ft
-
-from views.base.base_view import BaseView
-from schemas.base.base_schema import BaseStrictSchema, BasePlainSchema
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from services.base.base_service import BaseService
 from utils.enums import View, ViewMode
 from utils.translation import Translation
+from views.base.base_view import BaseView
 
 if TYPE_CHECKING:
     from controllers.base.base_view_controller import BaseViewController

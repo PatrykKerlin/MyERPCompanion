@@ -3,9 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
-
 from utils.enums import View, ViewMode
-
 from views.base.base_desktop_view import BaseDesktopView
 from views.controls.data_table_control import DataTable
 from views.mixins.user_link_view_mixin import UserLinkViewMixin
@@ -160,7 +158,12 @@ class EmployeeView(BaseDesktopView, UserLinkViewMixin):
             ),
             self._spacing_column,
             ft.Column(
-                controls=meta_grid + self._spacing_responsive_row + employment_grid + bank_grid + user_grid + [self.__subordinates_table],
+                controls=meta_grid
+                + self._spacing_responsive_row
+                + employment_grid
+                + bank_grid
+                + user_grid
+                + [self.__subordinates_table],
                 expand=2,
             ),
         ]

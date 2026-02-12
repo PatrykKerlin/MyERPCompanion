@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 
 from flet import Page
 
-
 if TYPE_CHECKING:
+    from logging import Logger
+
     from config.settings import Settings
     from events.event_bus import EventBus
-    from logging import Logger
     from states.state_store import StateStore
 
 

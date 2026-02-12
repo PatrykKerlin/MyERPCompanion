@@ -3,13 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
-
-
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
-    from utils.translation import Translation
     from controllers.components.toolbar_controller import ToolbarController
+    from utils.translation import Translation
 
 
 class ToolbarComponent(BaseComponent, ft.Container):
@@ -184,6 +182,7 @@ class ToolbarComponent(BaseComponent, ft.Container):
             return
         if page is not None:
             self.__apply_pending_username()
+
     def __apply_pending_username(self) -> None:
         username = self.__pending_username
         if username:
@@ -197,4 +196,3 @@ class ToolbarComponent(BaseComponent, ft.Container):
         self.__user_label.update()
         self.__user_button.update()
         self.__logout_button.update()
-

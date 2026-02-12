@@ -3,28 +3,26 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
-
 from controllers.base.base_component_controller import BaseComponentController
-from states.states import ViewState
-
-from utils.enums import TabNavigationDirection, ViewMode
-from views.base.base_view import BaseView
-from views.base.base_dialog import BaseDialog
-from views.components.tabs_bar_component import TabsBarComponent
 from events.events import (
-    TabClosed,
-    TabCloseRequested,
+    SaveSucceeded,
     TabCloseAllRequested,
+    TabClosed,
     TabCloseOthersRequested,
+    TabCloseRequested,
     TabNavigateRequested,
+    TabRequested,
     TabsBarReady,
     TabsBarRequested,
-    TabRequested,
     TabSearchRequested,
     ViewReady,
-    SaveSucceeded,
     ViewRequested,
 )
+from states.states import ViewState
+from utils.enums import TabNavigationDirection, ViewMode
+from views.base.base_dialog import BaseDialog
+from views.base.base_view import BaseView
+from views.components.tabs_bar_component import TabsBarComponent
 
 if TYPE_CHECKING:
     from config.context import Context

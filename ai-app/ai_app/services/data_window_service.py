@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import date
-from datetime import timedelta
+from datetime import date, timedelta
 
 from repositories.order_repository import OrderRepository
 from repositories.task_run_repository import TaskRunRepository

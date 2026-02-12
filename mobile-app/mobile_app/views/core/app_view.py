@@ -1,7 +1,6 @@
 from collections.abc import Callable
 
 import flet as ft
-
 from utils.enums import View
 from utils.translation import Translation
 

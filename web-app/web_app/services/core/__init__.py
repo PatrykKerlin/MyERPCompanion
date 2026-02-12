@@ -2,7 +2,6 @@ from schemas.core.language_schema import LanguagePlainSchema, LanguageStrictSche
 from schemas.core.user_schema import UserPlainSchema, UserStrictUpdateAppSchema
 from utils.service_factory import ServiceFactory
 
-
 LanguageService = ServiceFactory.create(
     name_prefix="Language",
     plain_schema_cls=LanguagePlainSchema,

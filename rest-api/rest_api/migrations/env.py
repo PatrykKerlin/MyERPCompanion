@@ -2,43 +2,29 @@ import asyncio
 from logging.config import fileConfig
 from typing import Any, Iterable
 
+import models.ai  # noqa: F401
+import models.business.hr  # noqa: F401
+import models.business.logistic  # noqa: F401
+import models.business.trade  # noqa: F401
+import models.core  # noqa: F401
 from alembic import context
 from alembic.operations.ops import CreateForeignKeyOp, CreateTableOp, MigrateOperation
+from config.settings import Settings
+from database.engine import Engine
 from sqlalchemy import Column, ForeignKeyConstraint, pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
-import models.business.hr  # noqa: F401
-import models.business.logistic  # noqa: F401
-import models.business.trade  # noqa: F401
-import models.ai  # noqa: F401
-import models.core  # noqa: F401
-from database.engine import Engine
-from config.settings import Settings
-
-
-
 config = context.config
-
 
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 
-
-
-
-
 settings = Settings()  # type: ignore
 db = Engine(settings)
 target_metadata = db.get_base().metadata
-
-
-
-
-
-
 
 
 def foreign_key_split_hook(directives: list[Any]) -> None:

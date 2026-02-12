@@ -3,9 +3,8 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Protocol
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
-
 from database.base import Base
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 
 class EngineSettings(Protocol):

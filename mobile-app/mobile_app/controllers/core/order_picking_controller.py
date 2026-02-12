@@ -19,7 +19,13 @@ from schemas.business.trade.order_schema import OrderPlainSchema, OrderStrictSch
 from schemas.business.trade.status_schema import StatusPlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
 from services.business.logistic import AssocBinItemService, BinService, ItemService, UnitService
-from services.business.trade import AssocOrderItemService, AssocOrderStatusService, CustomerService, OrderService, StatusService
+from services.business.trade import (
+    AssocOrderItemService,
+    AssocOrderStatusService,
+    CustomerService,
+    OrderService,
+    StatusService,
+)
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.core.order_picking_view import OrderPickingView
@@ -51,9 +57,7 @@ class OrderPickingBinOption:
     bin_item_quantity: int
 
 
-class OrderPickingController(
-    BaseViewController[OrderService, OrderPickingView, OrderPlainSchema, OrderStrictSchema]
-):
+class OrderPickingController(BaseViewController[OrderService, OrderPickingView, OrderPlainSchema, OrderStrictSchema]):
     _plain_schema_cls = OrderPlainSchema
     _strict_schema_cls = OrderStrictSchema
     _service_cls = OrderService
@@ -214,9 +218,7 @@ class OrderPickingController(
         self._view.set_picked_items([])
         self._page.update()
 
-    async def __load_eligible_orders(
-        self, order_date: str | None, customer_id: int | None
-    ) -> list[OrderPlainSchema]:
+    async def __load_eligible_orders(self, order_date: str | None, customer_id: int | None) -> list[OrderPlainSchema]:
         return await self.__perform_get_eligible_orders(order_date, customer_id)
 
     async def __load_order_item_rows(self, order_id: int) -> tuple[list[OrderPickingItemRow], list[OrderPickedItemRow]]:
@@ -235,7 +237,9 @@ class OrderPickingController(
         to_pick_rows: list[OrderPickingItemRow] = []
         quantity_by_item: dict[int, int] = {}
         for order_item in remaining_items:
-            quantity_by_item[order_item.item_id] = quantity_by_item.get(order_item.item_id, 0) + max(0, order_item.to_process)
+            quantity_by_item[order_item.item_id] = quantity_by_item.get(order_item.item_id, 0) + max(
+                0, order_item.to_process
+            )
         for item_id, to_process in quantity_by_item.items():
             item_schema = self.__items_by_id.get(item_id)
             if not item_schema or item_schema.is_package:
@@ -323,7 +327,9 @@ class OrderPickingController(
 
         default_bin_id = bin_options[0].bin_id
         default_quantity = (
-            1 if is_package_pick and bin_options[0].available_quantity > 0 else min(max_pick_quantity, bin_options[0].available_quantity)
+            1
+            if is_package_pick and bin_options[0].available_quantity > 0
+            else min(max_pick_quantity, bin_options[0].available_quantity)
         )
         if default_quantity <= 0:
             self._open_error_dialog(message_key="insufficient_stock")
@@ -584,9 +590,9 @@ class OrderPickingController(
             order_rows_by_item.setdefault(order_item.item_id, []).append(order_item)
 
         remaining = moved_quantity
-        ordered_rows = [row for row in order_rows_by_item.get(item_id, []) if row.bin_id == bin_option.bin_id and row.to_process > 0] + [
-            row for row in order_rows_by_item.get(item_id, []) if row.bin_id is None and row.to_process > 0
-        ]
+        ordered_rows = [
+            row for row in order_rows_by_item.get(item_id, []) if row.bin_id == bin_option.bin_id and row.to_process > 0
+        ] + [row for row in order_rows_by_item.get(item_id, []) if row.bin_id is None and row.to_process > 0]
         order_item_creates: list[AssocOrderItemStrictSchema] = []
         for order_item in ordered_rows:
             if remaining <= 0:
@@ -863,11 +869,7 @@ class OrderPickingController(
             self.__package_items_by_id = {}
             return []
         all_items = await self.__perform_get_all_items() or []
-        package_items = [
-            item
-            for item in all_items
-            if item.is_package and item.outbound_quantity > 0
-        ]
+        package_items = [item for item in all_items if item.is_package and item.outbound_quantity > 0]
         package_items = sorted(package_items, key=lambda item: (item.index.lower(), item.name.lower()))
         self.__package_items_by_id = {item.id: item for item in package_items}
         return [(item.id, f"{item.index} | {item.name}") for item in package_items]

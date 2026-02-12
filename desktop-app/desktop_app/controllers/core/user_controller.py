@@ -2,24 +2,23 @@ import asyncio
 from typing import Any, cast
 
 import flet as ft
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.business.logistic.warehouse_schema import WarehousePlainSchema
 from schemas.core.assoc_user_group_schema import AssocUserGroupPlainSchema, AssocUserGroupStrictSchema
 from schemas.core.group_schema import GroupPlainSchema
 from schemas.core.language_schema import LanguagePlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
 from schemas.core.user_schema import UserPlainSchema, UserStrictCreateAppSchema, UserStrictUpdateAppSchema
-from services.core import AssocUserGroupService, GroupService, LanguageService, UserService
-from services.business.logistic import WarehouseService
 from services.business.hr import EmployeeService
+from services.business.logistic import WarehouseService
 from services.business.trade import CustomerService
+from services.core import AssocUserGroupService, GroupService, LanguageService, UserService
 from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
 from utils.translation import Translation
 from views.core.user_view import UserView
-from events.events import ViewRequested
 
 
 class UserController(BaseViewController[UserService, UserView, UserPlainSchema, UserStrictUpdateAppSchema]):
@@ -152,9 +151,7 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         ]
         if is_from_customers and current_customer_id is not None:
             customer_pairs = [
-                (customer.id, customer.company_name)
-                for customer in customers
-                if customer.id == current_customer_id
+                (customer.id, customer.company_name) for customer in customers if customer.id == current_customer_id
             ]
         if not show_customer_relation:
             customer_pairs = []

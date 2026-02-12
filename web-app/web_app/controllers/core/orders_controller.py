@@ -136,11 +136,7 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
             moq = source.moq if source else 1
             vat_rate = source.vat_rate if source else item.vat_rate
             ean = source.ean if source else "-"
-            available = (
-                max(0, source.stock_quantity - source.reserved_quantity)
-                if source
-                else None
-            )
+            available = max(0, source.stock_quantity - source.reserved_quantity) if source else None
             rows.append(
                 {
                     "item_id": item.item_id,
@@ -163,7 +159,9 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
             )
         return rows
 
-    def __build_order_meta(self, view_data: OrderViewResponseSchema, discount_label_map: dict[int, str]) -> dict[str, str]:
+    def __build_order_meta(
+        self, view_data: OrderViewResponseSchema, discount_label_map: dict[int, str]
+    ) -> dict[str, str]:
         order = view_data.order
         if not order:
             return {}
@@ -239,7 +237,9 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
         self._view.set_status_loading(False)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_get_sales_orders_page(self, customer_id: int | None) -> PaginatedResponseSchema[OrderPlainSchema] | None:
+    async def __perform_get_sales_orders_page(
+        self, customer_id: int | None
+    ) -> PaginatedResponseSchema[OrderPlainSchema] | None:
         if customer_id is None:
             return PaginatedResponseSchema[OrderPlainSchema](
                 items=[],
@@ -260,10 +260,14 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_sales_view(self, order_id: int) -> OrderViewResponseSchema | None:
-        return await self.__order_view_service.get_view(Endpoint.ORDER_VIEW_SALES, order_id, None, None, self._module_id)
+        return await self.__order_view_service.get_view(
+            Endpoint.ORDER_VIEW_SALES, order_id, None, None, self._module_id
+        )
 
     @staticmethod
-    def __resolve_customer_discount_label(items: list[OrderViewTargetItemSchema], discount_label_map: dict[int, str]) -> str:
+    def __resolve_customer_discount_label(
+        items: list[OrderViewTargetItemSchema], discount_label_map: dict[int, str]
+    ) -> str:
         labels: list[str] = []
         for item in items:
             discount_id = item.customer_discount_id
@@ -277,7 +281,9 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
         return ", ".join(labels)
 
     @staticmethod
-    def __resolve_item_discount_labels(item: OrderViewTargetItemSchema, discount_label_map: dict[int, str]) -> list[str]:
+    def __resolve_item_discount_labels(
+        item: OrderViewTargetItemSchema, discount_label_map: dict[int, str]
+    ) -> list[str]:
         labels: list[str] = []
         for discount_id in (item.item_discount_id, item.category_discount_id, item.customer_discount_id):
             if not isinstance(discount_id, int):

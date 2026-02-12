@@ -2,11 +2,9 @@ from collections.abc import Callable
 from typing import Awaitable
 
 from fastapi import Request, Response
+from services.core.module_service import ModuleService
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
-
-from config.context import Context
-from services.core.module_service import ModuleService
 
 
 class ModuleMiddleware(BaseHTTPMiddleware):

@@ -2,17 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Index, text
-from sqlalchemy.orm import Mapped
-
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
+from sqlalchemy import Index, text
+from sqlalchemy.orm import Mapped
 
 if TYPE_CHECKING:
     from models.core.assoc_module_group import AssocModuleGroup
     from models.core.assoc_user_group import AssocUserGroup
-    from models.core.module import Module
-    from models.core.user import User
 
 
 class Group(BaseModel):

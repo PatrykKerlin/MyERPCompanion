@@ -5,9 +5,9 @@ import time
 from functools import wraps
 from typing import Any, Awaitable, Callable, TypeVar, cast
 
-from httpx import HTTPStatusError
-
+from config.context import Context
 from events.events import LogoutRequested
+from httpx import HTTPStatusError
 from schemas.base.base_schema import BaseStrictSchema
 from utils.enums import ApiActionError
 from utils.tokens_accessor import TokensAccessor
@@ -15,8 +15,6 @@ from views.components.confirm_dialog_component import ConfirmDialogComponent
 from views.components.error_dialog_component import ErrorDialogComponent
 from views.components.loading_dialog_component import LoadingDialogComponent
 from views.components.message_dialog_component import MessageDialogComponent
-
-from config.context import Context
 
 TStrictSchema = TypeVar("TStrictSchema", bound=BaseStrictSchema)
 TReturn = TypeVar("TReturn")

@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
+from models.base.base_model import BaseModel
 from sqlalchemy import Date, DateTime, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
-
-from models.base.base_model import BaseModel
 
 
 class AiTaskRun(BaseModel):

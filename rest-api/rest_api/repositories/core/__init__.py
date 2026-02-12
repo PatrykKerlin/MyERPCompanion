@@ -5,11 +5,10 @@ from models.core.controller import Controller
 from models.core.group import Group
 from models.core.image import Image
 from models.core.language import Language
-from models.core.view import View
 from repositories.core.module_repository import ModuleRepository
-from repositories.core.view_repository import ViewRepository
 from repositories.core.translation_repository import TranslationRepository
 from repositories.core.user_repository import UserRepository
+from repositories.core.view_repository import ViewRepository
 from utils.repository_factory import RepositoryFactory
 
 AssocModuleGroupRepository = RepositoryFactory.create(AssocModuleGroup)

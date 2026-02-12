@@ -1,12 +1,10 @@
+import flet as ft
 from schemas.core.module_schema import ModulePlainSchema
 from schemas.core.user_schema import UserPlainSchema
 from states.base.base_state import BaseState
-
 from utils.enums import ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
-
-import flet as ft
 
 
 class TranslationState(BaseState):

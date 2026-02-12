@@ -1,11 +1,10 @@
 from collections.abc import Mapping
 
+from models.business.logistic import AssocBinItem, Bin
+from repositories.base.base_repository import BaseRepository
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
-
-from models.business.logistic import AssocBinItem, Bin
-from repositories.base.base_repository import BaseRepository
 
 
 class BinRepository(BaseRepository[Bin]):

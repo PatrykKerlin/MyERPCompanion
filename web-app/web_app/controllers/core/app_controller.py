@@ -3,8 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
-from pydantic import ValidationError
-
 from controllers.base.base_controller import BaseController
 from events.events import (
     AppStarted,
@@ -18,6 +16,7 @@ from events.events import (
     UserAuthenticated,
     ViewRequested,
 )
+from pydantic import ValidationError
 from schemas.core.language_schema import LanguagePlainSchema
 from schemas.core.user_schema import UserPlainSchema, UserStrictUpdateAppSchema
 from services.core import LanguageService, UserService

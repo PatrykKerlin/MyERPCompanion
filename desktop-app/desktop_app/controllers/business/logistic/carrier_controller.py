@@ -1,6 +1,8 @@
+import flet as ft
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from events.events import CallerActionRequested, TabRequested, ViewRequested
 from schemas.business.logistic.carrier_schema import CarrierPlainSchema, CarrierStrictSchema
 from schemas.business.logistic.delivery_method_schema import DeliveryMethodPlainSchema
 from services.business.logistic import CarrierService, DeliveryMethodService
@@ -8,9 +10,6 @@ from services.business.trade import CurrencyService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.carrier_view import CarrierView
-from events.events import TabRequested, CallerActionRequested, ViewRequested
-
-import flet as ft
 
 
 class CarrierController(BaseViewController[CarrierService, CarrierView, CarrierPlainSchema, CarrierStrictSchema]):
@@ -94,5 +93,5 @@ class CarrierController(BaseViewController[CarrierService, CarrierView, CarrierP
                 record_id=response.id,
                 record_data=response.model_dump(),
                 mode=ViewMode.READ,
-                            )
+            )
         )

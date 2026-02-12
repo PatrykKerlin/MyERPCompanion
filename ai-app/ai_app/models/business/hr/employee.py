@@ -3,12 +3,11 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Index, literal_column, select, text
-from sqlalchemy.orm import Mapped, column_property
-
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
 from models.core import User
+from sqlalchemy import Index, literal_column, select, text
+from sqlalchemy.orm import Mapped, column_property
 
 if TYPE_CHECKING:
     from models.business.hr.department import Department

@@ -3,11 +3,10 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Index, text
-from sqlalchemy.orm import Mapped
-
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
+from sqlalchemy import Index, text
+from sqlalchemy.orm import Mapped
 
 if TYPE_CHECKING:
     from models.business.trade.currency import Currency
@@ -17,7 +16,9 @@ if TYPE_CHECKING:
 
 class Invoice(BaseModel):
     __tablename__ = "invoices"
-    __table_args__ = (Index("ux_invoice_number_active_true", "number", unique=True, postgresql_where=text("is_active")),)
+    __table_args__ = (
+        Index("ux_invoice_number_active_true", "number", unique=True, postgresql_where=text("is_active")),
+    )
 
     number: Mapped[str] = Fields.string_20(unique=False)
 

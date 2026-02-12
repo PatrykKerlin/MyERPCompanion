@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
 import flet as ft
-
-
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
-    from utils.translation import Translation
     from controllers.components.menu_bar_controller import MenuBarController
+    from utils.translation import Translation
 
 
 class MenuBarComponent(BaseComponent, ft.MenuBar):
@@ -16,7 +15,6 @@ class MenuBarComponent(BaseComponent, ft.MenuBar):
         BaseComponent.__init__(self, controller, translation)
         ft.MenuBar.__init__(
             self,
-            
             controls=[
                 ft.SubmenuButton(
                     content=ft.Text(self._translation.get("file")),

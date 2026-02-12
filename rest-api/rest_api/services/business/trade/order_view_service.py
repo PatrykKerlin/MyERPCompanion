@@ -1,7 +1,5 @@
 from collections.abc import Sequence
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from models.business.logistic.item import Item
 from models.business.trade.assoc_order_item import AssocOrderItem
 from models.business.trade.assoc_order_status import AssocOrderStatus
@@ -10,11 +8,11 @@ from repositories.business.trade.order_view_repository import OrderViewRepositor
 from repositories.mixins.item_quantity_mixin import ItemQuantityMixin
 from schemas.business.trade.order_schema import OrderPlainSchema
 from schemas.business.trade.order_view_schema import (
+    OrderViewCategorySchema,
+    OrderViewCustomerSchema,
     OrderViewDeliveryMethodSchema,
     OrderViewDiscountSchema,
     OrderViewExchangeRateSchema,
-    OrderViewCustomerSchema,
-    OrderViewCategorySchema,
     OrderViewImageSchema,
     OrderViewLookupSchema,
     OrderViewResponseSchema,
@@ -23,6 +21,7 @@ from schemas.business.trade.order_view_schema import (
     OrderViewSupplierSchema,
     OrderViewTargetItemSchema,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class OrderViewService(ItemQuantityMixin):

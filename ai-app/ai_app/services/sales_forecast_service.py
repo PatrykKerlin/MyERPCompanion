@@ -6,9 +6,8 @@ from typing import Any
 
 import numpy as np
 import torch
-
-from repositories.sales_prediction_repository import SalesPredictionRepository
 from repositories.sales_forecast_result_repository import SalesForecastResultRepository
+from repositories.sales_prediction_repository import SalesPredictionRepository
 
 logger = logging.getLogger("ai")
 
@@ -33,12 +32,15 @@ class SalesForecastService:
         self,
         start_date: date,
         end_date: date,
-    ) -> tuple[
-        torch.Tensor,
-        torch.Tensor,
-        torch.Tensor,
-        list[dict[str, Any]],
-    ] | None:
+    ) -> (
+        tuple[
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+            list[dict[str, Any]],
+        ]
+        | None
+    ):
         logger.info(
             f"Building monthly training data for range [{start_date}, {end_date}], "
             f"horizon_months={self._horizon_months}, discount_scenarios={self._prediction_discount_rates}"
@@ -141,8 +143,7 @@ class SalesForecastService:
 
         x_predict = torch.tensor(predict_features, dtype=torch.float32)
         logger.info(
-            f"Training data ready: train_rows={len(train_features)} "
-            f"prediction_points={len(prediction_points)}"
+            f"Training data ready: train_rows={len(train_features)} " f"prediction_points={len(prediction_points)}"
         )
         return (
             x_train,

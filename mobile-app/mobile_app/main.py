@@ -2,18 +2,17 @@ import logging
 import os
 
 import flet as ft
-
 from config.context import Context
 from config.settings import Settings
 from controllers.base.base_controller import BaseController
 from controllers.components.auth_dialog_controller import AuthDialogController
-from controllers.core.translation_controller import TranslationController
 from controllers.core.app_controller import AppController
 from controllers.core.bin_transfer_controller import BinTransferController
 from controllers.core.bins_controller import BinsController
 from controllers.core.items_controller import ItemsController
 from controllers.core.order_picking_controller import OrderPickingController
 from controllers.core.stock_receiving_controller import StockReceivingController
+from controllers.core.translation_controller import TranslationController
 from controllers.core.user_controller import UserController
 from events.event_bus import EventBus
 from events.events import AppStarted

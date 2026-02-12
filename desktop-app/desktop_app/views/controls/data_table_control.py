@@ -1,6 +1,6 @@
 from typing import Any, Callable
-import flet as ft
 
+import flet as ft
 from utils.translation import Translation
 
 

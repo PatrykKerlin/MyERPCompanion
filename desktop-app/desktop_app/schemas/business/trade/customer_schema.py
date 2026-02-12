@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pydantic import model_validator
-
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
 

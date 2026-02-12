@@ -8,10 +8,9 @@ from typing import cast
 
 import numpy as np
 import torch
+from ml.feed_forward_model import FeedForwardModel
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
-
-from ml.feed_forward_model import FeedForwardModel
 
 logger = logging.getLogger("ai")
 

@@ -3,16 +3,15 @@ from __future__ import annotations
 from functools import wraps
 from logging import Logger
 from typing import Any, Awaitable, Callable, Generic, TypeVar
-from fastapi import HTTPException, status
 
 import httpx
-
+from config.settings import Settings
+from fastapi import HTTPException, status
 from schemas.base.base_schema import BaseSchema, BaseStrictSchema
 from schemas.core.param_schema import IdsPayloadSchema, PaginatedResponseSchema
-from utils.enums import Endpoint
 from schemas.core.token_schema import TokenPlainSchema
+from utils.enums import Endpoint
 from utils.tokens_accessor import TokensAccessor
-from config.settings import Settings
 
 TPlainSchema = TypeVar("TPlainSchema", bound=BaseSchema)
 TStrictSchema = TypeVar("TStrictSchema", bound=BaseStrictSchema)

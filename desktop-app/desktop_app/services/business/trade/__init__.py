@@ -26,7 +26,6 @@ from services.business.trade.order_service import OrderService
 from services.business.trade.order_view_service import OrderViewService
 from utils.service_factory import ServiceFactory
 
-
 AssocCategoryDiscountService = ServiceFactory.create(
     name_prefix="AssocCategoryDiscount",
     plain_schema_cls=AssocCategoryDiscountPlainSchema,

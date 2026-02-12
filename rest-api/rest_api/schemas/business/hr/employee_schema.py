@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import date
 
 from pydantic import ValidationInfo, model_validator
-
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.validation.constraints import Constraints
 

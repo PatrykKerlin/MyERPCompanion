@@ -2,15 +2,14 @@ from collections.abc import Mapping, Sequence
 from datetime import date, datetime, time, timedelta
 from typing import Generic, TypeVar, cast
 
+from models.base.base_model import BaseModel
+from models.core.user import User
 from sqlalchemy import Date, DateTime, String, asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute, selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ClauseElement, ColumnElement
 from sqlalchemy.sql.schema import Column
-
-from models.base.base_model import BaseModel
-from models.core.user import User
 
 TModel = TypeVar("TModel", bound=BaseModel)
 

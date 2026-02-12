@@ -3,13 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
-
 from controllers.base.base_controller import BaseController
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_desktop_view import BaseDesktopView
-from views.mixins.group_bulk_transfer_mixin import GroupBulkTransferMixin
 from views.controls.bulk_transfer_control import BulkTransfer
+from views.mixins.group_bulk_transfer_mixin import GroupBulkTransferMixin
 
 if TYPE_CHECKING:
     from controllers.core.module_controller import ModuleController
@@ -104,7 +103,6 @@ class ModuleView(BaseDesktopView, GroupBulkTransferMixin):
                 self._buttons_row,
             ]
         )
-
 
     def get_pending_group_targets(self) -> list[tuple[int, int, bool, bool]]:
         pending = self._group_bulk_transfer.get_pending_targets()

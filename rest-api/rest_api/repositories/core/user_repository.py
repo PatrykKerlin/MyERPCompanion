@@ -1,11 +1,10 @@
 from collections.abc import Mapping
 
+from models.core import AssocUserGroup, Group, Language, User
+from repositories.base.base_repository import BaseRepository
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
-
-from models.core import AssocUserGroup, Group, Language, User
-from repositories.base.base_repository import BaseRepository
 
 
 class UserRepository(BaseRepository[User]):

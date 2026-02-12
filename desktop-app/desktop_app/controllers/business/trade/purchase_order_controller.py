@@ -1,10 +1,9 @@
-from datetime import date
-from typing import Any
 import random
 import string
+from datetime import date
+from typing import Any
 
 import flet as ft
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController

@@ -1,8 +1,7 @@
-from typing import cast
 from collections.abc import Callable
+from typing import cast
 
 import flet as ft
-
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 

@@ -1,11 +1,11 @@
 from collections.abc import Mapping
-from sqlalchemy.exc import NoResultFound
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.core import Module
 from repositories.core import ModuleRepository
 from schemas.core.module_schema import ModulePlainSchema, ModuleStrictSchema
 from services.base.base_service import BaseService
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class ModuleService(BaseService[Module, ModuleRepository, ModuleStrictSchema, ModulePlainSchema]):

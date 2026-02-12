@@ -3,12 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
-
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
-    from utils.translation import Translation
     from controllers.components.footer_controller import FooterController
+    from utils.translation import Translation
 
 
 class FooterComponent(BaseComponent, ft.Container):

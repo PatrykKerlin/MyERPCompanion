@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
-
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
@@ -206,11 +205,11 @@ class OrdersView(BaseView["OrdersController"]):
             ("description", str(item.get("description") or "")),
             (
                 "is_fragile",
-                ""
-                if is_fragile is None
-                else self._translation.get("yes")
-                if bool(is_fragile)
-                else self._translation.get("no"),
+                (
+                    ""
+                    if is_fragile is None
+                    else self._translation.get("yes") if bool(is_fragile) else self._translation.get("no")
+                ),
             ),
             ("expiration_date", str(item.get("expiration_date") or "")),
             ("category_name", str(item.get("category_name") or "")),
@@ -413,7 +412,9 @@ class OrdersView(BaseView["OrdersController"]):
                         controls=[
                             ft.Container(
                                 width=110,
-                                content=ft.Text(self._translation.get("index"), weight=ft.FontWeight.BOLD, no_wrap=True),
+                                content=ft.Text(
+                                    self._translation.get("index"), weight=ft.FontWeight.BOLD, no_wrap=True
+                                ),
                             ),
                             ft.Container(
                                 expand=True,

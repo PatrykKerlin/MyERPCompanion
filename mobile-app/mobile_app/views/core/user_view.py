@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
-
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -124,9 +123,7 @@ class UserView(BaseView):
             ("dark", self._translation.get("dark")),
             ("light", self._translation.get("light")),
         ]
-        self.__theme_dropdown.options = [
-            ft.dropdown.Option(key=value, text=label) for value, label in theme_options
-        ]
+        self.__theme_dropdown.options = [ft.dropdown.Option(key=value, text=label) for value, label in theme_options]
         if self.__theme_dropdown.value not in {option[0] for option in theme_options}:
             self.__theme_dropdown.value = "system"
 

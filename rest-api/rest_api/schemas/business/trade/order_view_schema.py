@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import date, datetime
 
 from pydantic import Field
-
 from schemas.base.base_schema import BaseSchema
 from schemas.business.trade.order_schema import OrderPlainSchema
 

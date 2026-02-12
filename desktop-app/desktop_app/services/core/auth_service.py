@@ -1,10 +1,11 @@
 from typing import Any
+
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
-from schemas.core.user_schema import UserPlainSchema
-from schemas.core.token_schema import TokenPlainSchema
-from schemas.core.param_schema import IdsPayloadSchema
-from services.base.base_service import BaseService
 from schemas.core.module_schema import ModulePlainSchema
+from schemas.core.param_schema import IdsPayloadSchema
+from schemas.core.token_schema import TokenPlainSchema
+from schemas.core.user_schema import UserPlainSchema
+from services.base.base_service import BaseService
 from utils.enums import Endpoint
 
 

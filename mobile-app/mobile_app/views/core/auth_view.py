@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
-
 from utils.translation import Translation
 
 if TYPE_CHECKING:
@@ -108,8 +107,7 @@ class AuthView(ft.Container):
     def set_warehouse_options(self, options: list[tuple[int, str]]) -> None:
         sorted_options = sorted(options, key=lambda option: option[0])
         self.__warehouse_dropdown.options = [
-            ft.dropdown.Option(key=str(warehouse_id), text=name)
-            for warehouse_id, name in sorted_options
+            ft.dropdown.Option(key=str(warehouse_id), text=name) for warehouse_id, name in sorted_options
         ]
         if sorted_options:
             self.__warehouse_dropdown.value = str(sorted_options[0][0])

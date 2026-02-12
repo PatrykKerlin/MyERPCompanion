@@ -5,13 +5,12 @@ from logging import Logger
 from typing import Any, Awaitable, Callable, Generic, TypeVar
 
 import httpx
-
+from config.settings import Settings
 from schemas.base.base_schema import BaseSchema, BaseStrictSchema
 from schemas.core.param_schema import IdsPayloadSchema, PaginatedResponseSchema
-from utils.enums import Endpoint
 from schemas.core.token_schema import TokenPlainSchema
+from utils.enums import Endpoint
 from utils.tokens_accessor import TokensAccessor
-from config.settings import Settings
 
 TPlainSchema = TypeVar("TPlainSchema", bound=BaseSchema)
 TStrictSchema = TypeVar("TStrictSchema", bound=BaseStrictSchema)
@@ -78,9 +77,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
                         raise
                     self._tokens_accessor.write(new_tokens)
                     try:
-                        return await func(
-                            self, endpoint, path_param, query_params, body_params, new_tokens, module_id
-                        )
+                        return await func(self, endpoint, path_param, query_params, body_params, new_tokens, module_id)
                     except httpx.HTTPStatusError as second_error:
                         if second_error.response.status_code == httpx.codes.UNAUTHORIZED:
                             raise PermissionError("Session expired.") from second_error
@@ -336,7 +333,6 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         if cls._shared_client and not cls._shared_client.is_closed:
             await cls._shared_client.aclose()
         cls._shared_client = None
-
 
     async def _get(
         self,

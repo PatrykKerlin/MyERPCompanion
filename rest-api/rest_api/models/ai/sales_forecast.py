@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from datetime import date
 
+from models.base.base_model import BaseModel
 from sqlalchemy import Date, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
-
-from models.base.base_model import BaseModel
 
 
 class SalesForecast(BaseModel):

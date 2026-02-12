@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from pydantic import ValidationError
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from events.events import MobileMainMenuRequested, TranslationRequested, ViewRequested
+from pydantic import ValidationError
 from schemas.core.language_schema import LanguagePlainSchema
 from schemas.core.user_schema import UserPlainSchema, UserStrictUpdateAppSchema
 from services.core import LanguageService, UserService

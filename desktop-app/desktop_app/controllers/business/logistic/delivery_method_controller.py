@@ -1,13 +1,14 @@
 import asyncio
+
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.business.logistic.delivery_method_schema import DeliveryMethodPlainSchema, DeliveryMethodStrictSchema
 from services.business.logistic import CarrierService, DeliveryMethodService, UnitService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.delivery_method_view import DeliveryMethodView
-from events.events import ViewRequested
 
 
 class DeliveryMethodController(

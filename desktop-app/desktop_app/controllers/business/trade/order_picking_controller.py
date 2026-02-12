@@ -1,8 +1,8 @@
 import asyncio
 from datetime import date
 from typing import Any
-import flet as ft
 
+import flet as ft
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
@@ -12,6 +12,7 @@ from schemas.business.logistic.bin_schema import BinPlainSchema
 from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
 from schemas.business.trade.assoc_order_item_schema import AssocOrderItemPlainSchema, AssocOrderItemStrictSchema
 from schemas.business.trade.assoc_order_status_schema import AssocOrderStatusPlainSchema, AssocOrderStatusStrictSchema
+from schemas.business.trade.customer_schema import CustomerPlainSchema
 from schemas.business.trade.order_schema import OrderPlainSchema
 from schemas.business.trade.status_schema import StatusPlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
@@ -23,7 +24,6 @@ from services.business.trade import (
     OrderService,
     StatusService,
 )
-from schemas.business.trade.customer_schema import CustomerPlainSchema
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.trade.order_picking_view import OrderPickingView

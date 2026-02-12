@@ -138,9 +138,7 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
     ) -> TokenPlainSchema | None:
         return await self.__service.fetch_tokens(username, password, warehouse_id)
 
-    async def __perform_get_login_warehouses(
-        self, username: str | None
-    ) -> list[WarehouseLoginOptionSchema] | None:
+    async def __perform_get_login_warehouses(self, username: str | None) -> list[WarehouseLoginOptionSchema] | None:
         try:
             return await self.__service.get_login_warehouses(username)
         except Exception:

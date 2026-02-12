@@ -3,12 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 import flet as ft
-
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
-    from utils.translation import Translation
     from controllers.components.tabs_bar_controller import TabsBarController
+    from utils.translation import Translation
 
 
 class TabsBarComponent(BaseComponent, ft.Container):
@@ -44,6 +43,7 @@ class TabsBarComponent(BaseComponent, ft.Container):
     def refresh(self) -> None:
         self.__build_controls()
         self.update()
+
     def __build_controls(self) -> None:
         controls = [
             ft.Row(
@@ -62,4 +62,3 @@ class TabsBarComponent(BaseComponent, ft.Container):
             for title in self.__tabs
         ]
         cast(ft.Row, self.content).controls = cast(list[ft.Control], controls)
-

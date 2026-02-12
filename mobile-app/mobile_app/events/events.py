@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 from events.base.base_event import BaseEvent
 from utils.enums import TabNavigationDirection, View, ViewMode

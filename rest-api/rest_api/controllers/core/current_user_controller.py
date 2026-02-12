@@ -1,9 +1,8 @@
 from typing import Union
 
-from fastapi import HTTPException, Request, status
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
+from fastapi import HTTPException, Request, status
 from schemas.core.user_schema import UserPlainSchema, UserStrictCreateApiSchema, UserStrictUpdateApiSchema
 from services.core import UserService
 from utils.auth import Auth

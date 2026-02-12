@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Index, text
-from sqlalchemy.orm import Mapped
-
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
+from sqlalchemy import Index, text
+from sqlalchemy.orm import Mapped
 
 if TYPE_CHECKING:
     from models.business.logistic.item import Item
@@ -24,7 +23,6 @@ class AssocItemDiscount(BaseModel):
             postgresql_where=text("is_active"),
         ),
     )
-
 
     item_id: Mapped[int] = Fields.foreign_key(column="items.id")
     item: Mapped[Item] = Fields.relationship(

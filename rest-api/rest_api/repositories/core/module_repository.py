@@ -1,13 +1,12 @@
 from collections.abc import Mapping
 
+from models.core import AssocModuleGroup, AssocViewController, Controller, Group, Module, View
+from repositories.base.base_repository import BaseRepository
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
-
-from models.core import AssocModuleGroup, AssocViewController, Controller, Group, Module, View
-from repositories.base.base_repository import BaseRepository
 
 
 class ModuleRepository(BaseRepository[Module]):

@@ -1,29 +1,27 @@
 import logging
 
 import flet as ft
-
+from config.context import Context
 from config.settings import Settings
 from controllers import components, core
 from controllers.base.base_controller import BaseController
 from controllers.business import hr, logistic, reporting, trade
 from events.event_bus import EventBus
 from events.events import AppStarted
+from services.base.base_service import BaseService
 from states.state_store import StateStore
 from states.states import (
     AppState,
-    ShellState,
     ModulesState,
-    ViewState,
+    ShellState,
     TokensState,
     TranslationState,
     UserState,
+    ViewState,
 )
-
 from utils.enums import ViewMode
 from utils.translation import Translation
 from utils.user_settings import UserSettings
-from config.context import Context
-from services.base.base_service import BaseService
 
 
 class App:

@@ -1,10 +1,10 @@
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.core.language_schema import LanguagePlainSchema, LanguageStrictSchema
 from services.core import LanguageService
 from utils.enums import Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.core.language_view import LanguageView
-from events.events import ViewRequested
 
 
 class LanguageController(BaseViewController[LanguageService, LanguageView, LanguagePlainSchema, LanguageStrictSchema]):

@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from sqlalchemy import select, update
-
 from database.engine import Engine
 from models.ai.ai_task_run import AiTaskRun
+from sqlalchemy import select, update
 
 
 class TaskRunRepository:
@@ -43,9 +42,7 @@ class TaskRunRepository:
     async def finish_run(self, run_id: int, status: str, finished_at: datetime) -> None:
         async with self._engine.get_session() as session:
             await session.execute(
-                update(AiTaskRun)
-                .where(AiTaskRun.id == run_id)
-                .values(status=status, finished_at=finished_at)
+                update(AiTaskRun).where(AiTaskRun.id == run_id).values(status=status, finished_at=finished_at)
             )
             await session.commit()
 

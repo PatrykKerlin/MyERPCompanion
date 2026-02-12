@@ -6,13 +6,12 @@ from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.currency import Currency
 from models.business.trade.invoice import Invoice
 from models.business.trade.supplier import Supplier
-from utils.repository_factory import RepositoryFactory
 from repositories.business.trade.customer_repository import CustomerRepository
 from repositories.business.trade.discount_repository import DiscountRepository
 from repositories.business.trade.exchange_rate_repository import ExchangeRateRepository
 from repositories.business.trade.order_repository import OrderRepository
 from repositories.business.trade.status_repository import StatusRepository
-
+from utils.repository_factory import RepositoryFactory
 
 AssocCategoryDiscountRepository = RepositoryFactory.create(AssocCategoryDiscount)
 AssocCustomerDiscountRepository = RepositoryFactory.create(AssocCustomerDiscount)

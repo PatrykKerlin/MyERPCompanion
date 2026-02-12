@@ -1,23 +1,22 @@
 from typing import Any
 
 import flet as ft
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
+from schemas.business.logistic.category_schema import CategoryPlainSchema, CategoryStrictSchema
 from schemas.business.trade.assoc_category_discount_schema import (
     AssocCategoryDiscountPlainSchema,
     AssocCategoryDiscountStrictSchema,
 )
 from schemas.business.trade.discount_schema import DiscountPlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
-from services.business.trade import AssocCategoryDiscountService, DiscountService
-from schemas.business.logistic.category_schema import CategoryPlainSchema, CategoryStrictSchema
 from services.business.logistic import CategoryService
+from services.business.trade import AssocCategoryDiscountService, DiscountService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.category_view import CategoryView
-from events.events import ViewRequested
 
 
 class CategoryController(BaseViewController[CategoryService, CategoryView, CategoryPlainSchema, CategoryStrictSchema]):

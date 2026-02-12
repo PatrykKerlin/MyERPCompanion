@@ -9,12 +9,11 @@ import flet as ft
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import seaborn as sns
-from matplotlib.ticker import FuncFormatter
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from events.events import ViewRequested
+from matplotlib.ticker import FuncFormatter
 from schemas.business.logistic.category_schema import CategoryPlainSchema
 from schemas.business.logistic.item_schema import ItemPlainSchema
 from schemas.business.reporting.sales_forecast_report_schema import (
@@ -168,7 +167,11 @@ class SalesForecastReportController(
         except ValueError as error:
             self._open_error_dialog(message=str(error))
             return
-        if parsed_discount_from is not None and parsed_discount_to is not None and parsed_discount_from > parsed_discount_to:
+        if (
+            parsed_discount_from is not None
+            and parsed_discount_to is not None
+            and parsed_discount_from > parsed_discount_to
+        ):
             self._open_error_dialog(message=self.__t("discount_range_invalid"))
             return
         self.__date_from = date_from

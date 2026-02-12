@@ -152,7 +152,9 @@ class StockReceivingController(
         else:
             item_index, item_name = self.__order_item_labels.get(item_id, (str(item_id), ""))
             target_id = self._view.add_target_row(item_id, [item_index, item_name, str(bounded_quantity)])
-            self.__pending_move_quantities[target_id] = self.__pending_move_quantities.get(target_id, 0) + bounded_quantity
+            self.__pending_move_quantities[target_id] = (
+                self.__pending_move_quantities.get(target_id, 0) + bounded_quantity
+            )
             self.__pending_move_item_ids[target_id] = item_id
 
         self.__order_item_quantities[item_id] = max(0, max_quantity - bounded_quantity)

@@ -3,26 +3,25 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
+from models.base.base_model import BaseModel
+from models.base.fields import Fields
 from sqlalchemy import Index, text
 from sqlalchemy.orm import Mapped
 
-from models.base.base_model import BaseModel
-from models.base.fields import Fields
-
 if TYPE_CHECKING:
-    from models.business.logistic.category import Category
-    from models.business.logistic.item import Item
     from models.business.trade.assoc_category_discount import AssocCategoryDiscount
     from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
     from models.business.trade.assoc_item_discount import AssocItemDiscount
     from models.business.trade.assoc_order_item import AssocOrderItem
     from models.business.trade.currency import Currency
-    from models.business.trade.customer import Customer
 
 
 class Discount(BaseModel):
     __tablename__ = "discounts"
-    __table_args__ = (Index("ux_discount_name_active_true", "name", unique=True, postgresql_where=text("is_active")), Index("ux_discount_code_active_true", "code", unique=True, postgresql_where=text("is_active")),)
+    __table_args__ = (
+        Index("ux_discount_name_active_true", "name", unique=True, postgresql_where=text("is_active")),
+        Index("ux_discount_code_active_true", "code", unique=True, postgresql_where=text("is_active")),
+    )
 
     name: Mapped[str] = Fields.name(unique=False)
     code: Mapped[str] = Fields.string_10(unique=False)

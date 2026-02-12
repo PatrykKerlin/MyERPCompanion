@@ -1,7 +1,8 @@
+from datetime import date, datetime, timedelta
 from types import SimpleNamespace
 from typing import Callable, cast
+
 import flet as ft
-from datetime import date, datetime, timedelta
 
 
 class DateField(ft.Row):

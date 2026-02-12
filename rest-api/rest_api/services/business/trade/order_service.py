@@ -1,11 +1,10 @@
 from collections.abc import Mapping
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from models.business.trade.order import Order
 from repositories.business.trade.order_repository import OrderRepository
 from schemas.business.trade.order_schema import OrderPickingSummarySchema, OrderPlainSchema, OrderStrictSchema
 from services.base.base_service import BaseService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class OrderService(BaseService[Order, OrderRepository, OrderStrictSchema, OrderPlainSchema]):

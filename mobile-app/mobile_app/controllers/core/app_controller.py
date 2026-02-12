@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from events.base.base_event import BaseEvent
@@ -23,8 +22,8 @@ from events.events import (
     ViewRequested,
 )
 from schemas.business.trade.order_schema import OrderPickingSummarySchema
-from services.core.app_service import AppService
 from services.business.trade import OrderService
+from services.core.app_service import AppService
 from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
 from utils.user_settings import UserSettings
 from views.core.app_view import AppView as MobileAppView

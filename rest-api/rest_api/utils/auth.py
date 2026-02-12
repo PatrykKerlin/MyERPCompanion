@@ -3,18 +3,17 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Awaitable, cast
 
+from config.context import Context
 from fastapi import HTTPException, Request, status
 from jose import JWTError, jwt
+from models.core.assoc_module_group import AssocModuleGroup
 from passlib.context import CryptContext
+from schemas.core.user_schema import UserPlainSchema
+from services.business.logistic import WarehouseService
+from services.core import ModuleService, UserService
 from sqlalchemy import exists, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from config.context import Context
-from models.core.assoc_module_group import AssocModuleGroup
-from services.business.logistic import WarehouseService
-from schemas.core.user_schema import UserPlainSchema
-from services.core import ModuleService, UserService
 from utils.enums import Permission
 
 

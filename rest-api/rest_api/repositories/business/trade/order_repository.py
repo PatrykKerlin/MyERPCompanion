@@ -1,10 +1,5 @@
 from collections.abc import Mapping, Sequence
 
-from sqlalchemy import Select, exists, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, with_loader_criteria
-from sqlalchemy.sql.elements import ColumnElement
-
 from models.business.logistic.assoc_bin_item import AssocBinItem
 from models.business.logistic.bin import Bin
 from models.business.trade import Order
@@ -12,6 +7,10 @@ from models.business.trade.assoc_order_item import AssocOrderItem
 from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.status import Status
 from repositories.base.base_repository import BaseRepository
+from sqlalchemy import Select, exists, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload, with_loader_criteria
+from sqlalchemy.sql.elements import ColumnElement
 
 
 class OrderRepository(BaseRepository[Order]):
@@ -313,9 +312,7 @@ class OrderRepository(BaseRepository[Order]):
         return cls._expr(latest_status_order_subquery.in_(status_orders))
 
     @classmethod
-    def __split_status_filter(
-        cls, filters: Mapping[str, str] | None
-    ) -> tuple[dict[str, str] | None, int | None]:
+    def __split_status_filter(cls, filters: Mapping[str, str] | None) -> tuple[dict[str, str] | None, int | None]:
         if not filters:
             return None, None
         copied_filters = dict(filters)
@@ -328,9 +325,7 @@ class OrderRepository(BaseRepository[Order]):
         return (copied_filters if copied_filters else None), status_id
 
     @classmethod
-    def __split_warehouse_filter(
-        cls, filters: Mapping[str, str] | None
-    ) -> tuple[dict[str, str] | None, int | None]:
+    def __split_warehouse_filter(cls, filters: Mapping[str, str] | None) -> tuple[dict[str, str] | None, int | None]:
         if not filters:
             return None, None
         copied_filters = dict(filters)

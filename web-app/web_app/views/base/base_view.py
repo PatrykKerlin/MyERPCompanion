@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, TypeVar
 
 import flet as ft
-
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from services.base.base_service import BaseService
 from utils.enums import View, ViewMode

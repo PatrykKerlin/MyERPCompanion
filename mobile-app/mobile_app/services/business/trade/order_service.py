@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 from httpx import HTTPStatusError
-
 from schemas.business.trade.order_schema import OrderPickingSummarySchema, OrderPlainSchema, OrderStrictSchema
 from schemas.core.param_schema import IdsPayloadSchema
 from schemas.core.token_schema import TokenPlainSchema

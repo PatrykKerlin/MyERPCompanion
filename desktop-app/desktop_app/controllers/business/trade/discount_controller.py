@@ -1,12 +1,12 @@
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
 from services.business.trade import CurrencyService, DiscountService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.trade.discount_view import DiscountView
-from events.events import ViewRequested
 
 
 class DiscountController(BaseViewController[DiscountService, DiscountView, DiscountPlainSchema, DiscountStrictSchema]):

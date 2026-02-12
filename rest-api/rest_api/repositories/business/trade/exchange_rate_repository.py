@@ -1,10 +1,9 @@
 from typing import Mapping
 
-from sqlalchemy.sql import Select
-from sqlalchemy.sql.elements import ColumnElement
-
 from models.business.trade.exchange_rate import ExchangeRate
 from repositories.base.base_repository import BaseRepository
+from sqlalchemy.sql import Select
+from sqlalchemy.sql.elements import ColumnElement
 
 
 class ExchangeRateRepository(BaseRepository[ExchangeRate]):

@@ -1,11 +1,10 @@
 from typing import Mapping
 
+from models.business.hr import Employee
+from repositories.base.base_repository import BaseRepository
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
-
-from models.business.hr import Employee
-from repositories.base.base_repository import BaseRepository
 
 
 class EmployeeRepository(BaseRepository[Employee]):

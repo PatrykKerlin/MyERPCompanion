@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
-
 from schemas.business.trade.order_view_schema import OrderViewDiscountSchema
 from utils.enums import View, ViewMode
 from utils.translation import Translation

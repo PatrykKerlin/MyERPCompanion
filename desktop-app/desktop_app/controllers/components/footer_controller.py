@@ -3,13 +3,13 @@ from __future__ import annotations
 import asyncio
 from contextlib import suppress
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from typing import TYPE_CHECKING
+from zoneinfo import ZoneInfo
 
 from controllers.base.base_component_controller import BaseComponentController
+from events.events import ApiStatusChecked, ApiStatusRequested, FooterReady, FooterRequested
 from states.states import ShellState
 from views.components.footer_component import FooterComponent
-from events.events import ApiStatusChecked, ApiStatusRequested, FooterReady, FooterRequested
 
 if TYPE_CHECKING:
     from config.context import Context

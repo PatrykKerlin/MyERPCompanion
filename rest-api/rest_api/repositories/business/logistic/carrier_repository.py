@@ -1,12 +1,11 @@
 from typing import Mapping
 
-from sqlalchemy.orm import selectinload, with_loader_criteria
-from sqlalchemy.sql import Select
-from sqlalchemy.sql.elements import ColumnElement
-
 from models.business.logistic.carrier import Carrier
 from models.business.logistic.delivery_method import DeliveryMethod
 from repositories.base.base_repository import BaseRepository
+from sqlalchemy.orm import selectinload, with_loader_criteria
+from sqlalchemy.sql import Select
+from sqlalchemy.sql.elements import ColumnElement
 
 
 class CarrierRepository(BaseRepository[Carrier]):

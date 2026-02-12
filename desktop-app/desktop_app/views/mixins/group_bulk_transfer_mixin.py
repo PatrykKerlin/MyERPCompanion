@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import flet as ft
-
 from utils.enums import ViewMode
 from views.controls.bulk_transfer_control import BulkTransfer
 
@@ -26,6 +25,7 @@ class GroupBulkTransferMixin:
 
     def set_group_target_rows(self, rows: list[tuple[int, list[str]]]) -> None:
         self._group_bulk_transfer.set_target_rows(rows)
+
     def _init_group_bulk_transfer(
         self,
         mode: ViewMode,
@@ -78,4 +78,3 @@ class GroupBulkTransferMixin:
     def _set_group_bulk_transfer_state(self, mode: ViewMode) -> None:
         editable = mode == ViewMode.READ
         self._group_bulk_transfer.set_enabled_states(editable, editable, editable)
-

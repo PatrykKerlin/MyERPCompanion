@@ -1,12 +1,12 @@
+from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
 from schemas.business.trade.exchange_rate_schema import ExchangeRatePlainSchema, ExchangeRateStrictSchema
 from services.business.trade import CurrencyService, ExchangeRateService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.trade.exchange_rate_view import ExchangeRateView
-from events.events import ViewRequested
-from config.context import Context
 
 
 class ExchangeRateController(
