@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import flet as ft
 from controllers.base.base_controller import BaseController
@@ -19,6 +19,7 @@ from events.events import (
 from pydantic import ValidationError
 from schemas.core.language_schema import LanguagePlainSchema
 from schemas.core.user_schema import UserPlainSchema, UserStrictUpdateAppSchema
+from schemas.validation.constraints import Constraints
 from services.core import LanguageService, UserService
 from services.core.app_service import AppService
 from states.states import ViewState
@@ -90,7 +91,7 @@ class AppController(BaseController):
     async def __cart_updated_handler(self, event: CartUpdated) -> None:
         self.__view.set_cart_count(event.count)
 
-    async def __handle_web_reconnect(self, _: ft.ControlEvent) -> None:
+    async def __handle_web_reconnect(self, _: ft.Event[ft.Page]) -> None:
         current_user = self._state_store.app_state.user.current
         if not current_user:
             await self._event_bus.publish(AuthDialogRequested())
@@ -218,8 +219,8 @@ class AppController(BaseController):
             return 520
 
         target_width = resolve_dialog_width()
-        dialog.width = target_width
-        dialog.content.width = target_width
+        if isinstance(dialog_content, ft.Container):
+            dialog_content.width = target_width
 
         save_button.on_click = lambda _: self._page.run_task(
             self.__save_current_user_settings,
@@ -247,10 +248,13 @@ class AppController(BaseController):
 
     @staticmethod
     def __parse_optional_int(value: str | None) -> int | None:
-        if value in {None, "", "0"}:
+        if value is None:
+            return None
+        stripped = value.strip()
+        if stripped in {"", "0"}:
             return None
         try:
-            return int(value)
+            return int(stripped)
         except ValueError:
             return None
 
@@ -285,7 +289,7 @@ class AppController(BaseController):
             self._open_error_dialog(message_key="value_required")
             return
         selected_language = language_by_id.get(selected_language_id)
-        selected_theme = theme_dropdown.value or current_user.theme
+        selected_theme = self.__normalize_theme(theme_dropdown.value, current_user.theme)
         password = self.__to_none_if_empty(password_field.value)
         password_repeat = self.__to_none_if_empty(password_repeat_field.value)
         try:
@@ -340,6 +344,13 @@ class AppController(BaseController):
             return None
         stripped = value.strip()
         return stripped if stripped else None
+
+    @staticmethod
+    def __normalize_theme(value: str | None, fallback: str | None = None) -> Constraints.Theme:
+        candidate = value if value is not None else fallback
+        if candidate in {"system", "dark", "light"}:
+            return cast(Constraints.Theme, candidate)
+        return "system"
 
     async def __translation_ready_handler(self, event: TranslationReady) -> None:
         self._close_loading_dialog()

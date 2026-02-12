@@ -21,7 +21,7 @@ class AuthView(ft.Container):
             can_reveal_password=True,
         )
 
-        def on_login(_: ft.ControlEvent) -> None:
+        def on_login() -> None:
             controller.on_login_click(login_field.value or "", password_field.value or "")
 
         login_button = ft.Button(

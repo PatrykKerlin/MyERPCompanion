@@ -162,14 +162,15 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             page.on_resize = handle_resize
 
         def build_text(value: str, align: ft.TextAlign | None = None, weight: ft.FontWeight | None = None) -> ft.Text:
-            return ft.Text(
-                value,
-                no_wrap=True,
-                overflow=ft.TextOverflow.ELLIPSIS,
-                max_lines=1,
-                text_align=align,
-                weight=weight,
-            )
+            text_kwargs: dict[str, Any] = {
+                "no_wrap": True,
+                "overflow": ft.TextOverflow.ELLIPSIS,
+                "max_lines": 1,
+                "weight": weight,
+            }
+            if align is not None:
+                text_kwargs["text_align"] = align
+            return ft.Text(value, **text_kwargs)
 
         def render_cart_items() -> None:
             cart_list.controls.clear()
@@ -316,13 +317,14 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         default_currency_id = self._controller.get_default_currency_id()
 
         def build_text(value: str, align: ft.TextAlign | None = None) -> ft.Text:
-            return ft.Text(
-                value,
-                no_wrap=True,
-                overflow=ft.TextOverflow.ELLIPSIS,
-                max_lines=1,
-                text_align=align,
-            )
+            text_kwargs: dict[str, Any] = {
+                "no_wrap": True,
+                "overflow": ft.TextOverflow.ELLIPSIS,
+                "max_lines": 1,
+            }
+            if align is not None:
+                text_kwargs["text_align"] = align
+            return ft.Text(value, **text_kwargs)
 
         currency_dropdown = ft.Dropdown(
             options=[ft.dropdown.Option(key="0", text="")]
@@ -337,8 +339,9 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         if not currency_options:
             currency_dropdown.disabled = True
             currency_dropdown.value = "0"
-        if currency_dropdown.label:
-            currency_dropdown.label = "\n".join(currency_dropdown.label.split(" "))
+        currency_label = currency_dropdown.label
+        if isinstance(currency_label, str):
+            currency_dropdown.label = "\n".join(currency_label.split(" "))
 
         customer_discount_dropdown = ft.Dropdown(
             options=[ft.dropdown.Option(key="0", text="")]
@@ -352,8 +355,9 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         )
         if not customer_discount_options:
             customer_discount_dropdown.disabled = True
-        if customer_discount_dropdown.label:
-            customer_discount_dropdown.label = "\n".join(customer_discount_dropdown.label.split(" "))
+        customer_discount_label = customer_discount_dropdown.label
+        if isinstance(customer_discount_label, str):
+            customer_discount_dropdown.label = "\n".join(customer_discount_label.split(" "))
 
         delivery_method_dropdown = ft.Dropdown(
             options=[ft.dropdown.Option(key="0", text="")]
@@ -367,8 +371,9 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         )
         if not delivery_method_options:
             delivery_method_dropdown.disabled = True
-        if delivery_method_dropdown.label:
-            delivery_method_dropdown.label = "\n".join(delivery_method_dropdown.label.split(" "))
+        delivery_method_label = delivery_method_dropdown.label
+        if isinstance(delivery_method_label, str):
+            delivery_method_dropdown.label = "\n".join(delivery_method_label.split(" "))
 
         total_net_text = build_text("", align=ft.TextAlign.END)
         total_gross_text = build_text("", align=ft.TextAlign.END)
@@ -408,7 +413,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             delivery_method_id = parse_dropdown_int(delivery_method_dropdown.value)
             (
                 total_net,
-                _total_vat,
+                _,
                 total_gross,
                 total_discount,
                 shipping_cost,
@@ -434,11 +439,8 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             self.__safe_update(missing_rate_text)
             self.__safe_update(confirm_button)
 
-        currency_dropdown.on_change = lambda _: update_totals()
         currency_dropdown.on_select = lambda _: update_totals()
-        customer_discount_dropdown.on_change = lambda _: update_totals()
         customer_discount_dropdown.on_select = lambda _: update_totals()
-        delivery_method_dropdown.on_change = lambda _: update_totals()
         delivery_method_dropdown.on_select = lambda _: update_totals()
 
         confirm_button.on_click = lambda _: self.__on_checkout_confirm_clicked(
@@ -456,9 +458,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                     controls=[
                         ft.Container(col={"sm": 6, "md": 4}, content=build_text(self._translation.get("total_net"))),
                         ft.Container(
-                            col={"sm": 6, "md": 8},
-                            alignment=ft.Alignment.CENTER_RIGHT,
-                            content=total_net_text,
+                            col={"sm": 6, "md": 8}, alignment=ft.Alignment.CENTER_RIGHT, content=total_net_text
                         ),
                     ],
                 ),
@@ -467,9 +467,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                     controls=[
                         ft.Container(col={"sm": 6, "md": 4}, content=build_text(self._translation.get("total_gross"))),
                         ft.Container(
-                            col={"sm": 6, "md": 8},
-                            alignment=ft.Alignment.CENTER_RIGHT,
-                            content=total_gross_text,
+                            col={"sm": 6, "md": 8}, alignment=ft.Alignment.CENTER_RIGHT, content=total_gross_text
                         ),
                     ],
                 ),
@@ -480,9 +478,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                             col={"sm": 6, "md": 4}, content=build_text(self._translation.get("total_discount"))
                         ),
                         ft.Container(
-                            col={"sm": 6, "md": 8},
-                            alignment=ft.Alignment.CENTER_RIGHT,
-                            content=total_discount_text,
+                            col={"sm": 6, "md": 8}, alignment=ft.Alignment.CENTER_RIGHT, content=total_discount_text
                         ),
                     ],
                 ),
@@ -493,9 +489,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                             col={"sm": 6, "md": 4}, content=build_text(self._translation.get("shipping_cost"))
                         ),
                         ft.Container(
-                            col={"sm": 6, "md": 8},
-                            alignment=ft.Alignment.CENTER_RIGHT,
-                            content=shipping_cost_text,
+                            col={"sm": 6, "md": 8}, alignment=ft.Alignment.CENTER_RIGHT, content=shipping_cost_text
                         ),
                     ],
                 ),
@@ -535,8 +529,9 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             controls=controls,
             actions=[back_button, confirm_button],
         )
-        if isinstance(dialog.content, ft.Container) and isinstance(dialog.content.content, ft.Column):
-            dialog.content.content.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
+        dialog_content = dialog.content
+        if isinstance(dialog_content, ft.Container) and isinstance(dialog_content.content, ft.Column):
+            dialog_content.content.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
         page = self._controller._page
 
         def resolve_width() -> int:
@@ -547,8 +542,8 @@ class CreateOrderView(BaseView["CreateOrderController"]):
 
         def apply_width() -> None:
             target_width = resolve_width()
-            dialog.width = target_width
-            dialog.content.width = target_width
+            if isinstance(dialog_content, ft.Container):
+                dialog_content.width = target_width
             self.__safe_update(dialog)
 
         apply_width()
@@ -603,7 +598,9 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         self, item: OrderViewSourceItemSchema, cart_quantities: dict[int, int] | None = None
     ) -> ft.Control:
         if cart_quantities is None:
-            cart_quantities = self._controller.get_cart_quantities()
+            cart_quantities = self.__normalize_cart_quantities(self._controller.get_cart_quantities())
+        else:
+            cart_quantities = self.__normalize_cart_quantities(cart_quantities)
         image_url = self.__image_map.get(item.id)
         image = ft.Container(
             width=64,
@@ -726,7 +723,9 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             control.error = self._translation.get("invalid_quantity")
             self.__toggle_add_button(control, False)
             return
-        available = self.__resolve_available(item, self._controller.get_cart_quantities())
+        available = self.__resolve_available(
+            item, self.__normalize_cart_quantities(self._controller.get_cart_quantities())
+        )
         if int(value) > available:
             control.error = self._translation.get("insufficient_stock")
             self.__toggle_add_button(control, False)
@@ -750,8 +749,8 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             qty_input.error = self._translation.get("insufficient_stock")
             return
         qty_input.error = None
-        category_discount_id = int(category_dropdown.value) if category_dropdown.value not in {"0", None} else None
-        item_discount_id = int(item_dropdown.value) if item_dropdown.value not in {"0", None} else None
+        category_discount_id = self.__parse_optional_int(category_dropdown.value)
+        item_discount_id = self.__parse_optional_int(item_dropdown.value)
         self._controller.on_add_to_cart(
             item.id,
             int(quantity),
@@ -898,22 +897,22 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                 self.__safe_update(thumbnails_row)
                 update_buttons()
 
-            def move_left(_: ft.ControlEvent) -> None:
+            def move_left() -> None:
                 nonlocal start_index
                 if start_index <= 0:
                     return
                 start_index -= 1
                 render_thumbnails()
 
-            def move_right(_: ft.ControlEvent) -> None:
+            def move_right() -> None:
                 nonlocal start_index
                 if start_index + 3 >= len(image_urls):
                     return
                 start_index += 1
                 render_thumbnails()
 
-            left_button = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT, on_click=move_left, disabled=True)
-            right_button = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT, on_click=move_right, disabled=True)
+            left_button = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT, on_click=lambda: move_left(), disabled=True)
+            right_button = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT, on_click=lambda: move_right(), disabled=True)
             render_thumbnails()
             gallery_row = ft.Row(controls=[left_button, thumbnails_row, right_button], spacing=8)
         else:
@@ -934,7 +933,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
 
     def __refresh_items_list(self) -> None:
         filtered_items = self.__filter_items_by_category(self.__items)
-        cart_quantities = self._controller.get_cart_quantities()
+        cart_quantities = self.__normalize_cart_quantities(self._controller.get_cart_quantities())
         self.__available_nodes.clear()
         self.__items_list.controls = [self.__build_item_row(item, cart_quantities) for item in filtered_items]
         self.__safe_update(self.__items_list)
@@ -1000,9 +999,34 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         node = self.__available_nodes.get(item_id)
         if not node:
             return
-        available = self.__resolve_available(item, self._controller.get_cart_quantities())
+        available = self.__resolve_available(
+            item, self.__normalize_cart_quantities(self._controller.get_cart_quantities())
+        )
         node.value = f"{self._translation.get('available')}: {available}"
         self.__safe_update(node)
+
+    @staticmethod
+    def __normalize_cart_quantities(cart_quantities: Any) -> dict[int, int]:
+        if not isinstance(cart_quantities, dict):
+            return {}
+        normalized: dict[int, int] = {}
+        for raw_key, raw_value in cart_quantities.items():
+            try:
+                key = int(raw_key)
+                value = int(raw_value)
+            except (TypeError, ValueError):
+                continue
+            normalized[key] = value
+        return normalized
+
+    @staticmethod
+    def __parse_optional_int(value: str | None) -> int | None:
+        if not value or value in {"0", ""}:
+            return None
+        try:
+            return int(value)
+        except ValueError:
+            return None
 
     def __wrap_dropdown(self, dropdown: ft.Dropdown) -> FieldGroup:
         return FieldGroup(

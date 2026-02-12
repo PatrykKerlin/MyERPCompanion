@@ -70,7 +70,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         options: Sequence[tuple[int | str, str]],
         callbacks: list[Callable[..., None]] | None = None,
     ) -> tuple[ft.Container, int]:
-        def handle_select(_: ft.ControlEvent) -> None:
+        def handle_select() -> None:
             for callback in callbacks or []:
                 callback()
 

@@ -16,7 +16,7 @@ from schemas.business.trade.assoc_order_status_schema import (
     AssocOrderStatusPlainSchema,
     AssocOrderStatusStrictSchema,
 )
-from schemas.business.trade.order_schema import OrderPlainSchema, SalesOrderStrictSchema
+from schemas.business.trade.order_schema import OrderPlainSchema, OrderStrictSchema
 from schemas.business.trade.order_view_schema import (
     OrderViewDiscountSchema,
     OrderViewExchangeRateSchema,
@@ -169,11 +169,11 @@ class CreateOrderController(
             "item_discount_id": item_discount_id,
         }
         self.__recalculate_cart_prices()
-        total = sum(int(value["quantity"]) for value in self.__cart.values() if value.get("quantity"))
+        total = sum(self.__as_positive_int(value.get("quantity")) for value in self.__cart.values())
         self._page.run_task(self._event_bus.publish, CartUpdated(count=total))
 
     def on_back_to_orders_clicked(self) -> None:
-        self._page.run_task(self.__open_orders_view, False)
+        self._page.run_task(self.__open_orders_view)
 
     def on_category_discount_changed(self, category_id: int, selected_value: str) -> None:
         category_discount_id: int | None = None
@@ -220,7 +220,7 @@ class CreateOrderController(
             return
         self.__cart.pop(item_id, None)
         self.__recalculate_cart_prices()
-        total = sum(int(value["quantity"]) for value in self.__cart.values() if value.get("quantity"))
+        total = sum(self.__as_positive_int(value.get("quantity")) for value in self.__cart.values())
         self._page.run_task(self._event_bus.publish, CartUpdated(count=total))
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> CreateOrderView:
@@ -459,7 +459,7 @@ class CreateOrderController(
         return amount
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __create_order(self, payload: SalesOrderStrictSchema) -> OrderPlainSchema:
+    async def __create_order(self, payload: OrderStrictSchema) -> OrderPlainSchema:
         payload = payload.model_copy(update={"is_sales": True})
         return await self.__order_service.create(Endpoint.ORDERS, None, None, payload, self._module_id)
 
@@ -524,6 +524,15 @@ class CreateOrderController(
         return await self.__order_status_service.create_bulk(
             Endpoint.ORDER_STATUSES_CREATE_BULK, None, None, [payload], self._module_id
         )
+
+    @staticmethod
+    def __as_positive_int(value: float | int | None) -> int:
+        if value is None:
+            return 0
+        parsed = int(value)
+        if parsed <= 0:
+            return 0
+        return parsed
 
     @staticmethod
     def __format_order_number(order_date: date, sequence: int) -> str:
@@ -660,7 +669,7 @@ class CreateOrderController(
                 return
             order_date = date.today()
             order_number = await self.__generate_order_number(order_date)
-            payload = SalesOrderStrictSchema(
+            payload = OrderStrictSchema(
                 number=order_number,
                 is_sales=True,
                 currency_id=currency_id,

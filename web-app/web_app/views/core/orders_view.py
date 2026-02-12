@@ -254,22 +254,22 @@ class OrdersView(BaseView["OrdersController"]):
                 self.__safe_update(thumbnails_row)
                 update_buttons()
 
-            def move_left(_: ft.ControlEvent) -> None:
+            def move_left() -> None:
                 nonlocal start_index
                 if start_index <= 0:
                     return
                 start_index -= 1
                 render_thumbnails()
 
-            def move_right(_: ft.ControlEvent) -> None:
+            def move_right() -> None:
                 nonlocal start_index
                 if start_index + 3 >= len(image_urls):
                     return
                 start_index += 1
                 render_thumbnails()
 
-            left_button = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT, on_click=move_left, disabled=True)
-            right_button = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT, on_click=move_right, disabled=True)
+            left_button = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT, on_click=lambda: move_left(), disabled=True)
+            right_button = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT, on_click=lambda: move_right(), disabled=True)
             render_thumbnails()
             gallery_row = ft.Row(controls=[left_button, thumbnails_row, right_button], spacing=8)
         else:
@@ -381,11 +381,7 @@ class OrdersView(BaseView["OrdersController"]):
                             ),
                             ft.Container(
                                 expand=True,
-                                content=ft.Text(
-                                    str(value),
-                                    no_wrap=True,
-                                    overflow=ft.TextOverflow.ELLIPSIS,
-                                ),
+                                content=ft.Text(str(value), no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                             ),
                         ],
                         spacing=12,
@@ -465,45 +461,25 @@ class OrdersView(BaseView["OrdersController"]):
                             controls=[
                                 ft.Container(
                                     width=110,
-                                    content=ft.Text(
-                                        item_index,
-                                        no_wrap=True,
-                                        overflow=ft.TextOverflow.ELLIPSIS,
-                                    ),
+                                    content=ft.Text(item_index, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                 ),
                                 ft.Container(
                                     expand=True,
-                                    content=ft.Text(
-                                        item_name,
-                                        no_wrap=True,
-                                        overflow=ft.TextOverflow.ELLIPSIS,
-                                    ),
+                                    content=ft.Text(item_name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                 ),
                                 ft.Container(
                                     width=130,
-                                    content=ft.Text(
-                                        item_ean,
-                                        no_wrap=True,
-                                        overflow=ft.TextOverflow.ELLIPSIS,
-                                    ),
+                                    content=ft.Text(item_ean, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                 ),
                                 ft.Container(
                                     width=90,
                                     alignment=ft.Alignment.CENTER_RIGHT,
-                                    content=ft.Text(
-                                        quantity,
-                                        no_wrap=True,
-                                        overflow=ft.TextOverflow.ELLIPSIS,
-                                    ),
+                                    content=ft.Text(quantity, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                 ),
                                 ft.Container(width=20),
                                 ft.Container(
                                     width=220,
-                                    content=ft.Text(
-                                        discounts,
-                                        no_wrap=True,
-                                        overflow=ft.TextOverflow.ELLIPSIS,
-                                    ),
+                                    content=ft.Text(discounts, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                 ),
                             ],
                         ),
