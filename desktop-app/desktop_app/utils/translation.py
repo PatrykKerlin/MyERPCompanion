@@ -137,6 +137,8 @@ class Translation:
             "item_details": "Item details",
             "images": "Images",
             "no_images": "No images available",
+            "copy_form_data": "Copy form data",
+            "paste_form_data": "Paste form data",
         }
         if items:
             self.__items.update(items)

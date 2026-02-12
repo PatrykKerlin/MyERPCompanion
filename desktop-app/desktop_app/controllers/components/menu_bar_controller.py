@@ -31,16 +31,18 @@ class MenuBarController(BaseComponentController[MenuBarComponent, MenuBarRequest
 
     def on_new_clicked(self) -> None:
         view_state = self._state_store.app_state.view
-        if not view_state.view:
+        current_view = view_state.view
+        if not current_view:
             return
-        view_state.view.clear_inputs()
+        self.__reset_view_inputs(current_view)
         self._state_store.update(view={"mode": ViewMode.CREATE})
 
-    def on_open_clicked(self) -> None:
+    def on_search_clicked(self) -> None:
         view_state = self._state_store.app_state.view
-        if not view_state.view:
+        current_view = view_state.view
+        if not current_view:
             return
-        view_state.view.clear_inputs()
+        self.__reset_view_inputs(current_view)
         self._state_store.update(view={"mode": ViewMode.SEARCH})
 
     def on_save_clicked(self) -> None:
@@ -127,6 +129,22 @@ class MenuBarController(BaseComponentController[MenuBarComponent, MenuBarRequest
         await self._event_bus.publish(MenuBarReady(self._component))
         self._page.on_keyboard_event = self.__on_keyboard_event
 
+    @staticmethod
+    def __reset_view_inputs(current_view: ft.Control) -> None:
+        controller = getattr(current_view, "_controller", None)
+        request_data = getattr(controller, "search_params", None)
+        if request_data is not None:
+            request_data.input_values.clear()
+            request_data.selected_inputs.clear()
+            request_data.page = 1
+        if hasattr(current_view, "_data_row"):
+            setattr(current_view, "_data_row", None)
+        if hasattr(current_view, "search_results"):
+            setattr(current_view, "search_results", None)
+        clear_inputs = getattr(current_view, "clear_inputs", None)
+        if callable(clear_inputs):
+            clear_inputs()
+
     def __on_keyboard_event(self, event: ft.KeyboardEvent) -> None:
         ctrl = event.ctrl or event.meta
         if not ctrl:
@@ -137,7 +155,7 @@ class MenuBarController(BaseComponentController[MenuBarComponent, MenuBarRequest
         elif key == "n":
             self.on_new_clicked()
         elif key == "o":
-            self.on_open_clicked()
+            self.on_search_clicked()
         elif key == "s":
             self.on_save_clicked()
         elif key == "w" and event.shift:
@@ -154,7 +172,7 @@ class MenuBarController(BaseComponentController[MenuBarComponent, MenuBarRequest
             self.on_undo_clicked()
         elif key == "y":
             self.on_redo_clicked()
-        elif key == "c":
+        elif key == "c" and event.shift:
             self.on_copy_clicked()
-        elif key == "v":
+        elif key == "v" and event.shift:
             self.on_paste_clicked()

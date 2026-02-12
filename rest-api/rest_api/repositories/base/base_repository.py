@@ -209,6 +209,14 @@ class BaseRepository(Generic[TModel]):
                 continue
 
             column_type = attribute.property.columns[0].type
+            is_empty_filter = raw_value is None or (isinstance(raw_value, str) and raw_value == "")
+
+            if is_empty_filter:
+                if isinstance(column_type, String):
+                    expressions.append(cls._expr(attribute.is_(None) | (attribute == "")))
+                else:
+                    expressions.append(cls._expr(attribute.is_(None)))
+                continue
 
             if isinstance(column_type, String):
                 expressions.append(attribute.ilike(f"%{raw_value}%"))
