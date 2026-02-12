@@ -18,7 +18,7 @@ class SalesForecastReportFilterSchema(BaseSchema):
     discount_to: Constraints.PercentFloatOptional = None
 
     @model_validator(mode="after")
-    def __validate_date_range(self) -> "SalesForecastReportFilterSchema":
+    def _validate_date_range(self) -> "SalesForecastReportFilterSchema":
         if self.date_from and self.date_to and self.date_from > self.date_to:
             raise ValueError("date_from must be less than or equal to date_to")
         if self.discount_from is not None and self.discount_to is not None and self.discount_from > self.discount_to:

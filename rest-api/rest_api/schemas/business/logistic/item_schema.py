@@ -40,7 +40,7 @@ class ItemStrictSchema(BaseStrictSchema):
     supplier_id: Constraints.PositiveInteger
 
     @model_validator(mode="after")
-    def __validate_data(self) -> ItemStrictSchema:
+    def _validate_data(self) -> ItemStrictSchema:
         today = date.today()
 
         if self.expiration_date is not None and self.expiration_date < today:

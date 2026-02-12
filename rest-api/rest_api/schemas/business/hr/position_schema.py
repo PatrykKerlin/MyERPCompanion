@@ -16,7 +16,7 @@ class PositionStrictSchema(BaseStrictSchema):
     department_id: Constraints.PositiveInteger
 
     @model_validator(mode="after")
-    def __validate_data(self) -> PositionStrictSchema:
+    def _validate_data(self) -> PositionStrictSchema:
         if self.min_salary > self.max_salary:
             raise ValueError("max_salary must be greater than or equal to min_salary")
         return self

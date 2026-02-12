@@ -34,7 +34,7 @@ class OrderStrictSchema(OrderStrictBaseSchema):
     supplier_id: Constraints.PositiveIntegerOptional
 
     @model_validator(mode="after")
-    def __validate_data(self) -> "OrderStrictSchema":
+    def _validate_data(self) -> "OrderStrictSchema":
         if not self.customer_id and not self.supplier_id:
             raise ValueError("either customer_id or supplier_id must be provided")
 

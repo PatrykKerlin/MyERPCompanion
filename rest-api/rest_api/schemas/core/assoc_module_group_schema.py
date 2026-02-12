@@ -12,7 +12,7 @@ class AssocModuleGroupStrictSchema(BaseStrictSchema):
     module_id: Constraints.PositiveInteger
 
     @model_validator(mode="after")
-    def validate_data(self) -> AssocModuleGroupStrictSchema:
+    def _validate_data(self) -> AssocModuleGroupStrictSchema:
         if self.can_modify and not self.can_read:
             raise ValueError("can_read is required for can_modify")
         if not self.can_read and not self.can_modify:

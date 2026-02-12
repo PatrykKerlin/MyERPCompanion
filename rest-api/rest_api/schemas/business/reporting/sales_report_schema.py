@@ -16,7 +16,7 @@ class SalesReportFilterSchema(BaseSchema):
     currency_id: Constraints.PositiveIntegerOptional = None
 
     @model_validator(mode="after")
-    def __validate_date_range(self) -> "SalesReportFilterSchema":
+    def _validate_date_range(self) -> "SalesReportFilterSchema":
         if self.date_from and self.date_to and self.date_from > self.date_to:
             raise ValueError("date_from must be less than or equal to date_to")
         return self

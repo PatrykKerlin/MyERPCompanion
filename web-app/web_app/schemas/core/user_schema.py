@@ -17,7 +17,7 @@ class UserStrictBaseSchema(BaseModel):
     customer_id: Constraints.PositiveIntegerOptional
 
     @model_validator(mode="after")
-    def __validate_exactly_one_of_employee_or_customer(self) -> UserStrictBaseSchema:
+    def _validate_exactly_one_of_employee_or_customer(self) -> UserStrictBaseSchema:
         has_employee = self.employee_id is not None
         has_customer = self.customer_id is not None
 
@@ -31,7 +31,7 @@ class UserStrictUpdateAppSchema(BaseStrictSchema, UserStrictBaseSchema):
     password_repeat: Annotated[Constraints.PasswordOptional, Field(exclude=True)]
 
     @model_validator(mode="after")
-    def __validate_passwords(self) -> UserStrictUpdateAppSchema:
+    def _validate_passwords(self) -> UserStrictUpdateAppSchema:
         if self.password is None and self.password_repeat is None:
             return self
         if self.password is None or self.password_repeat is None:

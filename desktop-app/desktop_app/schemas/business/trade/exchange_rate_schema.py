@@ -16,7 +16,7 @@ class ExchangeRateStrictSchema(BaseStrictSchema):
     quote_currency_id: Constraints.PositiveInteger
 
     @model_validator(mode="after")
-    def __validate_data(self) -> ExchangeRateStrictSchema:
+    def _validate_data(self) -> ExchangeRateStrictSchema:
         if self.base_currency_id == self.quote_currency_id:
             raise ValueError("Base currency and quote currency must be different.")
 

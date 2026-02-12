@@ -45,7 +45,7 @@ class EmployeeStrictSchema(BaseStrictSchema):
     position_id: Constraints.PositiveInteger
 
     @model_validator(mode="after")
-    def __validate_data(self, info: ValidationInfo) -> EmployeeStrictSchema:
+    def _validate_data(self, info: ValidationInfo) -> EmployeeStrictSchema:
         today = date.today()
 
         if bool(self.passport_number) ^ bool(self.passport_expiry):
