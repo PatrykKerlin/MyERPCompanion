@@ -32,7 +32,7 @@ from views.core.main_menu_view import MainMenuView
 
 if TYPE_CHECKING:
     from schemas.core.user_schema import UserPlainSchema
-    from states.states import TranslationState, UserState
+    from states.states import MobileWarehouseState, TranslationState, UserState
 
 
 class AppController(BaseController):
@@ -63,6 +63,7 @@ class AppController(BaseController):
             {
                 "translation": self.__translation_updated_listener,
                 "user": self.__user_updated_listener,
+                "mobile_warehouse": self.__mobile_warehouse_updated_listener,
             }
         )
 
@@ -71,6 +72,10 @@ class AppController(BaseController):
 
     def __translation_updated_listener(self, state: TranslationState) -> None:
         self.__view.update_translation(state.items)
+        self._page.update()
+
+    def __mobile_warehouse_updated_listener(self, _: MobileWarehouseState) -> None:
+        self.__view.set_warehouse_name(self._get_mobile_selected_warehouse_name())
         self._page.update()
 
     async def __app_started_handler(self, _: AppStarted) -> None:
@@ -125,6 +130,7 @@ class AppController(BaseController):
     async def __logout_requested_handler(self, _: LogoutRequested) -> None:
         self.__view.set_navigation_visible(False)
         self.__view.set_username(None)
+        self.__view.set_warehouse_name(None)
         self.__view.set_content_visible(False)
         self.__view.set_content(None)
         self.__main_menu = None
@@ -132,6 +138,7 @@ class AppController(BaseController):
             view={"title": "", "mode": ViewMode.NONE, "view": None},
             modules={"items": []},
             user={"current": None},
+            mobile_warehouse={"selected_id": None, "selected_name": None},
             tokens={"access": None, "refresh": None},
         )
         await self._event_bus.publish(AuthDialogRequested())
@@ -160,6 +167,7 @@ class AppController(BaseController):
         if not user:
             self.__view.set_navigation_visible(False)
             self.__view.set_username(None)
+            self.__view.set_warehouse_name(None)
             self.__view.set_content_visible(False)
             self.__view.set_content(None)
             self.__main_menu = None
@@ -172,6 +180,7 @@ class AppController(BaseController):
     def __apply_user_preferences(self, user: UserPlainSchema) -> None:
         self.__view.set_theme(user.theme)
         self.__view.set_username(user.username)
+        self.__view.set_warehouse_name(self._get_mobile_selected_warehouse_name())
 
     async def __open_main_menu_view(self) -> None:
         self.__main_menu = MainMenuView(self._state_store.app_state.translation.items)

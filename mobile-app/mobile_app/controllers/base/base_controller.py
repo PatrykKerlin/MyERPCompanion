@@ -181,6 +181,21 @@ class BaseController:
             return f"{title}: {id}"
         return title
 
+    def _get_mobile_selected_warehouse_id(self) -> int | None:
+        selected_id = self._state_store.app_state.mobile_warehouse.selected_id
+        if selected_id is not None:
+            return selected_id
+        user = self._state_store.app_state.user.current
+        if user and user.warehouse_id is not None:
+            return user.warehouse_id
+        return None
+
+    def _get_mobile_selected_warehouse_name(self) -> str | None:
+        selected_name = self._state_store.app_state.mobile_warehouse.selected_name
+        if selected_name:
+            return selected_name
+        return None
+
     async def _acquire_dialog_slot(self) -> None:
         await BaseController._dialog_lock.acquire()
         await self._wait_for_dialog_clear()

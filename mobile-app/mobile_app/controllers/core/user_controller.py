@@ -125,6 +125,7 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         if self._view:
             self._view.clear_password_inputs()
         self._open_message_dialog("record_save_success")
+        await self._event_bus.publish(MobileMainMenuRequested())
 
         target_language = effective_user.language.symbol
         if target_language != previous_language:

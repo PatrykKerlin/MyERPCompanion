@@ -42,6 +42,11 @@ class UserState(BaseState):
     current: UserPlainSchema | None = None
 
 
+class MobileWarehouseState(BaseState):
+    selected_id: int | None = None
+    selected_name: str | None = None
+
+
 class ModulesState(BaseState):
     items: list[ModulePlainSchema]
 
@@ -56,6 +61,7 @@ class AppState(BaseState):
     translation: TranslationState
     tokens: TokensState
     user: UserState
+    mobile_warehouse: MobileWarehouseState = Field(default_factory=MobileWarehouseState)
     modules: ModulesState
     shell: ShellState = Field(default_factory=ShellState)
     view: ViewState

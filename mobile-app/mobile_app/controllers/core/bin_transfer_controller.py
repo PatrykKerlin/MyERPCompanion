@@ -208,6 +208,13 @@ class BinTransferController(
         await self._open_loading_dialog()
         translation = self._state_store.app_state.translation.items
         bin_schema = await self.__perform_get_single_bin(location)
+        selected_warehouse_id = self._get_mobile_selected_warehouse_id()
+        if (
+            selected_warehouse_id is not None
+            and bin_schema is not None
+            and bin_schema.warehouse_id != selected_warehouse_id
+        ):
+            bin_schema = None
         if request_id != self.__source_request_id:
             self._close_loading_dialog()
             return
@@ -242,6 +249,13 @@ class BinTransferController(
         await self._open_loading_dialog()
         translation = self._state_store.app_state.translation.items
         bin_schema = await self.__perform_get_single_bin(location)
+        selected_warehouse_id = self._get_mobile_selected_warehouse_id()
+        if (
+            selected_warehouse_id is not None
+            and bin_schema is not None
+            and bin_schema.warehouse_id != selected_warehouse_id
+        ):
+            bin_schema = None
         if request_id != self.__target_request_id:
             self._close_loading_dialog()
             return

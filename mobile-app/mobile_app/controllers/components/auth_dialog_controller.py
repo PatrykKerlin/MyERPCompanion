@@ -24,6 +24,7 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
         self.__service = AuthService(self._settings, self._logger, self._tokens_accessor)
         self.__mobile_login_warehouses_request_id = 0
         self.__mobile_login_warehouses_username: str | None = None
+        self.__mobile_login_warehouses_by_id: dict[int, str] = {}
         self._subscribe_event_handlers({AuthDialogRequested: self._component_requested_handler})
 
     def on_cancel_click(self) -> None:
@@ -44,6 +45,7 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
     async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
         translation_state = self._state_store.app_state.translation
         self.__mobile_login_warehouses_username = None
+        self.__mobile_login_warehouses_by_id = {}
         self._component = MobileAuthView(controller=self, translation=translation_state.items)
         await self._event_bus.publish(AuthViewReady(component=self._component))
         self.on_mobile_username_changed(None, force=True)
@@ -74,6 +76,10 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
             self._state_store.update(tokens={"access": None, "refresh": None})
             self._open_error_dialog(message_key="employee_login_required")
             return
+
+        selected_warehouse_id = self.__resolve_mobile_selected_warehouse_id(user, warehouse_id)
+        selected_warehouse_name = await self.__resolve_mobile_selected_warehouse_name(username, selected_warehouse_id)
+
         user_groups_set = {group.id for group in user.groups}
         user_modules: list[ModulePlainSchema] = []
         for module in all_modules:
@@ -81,6 +87,9 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
             if module_groups_set.intersection(user_groups_set):
                 user_modules.append(module)
         self._state_store.update(modules={"items": user_modules})
+        self._state_store.update(
+            mobile_warehouse={"selected_id": selected_warehouse_id, "selected_name": selected_warehouse_name}
+        )
         self._state_store.update(user={"current": user})
         self._component = None
         await self._event_bus.publish(AuthViewReady(component=None))
@@ -93,12 +102,32 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
         if not isinstance(self._component, MobileAuthView):
             return
         if warehouses is None:
+            self.__mobile_login_warehouses_by_id = {}
             self._component.set_warehouse_options([])
             self._page.update()
             return
+        self.__mobile_login_warehouses_by_id = {warehouse.id: warehouse.name for warehouse in warehouses}
         options = [(warehouse.id, warehouse.name) for warehouse in warehouses]
         self._component.set_warehouse_options(options)
         self._page.update()
+
+    @staticmethod
+    def __resolve_mobile_selected_warehouse_id(user: UserPlainSchema, selected_warehouse_id: int | None) -> int | None:
+        if user.warehouse_id is not None:
+            return user.warehouse_id
+        return selected_warehouse_id
+
+    async def __resolve_mobile_selected_warehouse_name(self, username: str, warehouse_id: int | None) -> str | None:
+        if warehouse_id is None:
+            return None
+        warehouse_name = self.__mobile_login_warehouses_by_id.get(warehouse_id)
+        if warehouse_name:
+            return warehouse_name
+        warehouses = await self.__perform_get_login_warehouses(username)
+        if warehouses is None:
+            return None
+        self.__mobile_login_warehouses_by_id = {warehouse.id: warehouse.name for warehouse in warehouses}
+        return self.__mobile_login_warehouses_by_id.get(warehouse_id)
 
     @BaseController.handle_api_action(ApiActionError.INVALID_CREDENTIALS)
     async def __perform_fetch_tokens(

@@ -1,7 +1,8 @@
+from datetime import date, datetime
+from dataclasses import replace
+import json
 from abc import ABC
 from typing import Any, Callable, Generic, TypeVar, cast
-from datetime import date, datetime
-import json
 
 import flet as ft
 from pydantic import ValidationError
@@ -319,6 +320,7 @@ class BaseViewController(
         await self._open_loading_dialog()
         translation = self._state_store.app_state.translation.items
         self._module_id = event.module_id
+        effective_event = event
         data = event.data
         if (
             data is None
@@ -330,7 +332,7 @@ class BaseViewController(
         if data is not None:
             self._parse_data_row(data)
             if event.data is None:
-                object.__setattr__(event, "data", data)
+                effective_event = replace(event, data=data)
         if event.mode is not None:
             mode = event.mode
         elif data:
@@ -344,7 +346,7 @@ class BaseViewController(
             self._request_data.input_values = dict(data)
             if self._view_key == View.USERS:
                 self._request_data.input_values["language_id"] = data["language"]["id"]
-        self._view = await self._build_view(translation, mode, event)
+        self._view = await self._build_view(translation, mode, effective_event)
         if self._view:
             self._request_data_by_view[id(self._view)] = self._request_data
         await self._event_bus.publish(

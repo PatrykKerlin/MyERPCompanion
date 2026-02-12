@@ -370,7 +370,7 @@ class OrderPickingController(
         bin_ids = sorted({schema.bin_id for schema in bin_item_schemas})
         bins = await self.__perform_get_bins_by_ids(bin_ids) or []
         bins_by_id = {schema.id: schema for schema in bins}
-        warehouse_id = self.__resolve_mobile_warehouse_id()
+        warehouse_id = self._get_mobile_selected_warehouse_id()
 
         options: list[OrderPickingBinOption] = []
         for bin_item in bin_item_schemas:
@@ -677,12 +677,6 @@ class OrderPickingController(
         if item_schema:
             new_stock = max(0, item_schema.stock_quantity - moved_quantity)
             await self.__perform_update_item(item_id, self.__build_item_update(item_schema, new_stock))
-
-    def __resolve_mobile_warehouse_id(self) -> int | None:
-        user = self._state_store.app_state.user.current
-        if user and user.warehouse_id is not None:
-            return user.warehouse_id
-        return None
 
     async def __check_and_update_order_status(self, order_id: int, touched_item_ids: set[int]) -> None:
         statuses = await self.__perform_get_all_statuses()

@@ -59,6 +59,9 @@ class BinsController(BaseViewController[BinService, BinsView, BinPlainSchema, Bi
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinsView:
         bins = await self.__perform_get_all_bins()
+        selected_warehouse_id = self._get_mobile_selected_warehouse_id()
+        if selected_warehouse_id is not None:
+            bins = [schema for schema in bins if schema.warehouse_id == selected_warehouse_id]
         self.__bins = sorted(bins, key=lambda schema: schema.location.lower())
         self.__selected_bin = None
         self.__items = []

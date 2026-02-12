@@ -287,6 +287,13 @@ class StockReceivingController(
         if not self._view:
             return
         target_bin = await self.__perform_get_single_bin(location)
+        selected_warehouse_id = self._get_mobile_selected_warehouse_id()
+        if (
+            selected_warehouse_id is not None
+            and target_bin is not None
+            and target_bin.warehouse_id != selected_warehouse_id
+        ):
+            target_bin = None
         if not target_bin:
             self.__target_bin = None
             self.__target_items = {}

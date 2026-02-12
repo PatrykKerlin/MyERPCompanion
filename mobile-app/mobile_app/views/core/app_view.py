@@ -25,6 +25,7 @@ class AppView:
         self.__on_logout: Callable[[], None] | None = None
         self.__drawer_views: list[View] = []
         self.__current_username: str | None = None
+        self.__current_warehouse_name: str | None = None
 
         self.__title_text = ft.Text(
             self.__translation.get("my_erp_companion"),
@@ -135,6 +136,10 @@ class AppView:
             self.__username_text.value = self.__translation.get("username")
         self.__safe_update(self.__top_bar)
 
+    def set_warehouse_name(self, warehouse_name: str | None) -> None:
+        self.__current_warehouse_name = warehouse_name
+        self.__refresh_drawer_controls()
+
     def set_auth_view(self, component: ft.Control | None) -> None:
         if component is None:
             self.__auth_container.content = None
@@ -197,10 +202,21 @@ class AppView:
 
     def __refresh_drawer_controls(self) -> None:
         self.__drawer_views = []
+        title_controls: list[ft.Control] = [
+            ft.Text(self.__translation.get("my_erp_companion"), weight=ft.FontWeight.W_600)
+        ]
+        if self.__current_warehouse_name:
+            title_controls.append(
+                ft.Text(
+                    self.__current_warehouse_name,
+                    size=13,
+                    color=ft.Colors.ON_SURFACE_VARIANT,
+                )
+            )
         controls: list[ft.Control] = [
             ft.Container(
                 padding=ft.Padding.symmetric(horizontal=16, vertical=12),
-                content=ft.Text(self.__translation.get("my_erp_companion"), weight=ft.FontWeight.W_600),
+                content=ft.Column(controls=title_controls, spacing=2, tight=True),
             ),
             ft.Divider(height=1),
         ]
