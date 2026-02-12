@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from services.data_window_service import DataWindow
+from utils.data_window import DataWindow
 
 
 class TaskBase(ABC):

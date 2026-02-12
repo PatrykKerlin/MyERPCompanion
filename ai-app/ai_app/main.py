@@ -2,6 +2,7 @@ import asyncio
 import importlib
 import logging
 from datetime import UTC, datetime
+from typing import Sequence
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -23,7 +24,7 @@ class TaskOrchestrator:
         self,
         data_window: DataWindowService,
         runs: TaskRunRepository,
-        tasks: list[TaskBase],
+        tasks: Sequence[TaskBase],
         logger: logging.Logger,
     ) -> None:
         self._data_window = data_window

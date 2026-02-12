@@ -1,19 +1,13 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import timedelta
 
 from repositories.order_repository import OrderRepository
 from repositories.task_run_repository import TaskRunRepository
+from utils.data_window import DataWindow
 
 logger = logging.getLogger("ai")
-
-
-@dataclass(frozen=True)
-class DataWindow:
-    start: date | None
-    end: date | None
 
 
 class DataWindowService:

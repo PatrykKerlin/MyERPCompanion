@@ -3,9 +3,9 @@ from __future__ import annotations
 import logging
 
 from ml.sales_forecast_trainer import SalesForecastTrainer
-from services.data_window_service import DataWindow
 from services.sales_forecast_service import SalesForecastService
 from tasks.base.base import TaskBase
+from utils.data_window import DataWindow
 
 logger = logging.getLogger("ai")
 
