@@ -122,26 +122,10 @@ class StockReceivingView(BaseView):
 
         self._add_to_inputs(
             {
-                "order_id": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(order_container, 6),
-                    marker=(ft.Container(), 0),
-                ),
-                "target_bin": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(target_container, 6),
-                    marker=(ft.Container(), 0),
-                ),
-                "item_id": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(item_container, 7),
-                    marker=(ft.Container(), 0),
-                ),
-                "quantity": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(quantity_info_container, 3),
-                    marker=(ft.Container(), 0),
-                ),
+                "order_id": FieldGroup(input=(order_container, 6)),
+                "target_bin": FieldGroup(input=(target_container, 6)),
+                "item_id": FieldGroup(input=(item_container, 7)),
+                "quantity": FieldGroup(input=(quantity_info_container, 3)),
             }
         )
 
@@ -183,22 +167,22 @@ class StockReceivingView(BaseView):
         self.__render_source_options()
         self.__render_pending_rows()
         self.__update_available_text()
-        self.__update_if_attached()
+        self.safe_update(self)
 
     def set_orders(self, orders: list[tuple[int, str]]) -> None:
         self.__order_input.options = [ft.dropdown.Option(key="0", text="")] + [
             ft.dropdown.Option(key=str(order_id), text=label) for order_id, label in orders
         ]
         self.__order_input.value = "0"
-        self.__safe_update(self.__order_input)
+        self.safe_update(self.__order_input)
 
     def set_order_error(self, message: str | None) -> None:
         self.__order_input.error_text = message
-        self.__safe_update(self.__order_input)
+        self.safe_update(self.__order_input)
 
     def set_target_error(self, message: str | None) -> None:
         self.__target_input.error = message
-        self.__safe_update(self.__target_input)
+        self.safe_update(self.__target_input)
 
     def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
         parsed_rows: list[tuple[int, str, str, int]] = []
@@ -213,12 +197,12 @@ class StockReceivingView(BaseView):
         self.__sync_quantity_limit_to_selected_item()
         self.__update_available_text()
         self.__update_add_button_state()
-        self.__safe_update(self.__item_input)
-        self.__safe_update(self.__available_text)
-        self.__safe_update(self.__add_button)
+        self.safe_update(self.__item_input)
+        self.safe_update(self.__available_text)
+        self.safe_update(self.__add_button)
 
     def set_target_rows(self, _: list[tuple[int, list[str]]]) -> None:
-        self.__safe_update(self.__pending_section)
+        self.safe_update(self.__pending_section)
 
     def mark_source_items_as_moved(self, ids: list[int]) -> None:
         self.__moved_source_ids = set(ids)
@@ -226,9 +210,9 @@ class StockReceivingView(BaseView):
         self.__sync_quantity_limit_to_selected_item()
         self.__update_available_text()
         self.__update_add_button_state()
-        self.__safe_update(self.__item_input)
-        self.__safe_update(self.__available_text)
-        self.__safe_update(self.__add_button)
+        self.safe_update(self.__item_input)
+        self.safe_update(self.__available_text)
+        self.safe_update(self.__add_button)
 
     def get_pending_targets(self) -> list[tuple[int, int]]:
         return [(target_id, row[0]) for target_id, row in self.__pending_rows.items()]
@@ -243,8 +227,8 @@ class StockReceivingView(BaseView):
         self.__pending_rows[target_id] = (source_id, item_index, item_name, max(0, quantity))
         self.__render_pending_rows()
         self.__update_save_button_state()
-        self.__safe_update(self.__pending_section)
-        self.__safe_update(self.__save_button)
+        self.safe_update(self.__pending_section)
+        self.safe_update(self.__save_button)
         return target_id
 
     def update_existing_target(self, target_id: int, source_id: int, values: list[str]) -> None:
@@ -255,8 +239,8 @@ class StockReceivingView(BaseView):
         self.__pending_rows[target_id] = (source_id, item_index, item_name, max(0, quantity))
         self.__render_pending_rows()
         self.__update_save_button_state()
-        self.__safe_update(self.__pending_section)
-        self.__safe_update(self.__save_button)
+        self.safe_update(self.__pending_section)
+        self.safe_update(self.__save_button)
 
     def set_source_enabled(self, enabled: bool) -> None:
         self.__source_enabled = enabled
@@ -264,21 +248,21 @@ class StockReceivingView(BaseView):
         self.__quantity_input.read_only = not enabled
         self.__sync_quantity_limit_to_selected_item()
         self.__update_add_button_state()
-        self.__safe_update(self.__item_input)
-        self.__safe_update(self.__quantity_input)
-        self.__safe_update(self.__add_button)
+        self.safe_update(self.__item_input)
+        self.safe_update(self.__quantity_input)
+        self.safe_update(self.__add_button)
 
     def set_target_enabled(self, enabled: bool) -> None:
         self.__target_enabled = enabled
         self.__update_save_button_state()
-        self.__safe_update(self.__save_button)
+        self.safe_update(self.__save_button)
 
     def clear_pending_rows(self) -> None:
         self.__pending_rows.clear()
         self.__render_pending_rows()
         self.__update_save_button_state()
-        self.__safe_update(self.__pending_section)
-        self.__safe_update(self.__save_button)
+        self.safe_update(self.__pending_section)
+        self.safe_update(self.__save_button)
 
     def __render_static_texts(self) -> None:
         self.__title.value = self._translation.get("stock_receiving")
@@ -372,25 +356,25 @@ class StockReceivingView(BaseView):
     def __on_order_changed(self) -> None:
         self._controller.on_order_changed(self.__order_input.value)
 
-    def __on_target_submit(self, _: ft.ControlEvent) -> None:
+    def __on_target_submit(self, _: ft.Event[ft.TextField]) -> None:
         self._controller.on_target_bin_submit(self.__target_input.value or "")
 
     def __on_item_changed(self) -> None:
         self.__sync_quantity_limit_to_selected_item()
         self.__update_available_text()
         self.__update_add_button_state()
-        self.__safe_update(self.__available_text)
-        self.__safe_update(self.__add_button)
+        self.safe_update(self.__available_text)
+        self.safe_update(self.__add_button)
 
-    def __on_add_clicked(self, _: ft.ControlEvent) -> None:
+    def __on_add_clicked(self, _: ft.Event[ft.Button]) -> None:
         item_id = self.__parse_optional_int(self.__item_input.value)
         quantity = self.__parse_quantity(self.__quantity_input.value)
         self._controller.on_add_clicked(item_id, quantity)
 
-    def __on_save_clicked(self, _: ft.ControlEvent) -> None:
+    def __on_save_clicked(self, _: ft.Event[ft.Button]) -> None:
         self._controller.on_save_clicked()
 
-    def __on_back_click(self, _: ft.ControlEvent) -> None:
+    def __on_back_click(self, _: ft.Event[ft.Button]) -> None:
         self._controller.on_back_to_menu()
 
     def __build_pending_remove_handler(self, target_id: int):
@@ -400,8 +384,8 @@ class StockReceivingView(BaseView):
         self.__pending_rows.pop(target_id, None)
         self.__render_pending_rows()
         self.__update_save_button_state()
-        self.__safe_update(self.__pending_section)
-        self.__safe_update(self.__save_button)
+        self.safe_update(self.__pending_section)
+        self.safe_update(self.__save_button)
         self._controller.on_pending_item_removed(target_id)
 
     @staticmethod
@@ -437,20 +421,3 @@ class StockReceivingView(BaseView):
             return int(value)
         except ValueError:
             return default_value
-
-    def __update_if_attached(self) -> None:
-        try:
-            self.update()
-        except RuntimeError:
-            return
-
-    @staticmethod
-    def __safe_update(control: ft.Control) -> None:
-        try:
-            _ = control.page
-        except RuntimeError:
-            return
-        try:
-            control.update()
-        except RuntimeError:
-            return

@@ -66,16 +66,8 @@ class BinsView(BaseView):
 
         self._add_to_inputs(
             {
-                "filter_query": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(filter_container, 8),
-                    marker=(ft.Container(), 0),
-                ),
-                "bin_direction_filter": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(direction_container, 4),
-                    marker=(ft.Container(), 0),
-                ),
+                "filter_query": FieldGroup(input=(filter_container, 8)),
+                "bin_direction_filter": FieldGroup(input=(direction_container, 4)),
             }
         )
         self.__list = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=8)
@@ -105,7 +97,7 @@ class BinsView(BaseView):
     def update_translation(self, translation: Translation) -> None:
         self._translation = translation
         self.__render()
-        self.__update_if_attached()
+        self.safe_update(self)
 
     def set_bins(self, bins: list[BinPlainSchema]) -> None:
         self.__bins = bins
@@ -115,7 +107,7 @@ class BinsView(BaseView):
         self.__mode = self.__MODE_BINS
         self.__reset_filter()
         self.__render()
-        self.__update_if_attached()
+        self.safe_update(self)
 
     def set_bin_items(
         self,
@@ -129,7 +121,7 @@ class BinsView(BaseView):
         self.__mode = self.__MODE_ITEMS
         self.__reset_filter()
         self.__render()
-        self.__update_if_attached()
+        self.safe_update(self)
 
     def __render(self) -> None:
         if self.__mode == self.__MODE_BINS:
@@ -231,10 +223,10 @@ class BinsView(BaseView):
             or self.__filter_query in item_schema.ean.lower()
         ]
 
-    def __on_filter_changed(self, _: ft.ControlEvent) -> None:
+    def __on_filter_changed(self, _: ft.Event[ft.TextField]) -> None:
         self.__filter_query = (self.__filter_field.value or "").strip().lower()
         self.__list.controls = self.__build_list_controls()
-        self.__update_if_attached()
+        self.safe_update(self)
 
     def __on_bin_direction_filter_changed(self) -> None:
         selected = self.__direction_filter_field.value
@@ -244,19 +236,13 @@ class BinsView(BaseView):
             self.__bin_direction_filter = "all"
             self.__direction_filter_field.value = "all"
         self.__list.controls = self.__build_list_controls()
-        self.__update_if_attached()
+        self.safe_update(self)
 
-    def __on_back_click(self, _: ft.ControlEvent) -> None:
+    def __on_back_click(self, _: ft.Event[ft.Button]) -> None:
         if self.__mode == self.__MODE_BINS:
             self._controller.on_back_to_menu()
             return
         self.__mode = self.__MODE_BINS
         self.__reset_filter()
         self.__render()
-        self.__update_if_attached()
-
-    def __update_if_attached(self) -> None:
-        try:
-            self.update()
-        except RuntimeError:
-            return
+        self.safe_update(self)

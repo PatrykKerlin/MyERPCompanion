@@ -14,11 +14,8 @@ from views.controls.date_field_control import DateField
 from views.controls.numeric_field_control import NumericField
 
 if TYPE_CHECKING:
-    from controllers.core.order_picking_controller import (
-        OrderPickedItemRow,
-        OrderPickingController,
-        OrderPickingItemRow,
-    )
+    from controllers.core.order_picking_controller import OrderPickingController
+    from utils.order_picking_models import OrderPickedItemRow, OrderPickingItemRow
 
 
 class OrderPickingView(BaseView):
@@ -182,36 +179,12 @@ class OrderPickingView(BaseView):
 
         self._add_to_inputs(
             {
-                "order_date": FieldGroup(
-                    label=self._get_label("order_date", 0, colon=False),
-                    input=(order_date_container, 4),
-                    marker=self._get_marker("order_date", 0),
-                ),
-                "customer_id": FieldGroup(
-                    label=self._get_label("customer", 0, colon=False),
-                    input=(customer_container, 4),
-                    marker=self._get_marker("customer_id", 0),
-                ),
-                "order_id": FieldGroup(
-                    label=self._get_label("order", 0, colon=False),
-                    input=(order_container, 4),
-                    marker=self._get_marker("order_id", 0),
-                ),
-                "package_item_id": FieldGroup(
-                    label=self._get_label("packages", 0, colon=False),
-                    input=(package_item_container, 8),
-                    marker=(ft.Container(), 0),
-                ),
-                "pick_bin_id": FieldGroup(
-                    label=self._get_label("source_bin", 0, colon=False),
-                    input=(pick_bin_container, 12),
-                    marker=(ft.Container(), 0),
-                ),
-                "pick_quantity": FieldGroup(
-                    label=self._get_label("quantity", 0, colon=False),
-                    input=(pick_quantity_container, 12),
-                    marker=(ft.Container(), 0),
-                ),
+                "order_date": FieldGroup(input=(order_date_container, 4)),
+                "customer_id": FieldGroup(input=(customer_container, 4)),
+                "order_id": FieldGroup(input=(order_container, 4)),
+                "package_item_id": FieldGroup(input=(package_item_container, 8)),
+                "pick_bin_id": FieldGroup(input=(pick_bin_container, 12)),
+                "pick_quantity": FieldGroup(input=(pick_quantity_container, 12)),
             }
         )
 
@@ -321,7 +294,7 @@ class OrderPickingView(BaseView):
         self.__render_items_list()
         if self.__mode == self.__MODE_PICK:
             self.__render_pick_form()
-        self.__safe_update(self)
+        self.safe_update(self)
 
     def set_orders(self, orders: list[tuple[int, str]], selected_order_id: int | None) -> None:
         self.__selected_order_id = selected_order_id
@@ -329,16 +302,16 @@ class OrderPickingView(BaseView):
             ft.dropdown.Option(key=str(order_id), text=label) for order_id, label in orders
         ]
         self.__order_input.value = str(selected_order_id) if selected_order_id is not None else "0"
-        self.__safe_update(self.__order_input)
+        self.safe_update(self.__order_input)
         self.__render_subtitle()
-        self.__safe_update(self.__subtitle)
+        self.safe_update(self.__subtitle)
 
     def reset_order_selection(self) -> None:
         self.__selected_order_id = None
         self.__order_input.value = "0"
-        self.__safe_update(self.__order_input)
+        self.safe_update(self.__order_input)
         self.__render_subtitle()
-        self.__safe_update(self.__subtitle)
+        self.safe_update(self.__subtitle)
 
     def set_order_items(self, rows: list[OrderPickingItemRow]) -> None:
         self.__order_rows = rows
@@ -361,8 +334,8 @@ class OrderPickingView(BaseView):
         disabled = (not enabled) or (not options)
         self.__package_item_input.disabled = disabled
         self.__add_package_button.disabled = disabled
-        self.__safe_update(self.__package_item_input)
-        self.__safe_update(self.__add_package_button)
+        self.safe_update(self.__package_item_input)
+        self.safe_update(self.__add_package_button)
 
     def show_items_list(self) -> None:
         self.__mode = self.__MODE_LIST
@@ -373,7 +346,7 @@ class OrderPickingView(BaseView):
         self.__render_static_texts()
         self.__render_subtitle()
         self.__render_items_list()
-        self.__safe_update(self)
+        self.safe_update(self)
 
     def show_pick_form(
         self,
@@ -425,7 +398,7 @@ class OrderPickingView(BaseView):
         self.__render_static_texts()
         self.__render_subtitle()
         self.__render_pick_form()
-        self.__safe_update(self)
+        self.safe_update(self)
 
     def __render_static_texts(self) -> None:
         self.__title.value = self._translation.get("order_picking")
@@ -493,9 +466,9 @@ class OrderPickingView(BaseView):
             self.__picked_items_list.controls = picked_controls
 
         self.__picked_items_header.value = self._translation.get("picked_items")
-        self.__safe_update(self.__items_list)
-        self.__safe_update(self.__picked_items_header)
-        self.__safe_update(self.__picked_items_list)
+        self.safe_update(self.__items_list)
+        self.safe_update(self.__picked_items_header)
+        self.safe_update(self.__picked_items_list)
 
     def __render_pick_form(self) -> None:
         if self.__pick_item is None:
@@ -507,12 +480,12 @@ class OrderPickingView(BaseView):
         self.__pick_gallery_container.content = self.__build_gallery_section(image_urls)
         self.__update_pick_bin_info()
 
-        self.__safe_update(self.__pick_item_title)
-        self.__safe_update(self.__pick_bin_info_text)
-        self.__safe_update(self.__pick_gallery_container)
-        self.__safe_update(self.__pick_details_container)
-        self.__safe_update(self.__pick_bin_input)
-        self.__safe_update(self.__pick_quantity_input)
+        self.safe_update(self.__pick_item_title)
+        self.safe_update(self.__pick_bin_info_text)
+        self.safe_update(self.__pick_gallery_container)
+        self.safe_update(self.__pick_details_container)
+        self.safe_update(self.__pick_bin_input)
+        self.safe_update(self.__pick_quantity_input)
 
     def __build_detail_rows(self, item: ItemPlainSchema) -> list[tuple[str, str]]:
         data = item.model_dump()
@@ -523,13 +496,13 @@ class OrderPickingView(BaseView):
         for key in self.__DETAIL_FIELDS_ORDER:
             if key not in data or self.__is_excluded_field(key):
                 continue
-            rows.append((self.__label_for_key(key), self.__format_value(data[key])))
+            rows.append((key, self.__format_value(data[key])))
             used_keys.add(key)
 
         for key, value in data.items():
             if key in used_keys or self.__is_excluded_field(key):
                 continue
-            rows.append((self.__label_for_key(key), self.__format_value(value)))
+            rows.append((key, self.__format_value(value)))
 
         return rows
 
@@ -541,15 +514,6 @@ class OrderPickingView(BaseView):
             or key in self.__BIN_AND_DISCOUNT_FIELDS
             or key in self.__HIDDEN_DETAIL_FIELDS
         )
-
-    def __label_for_key(self, key: str) -> str:
-        label_overrides = {
-            "category_name": self._translation.get("category"),
-            "unit_name": self._translation.get("unit"),
-        }
-        if key in label_overrides:
-            return label_overrides[key]
-        return self._translation.get(key)
 
     def __format_value(self, value: Any) -> str:
         if value is None:
@@ -623,8 +587,8 @@ class OrderPickingView(BaseView):
         def update_buttons() -> None:
             left_button.disabled = self.__gallery_start_index <= 0
             right_button.disabled = self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE >= len(image_urls)
-            self.__safe_update(left_button)
-            self.__safe_update(right_button)
+            self.safe_update(left_button)
+            self.safe_update(right_button)
 
         def render_thumbnails() -> None:
             thumbnails_row.controls.clear()
@@ -643,16 +607,16 @@ class OrderPickingView(BaseView):
                         on_click=lambda _, image_url=url: self.__open_image_dialog(image_url),
                     )
                 )
-            self.__safe_update(thumbnails_row)
+            self.safe_update(thumbnails_row)
             update_buttons()
 
-        def move_left(_: ft.ControlEvent) -> None:
+        def move_left(_: ft.Event[ft.IconButton]) -> None:
             if self.__gallery_start_index <= 0:
                 return
             self.__gallery_start_index -= 1
             render_thumbnails()
 
-        def move_right(_: ft.ControlEvent) -> None:
+        def move_right(_: ft.Event[ft.IconButton]) -> None:
             if self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE >= len(image_urls):
                 return
             self.__gallery_start_index += 1
@@ -702,7 +666,7 @@ class OrderPickingView(BaseView):
     def __handle_order_changed(self) -> None:
         self.__selected_order_id = self.__parse_optional_int(self.__order_input.value)
         self.__render_subtitle()
-        self.__safe_update(self.__subtitle)
+        self.safe_update(self.__subtitle)
         self._controller.on_order_selected(self.__selected_order_id)
 
     def __handle_pick_bin_changed(self) -> None:
@@ -713,8 +677,8 @@ class OrderPickingView(BaseView):
         self.__pick_quantity_input.set_limits(1, max_quantity)
         self.__pick_quantity_input.value = max(1, min(current_quantity, max_quantity))
         self.__update_pick_bin_info()
-        self.__safe_update(self.__pick_quantity_input)
-        self.__safe_update(self.__pick_bin_info_text)
+        self.safe_update(self.__pick_quantity_input)
+        self.safe_update(self.__pick_bin_info_text)
 
     def __update_pick_bin_info(self) -> None:
         selected_bin_id = self.__parse_optional_int(self.__pick_bin_input.value)
@@ -735,18 +699,18 @@ class OrderPickingView(BaseView):
             return 0
         return self.__pick_bin_available_by_id.get(selected_bin_id, 0)
 
-    def __on_back_to_menu_clicked(self, _: ft.ControlEvent) -> None:
+    def __on_back_to_menu_clicked(self, _: ft.Event[ft.Button]) -> None:
         self._controller.on_back_to_menu()
 
-    def __on_pick_cancel_clicked(self, _: ft.ControlEvent) -> None:
+    def __on_pick_cancel_clicked(self, _: ft.Event[ft.Button]) -> None:
         self._controller.on_pick_form_cancelled()
 
-    def __on_pick_save_clicked(self, _: ft.ControlEvent) -> None:
+    def __on_pick_save_clicked(self, _: ft.Event[ft.Button]) -> None:
         selected_bin_id = self.__parse_optional_int(self.__pick_bin_input.value)
         quantity = self.__parse_quantity(self.__pick_quantity_input.value)
         self._controller.on_pick_form_saved(selected_bin_id, quantity)
 
-    def __on_add_package_clicked(self, _: ft.ControlEvent) -> None:
+    def __on_add_package_clicked(self, _: ft.Event[ft.Button]) -> None:
         package_item_id = self.__parse_optional_int(self.__package_item_input.value)
         self._controller.on_package_item_selected(package_item_id)
 
@@ -777,14 +741,3 @@ class OrderPickingView(BaseView):
         if quantity <= 0:
             return None
         return quantity
-
-    @staticmethod
-    def __safe_update(control: ft.Control) -> None:
-        try:
-            _ = control.page
-        except RuntimeError:
-            return
-        try:
-            control.update()
-        except RuntimeError:
-            return

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
@@ -7,6 +9,7 @@ from events.events import MobileMainMenuRequested, TranslationRequested, ViewReq
 from pydantic import ValidationError
 from schemas.core.language_schema import LanguagePlainSchema
 from schemas.core.user_schema import UserPlainSchema, UserStrictUpdateAppSchema
+from schemas.validation.constraints import Constraints
 from services.core import LanguageService, UserService
 from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
 from utils.translation import Translation
@@ -29,12 +32,12 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
     def on_back_to_menu(self) -> None:
         self._page.run_task(self._event_bus.publish, MobileMainMenuRequested())
 
-    def on_save_clicked(
+    def on_user_save_clicked(
         self,
         password: str | None,
         password_repeat: str | None,
         selected_language_id: int | None,
-        selected_theme: str,
+        selected_theme: Constraints.Theme,
     ) -> None:
         self._page.run_task(
             self.__handle_save_clicked,
@@ -71,7 +74,7 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
             data_row=event.data,
             languages=language_pairs,
             selected_language_id=user_schema.language.id,
-            selected_theme=user_schema.theme,
+            selected_theme=self.__normalize_theme(user_schema.theme),
         )
 
     async def __handle_save_clicked(
@@ -79,7 +82,7 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         password: str | None,
         password_repeat: str | None,
         selected_language_id: int | None,
-        selected_theme: str,
+        selected_theme: Constraints.Theme,
     ) -> None:
         current_user = self._state_store.app_state.user.current
         if current_user is None:
@@ -185,3 +188,9 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
             return None
         stripped = value.strip()
         return stripped if stripped else None
+
+    @staticmethod
+    def __normalize_theme(value: str | None) -> Constraints.Theme:
+        if value in {"system", "dark", "light"}:
+            return cast(Constraints.Theme, value)
+        return "system"

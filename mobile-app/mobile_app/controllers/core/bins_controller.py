@@ -84,8 +84,11 @@ class BinsController(BaseViewController[BinService, BinsView, BinPlainSchema, Bi
         if not selected_bin:
             return view
         await self.__set_selected_bin_items(selected_bin)
+        selected_bin_schema = self.__selected_bin
+        if selected_bin_schema is None:
+            return view
         view.set_bin_items(
-            bin_schema=self.__selected_bin,
+            bin_schema=selected_bin_schema,
             items=self.__items,
             item_quantities=self.__item_quantities,
         )
@@ -119,8 +122,11 @@ class BinsController(BaseViewController[BinService, BinsView, BinPlainSchema, Bi
             return
         if not isinstance(self._view, BinsView):
             return
+        selected_bin_schema = self.__selected_bin
+        if selected_bin_schema is None:
+            return
         self._view.set_bin_items(
-            bin_schema=self.__selected_bin,
+            bin_schema=selected_bin_schema,
             items=self.__items,
             item_quantities=self.__item_quantities,
         )

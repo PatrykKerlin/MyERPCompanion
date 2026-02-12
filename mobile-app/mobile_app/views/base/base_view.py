@@ -139,8 +139,9 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     def clear_inputs(self) -> None:
         for key, field in self._inputs.items():
             input = field.input.content
+            marker_control = field.marker
+            marker = marker_control.content if marker_control else None
             if key in self._search_disabled_fields:
-                marker = field.marker.content
                 if isinstance(input, ft.TextField):
                     input.value = ""
                 elif isinstance(input, ft.Dropdown):
@@ -484,8 +485,9 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         selected_inputs = self._controller.search_params.selected_inputs
         input_values = self._controller.search_params.input_values
         for key, field in self._inputs.items():
+            marker_control = field.marker
+            marker = marker_control.content if marker_control else None
             if key in self._search_disabled_fields:
-                marker = field.marker.content
                 if hasattr(marker, "disabled"):
                     setattr(marker, "disabled", True)
                 if hasattr(marker, "value"):
@@ -504,7 +506,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                     input.update()
                 continue
             input = field.input.content
-            marker = field.marker.content
             marker_selected = bool(getattr(marker, "value", False)) if marker else False
             is_selected = key in selected_inputs or marker_selected
             if is_selected:
@@ -551,7 +552,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         self.clear_inputs()
         for key, field in self._inputs.items():
             input = field.input.content
-            marker = field.marker.content
+            marker_control = field.marker
+            marker = marker_control.content if marker_control else None
             if hasattr(input, "disabled"):
                 if key in self._controller.meta_fields:
                     setattr(input, "disabled", True)
@@ -587,7 +589,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     def __set_read_mode(self) -> None:
         for key, field in self._inputs.items():
             input = field.input.content
-            marker = field.marker.content
+            marker_control = field.marker
+            marker = marker_control.content if marker_control else None
             if hasattr(input, "read_only"):
                 setattr(input, "read_only", True)
             if hasattr(input, "disabled"):

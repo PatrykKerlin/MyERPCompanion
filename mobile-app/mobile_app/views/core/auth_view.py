@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import flet as ft
 from utils.translation import Translation
+from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
     from controllers.components.auth_dialog_controller import AuthDialogController
@@ -115,12 +116,12 @@ class AuthView(ft.Container):
         else:
             self.__warehouse_dropdown.value = None
             self.__warehouse_dropdown.disabled = True
-        self.__safe_update(self.__warehouse_dropdown)
+        BaseComponent.safe_update(self.__warehouse_dropdown)
 
-    def __on_username_changed(self, _: ft.ControlEvent) -> None:
+    def __on_username_changed(self, _: ft.Event[ft.TextField]) -> None:
         self.__controller.on_mobile_username_changed(self.__login_field.value)
 
-    def __on_login(self, _: ft.ControlEvent) -> None:
+    def __on_login(self, _: ft.Event[ft.Button] | ft.Event[ft.TextField]) -> None:
         self.__controller.on_login_click(
             self.__login_field.value or "",
             self.__password_field.value or "",
@@ -135,14 +136,3 @@ class AuthView(ft.Container):
             return int(value)
         except (TypeError, ValueError):
             return None
-
-    @staticmethod
-    def __safe_update(control: ft.Control) -> None:
-        try:
-            _ = control.page
-        except RuntimeError:
-            return
-        try:
-            control.update()
-        except RuntimeError:
-            return

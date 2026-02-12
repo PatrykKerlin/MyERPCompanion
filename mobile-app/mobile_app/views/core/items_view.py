@@ -134,16 +134,8 @@ class ItemsView(BaseView):
 
         self._add_to_inputs(
             {
-                "category_filter": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(category_filter_container, 5),
-                    marker=(ft.Container(), 0),
-                ),
-                "index_filter": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(index_filter_container, 7),
-                    marker=(ft.Container(), 0),
-                ),
+                "category_filter": FieldGroup(input=(category_filter_container, 5)),
+                "index_filter": FieldGroup(input=(index_filter_container, 7)),
             }
         )
 
@@ -178,7 +170,7 @@ class ItemsView(BaseView):
     def update_translation(self, translation: Translation) -> None:
         self._translation = translation
         self.__render()
-        self.__update_if_attached()
+        self.safe_update(self)
 
     def __render(self) -> None:
         if self.__mode == self.__MODE_LIST:
@@ -257,7 +249,7 @@ class ItemsView(BaseView):
             items = [item for item in items if filter_normalized in item.index.lower()]
         return items
 
-    def __on_back_clicked(self, _: ft.ControlEvent) -> None:
+    def __on_back_clicked(self, _: ft.Event[ft.Button]) -> None:
         if self.__mode == self.__MODE_LIST:
             self._controller.on_back_to_menu()
             return
@@ -266,12 +258,12 @@ class ItemsView(BaseView):
     def __on_category_filter_changed(self) -> None:
         self.__selected_category_id = self.__parse_optional_int(self.__category_filter_input.value)
         self.__items_list.controls = self.__build_list_controls()
-        self.__update_if_attached()
+        self.safe_update(self)
 
-    def __on_index_filter_changed(self, _: ft.ControlEvent) -> None:
+    def __on_index_filter_changed(self, _: ft.Event[ft.TextField]) -> None:
         self.__index_filter = (self.__index_filter_input.value or "").strip()
         self.__items_list.controls = self.__build_list_controls()
-        self.__update_if_attached()
+        self.safe_update(self)
 
     def __build_item_click_handler(self, item_id: int, quantity: int):
         return lambda _: self._controller.on_item_selected(
@@ -303,8 +295,8 @@ class ItemsView(BaseView):
         def update_buttons() -> None:
             left_button.disabled = self.__gallery_start_index <= 0
             right_button.disabled = self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE >= len(image_urls)
-            self.__safe_update(left_button)
-            self.__safe_update(right_button)
+            self.safe_update(left_button)
+            self.safe_update(right_button)
 
         def render_thumbnails() -> None:
             thumbnails_row.controls.clear()
@@ -323,16 +315,16 @@ class ItemsView(BaseView):
                         on_click=lambda _, image_url=url: self.__open_image_dialog(image_url),
                     )
                 )
-            self.__safe_update(thumbnails_row)
+            self.safe_update(thumbnails_row)
             update_buttons()
 
-        def move_left(_: ft.ControlEvent) -> None:
+        def move_left(_: ft.Event[ft.IconButton]) -> None:
             if self.__gallery_start_index <= 0:
                 return
             self.__gallery_start_index -= 1
             render_thumbnails()
 
-        def move_right(_: ft.ControlEvent) -> None:
+        def move_right(_: ft.Event[ft.IconButton]) -> None:
             if self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE >= len(image_urls):
                 return
             self.__gallery_start_index += 1
@@ -384,13 +376,13 @@ class ItemsView(BaseView):
         for key in self.__DETAIL_FIELDS_ORDER:
             if key not in data or self.__is_excluded_field(key):
                 continue
-            rows.append((self.__label_for_key(key), self.__format_value(data[key])))
+            rows.append((key, self.__format_value(data[key])))
             used_keys.add(key)
 
         for key, value in data.items():
             if key in used_keys or self.__is_excluded_field(key):
                 continue
-            rows.append((self.__label_for_key(key), self.__format_value(value)))
+            rows.append((key, self.__format_value(value)))
 
         return rows
 
@@ -401,15 +393,6 @@ class ItemsView(BaseView):
             or key in self.__FINANCIAL_FIELDS
             or key in self.__BIN_AND_DISCOUNT_FIELDS
         )
-
-    def __label_for_key(self, key: str) -> str:
-        label_overrides = {
-            "quantity": self._translation.get("quantity"),
-            "category_name": self._translation.get("category"),
-        }
-        if key in label_overrides:
-            return label_overrides[key]
-        return self._translation.get(key)
 
     def __format_value(self, value: Any) -> str:
         if value is None:
@@ -461,12 +444,6 @@ class ItemsView(BaseView):
             ),
         )
 
-    def __update_if_attached(self) -> None:
-        try:
-            self.update()
-        except RuntimeError:
-            return
-
     @staticmethod
     def __parse_optional_int(value: str | int | float | None) -> int | None:
         if value is None:
@@ -482,14 +459,3 @@ class ItemsView(BaseView):
             return int(stripped)
         except ValueError:
             return None
-
-    @staticmethod
-    def __safe_update(control: ft.Control) -> None:
-        try:
-            _ = control.page
-        except RuntimeError:
-            return
-        try:
-            control.update()
-        except RuntimeError:
-            return

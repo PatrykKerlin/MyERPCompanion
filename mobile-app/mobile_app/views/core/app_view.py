@@ -1,8 +1,10 @@
 from collections.abc import Callable
+from typing import cast
 
 import flet as ft
 from utils.enums import View
 from utils.translation import Translation
+from views.base.base_component import BaseComponent
 
 
 class AppView:
@@ -125,7 +127,7 @@ class AppView:
 
     def set_navigation_visible(self, visible: bool) -> None:
         self.__top_bar.visible = visible
-        self.__safe_update(self.__top_bar)
+        BaseComponent.safe_update(self.__top_bar)
 
     def set_username(self, username: str | None) -> None:
         self.__current_username = username
@@ -133,7 +135,7 @@ class AppView:
             self.__username_text.value = username
         else:
             self.__username_text.value = self.__translation.get("username")
-        self.__safe_update(self.__top_bar)
+        BaseComponent.safe_update(self.__top_bar)
 
     def set_warehouse_name(self, warehouse_name: str | None) -> None:
         self.__current_warehouse_name = warehouse_name
@@ -159,7 +161,7 @@ class AppView:
                 expand=True,
                 alignment=ft.Alignment.TOP_LEFT,
             )
-        self.__safe_update(self.__body_container)
+        BaseComponent.safe_update(self.__body_container)
 
     def set_theme(self, theme: str) -> None:
         self.__theme = theme
@@ -171,7 +173,7 @@ class AppView:
 
     def set_content_visible(self, visible: bool) -> None:
         self.__content.visible = visible
-        self.__safe_update(self.__content)
+        BaseComponent.safe_update(self.__content)
 
     def __apply_page_settings(self, page: ft.Page) -> None:
         page.title = self.__translation.get("my_erp_companion")
@@ -233,16 +235,17 @@ class AppView:
         self.__drawer.controls = controls
         if self.__drawer.selected_index < 0:
             self.__drawer.selected_index = 0
-        self.__safe_update(self.__drawer)
+        BaseComponent.safe_update(self.__drawer)
 
-    async def __open_navigation_drawer(self, _: ft.ControlEvent) -> None:
+    def __open_navigation_drawer(self, _: ft.Event[ft.IconButton]) -> None:
         page = self.__root.page
         if not page:
             return
         page.drawer = self.__drawer
-        await page.show_drawer()
+        page_typed = cast(ft.Page, page)
+        page_typed.run_task(self.__show_drawer, page_typed)
 
-    async def __on_drawer_change(self, _: ft.ControlEvent) -> None:
+    def __on_drawer_change(self, _: ft.Event[ft.NavigationDrawer]) -> None:
         index = self.__drawer.selected_index
         if not isinstance(index, int):
             return
@@ -253,23 +256,21 @@ class AppView:
             self.__on_view_selected(selected_view)
         page = self.__root.page
         if page:
-            await page.close_drawer()
+            page_typed = cast(ft.Page, page)
+            page_typed.run_task(self.__close_drawer, page_typed)
 
-    def __handle_user_settings(self, _: ft.ControlEvent) -> None:
+    def __handle_user_settings(self, _: ft.Event[ft.IconButton]) -> None:
         if self.__on_user_settings:
             self.__on_user_settings()
 
-    def __handle_logout(self, _: ft.ControlEvent) -> None:
+    def __handle_logout(self, _: ft.Event[ft.IconButton]) -> None:
         if self.__on_logout:
             self.__on_logout()
 
     @staticmethod
-    def __safe_update(control: ft.Control) -> None:
-        try:
-            _ = control.page
-        except RuntimeError:
-            return
-        try:
-            control.update()
-        except RuntimeError:
-            return
+    async def __show_drawer(page: ft.Page) -> None:
+        await page.show_drawer()
+
+    @staticmethod
+    async def __close_drawer(page: ft.Page) -> None:
+        await page.close_drawer()

@@ -1,5 +1,6 @@
 import flet as ft
 from utils.translation import Translation
+from views.base.base_component import BaseComponent
 
 
 class MainMenuView(ft.Container):
@@ -65,7 +66,7 @@ class MainMenuView(ft.Container):
         self.__orders_value.value = str(max(0, orders_count))
         self.__items_value.value = str(max(0, items_count))
         self.__pieces_value.value = str(max(0, pieces_count))
-        self.__safe_update()
+        BaseComponent.safe_update(self)
 
     def update_translation(self, translation: Translation) -> None:
         self.__translation = translation
@@ -75,7 +76,7 @@ class MainMenuView(ft.Container):
         self.__orders_label.value = self.__translation.get("orders_to_pick")
         self.__items_label.value = self.__translation.get("distinct_items_to_pick")
         self.__pieces_label.value = self.__translation.get("total_pieces_to_pick")
-        self.__safe_update()
+        BaseComponent.safe_update(self)
 
     @staticmethod
     def __build_summary_row(label: ft.Text, value: ft.Text) -> ft.Control:
@@ -84,13 +85,3 @@ class MainMenuView(ft.Container):
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
-
-    def __safe_update(self) -> None:
-        try:
-            _ = self.page
-        except RuntimeError:
-            return
-        try:
-            self.update()
-        except RuntimeError:
-            return

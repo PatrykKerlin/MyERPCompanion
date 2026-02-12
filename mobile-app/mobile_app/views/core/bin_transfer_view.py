@@ -116,26 +116,10 @@ class BinTransferView(BaseView):
 
         self._add_to_inputs(
             {
-                "source_bin": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(source_container, 6),
-                    marker=(ft.Container(), 0),
-                ),
-                "target_bin": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(target_container, 6),
-                    marker=(ft.Container(), 0),
-                ),
-                "item_id": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(item_container, 7),
-                    marker=(ft.Container(), 0),
-                ),
-                "quantity": FieldGroup(
-                    label=(ft.Container(), 0),
-                    input=(quantity_info_container, 3),
-                    marker=(ft.Container(), 0),
-                ),
+                "source_bin": FieldGroup(input=(source_container, 6)),
+                "target_bin": FieldGroup(input=(target_container, 6)),
+                "item_id": FieldGroup(input=(item_container, 7)),
+                "quantity": FieldGroup(input=(quantity_info_container, 3)),
             }
         )
 
@@ -175,28 +159,28 @@ class BinTransferView(BaseView):
         self.__render_source_item_options()
         self.__render_pending_list()
         self.__update_available_text()
-        self.__update_if_attached()
+        self.safe_update(self)
 
     def set_source_error(self, message: str | None) -> None:
         self.__source_input.error = message
-        self.__safe_update(self.__source_input)
+        self.safe_update(self.__source_input)
 
     def set_target_error(self, message: str | None) -> None:
         self.__target_input.error = message
-        self.__safe_update(self.__target_input)
+        self.safe_update(self.__target_input)
 
     def set_source_items(self, items: list[tuple[int, str, int]]) -> None:
         self.__source_items = items
         self.__render_source_item_options()
         self.__sync_quantity_limit_to_selected_item()
         self.__update_available_text()
-        self.__safe_update(self.__item_input)
-        self.__safe_update(self.__available_text)
+        self.safe_update(self.__item_input)
+        self.safe_update(self.__available_text)
 
     def set_pending_items(self, items: list[tuple[int, str, int]]) -> None:
         self.__pending_items = items
         self.__render_pending_list()
-        self.__safe_update(self.__pending_section)
+        self.safe_update(self.__pending_section)
 
     def set_form_enabled(self, enabled: bool) -> None:
         self.__form_enabled = enabled
@@ -204,13 +188,13 @@ class BinTransferView(BaseView):
         self.__quantity_input.read_only = not enabled
         self.__sync_quantity_limit_to_selected_item()
         self.__update_add_button_state()
-        self.__safe_update(self.__item_input)
-        self.__safe_update(self.__quantity_input)
-        self.__safe_update(self.__add_button)
+        self.safe_update(self.__item_input)
+        self.safe_update(self.__quantity_input)
+        self.safe_update(self.__add_button)
 
     def set_save_enabled(self, enabled: bool) -> None:
         self.__save_button.disabled = not enabled
-        self.__safe_update(self.__save_button)
+        self.safe_update(self.__save_button)
 
     def __render_static_texts(self) -> None:
         self.__title.value = self._translation.get("bin_transfer")
@@ -258,29 +242,29 @@ class BinTransferView(BaseView):
     def __build_item_option_label(self, item_index: str) -> str:
         return item_index
 
-    def __on_source_submit(self, _: ft.ControlEvent) -> None:
+    def __on_source_submit(self, _: ft.Event[ft.TextField]) -> None:
         self._controller.on_source_bin_submit(self.__source_input.value or "")
 
-    def __on_target_submit(self, _: ft.ControlEvent) -> None:
+    def __on_target_submit(self, _: ft.Event[ft.TextField]) -> None:
         self._controller.on_target_bin_submit(self.__target_input.value or "")
 
-    def __on_add_click(self, _: ft.ControlEvent) -> None:
+    def __on_add_click(self, _: ft.Event[ft.Button]) -> None:
         item_id = self.__parse_optional_int(self.__item_input.value)
         quantity = self.__parse_quantity(self.__quantity_input.value)
         self._controller.on_add_clicked(item_id, quantity)
 
-    def __on_save_click(self, _: ft.ControlEvent) -> None:
+    def __on_save_click(self, _: ft.Event[ft.Button]) -> None:
         self._controller.on_save_clicked()
 
-    def __on_back_click(self, _: ft.ControlEvent) -> None:
+    def __on_back_click(self, _: ft.Event[ft.Button]) -> None:
         self._controller.on_back_to_menu()
 
     def __on_item_changed(self) -> None:
         self.__sync_quantity_limit_to_selected_item()
         self.__update_available_text()
         self.__update_add_button_state()
-        self.__safe_update(self.__available_text)
-        self.__safe_update(self.__add_button)
+        self.safe_update(self.__available_text)
+        self.safe_update(self.__add_button)
 
     def __build_remove_handler(self, item_id: int):
         return lambda _: self._controller.on_pending_item_removed(item_id)
@@ -305,12 +289,6 @@ class BinTransferView(BaseView):
         if parsed <= 0:
             return None
         return parsed
-
-    def __update_if_attached(self) -> None:
-        try:
-            self.update()
-        except RuntimeError:
-            return
 
     def __update_available_text(self) -> None:
         selected_item_id = self.__parse_optional_int(self.__item_input.value)
@@ -352,14 +330,3 @@ class BinTransferView(BaseView):
     def __update_add_button_state(self) -> None:
         selected_item_id = self.__parse_optional_int(self.__item_input.value)
         self.__add_button.disabled = (not self.__form_enabled) or selected_item_id is None
-
-    @staticmethod
-    def __safe_update(control: ft.Control) -> None:
-        try:
-            _ = control.page
-        except RuntimeError:
-            return
-        try:
-            control.update()
-        except RuntimeError:
-            return
