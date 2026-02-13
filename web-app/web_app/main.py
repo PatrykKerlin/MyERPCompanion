@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 
 import flet as ft
 from config.context import Context
@@ -35,9 +36,9 @@ class App:
     async def run(self, page: ft.Page) -> None:
         preferred_theme, preferred_language = await UserSettings.load_web()
         settings_kwargs: dict[str, str] = {}
-        if isinstance(preferred_theme, str) and preferred_theme:
+        if preferred_theme:
             settings_kwargs["THEME"] = preferred_theme
-        if isinstance(preferred_language, str) and preferred_language:
+        if preferred_language:
             settings_kwargs["LANGUAGE"] = preferred_language
         session_settings = Settings(**settings_kwargs)  # type: ignore
         session_id = id(page)
@@ -108,7 +109,9 @@ def main() -> None:
     host = os.getenv("FLET_SERVER_HOST", "0.0.0.0")
     port = int(os.getenv("FLET_SERVER_PORT", "8550"))
     view = getattr(ft.AppView, "WEB_SERVER", ft.AppView.WEB_BROWSER)
-    ft.run(app.run, view=view, host=host, port=port)
+    assets_dir = Path(__file__).resolve().parent / "assets"
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    ft.run(app.run, view=view, host=host, port=port, assets_dir=str(assets_dir))
 
 
 if __name__ == "__main__":

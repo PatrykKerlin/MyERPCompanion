@@ -23,9 +23,9 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
     async def get_all_modules(
         self,
         endpoint: Endpoint,
-        path_param: int | None = None,
-        query_params: dict[str, Any] | None = None,
-        body_params: BaseStrictSchema | list[BaseStrictSchema] | IdsPayloadSchema | None = None,
+        _path_param: int | None = None,
+        _query_params: dict[str, Any] | None = None,
+        _body_params: BaseStrictSchema | list[BaseStrictSchema] | IdsPayloadSchema | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> list[ModulePlainSchema]:
@@ -47,9 +47,9 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
     async def get_current_user(
         self,
         endpoint: Endpoint,
-        path_param: int | None = None,
-        query_params: dict[str, Any] | None = None,
-        body_params: BaseStrictSchema | list[BaseStrictSchema] | IdsPayloadSchema | None = None,
+        _path_param: int | None = None,
+        _query_params: dict[str, Any] | None = None,
+        _body_params: BaseStrictSchema | list[BaseStrictSchema] | IdsPayloadSchema | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> UserPlainSchema:

@@ -223,7 +223,7 @@ class CreateOrderController(
         total = sum(self.__as_positive_int(value.get("quantity")) for value in self.__cart.values())
         self._page.run_task(self._event_bus.publish, CartUpdated(count=total))
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> CreateOrderView:
+    async def _build_view(self, translation: Translation) -> CreateOrderView:
         view_data = await self.__perform_get_sales_view()
         self.__initialize_discount_maps(view_data)
         image_map, images_map = self.__build_image_maps(view_data.source_items)
@@ -382,7 +382,7 @@ class CreateOrderController(
         track_missing: bool = False,
         raise_on_missing: bool = False,
     ) -> float:
-        if not isinstance(delivery_method_id, int):
+        if not delivery_method_id:
             return 0.0
         delivery_method = self.__delivery_method_map.get(delivery_method_id)
         if not delivery_method:
@@ -651,7 +651,8 @@ class CreateOrderController(
             except Exception:
                 opened_loading = False
         try:
-            customer_id = self.__resolve_customer_id()
+            user = self._state_store.app_state.user.current
+            customer_id = user.customer_id if user else None
             totals = self.__compute_order_totals(currency_id, customer_discount_id, raise_on_missing=True)
             total_net, total_vat, total_gross, total_discount = totals
             try:
@@ -888,12 +889,6 @@ class CreateOrderController(
         ):
             resolved_customer_discount_id = customer_discount_id
         return item_discount_id, category_discount_id, resolved_customer_discount_id
-
-    def __resolve_customer_id(self) -> int | None:
-        user = self._state_store.app_state.user.current
-        if user and user.customer_id:
-            return user.customer_id
-        return None
 
     def __show_order_confirmation(self, order_number: str) -> None:
         translation = self._state_store.app_state.translation.items

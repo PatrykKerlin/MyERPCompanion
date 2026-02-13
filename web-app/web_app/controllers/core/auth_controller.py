@@ -22,7 +22,7 @@ class AuthController(BaseController):
         self._subscribe_event_handlers({AuthDialogRequested: self.__auth_requested_handler})
 
     def on_login_click(self, username: str, password: str) -> None:
-        self._page.run_task(self.__handle_login, "customer001", "test1234")
+        self._page.run_task(self.__handle_login, username, password)
 
     async def __auth_requested_handler(self, _: AuthDialogRequested) -> None:
         translation_state = self._state_store.app_state.translation

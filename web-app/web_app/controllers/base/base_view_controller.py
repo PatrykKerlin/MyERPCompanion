@@ -36,7 +36,7 @@ class BaseViewController(
         self._subscribe_event_handlers({ViewRequested: self.__view_requested_handler})
 
     @abstractmethod
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> TView: ...
+    async def _build_view(self, translation: Translation) -> TView: ...
 
     async def __view_requested_handler(self, event: ViewRequested) -> None:
         if event.view_key != self._view_key:
@@ -46,7 +46,7 @@ class BaseViewController(
             translation = self._state_store.app_state.translation.items
             self._module_id = event.module_id
             mode = event.mode or ViewMode.STATIC
-            self._view = await self._build_view(translation, mode, event)
+            self._view = await self._build_view(translation)
             self._state_store.update(
                 view={
                     "title": translation.get(event.view_key),

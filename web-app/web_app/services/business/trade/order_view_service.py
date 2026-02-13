@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from schemas.base.base_schema import BaseStrictSchema
@@ -18,8 +19,8 @@ class OrderViewService(BaseService[OrderViewResponseSchema, BaseStrictSchema]):
         self,
         endpoint: Endpoint,
         path_param: int | None = None,
-        query_params: dict[str, Any] | None = None,
-        body_params: BaseStrictSchema | list[BaseStrictSchema] | IdsPayloadSchema | None = None,
+        _query_params: dict[str, Any] | None = None,
+        _body_params: BaseStrictSchema | list[BaseStrictSchema] | IdsPayloadSchema | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> OrderViewResponseSchema:
@@ -34,10 +35,10 @@ class OrderViewService(BaseService[OrderViewResponseSchema, BaseStrictSchema]):
         endpoint: Endpoint,
         path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: BaseStrictSchema | list[BaseStrictSchema] | IdsPayloadSchema | None = None,
+        _body_params: BaseStrictSchema | list[BaseStrictSchema] | IdsPayloadSchema | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
-    ) -> bytes:
+    ) -> tuple[bytes, str | None]:
         if path_param is None:
             raise ValueError("Invoice ID is required for PDF download.")
         response = await self._get(
@@ -46,4 +47,14 @@ class OrderViewService(BaseService[OrderViewResponseSchema, BaseStrictSchema]):
             tokens=tokens,
             module_id=module_id,
         )
-        return response.content
+        return response.content, self.__extract_filename(response.headers.get("content-disposition"))
+
+    @staticmethod
+    def __extract_filename(content_disposition: str | None) -> str | None:
+        if not content_disposition:
+            return None
+        match = re.search(r'filename="?(?P<name>[^";]+)"?', content_disposition)
+        if not match:
+            return None
+        filename = match.group("name").strip()
+        return filename or None

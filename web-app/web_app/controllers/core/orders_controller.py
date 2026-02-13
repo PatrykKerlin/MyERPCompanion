@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import base64
 from datetime import date, datetime
+from pathlib import Path
 from typing import Any
 
 from config.context import Context
@@ -36,6 +36,7 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
         super().__init__(context)
         self.__order_view_service = OrderViewService(self._settings, self._logger, self._tokens_accessor)
         self.__visible_order_ids: set[int] = set()
+        self.__downloads_assets_dir = Path(__file__).resolve().parents[2] / "assets" / "downloads"
 
     def on_new_order_clicked(self) -> None:
         self._page.run_task(
@@ -55,7 +56,7 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
             return
         self._page.run_task(self.__handle_download_invoice_clicked, invoice_id)
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> OrdersView:
+    async def _build_view(self, translation: Translation) -> OrdersView:
         current_user = self._state_store.app_state.user.current
         customer_id = current_user.customer_id if current_user else None
         page_data = await self.__perform_get_sales_orders_page(customer_id)
@@ -81,7 +82,7 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
                     discount_label_map,
                 )
                 status_history = self.__build_status_history(view_data.status_history, translation)
-                selected_invoice_id = self.__resolve_selected_invoice_id(view_data)
+                selected_invoice_id = view_data.order.invoice_id if view_data.order else None
         return OrdersView(
             controller=self,
             translation=translation,
@@ -133,7 +134,13 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
         rows: list[dict[str, Any]] = []
         for item in sorted(items, key=lambda row: (row.index, row.name, row.id)):
             source = source_item_map.get(item.item_id)
-            discount_labels = OrdersController.__resolve_item_discount_labels(item, discount_label_map)
+            discount_labels: list[str] = []
+            for discount_id in (item.item_discount_id, item.category_discount_id, item.customer_discount_id):
+                if discount_id is None:
+                    continue
+                label = discount_label_map.get(discount_id)
+                if label and label not in discount_labels:
+                    discount_labels.append(label)
             width = source.width if source else item.width
             height = source.height if source else item.height
             length = source.length if source else item.length
@@ -181,7 +188,14 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
             delivery_method_map.get(order.delivery_method_id, "-") if order.delivery_method_id is not None else "-"
         )
         invoice_number = order.invoice_number.strip() if order.invoice_number else ""
-        customer_discount = self.__resolve_customer_discount_label(view_data.target_items, discount_label_map)
+        customer_discount_labels: list[str] = []
+        for item in view_data.target_items:
+            if item.customer_discount_id is None:
+                continue
+            label = discount_label_map.get(item.customer_discount_id)
+            if label and label not in customer_discount_labels:
+                customer_discount_labels.append(label)
+        customer_discount = ", ".join(customer_discount_labels) if customer_discount_labels else "-"
         total_with_shipping = order.total_gross + order.shipping_cost
         meta = {
             "number": order.number,
@@ -242,16 +256,21 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
             discount_label_map,
         )
         status_history = self.__build_status_history(view_data.status_history, translation)
-        selected_invoice_id = self.__resolve_selected_invoice_id(view_data)
+        selected_invoice_id = view_data.order.invoice_id if view_data.order else None
         self._view.set_status_history(order_meta, order_items, status_history, selected_invoice_id)
         self._view.set_status_loading(False)
 
     async def __handle_download_invoice_clicked(self, invoice_id: int) -> None:
-        pdf_content = await self.__perform_download_invoice_pdf(invoice_id)
-        if not pdf_content:
+        pdf_result = await self.__perform_download_invoice_pdf(invoice_id)
+        if pdf_result is None:
             return
-        encoded_pdf = base64.b64encode(pdf_content).decode("ascii")
-        self._page.launch_url(f"data:application/octet-stream;name=invoice_{invoice_id}.pdf;base64,{encoded_pdf}")
+        pdf_content, suggested_name = pdf_result
+        launch_path = self.__prepare_invoice_download_assets(invoice_id, pdf_content, suggested_name)
+        await self._page.launch_url(
+            launch_path,
+            web_popup_window=True,
+            web_popup_window_name="_blank",
+        )
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_sales_orders_page(
@@ -282,39 +301,20 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
         )
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_download_invoice_pdf(self, invoice_id: int) -> bytes | None:
+    async def __perform_download_invoice_pdf(self, invoice_id: int) -> tuple[bytes, str | None] | None:
         return await self.__order_view_service.download_pdf(
             Endpoint.INVOICES_PDF, invoice_id, None, None, self._module_id
         )
 
-    @staticmethod
-    def __resolve_customer_discount_label(
-        items: list[OrderViewTargetItemSchema], discount_label_map: dict[int, str]
-    ) -> str:
-        labels: list[str] = []
-        for item in items:
-            discount_id = item.customer_discount_id
-            if not isinstance(discount_id, int):
-                continue
-            label = discount_label_map.get(discount_id)
-            if label and label not in labels:
-                labels.append(label)
-        if not labels:
-            return "-"
-        return ", ".join(labels)
-
-    @staticmethod
-    def __resolve_item_discount_labels(
-        item: OrderViewTargetItemSchema, discount_label_map: dict[int, str]
-    ) -> list[str]:
-        labels: list[str] = []
-        for discount_id in (item.item_discount_id, item.category_discount_id, item.customer_discount_id):
-            if not isinstance(discount_id, int):
-                continue
-            label = discount_label_map.get(discount_id)
-            if label and label not in labels:
-                labels.append(label)
-        return labels
+    def __prepare_invoice_download_assets(self, invoice_id: int, pdf_content: bytes, suggested_name: str | None) -> str:
+        self.__downloads_assets_dir.mkdir(parents=True, exist_ok=True)
+        pdf_filename = suggested_name or f"invoice_{invoice_id}.pdf"
+        pdf_filename = Path(pdf_filename).name
+        if not pdf_filename.lower().endswith(".pdf"):
+            pdf_filename = f"{pdf_filename}.pdf"
+        pdf_path = self.__downloads_assets_dir / pdf_filename
+        pdf_path.write_bytes(pdf_content)
+        return f"/downloads/{pdf_filename}"
 
     @staticmethod
     def __resolve_selected_order_id(orders: list[dict[str, Any]]) -> int | None:
@@ -322,13 +322,6 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
             return None
         first_id = orders[0].get("id")
         return int(first_id) if isinstance(first_id, int) else None
-
-    @staticmethod
-    def __resolve_selected_invoice_id(view_data: OrderViewResponseSchema) -> int | None:
-        if not view_data.order:
-            return None
-        invoice_id = view_data.order.invoice_id
-        return invoice_id if isinstance(invoice_id, int) else None
 
     def __to_order_summary(self, order: OrderPlainSchema) -> dict[str, Any]:
         return {

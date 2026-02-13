@@ -22,7 +22,6 @@ from repositories.business.trade.customer_repository import CustomerRepository
 from repositories.business.trade.discount_repository import DiscountRepository
 from repositories.business.trade.exchange_rate_repository import ExchangeRateRepository
 from repositories.business.trade.status_repository import StatusRepository
-from services.business.trade.invoice_service import InvoiceService
 from schemas.business.trade.assoc_category_discount_schema import (
     AssocCategoryDiscountPlainSchema,
     AssocCategoryDiscountStrictSchema,
@@ -43,6 +42,7 @@ from schemas.business.trade.discount_schema import DiscountPlainSchema, Discount
 from schemas.business.trade.exchange_rate_schema import ExchangeRatePlainSchema, ExchangeRateStrictSchema
 from schemas.business.trade.status_schema import StatusPlainSchema, StatusStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
+from services.business.trade.invoice_service import InvoiceService
 from utils.service_factory import ServiceFactory
 
 AssocCategoryDiscountService = ServiceFactory.create(

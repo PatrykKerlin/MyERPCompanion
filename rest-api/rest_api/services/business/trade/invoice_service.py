@@ -1,5 +1,6 @@
 import re
 from io import BytesIO
+from typing import TypeAlias
 from xml.sax.saxutils import escape
 
 from config.settings import Settings
@@ -16,6 +17,9 @@ from schemas.business.trade.invoice_schema import InvoicePlainSchema, InvoiceStr
 from services.base.base_service import BaseService
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
+
+TableCell: TypeAlias = str | Paragraph
+TableRow: TypeAlias = list[TableCell]
 
 
 class InvoiceService(BaseService[Invoice, InvoiceRepository, InvoiceStrictSchema, InvoicePlainSchema]):
@@ -112,7 +116,7 @@ class InvoiceService(BaseService[Invoice, InvoiceRepository, InvoiceStrictSchema
         elements.append(party_table)
         elements.append(Spacer(1, 5 * mm))
 
-        table_rows = [
+        table_rows: list[TableRow] = [
             ["Lp.", "Order", "Index", "Qty", "Unit", "Net", "VAT", "Gross"],
         ]
         row_number = 1
@@ -234,11 +238,7 @@ class InvoiceService(BaseService[Invoice, InvoiceRepository, InvoiceStrictSchema
             f"E-mail: {self.__settings.ISSUER_EMAIL}" if self.__settings.ISSUER_EMAIL else "",
             f"Phone: {self.__settings.ISSUER_PHONE}" if self.__settings.ISSUER_PHONE else "",
             f"Bank: {self.__settings.ISSUER_BANK_NAME}" if self.__settings.ISSUER_BANK_NAME else "",
-            (
-                f"Account: {self.__settings.ISSUER_BANK_ACCOUNT.strip()}"
-                if self.__settings.ISSUER_BANK_ACCOUNT
-                else ""
-            ),
+            (f"Account: {self.__settings.ISSUER_BANK_ACCOUNT.strip()}" if self.__settings.ISSUER_BANK_ACCOUNT else ""),
         ]
         normalized = [line.strip() for line in lines if line and line.strip()]
         return normalized if normalized else ["-"]

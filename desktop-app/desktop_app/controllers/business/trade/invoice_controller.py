@@ -484,7 +484,9 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         if result.returncode != 0:
             stderr = result.stderr.strip()
             if stderr:
-                self._logger.warning(f"Zenity save dialog returned non-zero code with stderr: {stderr}", )
+                self._logger.warning(
+                    f"Zenity save dialog returned non-zero code with stderr: {stderr}",
+                )
             return None
         return result.stdout.strip() or None
 

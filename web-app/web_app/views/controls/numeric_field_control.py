@@ -92,15 +92,6 @@ class NumericField(ft.Row):
     def value(self, new_value: int | float) -> None:
         self.__set_value(new_value)
 
-    def set_limits(self, min_value: int | float | None, max_value: int | float | None) -> None:
-        if self.__is_float:
-            self.__min_value = float(min_value) if min_value is not None else 0.0
-            self.__max_value = float(max_value) if max_value is not None else sys.float_info.max
-        else:
-            self.__min_value = int(min_value) if min_value is not None else 0
-            self.__max_value = int(max_value) if max_value is not None else sys.maxsize
-        self.__set_value(self.__value)
-
     def __decrement(self, _: ft.Event[ft.IconButton]) -> None:
         current = self.__parse_value(self.__text_field.value or "") or self.__value
         self.__set_value(current - self.__step)

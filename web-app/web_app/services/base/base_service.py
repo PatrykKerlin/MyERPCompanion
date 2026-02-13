@@ -87,8 +87,8 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
     async def create(
         self,
         endpoint: Endpoint,
-        path_param: int | None = None,
-        query_params: dict[str, Any] | None = None,
+        _path_param: int | None = None,
+        _query_params: dict[str, Any] | None = None,
         body_params: TStrictSchema | list[TStrictSchema] | IdsPayloadSchema | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
@@ -107,8 +107,8 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
     async def create_bulk(
         self,
         endpoint: Endpoint,
-        path_param: int | None = None,
-        query_params: dict[str, Any] | None = None,
+        _path_param: int | None = None,
+        _query_params: dict[str, Any] | None = None,
         body_params: TStrictSchema | list[TStrictSchema] | IdsPayloadSchema | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
@@ -128,73 +128,12 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         return [self._plain_schema_cls(**item) for item in data]
 
     @handle_token_refresh
-    async def create_multipart(
-        self,
-        endpoint: Endpoint,
-        path_param: int | None = None,
-        query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | list[TStrictSchema] | IdsPayloadSchema | None = None,
-        tokens: TokenPlainSchema | None = None,
-        module_id: int | None = None,
-    ) -> TPlainSchema:
-        if isinstance(body_params, BaseStrictSchema):
-            payload = body_params.model_dump()
-            data = payload.get("data")
-            files = payload.get("files")
-        elif isinstance(body_params, dict):
-            data = body_params.get("data")
-            files = body_params.get("files")
-        else:
-            data = None
-            files = None
-        response = await self._post_multipart(
-            endpoint=endpoint,
-            data=data,
-            files=files,
-            tokens=tokens,
-            module_id=module_id,
-        )
-        payload = response.json()
-        return self._plain_schema_cls(**payload)
-
-    @handle_token_refresh
-    async def delete(
-        self,
-        endpoint: Endpoint,
-        path_param: int | None = None,
-        query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | list[TStrictSchema] | IdsPayloadSchema | None = None,
-        tokens: TokenPlainSchema | None = None,
-        module_id: int | None = None,
-    ) -> bool:
-        resolved_endpoint = f"{endpoint}/{path_param}"
-        await self._delete(endpoint=resolved_endpoint, tokens=tokens, module_id=module_id)
-        return True
-
-    @handle_token_refresh
-    async def delete_bulk(
-        self,
-        endpoint: Endpoint,
-        path_param: int | None = None,
-        query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | list[TStrictSchema] | IdsPayloadSchema | None = None,
-        tokens: TokenPlainSchema | None = None,
-        module_id: int | None = None,
-    ) -> bool:
-        if isinstance(body_params, IdsPayloadSchema):
-            resolved_body_params = body_params.model_dump(mode="json")
-        else:
-            resolved_body_params = IdsPayloadSchema().model_dump(mode="json")
-        await self._delete(endpoint=endpoint, body_params=resolved_body_params, tokens=tokens, module_id=module_id)
-        return True
-
-    @handle_token_refresh
     async def get_all(
         self,
         endpoint: Endpoint,
-        path_param: int | None = None,
+        _path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | list[TStrictSchema] | IdsPayloadSchema | None = None,
+        _body_params: TStrictSchema | list[TStrictSchema] | IdsPayloadSchema | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> list[TPlainSchema]:
@@ -213,47 +152,12 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         return items
 
     @handle_token_refresh
-    async def get_bulk(
-        self,
-        endpoint: Endpoint,
-        path_param: int | None = None,
-        query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | list[TStrictSchema] | IdsPayloadSchema | None = None,
-        tokens: TokenPlainSchema | None = None,
-        module_id: int | None = None,
-    ) -> list[TPlainSchema]:
-        if isinstance(body_params, IdsPayloadSchema):
-            resolved_body_params = body_params.model_dump(mode="json")
-        else:
-            resolved_body_params = IdsPayloadSchema().model_dump(mode="json")
-        response = await self._post(
-            endpoint=endpoint, body_params=resolved_body_params, tokens=tokens, module_id=module_id
-        )
-        data = response.json()
-        return [self._plain_schema_cls(**item) for item in data]
-
-    @handle_token_refresh
-    async def get_one(
-        self,
-        endpoint: Endpoint,
-        path_param: int | None = None,
-        query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | list[TStrictSchema] | IdsPayloadSchema | None = None,
-        tokens: TokenPlainSchema | None = None,
-        module_id: int | None = None,
-    ) -> TPlainSchema:
-        resolved_endpoint = f"{endpoint}/{path_param}"
-        response = await self._get(endpoint=resolved_endpoint, tokens=tokens, module_id=module_id)
-        data = response.json()
-        return self._plain_schema_cls(**data)
-
-    @handle_token_refresh
     async def get_page(
         self,
         endpoint: Endpoint,
-        path_param: int | None = None,
+        _path_param: int | None = None,
         query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | list[TStrictSchema] | IdsPayloadSchema | None = None,
+        _body_params: TStrictSchema | list[TStrictSchema] | IdsPayloadSchema | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
     ) -> PaginatedResponseSchema[TPlainSchema]:
@@ -282,7 +186,7 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         self,
         endpoint: Endpoint,
         path_param: int | None = None,
-        query_params: dict[str, Any] | None = None,
+        _query_params: dict[str, Any] | None = None,
         body_params: TStrictSchema | list[TStrictSchema] | IdsPayloadSchema | None = None,
         tokens: TokenPlainSchema | None = None,
         module_id: int | None = None,
@@ -297,46 +201,6 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         )
         data = response.json()
         return self._plain_schema_cls(**data)
-
-    @handle_token_refresh
-    async def update_bulk(
-        self,
-        endpoint: Endpoint,
-        path_param: int | None = None,
-        query_params: dict[str, Any] | None = None,
-        body_params: TStrictSchema | list[TStrictSchema] | IdsPayloadSchema | None = None,
-        tokens: TokenPlainSchema | None = None,
-        module_id: int | None = None,
-    ) -> list[TPlainSchema]:
-        resolved_body_params: list[dict[str, Any]] = []
-        if isinstance(body_params, list):
-            for item in body_params:
-                schema_item = item
-                if isinstance(schema_item, BaseStrictSchema):
-                    param = schema_item.model_dump(mode="json")
-                    param["id"] = schema_item.id
-                    resolved_body_params.append(param)
-        response = await self._put(
-            endpoint=endpoint,
-            body_params=resolved_body_params,
-            tokens=tokens,
-            module_id=module_id,
-        )
-        data = response.json()
-        return [self._plain_schema_cls(**item) for item in data]
-
-    async def _delete(
-        self,
-        endpoint: str,
-        body_params: dict[str, Any] | None = None,
-        tokens: TokenPlainSchema | None = None,
-        module_id: int | None = None,
-    ) -> httpx.Response:
-        headers = self.__prepare_headers(tokens, module_id)
-        client = self.__get_client()
-        response = await client.request("DELETE", url=endpoint, json=body_params, headers=headers)
-        response.raise_for_status()
-        return response
 
     async def _get(
         self,
@@ -361,20 +225,6 @@ class BaseService(Generic[TPlainSchema, TStrictSchema]):
         headers = self.__prepare_headers(tokens, module_id)
         client = self.__get_client()
         response = await client.post(url=endpoint, json=body_params, headers=headers)
-        response.raise_for_status()
-        return response
-
-    async def _post_multipart(
-        self,
-        endpoint: str,
-        data: dict[str, Any] | None = None,
-        files: dict[str, tuple[str, bytes, str]] | None = None,
-        tokens: TokenPlainSchema | None = None,
-        module_id: int | None = None,
-    ) -> httpx.Response:
-        headers = self.__prepare_headers(tokens, module_id)
-        client = self.__get_client()
-        response = await client.post(url=endpoint, data=data, files=files, headers=headers)
         response.raise_for_status()
         return response
 

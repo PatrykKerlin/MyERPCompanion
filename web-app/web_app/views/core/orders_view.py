@@ -31,9 +31,6 @@ class OrdersView(BaseView["OrdersController"]):
             mode=ViewMode.STATIC,
             view_key=View.WEB_ORDERS,
             data_row=None,
-            base_label_size=0,
-            base_input_size=0,
-            base_columns_qty=12,
         )
         self.__orders = list(orders)
         self.__selected_order_id = selected_order_id
@@ -368,9 +365,7 @@ class OrdersView(BaseView["OrdersController"]):
             self.__safe_update(self.__orders_list)
             return
         for order in self.__orders:
-            order_id = order.get("id")
-            if not isinstance(order_id, int):
-                continue
+            order_id = order["id"]
             selected = order_id == self.__selected_order_id
             number = str(order.get("number") or "-")
             order_date = str(order.get("order_date") or "-")
@@ -442,8 +437,6 @@ class OrdersView(BaseView["OrdersController"]):
 
     @staticmethod
     def __resolve_order_payment_status(due_date: date | None, is_paid: Any) -> str:
-        if not isinstance(is_paid, bool):
-            return "none"
         if is_paid:
             return "none"
         if due_date and due_date < date.today():

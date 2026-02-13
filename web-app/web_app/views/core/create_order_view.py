@@ -35,9 +35,6 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             mode=ViewMode.STATIC,
             view_key=View.WEB_CREATE_ORDER,
             data_row=None,
-            base_label_size=0,
-            base_input_size=0,
-            base_columns_qty=12,
         )
         self.__categories = categories
         self.__items = items
@@ -246,8 +243,8 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                 item_discount_id = entry.get("item_discount_id")
                 category_discounts = self.__category_discount_map.get(item.category_id or -1, []) if item else []
                 item_discounts = item.discounts if item else []
-                category_label = self.__resolve_discount_label(category_discount_id, category_discounts)
-                item_label = self.__resolve_discount_label(item_discount_id, item_discounts)
+                category_label = self.__get_discount_label(category_discount_id, category_discounts)
+                item_label = self.__get_discount_label(item_discount_id, item_discounts)
 
                 remove_button = ft.IconButton(
                     icon=ft.Icons.DELETE_OUTLINE,
@@ -609,7 +606,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             content=ft.Image(src=image_url, width=56, height=56, fit=ft.BoxFit.CONTAIN) if image_url else None,
             on_click=lambda _: self.__open_item_dialog(item),
         )
-        available = self.__resolve_available(item, cart_quantities)
+        available = self.__get_available_quantity(item, cart_quantities)
         available_text = ft.Text(f"{self._translation.get('available')}: {available}")
         self.__available_nodes[item.id] = available_text
         details = ft.Column(
@@ -723,7 +720,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             control.error = self._translation.get("invalid_quantity")
             self.__toggle_add_button(control, False)
             return
-        available = self.__resolve_available(
+        available = self.__get_available_quantity(
             item, self.__normalize_cart_quantities(self._controller.get_cart_quantities())
         )
         if int(value) > available:
@@ -744,7 +741,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         if quantity is None or quantity == 0 or int(quantity) % item.moq != 0:
             qty_input.error = self._translation.get("invalid_quantity")
             return
-        available = self.__resolve_available(item, self._controller.get_cart_quantities())
+        available = self.__get_available_quantity(item, self._controller.get_cart_quantities())
         if int(quantity) > available:
             qty_input.error = self._translation.get("insufficient_stock")
             return
@@ -957,13 +954,13 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         self.__update_available_for_item(item_id)
         refresh()
 
-    def __resolve_available(self, item: OrderViewSourceItemSchema, cart_quantities: dict[int, int]) -> int:
+    def __get_available_quantity(self, item: OrderViewSourceItemSchema, cart_quantities: dict[int, int]) -> int:
         base_available = max(0, item.stock_quantity - item.reserved_quantity)
         cart_quantity = cart_quantities.get(item.id, 0)
         return max(0, base_available - cart_quantity)
 
-    def __resolve_discount_label(self, discount_id: int | None, discounts: list[OrderViewDiscountSchema]) -> str | None:
-        if not isinstance(discount_id, int):
+    def __get_discount_label(self, discount_id: int | None, discounts: list[OrderViewDiscountSchema]) -> str | None:
+        if discount_id is None:
             return None
         for discount in discounts:
             if discount.id == discount_id:
@@ -999,7 +996,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         node = self.__available_nodes.get(item_id)
         if not node:
             return
-        available = self.__resolve_available(
+        available = self.__get_available_quantity(
             item, self.__normalize_cart_quantities(self._controller.get_cart_quantities())
         )
         node.value = f"{self._translation.get('available')}: {available}"

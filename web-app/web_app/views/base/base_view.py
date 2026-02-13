@@ -26,12 +26,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         mode: ViewMode,
         view_key: View,
         data_row: dict[str, Any] | None,
-        base_label_size: int,
-        base_input_size: int,
-        base_columns_qty: int = 12,
         caller_view_key: View | None = None,
     ) -> None:
-        del base_label_size, base_input_size, base_columns_qty
         BaseComponent.__init__(self, controller, translation)
         self._mode = mode
         self._view_key = view_key
@@ -49,19 +45,12 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         return self._data_row
 
     @property
-    def inputs(self) -> dict[str, FieldGroup]:
-        return self._inputs
-
-    @property
     def mode(self) -> ViewMode:
         return self._mode
 
     @property
     def view_key(self) -> View:
         return self._view_key
-
-    def set_mode(self, mode: ViewMode) -> None:
-        self._mode = mode
 
     def _get_dropdown(
         self,
@@ -77,6 +66,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         return (
             ft.Container(
                 content=ft.Dropdown(
+                    key=key,
                     options=[ft.dropdown.Option(key="0", text="")]
                     + [ft.dropdown.Option(key=str(option[0]), text=option[1]) for option in options],
                     on_select=handle_select,
