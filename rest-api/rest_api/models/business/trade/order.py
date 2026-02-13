@@ -82,6 +82,18 @@ class Order(BaseModel):
         .where(Invoice.is_active.is_(True))
         .scalar_subquery()
     )
+    invoice_due_date = column_property(
+        select(Invoice.due_date)
+        .where(Invoice.id == literal_column("orders.invoice_id"))
+        .where(Invoice.is_active.is_(True))
+        .scalar_subquery()
+    )
+    invoice_is_paid = column_property(
+        select(Invoice.is_paid)
+        .where(Invoice.id == literal_column("orders.invoice_id"))
+        .where(Invoice.is_active.is_(True))
+        .scalar_subquery()
+    )
 
     @property
     def item_ids(self) -> list[int]:

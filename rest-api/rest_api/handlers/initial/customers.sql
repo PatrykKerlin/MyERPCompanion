@@ -30,7 +30,7 @@ SELECT
     lpad((1000000000 + i)::text, 10, '0') AS tax_id,
     'firma' || lpad(i::text, 3, '0') || '@example.pl' AS email,
     '+48' || (500000000 + i)::text AS phone_number,
-    'Ulica ' || ((i % 20) + 1)::text AS street,
+    'Ulica' AS street,
     ((i % 50) + 1)::text AS house_number,
     CASE WHEN i % 5 = 0 THEN ((i % 20) + 1)::text ELSE NULL END AS apartment_number,
     lpad(((i % 90) + 10)::text, 2, '0') || '-' || lpad(((i % 900) + 100)::text, 3, '0') AS postal_code,

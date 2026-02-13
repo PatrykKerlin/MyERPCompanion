@@ -225,12 +225,6 @@ class CreateOrderController(
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> CreateOrderView:
         view_data = await self.__perform_get_sales_view()
-        self._logger.info(
-            "CreateOrderView data: module_id=%s categories=%s source_items=%s",
-            self._module_id,
-            len(view_data.categories),
-            len(view_data.source_items),
-        )
         self.__initialize_discount_maps(view_data)
         image_map, images_map = self.__build_image_maps(view_data.source_items)
         return CreateOrderView(

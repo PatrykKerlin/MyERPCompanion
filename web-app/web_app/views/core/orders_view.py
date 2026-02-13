@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
@@ -19,6 +20,7 @@ class OrdersView(BaseView["OrdersController"]):
         translation: Translation,
         orders: list[dict[str, Any]],
         selected_order_id: int | None,
+        selected_invoice_id: int | None,
         order_meta: dict[str, str],
         order_items: list[dict[str, Any]],
         status_history: list[dict[str, str]],
@@ -35,6 +37,7 @@ class OrdersView(BaseView["OrdersController"]):
         )
         self.__orders = list(orders)
         self.__selected_order_id = selected_order_id
+        self.__selected_invoice_id = selected_invoice_id
         self.__order_meta = dict(order_meta)
         self.__order_items = list(order_items)
         self.__status_history = list(status_history)
@@ -52,6 +55,16 @@ class OrdersView(BaseView["OrdersController"]):
             content=ft.ProgressRing(width=20, height=20),
             padding=ft.Padding.only(bottom=8),
         )
+        self.__download_invoice_button = ft.IconButton(
+            icon=ft.Icons.DOWNLOAD,
+            tooltip=self._translation.get("download_invoice_pdf"),
+            on_click=lambda _: self.__handle_download_invoice_clicked(),
+        )
+        self.__download_invoice_placeholder = ft.IconButton(
+            icon=ft.Icons.DOWNLOAD,
+            disabled=True,
+            opacity=0.0,
+        )
 
         new_order_button = ft.Button(
             content=self._translation.get("create_order"),
@@ -65,6 +78,49 @@ class OrdersView(BaseView["OrdersController"]):
                 new_order_button,
             ],
         )
+        payment_legend = ft.Container(
+            padding=ft.Padding.symmetric(horizontal=8, vertical=6),
+            border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
+            border_radius=8,
+            content=ft.Column(
+                spacing=4,
+                tight=True,
+                controls=[
+                    ft.Text(self._translation.get("payment_status_legend"), size=11, weight=ft.FontWeight.W_600),
+                    ft.Row(
+                        spacing=6,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            ft.Icon(ft.Icons.PENDING, size=16),
+                            ft.Container(
+                                expand=True,
+                                content=ft.Text(
+                                    self._translation.get("invoice_unpaid_before_due"),
+                                    size=11,
+                                    no_wrap=False,
+                                ),
+                            ),
+                        ],
+                    ),
+                    ft.Row(
+                        spacing=6,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED, size=16, color=ft.Colors.ERROR),
+                            ft.Container(
+                                expand=True,
+                                content=ft.Text(
+                                    self._translation.get("invoice_unpaid_overdue"),
+                                    size=11,
+                                    no_wrap=False,
+                                    color=ft.Colors.ERROR,
+                                ),
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        )
 
         left_panel = ft.Container(
             expand=True,
@@ -75,6 +131,7 @@ class OrdersView(BaseView["OrdersController"]):
                 expand=True,
                 controls=[
                     ft.Text(self._translation.get("browse_orders"), weight=ft.FontWeight.BOLD),
+                    payment_legend,
                     self.__orders_list,
                 ],
             ),
@@ -164,10 +221,12 @@ class OrdersView(BaseView["OrdersController"]):
         order_meta: dict[str, str],
         order_items: list[dict[str, Any]],
         status_history: list[dict[str, str]],
+        selected_invoice_id: int | None,
     ) -> None:
         self.__order_meta = dict(order_meta)
         self.__order_items = list(order_items)
         self.__status_history = list(status_history)
+        self.__selected_invoice_id = selected_invoice_id
         self.__render_status()
 
     def set_status_loading(self, loading: bool) -> None:
@@ -315,26 +374,81 @@ class OrdersView(BaseView["OrdersController"]):
             selected = order_id == self.__selected_order_id
             number = str(order.get("number") or "-")
             order_date = str(order.get("order_date") or "-")
+            due_date = self.__parse_iso_date(order.get("invoice_due_date"))
+            is_paid = order.get("invoice_is_paid")
+            payment_status = self.__resolve_order_payment_status(due_date=due_date, is_paid=is_paid)
+            icon_control: ft.Control | None = None
+            number_color: str | ft.Colors | None = None
+            date_color: str | ft.Colors | None = None
+            if payment_status == "unpaid":
+                icon_control = ft.Icon(ft.Icons.PENDING, size=22)
+            elif payment_status == "overdue":
+                icon_control = ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED, size=22, color=ft.Colors.ERROR)
+                number_color = ft.Colors.ERROR
+                date_color = ft.Colors.ERROR
             item = ft.Container(
                 padding=ft.Padding.all(10),
                 border=ft.Border.all(1, ft.Colors.PRIMARY if selected else ft.Colors.OUTLINE_VARIANT),
                 border_radius=8,
                 bgcolor=ft.Colors.PRIMARY_CONTAINER if selected else None,
                 on_click=lambda _, oid=order_id: self._controller.on_order_selected(oid),
-                content=ft.Column(
-                    spacing=2,
+                content=ft.Row(
+                    spacing=8,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     controls=[
-                        ft.Text(number, weight=ft.FontWeight.BOLD, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
-                        ft.Text(
-                            f"{self._translation.get('order_date')}: {order_date}",
-                            no_wrap=True,
-                            overflow=ft.TextOverflow.ELLIPSIS,
+                        ft.Container(
+                            expand=True,
+                            content=ft.Column(
+                                spacing=2,
+                                controls=[
+                                    ft.Text(
+                                        number,
+                                        weight=ft.FontWeight.BOLD,
+                                        no_wrap=True,
+                                        overflow=ft.TextOverflow.ELLIPSIS,
+                                        color=number_color,
+                                    ),
+                                    ft.Text(
+                                        f"{self._translation.get('order_date')}: {order_date}",
+                                        no_wrap=True,
+                                        overflow=ft.TextOverflow.ELLIPSIS,
+                                        color=date_color,
+                                    ),
+                                ],
+                            ),
+                        ),
+                        ft.Container(
+                            width=28,
+                            height=40,
+                            alignment=ft.Alignment.CENTER,
+                            content=icon_control,
                         ),
                     ],
                 ),
             )
             self.__orders_list.controls.append(item)
         self.__safe_update(self.__orders_list)
+
+    @staticmethod
+    def __parse_iso_date(raw: Any) -> date | None:
+        if isinstance(raw, date):
+            return raw
+        if isinstance(raw, str):
+            try:
+                return date.fromisoformat(raw)
+            except ValueError:
+                return None
+        return None
+
+    @staticmethod
+    def __resolve_order_payment_status(due_date: date | None, is_paid: Any) -> str:
+        if not isinstance(is_paid, bool):
+            return "none"
+        if is_paid:
+            return "none"
+        if due_date and due_date < date.today():
+            return "overdue"
+        return "unpaid"
 
     def __render_status(self) -> None:
         self.__status_loading.visible = self.__is_status_loading
@@ -343,51 +457,36 @@ class OrdersView(BaseView["OrdersController"]):
         if self.__selected_order_id is None:
             self.__order_meta_column.controls.append(ft.Text(self._translation.get("select_order")))
         elif self.__order_meta:
+            has_invoice = isinstance(self.__selected_invoice_id, int)
             detail_rows: list[tuple[str, str]] = [
                 (self._translation.get("number"), self.__order_meta.get("number", "-")),
+                (self._translation.get("order_date"), self.__order_meta.get("order_date", "-")),
+                (self._translation.get("currency"), self.__order_meta.get("currency", "-")),
+                (self._translation.get("delivery_method"), self.__order_meta.get("delivery_method", "-")),
+                (self._translation.get("customer_discount"), self.__order_meta.get("customer_discount", "-")),
+                (self._translation.get("total_net"), self.__order_meta.get("total_net", "0.00")),
+                (self._translation.get("total_vat"), self.__order_meta.get("total_vat", "0.00")),
+                (self._translation.get("total_gross"), self.__order_meta.get("total_gross", "0.00")),
+                (self._translation.get("total_discount"), self.__order_meta.get("total_discount", "0.00")),
+                (self._translation.get("shipping_cost"), self.__order_meta.get("shipping_cost", "0.00")),
+                (
+                    self._translation.get("total_with_shipping"),
+                    self.__order_meta.get("total_with_shipping", "0.00"),
+                ),
             ]
             invoice_number = self.__order_meta.get("invoice_number")
-            if invoice_number:
-                detail_rows.append((self._translation.get("invoice_number"), invoice_number))
-            detail_rows.extend(
-                [
-                    (self._translation.get("order_date"), self.__order_meta.get("order_date", "-")),
-                    (self._translation.get("currency"), self.__order_meta.get("currency", "-")),
-                    (self._translation.get("delivery_method"), self.__order_meta.get("delivery_method", "-")),
-                    (self._translation.get("customer_discount"), self.__order_meta.get("customer_discount", "-")),
-                    (self._translation.get("total_net"), self.__order_meta.get("total_net", "0.00")),
-                    (self._translation.get("total_vat"), self.__order_meta.get("total_vat", "0.00")),
-                    (self._translation.get("total_gross"), self.__order_meta.get("total_gross", "0.00")),
-                    (self._translation.get("total_discount"), self.__order_meta.get("total_discount", "0.00")),
-                    (self._translation.get("shipping_cost"), self.__order_meta.get("shipping_cost", "0.00")),
-                    (
-                        self._translation.get("total_with_shipping"),
-                        self.__order_meta.get("total_with_shipping", "0.00"),
-                    ),
-                ]
+            for label, value in detail_rows:
+                self.__order_meta_column.controls.append(self.__build_order_meta_row(label=label, value=value))
+            self.__download_invoice_button.disabled = not has_invoice
+            invoice_trailing_control: ft.Control = (
+                self.__download_invoice_button if has_invoice else self.__download_invoice_placeholder
             )
-            self.__order_meta_column.controls.extend(
-                [
-                    ft.Row(
-                        controls=[
-                            ft.Container(
-                                width=220,
-                                content=ft.Text(
-                                    f"{label}:",
-                                    weight=ft.FontWeight.W_600,
-                                    no_wrap=True,
-                                    overflow=ft.TextOverflow.ELLIPSIS,
-                                ),
-                            ),
-                            ft.Container(
-                                expand=True,
-                                content=ft.Text(str(value), no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
-                            ),
-                        ],
-                        spacing=12,
-                    )
-                    for label, value in detail_rows
-                ]
+            self.__order_meta_column.controls.append(
+                self.__build_order_meta_row(
+                    label=self._translation.get("invoice_number"),
+                    value=invoice_number if invoice_number else "-",
+                    trailing_control=invoice_trailing_control,
+                )
             )
         self.__safe_update(self.__order_meta_column)
 
@@ -515,6 +614,44 @@ class OrdersView(BaseView["OrdersController"]):
                 )
             )
         self.__safe_update(self.__status_list)
+
+    def __handle_download_invoice_clicked(self) -> None:
+        self._controller.on_download_invoice_clicked(self.__selected_invoice_id)
+
+    @staticmethod
+    def __build_order_meta_row(
+        label: str,
+        value: str,
+        trailing_control: ft.Control | None = None,
+    ) -> ft.Row:
+        if trailing_control is not None:
+            value_control: ft.Control = ft.Row(
+                spacing=8,
+                controls=[
+                    ft.Text(str(value), no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                    trailing_control,
+                ],
+            )
+        else:
+            value_control = ft.Container(
+                expand=True,
+                content=ft.Text(str(value), no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+            )
+        return ft.Row(
+            controls=[
+                ft.Container(
+                    width=220,
+                    content=ft.Text(
+                        f"{label}:",
+                        weight=ft.FontWeight.W_600,
+                        no_wrap=True,
+                        overflow=ft.TextOverflow.ELLIPSIS,
+                    ),
+                ),
+                value_control,
+            ],
+            spacing=12,
+        )
 
     @staticmethod
     def __safe_update(control: ft.Control) -> None:

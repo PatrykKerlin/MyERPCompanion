@@ -1,4 +1,6 @@
 import asyncio
+import os
+import subprocess
 from datetime import date, timedelta
 from typing import Any, Callable, cast
 
@@ -63,6 +65,11 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             return
         self._page.run_task(self.__handle_orders_save)
 
+    def on_generate_pdf_clicked(self, _: ft.Event[ft.Button]) -> None:
+        if not self._view:
+            return
+        self._page.run_task(self.__handle_generate_pdf)
+
     def on_orders_delete_clicked(self, order_ids: list[int]) -> None:
         if not self._view or not order_ids:
             return
@@ -95,6 +102,7 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             event.data,
             currencies,
             customers,
+            self.on_generate_pdf_clicked,
             self.on_orders_save_clicked,
             self.on_orders_delete_clicked,
         )
@@ -180,6 +188,10 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
     @BaseController.handle_api_action(ApiActionError.SAVE)
     async def __perform_update_invoice(self, invoice_id: int, payload: InvoiceStrictSchema) -> InvoicePlainSchema:
         return await self._service.update(Endpoint.INVOICES, invoice_id, None, payload, self._module_id)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_download_invoice_pdf(self, invoice_id: int) -> tuple[bytes, str | None]:
+        return await self._service.download_pdf(Endpoint.INVOICES_PDF, invoice_id, None, None, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_orders_by_ids(self, order_ids: list[int]) -> list[OrderPlainSchema]:
@@ -417,6 +429,69 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         if invoice_id is not None:
             await self.__update_orders_invoice_assignment(order_ids, None)
         await self.__reload_orders_for_selection()
+
+    async def __handle_generate_pdf(self) -> None:
+        if not self._view or self._view.mode not in {ViewMode.READ, ViewMode.EDIT}:
+            return
+        invoice_id = self.__get_current_invoice_id()
+        if invoice_id is None:
+            return
+        pdf_result = await self.__perform_download_invoice_pdf(invoice_id)
+        if pdf_result is None:
+            return
+        content, suggested_name = pdf_result
+        default_name = suggested_name or f"invoice_{invoice_id}.pdf"
+        file_path = await self.__pick_pdf_save_path(default_name)
+        if not file_path:
+            return
+        try:
+            await asyncio.to_thread(self.__write_pdf_file, file_path, content)
+        except Exception:
+            self._logger.exception(f"Unhandled exception in {self.__handle_generate_pdf.__qualname__}")
+            self._open_error_dialog(message_key=ApiActionError.GENERIC)
+
+    async def __pick_pdf_save_path(self, suggested_name: str) -> str | None:
+        try:
+            selected_path = await asyncio.to_thread(self.__pick_linux_save_path, suggested_name)
+            if not selected_path:
+                return None
+            if not selected_path.lower().endswith(".pdf"):
+                return f"{selected_path}.pdf"
+            return selected_path
+        except Exception:
+            self._logger.exception(f"Unhandled exception in {self.__pick_pdf_save_path.__qualname__}")
+            self._open_error_dialog(message_key=ApiActionError.GENERIC)
+            return None
+
+    def __pick_linux_save_path(self, suggested_name: str) -> str | None:
+        translation = self._state_store.app_state.translation.items
+        cwd = os.getcwd()
+        env = os.environ.copy()
+        env["WAYLAND_DISPLAY"] = env.get("WAYLAND_DISPLAY", "wayland-0")
+        env["XDG_RUNTIME_DIR"] = env.get("XDG_RUNTIME_DIR", "/mnt/wslg/runtime-dir")
+        env["XDG_SESSION_TYPE"] = "wayland"
+        env["GDK_BACKEND"] = "wayland"
+        args = [
+            "zenity",
+            "--file-selection",
+            "--save",
+            "--confirm-overwrite",
+            f"--title={translation.get('save_pdf')}",
+            f"--filename={os.path.join(cwd, suggested_name)}",
+            "--file-filter=PDF files | *.pdf",
+        ]
+        result = subprocess.run(args, capture_output=True, text=True, env=env)
+        if result.returncode != 0:
+            stderr = result.stderr.strip()
+            if stderr:
+                self._logger.warning(f"Zenity save dialog returned non-zero code with stderr: {stderr}", )
+            return None
+        return result.stdout.strip() or None
+
+    @staticmethod
+    def __write_pdf_file(file_path: str, content: bytes) -> None:
+        with open(file_path, "wb") as file:
+            file.write(content)
 
     def __reset_orders(self, view: InvoiceView) -> None:
         self.__orders_by_id.clear()

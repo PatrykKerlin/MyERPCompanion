@@ -38,6 +38,18 @@ services:
       - CORS_ORIGINS=http://localhost:8550,http://127.0.0.1:8550,http://localhost:8551,http://127.0.0.1:8551
       - SUPERUSER_USERNAME=admin
       - SUPERUSER_PASSWORD=admin123
+      - ISSUER_NAME=Northwind Distribution Sp. z o.o.
+      - ISSUER_TAX_ID=PL5273012345
+      - ISSUER_STREET=Prosta
+      - ISSUER_HOUSE_NUMBER=51
+      - ISSUER_APARTMENT_NUMBER=7
+      - ISSUER_POSTAL_CODE=00-838
+      - ISSUER_CITY=Warsaw
+      - ISSUER_COUNTRY=Poland
+      - ISSUER_EMAIL=billing@northwind-distribution.com
+      - ISSUER_PHONE=+48221234567
+      - ISSUER_BANK_NAME=PKO BP
+      - ISSUER_BANK_ACCOUNT=PL61109010140000071219812874
     depends_on:
       - postgres
     command:

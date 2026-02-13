@@ -32,6 +32,7 @@ class Endpoint(StrEnum):
     USERS = "users"
     LANGUAGES = "languages"
     ITEMS = "items"
+    INVOICES_PDF = "invoices/{invoice_id}/pdf"
     ORDERS = "orders"
     SALES_ORDERS = "orders/sales"
     ORDER_VIEW_SALES = "orders/view/sales"

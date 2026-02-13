@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 from datetime import date, datetime
 from typing import Any
 
@@ -49,6 +50,11 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
     def on_order_selected(self, order_id: int) -> None:
         self._page.run_task(self.__handle_order_selected, order_id)
 
+    def on_download_invoice_clicked(self, invoice_id: int | None) -> None:
+        if not isinstance(invoice_id, int):
+            return
+        self._page.run_task(self.__handle_download_invoice_clicked, invoice_id)
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> OrdersView:
         current_user = self._state_store.app_state.user.current
         customer_id = current_user.customer_id if current_user else None
@@ -60,6 +66,7 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
         order_meta: dict[str, str] = {}
         order_items: list[dict[str, Any]] = []
         status_history: list[dict[str, str]] = []
+        selected_invoice_id: int | None = None
         if selected_order_id is not None:
             view_data = await self.__perform_get_sales_view(selected_order_id)
             if view_data:
@@ -74,11 +81,13 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
                     discount_label_map,
                 )
                 status_history = self.__build_status_history(view_data.status_history, translation)
+                selected_invoice_id = self.__resolve_selected_invoice_id(view_data)
         return OrdersView(
             controller=self,
             translation=translation,
             orders=orders,
             selected_order_id=selected_order_id,
+            selected_invoice_id=selected_invoice_id,
             order_meta=order_meta,
             order_items=order_items,
             status_history=status_history,
@@ -233,8 +242,16 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
             discount_label_map,
         )
         status_history = self.__build_status_history(view_data.status_history, translation)
-        self._view.set_status_history(order_meta, order_items, status_history)
+        selected_invoice_id = self.__resolve_selected_invoice_id(view_data)
+        self._view.set_status_history(order_meta, order_items, status_history, selected_invoice_id)
         self._view.set_status_loading(False)
+
+    async def __handle_download_invoice_clicked(self, invoice_id: int) -> None:
+        pdf_content = await self.__perform_download_invoice_pdf(invoice_id)
+        if not pdf_content:
+            return
+        encoded_pdf = base64.b64encode(pdf_content).decode("ascii")
+        self._page.launch_url(f"data:application/octet-stream;name=invoice_{invoice_id}.pdf;base64,{encoded_pdf}")
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_sales_orders_page(
@@ -252,7 +269,7 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
         params: dict[str, str | int] = {
             "page": 1,
             "page_size": 100,
-            "sort_by": "order_date",
+            "sort_by": "id",
             "order": "desc",
             "customer_id": customer_id,
         }
@@ -262,6 +279,12 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
     async def __perform_get_sales_view(self, order_id: int) -> OrderViewResponseSchema | None:
         return await self.__order_view_service.get_view(
             Endpoint.ORDER_VIEW_SALES, order_id, None, None, self._module_id
+        )
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_download_invoice_pdf(self, invoice_id: int) -> bytes | None:
+        return await self.__order_view_service.download_pdf(
+            Endpoint.INVOICES_PDF, invoice_id, None, None, self._module_id
         )
 
     @staticmethod
@@ -300,9 +323,18 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
         first_id = orders[0].get("id")
         return int(first_id) if isinstance(first_id, int) else None
 
+    @staticmethod
+    def __resolve_selected_invoice_id(view_data: OrderViewResponseSchema) -> int | None:
+        if not view_data.order:
+            return None
+        invoice_id = view_data.order.invoice_id
+        return invoice_id if isinstance(invoice_id, int) else None
+
     def __to_order_summary(self, order: OrderPlainSchema) -> dict[str, Any]:
         return {
             "id": order.id,
             "number": order.number,
             "order_date": self.__format_date(order.order_date),
+            "invoice_due_date": self.__format_date(order.invoice_due_date) if order.invoice_due_date else None,
+            "invoice_is_paid": order.invoice_is_paid,
         }

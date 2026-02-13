@@ -101,7 +101,7 @@ class FooterController(BaseComponentController[FooterComponent, FooterRequested]
             try:
                 return datetime.now(ZoneInfo(timezone_name))
             except Exception:
-                self._logger.exception("Invalid TIMEZONE setting: %s", timezone_name)
+                self._logger.exception(f"Invalid TIMEZONE setting: {timezone_name}")
         return datetime.now().astimezone()
 
     @staticmethod

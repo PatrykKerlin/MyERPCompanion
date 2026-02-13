@@ -166,7 +166,6 @@ cython_debug/
 
 # VSCode
 .vscode
-.codex
 
 # Ruff cache
 .ruff_cache
@@ -188,3 +187,6 @@ rest-api/rest_api/migrations/versions
 .config
 .local
 .artifacts
+
+# PDF
+*.pdf

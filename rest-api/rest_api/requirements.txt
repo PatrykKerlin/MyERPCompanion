@@ -10,3 +10,4 @@ pydantic-settings
 pydantic[email]
 aiofiles
 python-multipart
+reportlab

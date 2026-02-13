@@ -71,7 +71,7 @@ class BaseController:
                     return cast(TReturn, None)
                 except PermissionError:
                     self._close_loading_dialog()
-                    self._logger.info("Authentication failure in %s", func.__qualname__, exc_info=True)
+                    self._logger.info(f"Authentication failure in {func.__qualname__}", exc_info=True)
                     self._state_store.update(tokens={"access": None, "refresh": None})
                     self._page.run_task(self._event_bus.publish, LogoutRequested())
                     return cast(TReturn, None)

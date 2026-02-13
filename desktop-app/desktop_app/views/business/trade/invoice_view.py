@@ -22,6 +22,7 @@ class InvoiceView(BaseView):
         data_row: dict[str, Any] | None,
         currencies: list[tuple[int, str]],
         customers: list[tuple[int, str]],
+        on_generate_pdf_clicked: Callable[[ft.Event[ft.Button]], None],
         on_orders_save_clicked: Callable[[ft.Event[ft.IconButton]], None],
         on_orders_delete_clicked: Callable[[list[int]], None],
     ) -> None:
@@ -79,6 +80,12 @@ class InvoiceView(BaseView):
                 self._translation.get("total_gross"),
             ],
         )
+        self.__generate_pdf_button = ft.Button(
+            content=self._translation.get("generate_pdf"),
+            on_click=on_generate_pdf_clicked,
+        )
+        self._buttons_row.controls.insert(0, self.__generate_pdf_button)
+        self.__set_generate_pdf_button_state(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT, ViewMode.CREATE}
         self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
@@ -98,6 +105,7 @@ class InvoiceView(BaseView):
             self._controller.on_read_mode_requested()
         if mode in {ViewMode.CREATE, ViewMode.EDIT}:
             self.__apply_editable_fields(mode)
+        self.__set_generate_pdf_button_state(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT, ViewMode.CREATE}
         self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
@@ -196,6 +204,11 @@ class InvoiceView(BaseView):
     def __set_bulk_transfer_state(self, mode: ViewMode) -> None:
         enabled = mode == ViewMode.CREATE
         self.__bulk_transfer.set_enabled_states(enabled, enabled, enabled)
+
+    def __set_generate_pdf_button_state(self, mode: ViewMode) -> None:
+        self.__generate_pdf_button.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__generate_pdf_button.disabled = mode == ViewMode.EDIT
+        self.safe_update(self.__generate_pdf_button)
 
     def __set_total_value(self, key: str, value: float) -> None:
         if not self.__is_mounted:

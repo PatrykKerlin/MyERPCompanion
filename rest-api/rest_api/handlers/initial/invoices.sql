@@ -60,3 +60,80 @@ FROM invoiced_orders io
 JOIN inserted i
     ON i.number = to_char(io.issue_date, 'YYYY/MM/DD') || '/' || lpad(io.seq::text, 4, '0')
 WHERE o.id = io.order_id;
+
+WITH ranked_sales_orders AS (
+    SELECT
+        o.id,
+        o.customer_id,
+        row_number() OVER (PARTITION BY o.customer_id ORDER BY o.id DESC) AS rn
+    FROM orders o
+    WHERE
+        o.is_sales IS TRUE
+        AND o.customer_id IS NOT NULL
+)
+UPDATE orders o
+SET invoice_id = NULL
+FROM ranked_sales_orders rso
+WHERE
+    o.id = rso.id
+    AND rso.rn = 1;
+
+WITH ranked_sales_orders AS (
+    SELECT
+        o.id,
+        o.customer_id,
+        row_number() OVER (PARTITION BY o.customer_id ORDER BY o.id DESC) AS rn
+    FROM orders o
+    WHERE
+        o.is_sales IS TRUE
+        AND o.customer_id IS NOT NULL
+)
+UPDATE invoices i
+SET
+    is_paid = TRUE,
+    due_date = (CURRENT_DATE - INTERVAL '10 days')::date
+FROM ranked_sales_orders rso
+JOIN orders o ON o.id = rso.id
+WHERE
+    rso.rn = 2
+    AND o.invoice_id = i.id;
+
+WITH ranked_sales_orders AS (
+    SELECT
+        o.id,
+        o.customer_id,
+        row_number() OVER (PARTITION BY o.customer_id ORDER BY o.id DESC) AS rn
+    FROM orders o
+    WHERE
+        o.is_sales IS TRUE
+        AND o.customer_id IS NOT NULL
+)
+UPDATE invoices i
+SET
+    is_paid = FALSE,
+    due_date = (CURRENT_DATE + INTERVAL '14 days')::date
+FROM ranked_sales_orders rso
+JOIN orders o ON o.id = rso.id
+WHERE
+    rso.rn = 3
+    AND o.invoice_id = i.id;
+
+WITH ranked_sales_orders AS (
+    SELECT
+        o.id,
+        o.customer_id,
+        row_number() OVER (PARTITION BY o.customer_id ORDER BY o.id DESC) AS rn
+    FROM orders o
+    WHERE
+        o.is_sales IS TRUE
+        AND o.customer_id IS NOT NULL
+)
+UPDATE invoices i
+SET
+    is_paid = FALSE,
+    due_date = (CURRENT_DATE - INTERVAL '14 days')::date
+FROM ranked_sales_orders rso
+JOIN orders o ON o.id = rso.id
+WHERE
+    rso.rn = 4
+    AND o.invoice_id = i.id;

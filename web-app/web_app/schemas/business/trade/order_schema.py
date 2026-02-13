@@ -58,6 +58,8 @@ class SalesOrderStrictSchema(OrderStrictBaseSchema):
 class OrderPlainSchema(BasePlainSchema):
     number: str
     invoice_number: str | None = None
+    invoice_due_date: date | None = None
+    invoice_is_paid: bool | None = None
     is_sales: bool | None
 
     total_net: float

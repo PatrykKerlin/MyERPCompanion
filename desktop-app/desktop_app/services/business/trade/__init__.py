@@ -19,9 +19,9 @@ from schemas.business.trade.currency_schema import CurrencyPlainSchema, Currency
 from schemas.business.trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
 from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
 from schemas.business.trade.exchange_rate_schema import ExchangeRatePlainSchema, ExchangeRateStrictSchema
-from schemas.business.trade.invoice_schema import InvoicePlainSchema, InvoiceStrictSchema
 from schemas.business.trade.status_schema import StatusPlainSchema, StatusStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
+from services.business.trade.invoice_service import InvoiceService
 from services.business.trade.order_service import OrderService
 from services.business.trade.order_view_service import OrderViewService
 from utils.service_factory import ServiceFactory
@@ -70,11 +70,6 @@ ExchangeRateService = ServiceFactory.create(
     name_prefix="ExchangeRate",
     plain_schema_cls=ExchangeRatePlainSchema,
     strict_schema_cls=ExchangeRateStrictSchema,
-)
-InvoiceService = ServiceFactory.create(
-    name_prefix="Invoice",
-    plain_schema_cls=InvoicePlainSchema,
-    strict_schema_cls=InvoiceStrictSchema,
 )
 StatusService = ServiceFactory.create(
     name_prefix="Status",

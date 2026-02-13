@@ -294,15 +294,9 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         await self.__perform_image_upload(file_path)
 
     async def __pick_file_path(self) -> str | None:
-        platform = self._page.platform
         translation = self._state_store.app_state.translation.items
         try:
-            if platform == ft.PagePlatform.WINDOWS:
-                return await asyncio.to_thread(self.__pick_windows_file)
-            if platform == ft.PagePlatform.LINUX:
-                return await asyncio.to_thread(self.__pick_linux_file)
-            self._open_error_dialog(message=translation.get("image_upload_not_supported"))
-            return None
+            return await asyncio.to_thread(self.__pick_linux_file)
         except Exception:
             self._logger.exception(f"Unhandled exception in {self.__pick_file_path.__qualname__}")
             self._open_error_dialog(message=translation.get("image_upload_not_supported"))
@@ -327,23 +321,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         if result.returncode != 0:
             stderr = result.stderr.strip()
             if stderr:
-                self._logger.warning("Zenity file picker returned non-zero code with stderr: %s", stderr)
-            return None
-        return result.stdout.strip() or None
-
-    def __pick_windows_file(self) -> str | None:
-        cwd = os.getcwd()
-        script = (
-            "Add-Type -AssemblyName System.Windows.Forms; "
-            "$f = New-Any System.Windows.Forms.OpenFileDialog; "
-            "$f.Multiselect = $false; "
-            f"$f.InitialDirectory = '{cwd}'; "
-            "$f.Filter = "
-            "'Images (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg'; "
-            "if($f.ShowDialog() -eq 'OK'){ Write-Output $f.FileName }"
-        )
-        result = subprocess.run(["powershell", "-NoProfile", "-Command", script], capture_output=True, text=True)
-        if result.returncode != 0:
+                self._logger.warning(f"Zenity file picker returned non-zero code with stderr: {stderr}")
             return None
         return result.stdout.strip() or None
 

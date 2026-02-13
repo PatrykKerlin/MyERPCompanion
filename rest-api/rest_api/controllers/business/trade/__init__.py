@@ -1,3 +1,4 @@
+from controllers.business.trade.invoice_controller import InvoiceController
 from controllers.business.trade.order_controller import OrderController
 from controllers.business.trade.order_view_controller import OrderViewController
 from models.business.trade.assoc_category_discount import AssocCategoryDiscount
@@ -9,7 +10,6 @@ from models.business.trade.currency import Currency
 from models.business.trade.customer import Customer
 from models.business.trade.discount import Discount
 from models.business.trade.exchange_rate import ExchangeRate
-from models.business.trade.invoice import Invoice
 from models.business.trade.status import Status
 from models.business.trade.supplier import Supplier
 from schemas.business.trade.assoc_category_discount_schema import (
@@ -30,7 +30,6 @@ from schemas.business.trade.currency_schema import CurrencyPlainSchema, Currency
 from schemas.business.trade.customer_schema import CustomerPlainSchema, CustomerStrictSchema
 from schemas.business.trade.discount_schema import DiscountPlainSchema, DiscountStrictSchema
 from schemas.business.trade.exchange_rate_schema import ExchangeRatePlainSchema, ExchangeRateStrictSchema
-from schemas.business.trade.invoice_schema import InvoicePlainSchema, InvoiceStrictSchema
 from schemas.business.trade.status_schema import StatusPlainSchema, StatusStrictSchema
 from schemas.business.trade.supplier_schema import SupplierPlainSchema, SupplierStrictSchema
 from services.business.trade import (
@@ -43,7 +42,6 @@ from services.business.trade import (
     CustomerService,
     DiscountService,
     ExchangeRateService,
-    InvoiceService,
     StatusService,
     SupplierService,
 )
@@ -166,12 +164,6 @@ ExchangeRateController = ControllerFactory.create(
     service_cls=ExchangeRateService,
     input_schema_cls=ExchangeRateStrictSchema,
     output_schema_cls=ExchangeRatePlainSchema,
-)
-InvoiceController = ControllerFactory.create(
-    model_cls=Invoice,
-    service_cls=InvoiceService,
-    input_schema_cls=InvoiceStrictSchema,
-    output_schema_cls=InvoicePlainSchema,
 )
 StatusController = ControllerFactory.create(
     model_cls=Status,

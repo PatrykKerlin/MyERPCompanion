@@ -25,6 +25,8 @@ class Translation:
             "customer": "Customer",
             "number": "Number",
             "invoice_number": "Invoice number",
+            "generate_pdf": "Generate PDF",
+            "save_pdf": "Save PDF",
             "order_date": "Order date",
             "categories": "Categories",
             "category": "Category",

@@ -141,6 +141,7 @@ class Endpoint(StrEnum):
     ITEM_DISCOUNTS_DELETE_BULK = "item-discounts/delete-bulk"
     EXCHANGE_RATES = "exchange-rates"
     INVOICES = "invoices"
+    INVOICES_PDF = "invoices/{invoice_id}/pdf"
     ORDERS = "orders"
     ORDERS_PICKING_ELIGIBLE = "orders/picking-eligible"
     ORDERS_PICKING_SUMMARY = "orders/picking-summary"

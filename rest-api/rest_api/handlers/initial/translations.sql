@@ -92,4 +92,3 @@ VALUES
 ('phone_number', 'Numer telefonu', 2, TRUE, CURRENT_TIMESTAMP, 1),
 ('check_to_search', 'Check to search by this field', 1, TRUE, CURRENT_TIMESTAMP, 1),
 ('check_to_search', 'Zaznacz, aby wyszukiwać według tego pola', 2, TRUE, CURRENT_TIMESTAMP, 1);
-

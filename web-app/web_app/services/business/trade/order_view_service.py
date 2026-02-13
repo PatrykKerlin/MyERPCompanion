@@ -27,3 +27,23 @@ class OrderViewService(BaseService[OrderViewResponseSchema, BaseStrictSchema]):
         response = await self._get(endpoint=resolved_endpoint, tokens=tokens, module_id=module_id)
         data = response.json()
         return self._plain_schema_cls(**data)
+
+    @BaseService.handle_token_refresh
+    async def download_pdf(
+        self,
+        endpoint: Endpoint,
+        path_param: int | None = None,
+        query_params: dict[str, Any] | None = None,
+        body_params: BaseStrictSchema | list[BaseStrictSchema] | IdsPayloadSchema | None = None,
+        tokens: TokenPlainSchema | None = None,
+        module_id: int | None = None,
+    ) -> bytes:
+        if path_param is None:
+            raise ValueError("Invoice ID is required for PDF download.")
+        response = await self._get(
+            endpoint=endpoint.format(invoice_id=path_param),
+            query_params=query_params,
+            tokens=tokens,
+            module_id=module_id,
+        )
+        return response.content
