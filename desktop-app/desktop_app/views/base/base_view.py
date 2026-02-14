@@ -210,6 +210,11 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             if input:
                 input.update()
 
+    def reset_inputs(self) -> None:
+        self._data_row = None
+        self.search_results = None
+        self.clear_inputs()
+
     def _build_field_groups(self, definitions: list[dict[str, Any]]) -> dict[str, FieldGroup]:
         return {definition["key"]: self.__build_field_group(**definition) for definition in definitions}
 

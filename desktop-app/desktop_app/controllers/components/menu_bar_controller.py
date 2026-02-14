@@ -15,7 +15,13 @@ from events.events import (
     TabsBarToggleRequested,
     TabSearchRequested,
     ToolbarToggleRequested,
-    ViewRequested,
+    ViewCopyRequested,
+    ViewModeRequested,
+    ViewPasteRequested,
+    ViewRedoRequested,
+    ViewRefreshRequested,
+    ViewSaveRequested,
+    ViewUndoRequested,
 )
 from utils.enums import ViewMode
 from views.components.menu_bar_component import MenuBarComponent
@@ -34,22 +40,27 @@ class MenuBarController(BaseComponentController[MenuBarComponent, MenuBarRequest
         current_view = view_state.view
         if not current_view:
             return
-        self.__reset_view_inputs(current_view)
-        self._state_store.update(view={"mode": ViewMode.CREATE})
+        self._page.run_task(
+            self._event_bus.publish,
+            ViewModeRequested(view_key=current_view.view_key, mode=ViewMode.CREATE),
+        )
 
     def on_search_clicked(self) -> None:
         view_state = self._state_store.app_state.view
         current_view = view_state.view
         if not current_view:
             return
-        self.__reset_view_inputs(current_view)
-        self._state_store.update(view={"mode": ViewMode.SEARCH})
+        self._page.run_task(
+            self._event_bus.publish,
+            ViewModeRequested(view_key=current_view.view_key, mode=ViewMode.SEARCH),
+        )
 
     def on_save_clicked(self) -> None:
         view_state = self._state_store.app_state.view
-        if not view_state.view:
+        current_view = view_state.view
+        if not current_view:
             return
-        view_state.view._controller.on_save_clicked()
+        self._page.run_task(self._event_bus.publish, ViewSaveRequested(view_key=current_view.view_key))
 
     def on_close_tab_clicked(self) -> None:
         title = self._state_store.app_state.view.title
@@ -68,45 +79,38 @@ class MenuBarController(BaseComponentController[MenuBarComponent, MenuBarRequest
 
     def on_undo_clicked(self) -> None:
         view_state = self._state_store.app_state.view
-        if not view_state.view:
+        current_view = view_state.view
+        if not current_view:
             return
-        view_state.view._controller.on_undo_clicked()
+        self._page.run_task(self._event_bus.publish, ViewUndoRequested(view_key=current_view.view_key))
 
     def on_redo_clicked(self) -> None:
         view_state = self._state_store.app_state.view
-        if not view_state.view:
+        current_view = view_state.view
+        if not current_view:
             return
-        view_state.view._controller.on_redo_clicked()
+        self._page.run_task(self._event_bus.publish, ViewRedoRequested(view_key=current_view.view_key))
 
     def on_copy_clicked(self) -> None:
         view_state = self._state_store.app_state.view
-        if not view_state.view:
+        current_view = view_state.view
+        if not current_view:
             return
-        view_state.view._controller.on_copy_clicked()
+        self._page.run_task(self._event_bus.publish, ViewCopyRequested(view_key=current_view.view_key))
 
     def on_paste_clicked(self) -> None:
         view_state = self._state_store.app_state.view
-        if not view_state.view:
+        current_view = view_state.view
+        if not current_view:
             return
-        view_state.view._controller.on_paste_clicked()
+        self._page.run_task(self._event_bus.publish, ViewPasteRequested(view_key=current_view.view_key))
 
     def on_refresh_clicked(self) -> None:
         view_state = self._state_store.app_state.view
         current_view = view_state.view
         if not current_view:
             return
-        data_row = current_view.data_row
-        record_id = data_row.get("id") if data_row else None
-        module_id = current_view._controller._module_id
-        self._page.run_task(
-            self._event_bus.publish,
-            ViewRequested(
-                module_id=module_id,
-                view_key=current_view.view_key,
-                record_id=record_id,
-                data=data_row,
-            ),
-        )
+        self._page.run_task(self._event_bus.publish, ViewRefreshRequested(view_key=current_view.view_key))
 
     def on_toggle_side_menu_clicked(self) -> None:
         self._page.run_task(self._event_bus.publish, SideMenuToggleRequested())
@@ -121,29 +125,13 @@ class MenuBarController(BaseComponentController[MenuBarComponent, MenuBarRequest
         self._open_message_dialog("about")
 
     def on_check_api_status_clicked(self) -> None:
-        self._page.run_task(self._event_bus.publish, ApiStatusRequested())
+        self._page.run_task(self._event_bus.publish, ApiStatusRequested(silent=False))
 
     async def _component_requested_handler(self, _: MenuBarRequested) -> None:
         translation_state = self._state_store.app_state.translation
         self._component = MenuBarComponent(controller=self, translation=translation_state.items)
         await self._event_bus.publish(MenuBarReady(self._component))
         self._page.on_keyboard_event = self.__on_keyboard_event
-
-    @staticmethod
-    def __reset_view_inputs(current_view: ft.Control) -> None:
-        controller = getattr(current_view, "_controller", None)
-        request_data = getattr(controller, "search_params", None)
-        if request_data is not None:
-            request_data.input_values.clear()
-            request_data.selected_inputs.clear()
-            request_data.page = 1
-        if hasattr(current_view, "_data_row"):
-            setattr(current_view, "_data_row", None)
-        if hasattr(current_view, "search_results"):
-            setattr(current_view, "search_results", None)
-        clear_inputs = getattr(current_view, "clear_inputs", None)
-        if callable(clear_inputs):
-            clear_inputs()
 
     def __on_keyboard_event(self, event: ft.KeyboardEvent) -> None:
         ctrl = event.ctrl or event.meta

@@ -14,7 +14,14 @@ from events.events import (
     TabClosed,
     TabCloseRequested,
     TabRequested,
+    ViewCopyRequested,
     ViewReady,
+    ViewRedoRequested,
+    ViewRefreshRequested,
+    ViewSaveRequested,
+    ViewModeRequested,
+    ViewPasteRequested,
+    ViewUndoRequested,
     ViewRequested,
 )
 from pydantic import ValidationError
@@ -63,6 +70,13 @@ class BaseViewController(
             {
                 TabClosed: self.__tab_closed_handler,
                 RecordDeleteRequested: self.__record_delete_requested_handler,
+                ViewCopyRequested: self.__view_copy_requested_handler,
+                ViewModeRequested: self.__view_mode_requested_handler,
+                ViewPasteRequested: self.__view_paste_requested_handler,
+                ViewRedoRequested: self.__view_redo_requested_handler,
+                ViewRefreshRequested: self.__view_refresh_requested_handler,
+                ViewSaveRequested: self.__view_save_requested_handler,
+                ViewUndoRequested: self.__view_undo_requested_handler,
                 ViewRequested: self.__view_requested_handler,
                 SaveSucceeded: self.__save_succeeded_handler,
             }
@@ -358,6 +372,57 @@ class BaseViewController(
             )
         )
         self._close_loading_dialog()
+
+    async def __view_mode_requested_handler(self, event: ViewModeRequested) -> None:
+        if event.view_key != self._view_key or not self._view:
+            return
+        self._request_data.input_values.clear()
+        self._request_data.selected_inputs.clear()
+        self._request_data.page = 1
+        self._view.reset_inputs()
+        self._state_store.update(view={"mode": event.mode})
+
+    async def __view_save_requested_handler(self, event: ViewSaveRequested) -> None:
+        if event.view_key != self._view_key:
+            return
+        self.on_save_clicked()
+
+    async def __view_undo_requested_handler(self, event: ViewUndoRequested) -> None:
+        if event.view_key != self._view_key:
+            return
+        self.on_undo_clicked()
+
+    async def __view_redo_requested_handler(self, event: ViewRedoRequested) -> None:
+        if event.view_key != self._view_key:
+            return
+        self.on_redo_clicked()
+
+    async def __view_copy_requested_handler(self, event: ViewCopyRequested) -> None:
+        if event.view_key != self._view_key:
+            return
+        self.on_copy_clicked()
+
+    async def __view_paste_requested_handler(self, event: ViewPasteRequested) -> None:
+        if event.view_key != self._view_key:
+            return
+        self.on_paste_clicked()
+
+    async def __view_refresh_requested_handler(self, event: ViewRefreshRequested) -> None:
+        if event.view_key != self._view_key or not self._view:
+            return
+        data_row = self._view.data_row
+        record_id = data_row.get("id") if data_row else None
+        await self._event_bus.publish(
+            ViewRequested(
+                module_id=self._module_id,
+                view_key=self._view_key,
+                record_id=record_id,
+                data=data_row,
+                mode=event.mode,
+                caller_view_key=event.caller_view_key,
+                caller_data=event.caller_data,
+            )
+        )
 
     async def __tab_closed_handler(self, event: TabClosed) -> None:
         if event.view.view_key != self._view_key:

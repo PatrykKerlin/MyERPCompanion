@@ -96,13 +96,24 @@ class AppController(BaseController):
             return
         self._open_error_dialog(message_key="api_not_responding")
 
-    async def __api_status_handler(self, _: ApiStatusRequested) -> None:
-        ok = await self.__perform_api_health_check()
+    async def __api_status_handler(self, event: ApiStatusRequested) -> None:
+        if event.silent:
+            ok = await self.__perform_api_health_check_silent()
+            
+        else:
+            ok = await self.__perform_api_health_check()
         await self._event_bus.publish(ApiStatusChecked(status=bool(ok)))
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_api_health_check(self) -> bool:
         await self.__service.api_health_check()
+        return True
+
+    async def __perform_api_health_check_silent(self) -> bool:
+        try:
+            await self.__service.api_health_check()
+        except Exception:
+            return False
         return True
 
     async def __translation_ready_handler(self, event: TranslationReady) -> None:

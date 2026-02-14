@@ -22,7 +22,7 @@ class AppStarted(BaseEvent):
 
 @dataclass(frozen=True)
 class ApiStatusRequested(BaseEvent):
-    pass
+    silent: bool = False
 
 
 @dataclass(frozen=True)
@@ -147,6 +147,45 @@ class ViewRequested(BaseEvent):
     caller_data: dict[str, Any] | None = None
     width_ratio: float = 0.5
     save_succeeded: bool = False
+
+
+@dataclass(frozen=True)
+class ViewModeRequested(BaseEvent):
+    view_key: View
+    mode: ViewMode
+
+
+@dataclass(frozen=True)
+class ViewSaveRequested(BaseEvent):
+    view_key: View
+
+
+@dataclass(frozen=True)
+class ViewUndoRequested(BaseEvent):
+    view_key: View
+
+
+@dataclass(frozen=True)
+class ViewRedoRequested(BaseEvent):
+    view_key: View
+
+
+@dataclass(frozen=True)
+class ViewCopyRequested(BaseEvent):
+    view_key: View
+
+
+@dataclass(frozen=True)
+class ViewPasteRequested(BaseEvent):
+    view_key: View
+
+
+@dataclass(frozen=True)
+class ViewRefreshRequested(BaseEvent):
+    view_key: View
+    mode: ViewMode | None = None
+    caller_view_key: View | None = None
+    caller_data: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)

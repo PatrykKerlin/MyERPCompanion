@@ -66,7 +66,7 @@ class FooterController(BaseComponentController[FooterComponent, FooterRequested]
     async def __status_loop(self) -> None:
         try:
             while not self.__disposing:
-                await self._event_bus.publish(ApiStatusRequested())
+                await self._event_bus.publish(ApiStatusRequested(silent=True))
                 await asyncio.sleep(self._settings.API_CHECK_DELAY)
         except asyncio.CancelledError:
             raise

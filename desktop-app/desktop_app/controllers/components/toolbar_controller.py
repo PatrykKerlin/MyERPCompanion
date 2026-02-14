@@ -14,7 +14,7 @@ from events.events import (
     TabSearchRequested,
     ToolbarReady,
     ToolbarRequested,
-    ViewRequested,
+    ViewRefreshRequested,
 )
 from states.states import ViewState
 from utils.enums import Module, TabNavigationDirection, View, ViewMode
@@ -81,15 +81,10 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         current_view = view_state.view
         if not current_view:
             return
-        data_row = current_view.data_row
-        record_id = data_row.get("id") if data_row else None
-        module_id = current_view._controller._module_id
         self._page.run_task(
             self._event_bus.publish,
-            ViewRequested(
-                module_id=module_id,
+            ViewRefreshRequested(
                 view_key=current_view.view_key,
-                record_id=record_id,
                 mode=view_state.mode,
                 caller_view_key=current_view.caller_view_key,
                 caller_data=current_view.data_row,
