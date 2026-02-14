@@ -266,7 +266,7 @@ class StockReceivingView(BaseView):
 
     def __render_static_texts(self) -> None:
         self.__title.value = self._translation.get("stock_receiving")
-        self.__subtitle.value = self._translation.get("mobile_stock_receiving_hint")
+        self.__subtitle.value = self._translation.get("mob_stock_receiving_hint")
         self.__order_input.label = self._translation.get("tracking_number")
         self.__target_input.label = self._translation.get("target_bin")
         self.__item_input.label = self._translation.get("item")

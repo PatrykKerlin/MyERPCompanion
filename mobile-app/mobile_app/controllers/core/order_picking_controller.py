@@ -705,7 +705,7 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
         )
         if not has_picked_packages:
             if touched_item_ids:
-                self._open_message_dialog(message_key="package_required_to_complete")
+                self._open_message_dialog(message_key="package_required_complete")
             return
 
         has_final_status = any(status.status_id == final_status.id for status in order_statuses)

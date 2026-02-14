@@ -299,7 +299,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
             return await asyncio.to_thread(self.__pick_linux_file)
         except Exception:
             self._logger.exception(f"Unhandled exception in {self.__pick_file_path.__qualname__}")
-            self._open_error_dialog(message=translation.get("image_upload_not_supported"))
+            self._open_error_dialog(message=translation.get("image_upload_unsupported"))
             return None
 
     def __pick_linux_file(self) -> str | None:
