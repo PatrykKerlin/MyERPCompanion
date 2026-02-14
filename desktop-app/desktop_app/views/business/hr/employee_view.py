@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
+from styles import AppDimensions
 from utils.enums import View, ViewMode
 from views.base.base_view import BaseView
 from views.controls.data_table_control import DataTable
@@ -144,7 +145,7 @@ class EmployeeView(BaseView, UserLinkViewMixin):
             columns=["id", "first_name", "last_name"],
             rows=subordinate_rows,
             translation=self._translation,
-            height=200,
+            height=AppDimensions.SUBSECTION_HEIGHT,
             with_button=False,
         )
         employment_grid = self._build_grid(employment_fields)

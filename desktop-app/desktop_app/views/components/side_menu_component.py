@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
+from styles.dimensions import AppDimensions
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
@@ -31,8 +32,8 @@ class SideMenuComponent(BaseComponent, ft.Container):
             alignment=ft.Alignment.TOP_CENTER,
             width=self.__calculate_width(),
             opacity=1.0,
-            animate_opacity=300,
-            animate_size=300,
+            animate_opacity=AppDimensions.ANIMATION_DURATION_MS,
+            animate_size=AppDimensions.ANIMATION_DURATION_MS,
         )
 
     def __build_controls(self) -> None:

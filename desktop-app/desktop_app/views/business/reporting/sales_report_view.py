@@ -4,6 +4,7 @@ from datetime import date
 from typing import TYPE_CHECKING, cast
 
 import flet as ft
+from styles import AppDimensions
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -84,8 +85,8 @@ class SalesReportView(BaseView):
 
         self.__totals_row = ft.ResponsiveRow(
             columns=14,
-            spacing=8,
-            run_spacing=8,
+            spacing=AppDimensions.FIELD_ROW_SPACING,
+            run_spacing=AppDimensions.FIELD_ROW_SPACING,
             controls=[],
         )
         self.__category_chart_container = ft.Container(expand=True, alignment=ft.Alignment.CENTER)
@@ -159,7 +160,7 @@ class SalesReportView(BaseView):
 
         charts = ft.Row(
             expand=True,
-            spacing=12,
+            spacing=AppDimensions.MEDIUM_SPACING,
             controls=[
                 ft.Container(expand=1, content=self.__category_chart_container),
                 ft.Container(expand=1, content=self.__daily_chart_container),
@@ -250,8 +251,10 @@ class SalesReportView(BaseView):
     def __open_chart_dialog(self, chart: bytes, title: str) -> None:
         if not self.page:
             return
-        width = int((self.page.width or 1600) * 0.98)
-        height = int((self.page.height or 900) * 0.9)
+        width = int((self.page.width or AppDimensions.DESKTOP_WINDOW_WIDTH) * AppDimensions.REPORT_DIALOG_WIDTH_RATIO)
+        height = int(
+            (self.page.height or AppDimensions.DESKTOP_WINDOW_HEIGHT) * AppDimensions.REPORT_DIALOG_HEIGHT_RATIO
+        )
         dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text(title),

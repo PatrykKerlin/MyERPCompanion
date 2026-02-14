@@ -2,6 +2,7 @@ from typing import Any, Callable, cast
 
 import flet as ft
 from controllers.base.base_controller import BaseController
+from styles import AppColors, AppDimensions, ComponentStyles
 from views.base.base_component import BaseComponent
 
 
@@ -48,18 +49,8 @@ class BulkTransfer(ft.Container):
         self.__on_delete_clicked = on_delete_clicked
         self.__on_pending_reverted = on_pending_reverted
 
-        self.__source_container = ft.Container(
-            expand=True,
-            border=ft.Border.all(1, ft.Colors.OUTLINE),
-            border_radius=6,
-            padding=6,
-        )
-        self.__target_container = ft.Container(
-            expand=True,
-            border=ft.Border.all(1, ft.Colors.OUTLINE),
-            border_radius=6,
-            padding=6,
-        )
+        self.__source_container = ComponentStyles.outlined_container(expand=True)
+        self.__target_container = ComponentStyles.outlined_container(expand=True)
 
         self.__button_move = ft.IconButton(
             icon=ft.Icons.ARROW_FORWARD, disabled=True, on_click=self.__handle_move_clicked
@@ -73,14 +64,14 @@ class BulkTransfer(ft.Container):
                 self.__source_container,
             ],
             expand=True,
-            spacing=8,
+            spacing=AppDimensions.COMPACT_SPACING,
         )
 
         buttons_column = ft.Column(
             controls=[self.__button_move, self.__button_delete, self.__button_save],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=10,
+            spacing=AppDimensions.SMALL_SPACING,
         )
 
         target_column = ft.Column(
@@ -89,13 +80,13 @@ class BulkTransfer(ft.Container):
                 self.__target_container,
             ],
             expand=True,
-            spacing=8,
+            spacing=AppDimensions.COMPACT_SPACING,
         )
 
         self.content = ft.Row(
             controls=[source_column, buttons_column, target_column],
             expand=True,
-            spacing=12,
+            spacing=AppDimensions.MEDIUM_SPACING,
             vertical_alignment=ft.CrossAxisAlignment.STRETCH,
         )
         self.__render_source_table()
@@ -406,7 +397,7 @@ class BulkTransfer(ft.Container):
                     text_value = "" if value is None else str(value)
                     cells.append(
                         ft.DataCell(
-                            ft.Text(text_value, no_wrap=True, color=ft.Colors.ERROR if is_highlighted else None)
+                            ft.Text(text_value, no_wrap=True, color=AppColors.ERROR if is_highlighted else None)
                         )
                     )
             table_rows.append(ft.DataRow(cells=[selection_cell] + cells))

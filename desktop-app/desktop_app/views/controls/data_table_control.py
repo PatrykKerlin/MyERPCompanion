@@ -1,6 +1,7 @@
 from typing import Any, Callable
 
 import flet as ft
+from styles.dimensions import AppDimensions
 from utils.translation import Translation
 
 
@@ -66,7 +67,7 @@ class DataTable(ft.Container):
             on_click=self.__handle_add_clicked if on_add_clicked else None,
             visible=with_button,
             disabled=not with_button or read_only,
-            width=48,
+            width=AppDimensions.ICON_BUTTON_WIDTH,
         )
 
         self.content = ft.Column(

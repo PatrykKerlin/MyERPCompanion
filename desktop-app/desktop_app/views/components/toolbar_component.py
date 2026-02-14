@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
+from styles.dimensions import AppDimensions
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
@@ -30,7 +31,7 @@ class ToolbarComponent(BaseComponent, ft.Container):
             disabled=True,
             on_click=lambda _: self._controller.on_delete_clicked(),
         )
-        self.__nav_spacer = ft.Container(width=12)
+        self.__nav_spacer = ft.Container(width=AppDimensions.MEDIUM_SPACING)
         self.__first_tab_button = ft.IconButton(
             icon=ft.Icons.FIRST_PAGE,
             tooltip=translation.get("First tab"),

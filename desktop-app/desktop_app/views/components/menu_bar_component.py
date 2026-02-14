@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
+from styles import AppColors, AppDimensions
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
@@ -117,8 +118,8 @@ class MenuBarComponent(BaseComponent, ft.MenuBar):
                         ft.TextSpan(
                             f"  {shortcut}",
                             style=ft.TextStyle(
-                                size=10,
-                                color=ft.Colors.ON_SURFACE_VARIANT,
+                                size=AppDimensions.SHORTCUT_FONT_SIZE,
+                                color=AppColors.SHORTCUT_TEXT,
                             ),
                         ),
                     ]

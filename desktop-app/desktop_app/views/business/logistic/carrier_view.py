@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
+from styles import AppDimensions
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -109,7 +110,7 @@ class CarrierView(BaseView):
             columns=["id", "name", "description", "price_per_unit", "unit_id"],
             rows=delivery_methods,
             translation=self._translation,
-            height=250,
+            height=AppDimensions.SECTION_HEIGHT,
             on_row_clicked=lambda row: self._controller.on_table_row_clicked(row["id"]),
             on_add_clicked=self._controller.on_add_delivery_method_clicked,
             sort_by="id",

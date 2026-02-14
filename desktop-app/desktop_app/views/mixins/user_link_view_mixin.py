@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Callable, cast
 
 import flet as ft
+from styles import AppDimensions
 from utils.enums import ViewMode
 from utils.field_group import FieldGroup
 
@@ -46,7 +47,7 @@ class UserLinkViewMixin:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 expand=True,
-                spacing=8,
+                spacing=AppDimensions.FIELD_ROW_SPACING,
             ),
             col={"sm": float(size)},
             alignment=self._base_alignment,

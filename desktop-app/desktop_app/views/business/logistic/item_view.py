@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
 from controllers.base.base_controller import BaseController
+from styles.colors import AppColors
+from styles.dimensions import AppDimensions, ItemViewDimensions
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -32,8 +34,8 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         on_discount_delete_clicked: Callable[[list[int]], None] | None = None,
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
-        self.__GALLERY_HEIGHT = 140
-        self.__PRIMARY_BORDER = 4
+        self.__GALLERY_HEIGHT = ItemViewDimensions.GALLERY_HEIGHT
+        self.__PRIMARY_BORDER = ItemViewDimensions.PRIMARY_BORDER
 
         product_fields_definitions = [
             {"key": "index", "input": self._get_text_input},
@@ -105,7 +107,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
 
         self.__image_gallery = ft.Row(
             scroll=ft.ScrollMode.AUTO,
-            spacing=10,
+            spacing=AppDimensions.SMALL_SPACING,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
             expand=True,
         )
@@ -119,14 +121,14 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             on_click=self.__on_add_image_clicked,
             tooltip=self._translation.get("add_image"),
             visible=False,
-            width=48,
+            width=AppDimensions.ICON_BUTTON_WIDTH,
         )
         self.__bins_table = DataTable(
             columns=["id", "location", "quantity"],
             rows=bins,
             on_row_clicked=lambda row: self._controller.on_table_row_clicked(row["id"]),
             translation=self._translation,
-            height=250,
+            height=AppDimensions.SECTION_HEIGHT,
             with_button=False,
         )
         self.__image_order_field = ft.TextField(
@@ -169,13 +171,13 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             self._translation.get("item_discounts"),
             on_discount_save_clicked,
             on_discount_delete_clicked,
-            height=250,
+            height=AppDimensions.SECTION_HEIGHT,
         )
         bulk_transfer_row = self._build_discount_bulk_transfer_row()
         self._rows = [
             self._columns_row,
             self.__gallery_column,
-            ft.Row(height=25),
+            ft.Row(height=AppDimensions.BASE_SPACING),
             bulk_transfer_row,
             self._spacing_row,
             self._buttons_row,
@@ -243,7 +245,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         is_primary = image["is_primary"]
         image_height = self.__GALLERY_HEIGHT - 2 * self.__PRIMARY_BORDER
         padding = self.__PRIMARY_BORDER if is_primary else 0
-        border = ft.Border.all(2, ft.Colors.BLUE_300) if is_primary else None
+        border = ft.Border.all(2, AppColors.PRIMARY) if is_primary else None
         return ft.Container(
             content=ft.Image(
                 src=url,

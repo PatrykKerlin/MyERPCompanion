@@ -1,6 +1,7 @@
 import asyncio
 
 import flet as ft
+from styles.colors import AppColors
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 from views.controls.numeric_field_control import NumericField
@@ -39,7 +40,7 @@ class QuantityDialogComponent(BaseDialog):
             actions=[cancel_button, confirm_button],
             title=ft.Row(
                 controls=[
-                    ft.Icon(icon=ft.Icons.CONFIRMATION_NUMBER, color=ft.Colors.BLUE),
+                    ft.Icon(icon=ft.Icons.CONFIRMATION_NUMBER, color=AppColors.PRIMARY),
                     ft.Text(value=translation.get("confirm")),
                 ]
             ),

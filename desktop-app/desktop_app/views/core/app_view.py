@@ -1,4 +1,5 @@
 import flet as ft
+from styles import AppDimensions
 from utils.translation import Translation
 from views.base.base_view import BaseView
 from views.components.footer_component import FooterComponent
@@ -116,10 +117,10 @@ class AppView:
     def __apply_page_settings(self, page: ft.Page) -> None:
         page.title = self.__translation.get("my_erp_companion")
         page.theme_mode = self.__resolve_theme_mode(self.__theme)
-        page.window.width = 1600
-        page.window.height = 900
-        page.window.min_width = 1024
-        page.window.min_height = 768
+        page.window.width = AppDimensions.DESKTOP_WINDOW_WIDTH
+        page.window.height = AppDimensions.DESKTOP_WINDOW_HEIGHT
+        page.window.min_width = AppDimensions.DESKTOP_WINDOW_MIN_WIDTH
+        page.window.min_height = AppDimensions.DESKTOP_WINDOW_MIN_HEIGHT
 
     def __resolve_theme_mode(self, theme: str) -> ft.ThemeMode:
         if theme == "dark":

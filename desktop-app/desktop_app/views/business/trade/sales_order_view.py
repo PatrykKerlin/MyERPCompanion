@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
 from schemas.business.trade.order_view_schema import OrderViewDiscountSchema
+from styles.dimensions import AppDimensions
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -87,7 +88,7 @@ class SalesOrderView(BaseView):
             ],
         )
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
-        self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
+        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
 
         main_fields_definitions = [
@@ -185,7 +186,7 @@ class SalesOrderView(BaseView):
             columns=["status", "created_at"],
             rows=status_history,
             translation=self._translation,
-            height=180,
+            height=AppDimensions.COMPACT_SECTION_HEIGHT,
             with_button=False,
             on_row_clicked=None,
             read_only=True,
@@ -194,13 +195,13 @@ class SalesOrderView(BaseView):
         self._master_column.controls.extend(
             [
                 self._columns_row,
-                ft.Row(height=10),
+                ft.Row(height=AppDimensions.SMALL_SPACING),
                 self.__category_filter_row,
-                ft.Row(height=15),
+                ft.Row(height=AppDimensions.SMALL_ROW_HEIGHT),
                 bulk_transfer_row,
-                ft.Row(height=15),
+                ft.Row(height=AppDimensions.SMALL_ROW_HEIGHT),
                 self.__status_history_table,
-                ft.Row(height=25),
+                ft.Row(height=AppDimensions.BASE_SPACING),
                 self._buttons_row,
             ]
         )
@@ -214,7 +215,7 @@ class SalesOrderView(BaseView):
         if mode in {ViewMode.CREATE, ViewMode.EDIT}:
             self.__apply_editable_fields(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
-        self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
+        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()
         self.__status_history_table.visible = mode in {ViewMode.READ, ViewMode.EDIT}

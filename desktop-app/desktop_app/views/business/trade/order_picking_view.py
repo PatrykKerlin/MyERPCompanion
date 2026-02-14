@@ -4,6 +4,7 @@ from datetime import date
 from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
+from styles import AppDimensions
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -134,8 +135,8 @@ class OrderPickingView(BaseView):
 
         inputs_row = ft.ResponsiveRow(
             columns=12,
-            spacing=8,
-            run_spacing=8,
+            spacing=AppDimensions.FIELD_ROW_SPACING,
+            run_spacing=AppDimensions.FIELD_ROW_SPACING,
             controls=[
                 order_date_container,
                 customer_container,

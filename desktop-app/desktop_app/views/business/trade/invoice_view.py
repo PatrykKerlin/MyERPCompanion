@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
+from styles.dimensions import AppDimensions
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -87,12 +88,12 @@ class InvoiceView(BaseView):
         self._buttons_row.controls.insert(0, self.__generate_pdf_button)
         self.__set_generate_pdf_button_state(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT, ViewMode.CREATE}
-        self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
+        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
 
         self._master_column.controls.extend(self._rows)
-        self._master_column.controls.insert(-1, ft.Row(height=15))
+        self._master_column.controls.insert(-1, ft.Row(height=AppDimensions.SMALL_ROW_HEIGHT))
         self._master_column.controls.insert(-1, bulk_transfer_row)
 
     def set_mode(self, mode: ViewMode) -> None:
@@ -107,7 +108,7 @@ class InvoiceView(BaseView):
             self.__apply_editable_fields(mode)
         self.__set_generate_pdf_button_state(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT, ViewMode.CREATE}
-        self.__bulk_transfer.height = 260 if self.__bulk_transfer.visible else 0
+        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()
         if self.__bulk_transfer.page:

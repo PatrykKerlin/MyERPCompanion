@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from typing import Callable, cast
 
 import flet as ft
+from styles.dimensions import AppDimensions
 from views.base.base_component import BaseComponent
 
 
@@ -23,7 +24,7 @@ class DateField(ft.Row):
             vertical_alignment=ft.CrossAxisAlignment.START,
             width=width,
             expand=expand,
-            spacing=6,
+            spacing=AppDimensions.COMPACT_SPACING,
         )
         self.__on_change = on_change
         self.__format = date_format
@@ -48,13 +49,16 @@ class DateField(ft.Row):
             self.__picker.value = self.__value
 
         self.__open_button = ft.IconButton(
-            icon=ft.Icons.CALENDAR_MONTH, on_click=self.__open_picker, disabled=self.__read_only, width=48
+            icon=ft.Icons.CALENDAR_MONTH,
+            on_click=self.__open_picker,
+            disabled=self.__read_only,
+            width=AppDimensions.ICON_BUTTON_WIDTH,
         )
         self.__clear_button = ft.IconButton(
             icon=ft.Icons.CLEAR,
             on_click=self.__clear_date,
             disabled=self.__read_only or self.__value is None,
-            width=48,
+            width=AppDimensions.ICON_BUTTON_WIDTH,
         )
 
         self.controls = [

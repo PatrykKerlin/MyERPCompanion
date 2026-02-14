@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
+from styles import AppDimensions
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -40,7 +41,7 @@ class BinView(BaseView):
             columns=["id", "index", "name", "quantity"],
             rows=items,
             translation=self._translation,
-            height=250,
+            height=AppDimensions.SECTION_HEIGHT,
             on_row_clicked=lambda row: self._controller.on_table_row_clicked(row["id"]),
             sort_by="id",
             with_button=False,

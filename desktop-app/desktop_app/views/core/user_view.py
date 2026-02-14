@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
+from styles.dimensions import AppDimensions
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -113,7 +114,7 @@ class UserView(BaseView, GroupBulkTransferMixin):
                 target_label=self._translation.get("user_groups"),
                 on_save_clicked=on_groups_save_clicked,
                 on_delete_clicked=on_groups_delete_clicked,
-                height=260,
+                height=AppDimensions.BULK_TRANSFER_HEIGHT,
                 visible_modes={ViewMode.READ, ViewMode.EDIT},
             )
             group_row = self._build_group_bulk_transfer_row()
@@ -123,9 +124,9 @@ class UserView(BaseView, GroupBulkTransferMixin):
         if group_row is not None:
             self._rows.extend(
                 [
-                    ft.Row(height=25),
+                    ft.Row(height=AppDimensions.BASE_SPACING),
                     group_row,
-                    ft.Row(height=25),
+                    ft.Row(height=AppDimensions.BASE_SPACING),
                 ]
             )
         self._rows.append(self._buttons_row)

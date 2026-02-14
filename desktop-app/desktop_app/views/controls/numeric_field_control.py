@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from typing import Callable, cast
 
 import flet as ft
+from styles.dimensions import AppDimensions
 
 
 class NumericField(ft.Row):
@@ -22,7 +23,7 @@ class NumericField(ft.Row):
             alignment=ft.MainAxisAlignment.START,
             vertical_alignment=ft.CrossAxisAlignment.START,
             expand=expand,
-            spacing=4,
+            spacing=AppDimensions.TIGHT_SPACING,
         )
         self.__precision = precision
         self.__on_change = on_change
@@ -49,10 +50,16 @@ class NumericField(ft.Row):
         )
 
         self.__decrement_button = ft.IconButton(
-            icon=ft.Icons.REMOVE, on_click=self.__decrement, disabled=self.__read_only, width=48
+            icon=ft.Icons.REMOVE,
+            on_click=self.__decrement,
+            disabled=self.__read_only,
+            width=AppDimensions.ICON_BUTTON_WIDTH,
         )
         self.__increment_button = ft.IconButton(
-            icon=ft.Icons.ADD, on_click=self.__increment, disabled=self.__read_only, width=48
+            icon=ft.Icons.ADD,
+            on_click=self.__increment,
+            disabled=self.__read_only,
+            width=AppDimensions.ICON_BUTTON_WIDTH,
         )
 
         self.controls = [

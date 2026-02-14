@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
+from styles import AppDimensions
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -53,15 +54,15 @@ class CategoryView(BaseView, DiscountBulkTransferMixin):
             self._translation.get("category_discounts"),
             on_discount_save_clicked,
             on_discount_delete_clicked,
-            height=250,
+            height=AppDimensions.SECTION_HEIGHT,
         )
         bulk_transfer_row = self._build_discount_bulk_transfer_row()
         self._master_column.controls.extend(
             [
                 self._columns_row,
-                ft.Row(height=25),
+                ft.Row(height=AppDimensions.BASE_SPACING),
                 bulk_transfer_row,
-                ft.Row(height=25),
+                ft.Row(height=AppDimensions.BASE_SPACING),
                 self._buttons_row,
             ]
         )

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, TypeVar, cas
 import flet as ft
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from services.base.base_service import BaseService
+from styles.dimensions import AppDimensions
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -43,8 +44,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self._inputs: dict[str, FieldGroup] = {}
         self._search_disabled_fields: set[str] = set()
         self._master_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
-        self._spacing_column = ft.Column(width=25)
-        self._spacing_row = ft.Row(height=25)
+        self._spacing_column = ft.Column(width=AppDimensions.BASE_SPACING)
+        self._spacing_row = ft.Row(height=AppDimensions.BASE_SPACING)
         self._spacing_responsive_row = [
             ft.ResponsiveRow(controls=[ft.Container(content=ft.TextField(disabled=True), opacity=0.0, col={"sm": 1})])
         ]
@@ -452,7 +453,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             ft.Container(
                 content=ft.Checkbox(
                     on_change=lambda event, key=key: self._controller.on_value_changed(event, key),
-                    animate_size=300,
+                    animate_size=AppDimensions.ANIMATION_DURATION_MS,
                     value=value,
                     shape=ft.CircleBorder(),
                 ),
@@ -468,7 +469,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 content=ft.Checkbox(
                     on_change=lambda event, key=key: self._controller.on_marker_clicked(event, key),
                     tooltip=self._translation.get("check_to_search"),
-                    animate_size=300,
+                    animate_size=AppDimensions.ANIMATION_DURATION_MS,
                     value=False,
                 ),
                 col={"sm": float(size)},
