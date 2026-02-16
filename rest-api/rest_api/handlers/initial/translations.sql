@@ -797,5 +797,6 @@ VALUES
 ('warehouse_id', 'Warehouse', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('warehouse_id', 'Magazyn', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('width', 'Width', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('width', 'Szerokość', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id)
-;
+('width', 'Szerokość', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('subordinates', 'Subordinates', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('subordinates', 'Podwładni', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id);

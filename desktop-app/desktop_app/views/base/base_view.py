@@ -611,13 +611,21 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             self.__scrollable_wrapper.controls.append(self.__form_container)
         self.__scrollable_wrapper.update()
 
-    def __set_control_disabled_state(self, control: ft.Control | None, disabled: bool) -> None:
+    def __set_control_disabled_state(
+        self,
+        control: ft.Control | None,
+        disabled: bool,
+        sync_radio_option_disabled_state: bool = True,
+    ) -> None:
         if control is None:
             return
         if hasattr(control, "disabled"):
             setattr(control, "disabled", disabled)
         if isinstance(control, ft.RadioGroup):
-            self.__set_radio_group_option_disabled_state(control, disabled)
+            if sync_radio_option_disabled_state:
+                self.__set_radio_group_option_disabled_state(control, disabled)
+            else:
+                self.__set_radio_group_option_disabled_state(control, False)
 
     def __set_radio_group_option_disabled_state(self, radio_group: ft.RadioGroup, disabled: bool) -> None:
         container = radio_group.content
@@ -793,7 +801,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             marker = marker_control.content if marker_control else None
             self.__set_control_read_only_state(input, True)
             input_disabled = not isinstance(input, (ft.TextField, ft.Dropdown, NumericField, DateField))
-            self.__set_control_disabled_state(input, input_disabled)
+            self.__set_control_disabled_state(input, input_disabled, sync_radio_option_disabled_state=False)
             if isinstance(input, ft.Dropdown) and self._data_row:
                 self.__limit_dropdown_options(input, key)
             self.__set_marker_state_for_non_search_mode(marker)

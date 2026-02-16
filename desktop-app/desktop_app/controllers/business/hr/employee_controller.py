@@ -36,7 +36,6 @@ class EmployeeController(
         self.__all_employees: list[EmployeePlainSchema] = []
         self.__positions_by_id: dict[int, PositionPlainSchema] = {}
 
-    @property
     def on_department_changed(self) -> None:
         if not self._view:
             return

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ControlStyles
 from utils.enums import View, ViewMode
 from views.base.base_view import BaseView
 from views.controls.data_table_control import DataTable
@@ -144,6 +145,27 @@ class EmployeeView(BaseView, UserLinkViewMixin):
             translation=self._translation,
             height=AppDimensions.SECTION_HEIGHT_REGULAR,
             with_button=False,
+            with_border=True,
+        )
+        subordinates_label, _ = self._get_label("subordinates", 4)
+        self.__subordinates_row = ft.ResponsiveRow(
+            columns=12,
+            controls=[
+                subordinates_label,
+                ft.Container(
+                    content=self.__subordinates_table,
+                    col={"sm": 7.0},
+                    alignment=ControlStyles.INPUT_ALIGNMENT,
+                    height=AppDimensions.SECTION_HEIGHT_REGULAR,
+                ),
+                ft.Container(
+                    col={"sm": 1.0},
+                    alignment=ControlStyles.INPUT_ALIGNMENT,
+                    height=AppDimensions.SECTION_HEIGHT_REGULAR,
+                ),
+            ],
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
         )
         employment_grid = self._build_grid(employment_fields)
         bank_grid = self._build_grid(bank_fields)
@@ -151,7 +173,15 @@ class EmployeeView(BaseView, UserLinkViewMixin):
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
         columns = [
             ft.Column(
-                controls=personal_grid + contact_grid + street_grid + house_grid + city_grid + country_grid,
+                controls=personal_grid
+                + contact_grid
+                + street_grid
+                + house_grid
+                + city_grid
+                + country_grid
+                + self._spacing_responsive_row
+                + user_grid
+                + [self.__subordinates_row],
                 expand=True,
             ),
             self._spacing_column,
@@ -160,13 +190,12 @@ class EmployeeView(BaseView, UserLinkViewMixin):
                 + self._spacing_responsive_row
                 + employment_grid
                 + bank_grid
-                + user_grid
-                + [self.__subordinates_table],
+                + [self._spacing_row, self._buttons_row],
                 expand=True,
             ),
         ]
         self._columns_row.controls.extend(columns)
-        self._master_column.controls.extend(self._rows)
+        self._master_column.controls.append(self._columns_row)
 
     def clear_inputs(self) -> None:
         super().clear_inputs()
@@ -175,11 +204,11 @@ class EmployeeView(BaseView, UserLinkViewMixin):
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
         self._apply_user_link_mode(mode)
-        if self._mode in {ViewMode.READ, ViewMode.EDIT}:
-            self.__subordinates_table.visible = True
-        else:
-            self.__subordinates_table.visible = False
+        is_subordinates_visible = self._mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__subordinates_row.visible = is_subordinates_visible
+        self.__subordinates_table.visible = is_subordinates_visible
         self.__subordinates_table.read_only = True
+        self.__subordinates_row.update()
         self.__subordinates_table.update()
 
     def set_dropdown_options(self, key: str, options: list[tuple[int, str]]) -> None:

@@ -96,10 +96,9 @@ class UserLinkViewMixin:
                 if user_id_value is not None:
                     if self._user_dropdown_options is None:
                         self._user_dropdown_options = list(dropdown.options)
-                    matching = [option for option in dropdown.options if option.key == str(user_id_value)]
-                    if matching:
-                        dropdown.options = matching
-                        dropdown.value = matching[0].key
+                    option = self.__resolve_user_option(user_id_value, self._user_dropdown_options)
+                    dropdown.options = [option]
+                    dropdown.value = option.key
                 else:
                     if self._user_dropdown_options is None:
                         self._user_dropdown_options = list(dropdown.options)
@@ -149,10 +148,18 @@ class UserLinkViewMixin:
                 and self._data_row
                 and self._data_row.get("user_id") is not None
             ):
-                value = self._data_row.get("user_id")
-                matching = [option for option in dropdown.options if option.key == str(value)]
-                if matching:
-                    dropdown.options = matching
-                    dropdown.value = matching[0].key
+                value = cast(int | str, self._data_row["user_id"])
+                option = self.__resolve_user_option(value, dropdown.options)
+                dropdown.options = [option]
+                dropdown.value = option.key
             dropdown.update()
         return True
+
+    @staticmethod
+    def __resolve_user_option(value: int | str, options: list[ft.DropdownOption]) -> ft.DropdownOption:
+        resolved_key = str(value)
+        for option in options:
+            if str(option.key) == resolved_key:
+                option_text = option.text if option.text else resolved_key
+                return ft.dropdown.Option(key=resolved_key, text=option_text)
+        return ft.dropdown.Option(key=resolved_key, text=resolved_key)

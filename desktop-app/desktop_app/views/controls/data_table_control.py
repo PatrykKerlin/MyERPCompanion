@@ -2,7 +2,7 @@ from typing import Any, Callable
 
 import flet as ft
 from styles.dimensions import AppDimensions
-from styles.styles import AlignmentStyles, ButtonStyles
+from styles.styles import AlignmentStyles, ButtonStyles, ControlStyles
 from utils.translation import Translation
 
 
@@ -21,6 +21,7 @@ class DataTable(ft.Container):
         expand: bool = True,
         visible: bool = True,
         read_only: bool = False,
+        with_border: bool = False,
     ) -> None:
         super().__init__(expand=expand, visible=visible)
         self.__on_add_clicked = on_add_clicked
@@ -61,6 +62,9 @@ class DataTable(ft.Container):
             content=table_vertical_scroller,
             height=height,
             clip_behavior=ft.ClipBehavior.HARD_EDGE,
+            border=ControlStyles.FIELD_BORDER if with_border else None,
+            border_radius=ControlStyles.FIELD_BORDER_RADIUS if with_border else None,
+            padding=ft.Padding.all(AppDimensions.SPACE_2XS) if with_border else None,
         )
 
         self.__add_button = ft.IconButton(
