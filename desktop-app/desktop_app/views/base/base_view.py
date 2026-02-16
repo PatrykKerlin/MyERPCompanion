@@ -152,9 +152,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self.__set_buttons()
 
     def set_input_state(self, input: ft.Control, enable: bool) -> None:
-        self.__set_disabled_state(input, not enable)
-        if hasattr(input, "read_only"):
-            setattr(input, "read_only", not enable)
+        self.__set_control_disabled_state(input, not enable)
+        self.__set_control_read_only_state(input, not enable)
         input.update()
 
     def set_field_error(self, key: str, message: str | None) -> None:
@@ -175,26 +174,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             marker_control = field.marker
             marker = marker_control.content if marker_control else None
             if key in self._search_disabled_fields:
-                if isinstance(input, ft.TextField):
-                    input.value = ""
-                elif isinstance(input, ft.Dropdown):
-                    input.value = "0"
-                elif isinstance(input, ft.Checkbox):
-                    input.value = False
-                elif isinstance(input, NumericField):
-                    input.value = 0
-                elif isinstance(input, DateField):
-                    input.value = None
-                if hasattr(input, "read_only"):
-                    setattr(input, "read_only", True)
-                if hasattr(input, "disabled"):
-                    setattr(input, "disabled", True)
-                if hasattr(marker, "disabled"):
-                    setattr(marker, "disabled", True)
-                if hasattr(marker, "value"):
-                    setattr(marker, "value", False)
-                if hasattr(marker, "width"):
-                    setattr(marker, "width", 0)
+                self.__set_control_value(input, self.__get_default_value_for_control(input))
+                self.__set_control_read_only_state(input, True)
+                self.__set_control_disabled_state(input, True)
+                self.__set_marker_state_for_non_search_mode(marker)
                 self.set_field_error(key, None)
                 if input:
                     input.update()
@@ -205,17 +188,9 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 value = self._data_row[key]
                 if isinstance(input, DateField):
                     value = self.__normalize_date_value(value)
-                setattr(input, "value", value)
-            elif isinstance(input, ft.TextField):
-                input.value = ""
-            elif isinstance(input, ft.Dropdown):
-                input.value = "0"
-            elif isinstance(input, ft.Checkbox):
-                input.value = False
-            elif isinstance(input, NumericField):
-                input.value = 0
-            elif isinstance(input, DateField):
-                input.value = None
+                self.__set_control_value(input, value)
+            else:
+                self.__set_control_value(input, self.__get_default_value_for_control(input))
             if input:
                 input.update()
 
@@ -578,18 +553,66 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             self.__scrollable_wrapper.controls.append(self.__form_container)
         self.__scrollable_wrapper.update()
 
-    def __set_disabled_state(self, control: ft.Control | None, disabled: bool) -> None:
+    def __set_control_disabled_state(self, control: ft.Control | None, disabled: bool) -> None:
         if control is None:
             return
         if hasattr(control, "disabled"):
             setattr(control, "disabled", disabled)
         if isinstance(control, ft.RadioGroup):
-            container = control.content
-            if isinstance(container, ft.Container) and isinstance(container.content, ft.Row):
-                for item in container.content.controls:
-                    if isinstance(item, ft.Radio):
-                        item.disabled = disabled
-                        item.opacity = ControlStyles.DISABLED_CONTENT_OPACITY if disabled else 1.0
+            self.__set_radio_group_option_disabled_state(control, disabled)
+
+    def __set_radio_group_option_disabled_state(self, radio_group: ft.RadioGroup, disabled: bool) -> None:
+        container = radio_group.content
+        if not isinstance(container, ft.Container) or not isinstance(container.content, ft.Row):
+            return
+        for item in container.content.controls:
+            if isinstance(item, ft.Radio):
+                item.disabled = disabled
+                item.opacity = ControlStyles.DISABLED_CONTENT_OPACITY if disabled else 1.0
+
+    def __set_control_read_only_state(self, control: ft.Control | None, read_only: bool) -> None:
+        if control is None:
+            return
+        if hasattr(control, "read_only"):
+            setattr(control, "read_only", read_only)
+
+    def __set_control_value(self, control: ft.Control | None, value: Any) -> None:
+        if control is None or not hasattr(control, "value"):
+            return
+        setattr(control, "value", value)
+
+    def __set_marker_state_for_non_search_mode(self, marker: ft.Control | None) -> None:
+        if marker is None:
+            return
+        if hasattr(marker, "disabled"):
+            setattr(marker, "disabled", True)
+        if hasattr(marker, "value"):
+            setattr(marker, "value", False)
+        if hasattr(marker, "width"):
+            setattr(marker, "width", 0)
+
+    def __set_marker_state_for_search_mode(self, marker: ft.Control | None, selected: bool) -> None:
+        if marker is None:
+            return
+        if hasattr(marker, "disabled"):
+            setattr(marker, "disabled", False)
+        if hasattr(marker, "value"):
+            setattr(marker, "value", selected)
+        if hasattr(marker, "width"):
+            setattr(marker, "width", None)
+
+    def __get_default_value_for_control(self, control: ft.Control | None) -> Any:
+        if isinstance(control, ft.TextField):
+            return ""
+        if isinstance(control, ft.Dropdown):
+            return "0"
+        if isinstance(control, ft.Checkbox):
+            return False
+        if isinstance(control, NumericField):
+            return 0
+        if isinstance(control, DateField):
+            return None
+        return None
 
     def __set_search_mode(self) -> None:
         selected_inputs = self._controller.search_params.selected_inputs
@@ -598,18 +621,12 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             marker_control = field.marker
             marker = marker_control.content if marker_control else None
             if key in self._search_disabled_fields:
-                if hasattr(marker, "disabled"):
-                    setattr(marker, "disabled", True)
-                if hasattr(marker, "value"):
-                    setattr(marker, "value", False)
-                if hasattr(marker, "width"):
-                    setattr(marker, "width", 0)
+                self.__set_marker_state_for_non_search_mode(marker)
                 if marker:
                     marker.update()
                 input = field.input.content
-                if hasattr(input, "read_only"):
-                    setattr(input, "read_only", True)
-                self.__set_disabled_state(input, True)
+                self.__set_control_read_only_state(input, True)
+                self.__set_control_disabled_state(input, True)
                 if input:
                     input.update()
                 continue
@@ -626,28 +643,13 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 if key in input_values:
                     value = input_values.get(key)
                     if value is None:
-                        if isinstance(input, ft.TextField):
-                            value = ""
-                        elif isinstance(input, ft.Dropdown):
-                            value = "0"
-                        elif isinstance(input, ft.Checkbox):
-                            value = False
-                        elif isinstance(input, NumericField):
-                            value = 0
-                        elif isinstance(input, DateField):
-                            value = None
+                        value = self.__get_default_value_for_control(input)
                     if isinstance(input, DateField):
                         value = self.__normalize_date_value(value)
-                    setattr(input, "value", value)
-            if hasattr(input, "read_only"):
-                setattr(input, "read_only", not is_selected)
-            self.__set_disabled_state(input, not is_selected)
-            if hasattr(marker, "disabled"):
-                setattr(marker, "disabled", False)
-            if hasattr(marker, "value"):
-                setattr(marker, "value", is_selected)
-            if hasattr(marker, "width"):
-                setattr(marker, "width", None)
+                    self.__set_control_value(input, value)
+            self.__set_control_read_only_state(input, not is_selected)
+            self.__set_control_disabled_state(input, not is_selected)
+            self.__set_marker_state_for_search_mode(marker, is_selected)
             self.set_field_error(key, None)
             if input:
                 input.update()
@@ -662,24 +664,17 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             marker_control = field.marker
             marker = marker_control.content if marker_control else None
             input_disabled = key in self._controller.meta_fields
-            self.__set_disabled_state(input, input_disabled)
+            self.__set_control_disabled_state(input, input_disabled)
             if (
                 isinstance(input, ft.Dropdown)
                 and self._data_row
                 and self._caller_view_key
                 and key in self._data_row
-                and self._data_row.get(key) is not None
+                    and self._data_row.get(key) is not None
             ):
                 self.__limit_dropdown_options(input, key)
-            if hasattr(input, "read_only"):
-                if key in self._controller.meta_fields:
-                    setattr(input, "read_only", True)
-                else:
-                    setattr(input, "read_only", False)
-            if hasattr(marker, "disabled"):
-                setattr(marker, "disabled", True)
-            if hasattr(marker, "width"):
-                setattr(marker, "width", 0)
+            self.__set_control_read_only_state(input, key in self._controller.meta_fields)
+            self.__set_marker_state_for_non_search_mode(marker)
             if hasattr(input, "value"):
                 self._controller.set_field_value(key, getattr(input, "value", ""))
             if input:
@@ -695,33 +690,20 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             input = field.input.content
             marker_control = field.marker
             marker = marker_control.content if marker_control else None
-            if hasattr(input, "read_only"):
-                setattr(input, "read_only", True)
+            self.__set_control_read_only_state(input, True)
             input_disabled = not isinstance(input, (ft.TextField, ft.Dropdown, NumericField, DateField))
-            self.__set_disabled_state(input, input_disabled)
+            self.__set_control_disabled_state(input, input_disabled)
             if isinstance(input, ft.Dropdown) and self._data_row:
                 self.__limit_dropdown_options(input, key)
-            if hasattr(marker, "disabled"):
-                setattr(marker, "disabled", True)
-            if hasattr(marker, "width"):
-                setattr(marker, "width", 0)
+            self.__set_marker_state_for_non_search_mode(marker)
             if self._data_row and hasattr(input, "value"):
                 if key in self._data_row:
                     value = self._data_row.get(key)
                 else:
-                    if isinstance(input, ft.TextField):
-                        value = ""
-                    elif isinstance(input, NumericField):
-                        value = 0
-                    elif isinstance(input, DateField):
-                        value = None
-                    elif isinstance(input, ft.Checkbox):
-                        value = False
-                    else:
-                        value = None
+                    value = self.__get_default_value_for_control(input)
                 if isinstance(input, DateField):
                     value = self.__normalize_date_value(value)
-                setattr(input, "value", value)
+                self.__set_control_value(input, value)
             if input:
                 input.update()
             if marker:
@@ -731,9 +713,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         for key, field in self._inputs.items():
             input = field.input.content
             input_disabled = key in self._controller.meta_fields
-            self.__set_disabled_state(input, input_disabled)
-            if hasattr(input, "read_only"):
-                setattr(input, "read_only", False)
+            self.__set_control_disabled_state(input, input_disabled)
+            self.__set_control_read_only_state(input, False)
             if isinstance(input, ft.Dropdown):
                 self.__restore_dropdown_options(input, key)
             if hasattr(input, "value"):
