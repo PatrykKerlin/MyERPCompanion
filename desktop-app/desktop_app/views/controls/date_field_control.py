@@ -43,6 +43,7 @@ class DateField(ft.Row):
             expand=True,
             text_align=ft.TextAlign.CENTER,
             height=resolved_height,
+            text_style=ControlStyles.INPUT_TEXT_STYLE,
             border_radius=ControlStyles.FIELD_BORDER_RADIUS,
             border_color=ControlStyles.FIELD_BORDER_COLOR,
             focused_border_color=ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
@@ -96,6 +97,10 @@ class DateField(ft.Row):
     def error(self, message: str | None) -> None:
         self.__text_field.error = message
         BaseComponent.safe_update(self.__text_field)
+
+    def set_validation_height(self, height: int | float) -> None:
+        self.height = height
+        self.__text_field.height = height
 
     @property
     def read_only(self) -> bool:

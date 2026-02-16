@@ -60,6 +60,7 @@ class NumericField(ft.Row):
             on_change=self.__handle_text_change,
             read_only=self.__read_only,
             height=resolved_height,
+            text_style=ControlStyles.INPUT_TEXT_STYLE,
             border_radius=resolved_border_radius,
             border_color=resolved_border_color,
             focused_border_color=resolved_focused_border_color,
@@ -103,6 +104,10 @@ class NumericField(ft.Row):
     def error(self, message: str | None) -> None:
         self.__text_field.error = message
         self.__text_field.update()
+
+    def set_validation_height(self, height: int | float) -> None:
+        self.height = height
+        self.__text_field.height = height
 
     @property
     def read_only(self) -> bool:

@@ -1,3 +1,5 @@
+import math
+
 import flet as ft
 from styles.colors import AppColors
 from styles.dimensions import AppDimensions
@@ -65,12 +67,19 @@ class ControlStyles:
     INPUT_ALIGNMENT = AlignmentStyles.CENTER_LEFT
     LABEL_ALIGNMENT = AlignmentStyles.TOP_LEFT
     MARKER_ALIGNMENT = AlignmentStyles.TOP_LEFT
+    INPUT_FONT_SIZE = 14
+    INPUT_FONT_LINE_HEIGHT = 1.2
+    INPUT_TEXT_STYLE = ft.TextStyle(size=INPUT_FONT_SIZE, height=INPUT_FONT_LINE_HEIGHT)
     FIELD_BORDER_RADIUS = AppDimensions.RADIUS_MD
     FIELD_BORDER_COLOR: ft.ColorValue = AppColors.OUTLINE
     FIELD_FOCUSED_BORDER_COLOR: ft.ColorValue = AppColors.PRIMARY
     FIELD_BORDER = ft.Border.all(1, AppColors.OUTLINE)
     FIELD_BORDER_SIDE = ft.BorderSide(width=1, color=AppColors.OUTLINE)
-    TEXT_FIELD_HEIGHT = AppDimensions.CONTROL_HEIGHT
+    TEXT_FIELD_HEIGHT = max(
+        AppDimensions.CONTROL_HEIGHT,
+        math.ceil((INPUT_FONT_SIZE * INPUT_FONT_LINE_HEIGHT) + (2 * AppDimensions.PADDING_INPUT_VERTICAL) + 2),
+    )
+    VALIDATION_ERROR_EXTRA_HEIGHT = math.ceil((INPUT_FONT_SIZE * INPUT_FONT_LINE_HEIGHT) + AppDimensions.SPACE_2XS)
     FIELD_PADDING = ft.Padding.symmetric(
         horizontal=AppDimensions.PADDING_INPUT_HORIZONTAL,
         vertical=AppDimensions.PADDING_INPUT_VERTICAL,

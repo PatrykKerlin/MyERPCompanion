@@ -52,7 +52,7 @@ class UserLinkViewMixin:
             ),
             col={"sm": float(size)},
             alignment=ControlStyles.INPUT_ALIGNMENT,
-            height=AppDimensions.CONTROL_HEIGHT,
+            height=ControlStyles.TEXT_FIELD_HEIGHT,
         )
         user_field = {
             "user_id": FieldGroup(

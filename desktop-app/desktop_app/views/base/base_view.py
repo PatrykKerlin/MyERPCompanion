@@ -46,7 +46,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self._master_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
         self._spacing_column = ft.Column(width=AppDimensions.SPACE_2XL)
         self._spacing_row = ft.Row(height=AppDimensions.SPACE_2XL)
-        self._spacing_responsive_row = [ft.Container(height=AppDimensions.CONTROL_HEIGHT)]
+        self._spacing_responsive_row = [ft.Container(height=ControlStyles.TEXT_FIELD_HEIGHT)]
         self._columns_row = ft.Row(
             alignment=AlignmentStyles.AXIS_START,
             vertical_alignment=AlignmentStyles.CROSS_START,
@@ -68,6 +68,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self.__base_label_size = base_label_size
         self.__base_input_size = base_input_size
         self.__base_columns_qty = base_columns_qty
+        self.__control_base_heights: dict[int, float] = {}
         self.__search_results: list[dict[str, Any]] | None = None
         self.__dropdown_options: dict[str, list[ft.DropdownOption]] = {}
         self._cancel_button = ft.Button(
@@ -158,15 +159,18 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
 
     def set_field_error(self, key: str, message: str | None) -> None:
         field = self._inputs[key]
-        if isinstance(field.input.content, (ft.TextField, NumericField)):
-            field.input.content.error = message
-        if isinstance(field.input.content, ft.Dropdown):
-            field.input.content.error_text = message
-        elif isinstance(field.input.content, ft.Checkbox):
-            field.input.content.error = bool(message)
-            field.input.content.tooltip = message
-        if field.input.content:
-            field.input.content.update()
+        input_control = field.input.content
+        if isinstance(input_control, (ft.TextField, NumericField, DateField)):
+            input_control.error = message
+        if isinstance(input_control, ft.Dropdown):
+            input_control.error_text = message
+        elif isinstance(input_control, ft.Checkbox):
+            input_control.error = bool(message)
+            input_control.tooltip = message
+        self.__set_control_validation_height(field.input, input_control, message)
+        if input_control:
+            input_control.update()
+        BaseComponent.safe_update(field.input)
 
     def clear_inputs(self) -> None:
         for key, field in self._inputs.items():
@@ -207,24 +211,26 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             return []
         if inline:
             total_columns = sum(group.columns for group in fields.values())
-            inline_controls = [part for group in fields.values() for part in group]
-            return [
-                ft.ResponsiveRow(
-                    columns=total_columns,
-                    controls=cast(list[ft.Control], inline_controls),
-                    alignment=AlignmentStyles.AXIS_START,
-                    vertical_alignment=AlignmentStyles.CROSS_CENTER,
-                )
-            ]
-        return [
-            ft.ResponsiveRow(
-                columns=group.columns,
-                controls=[part for part in group],
+            inline_controls = cast(list[ft.Control], [part for group in fields.values() for part in group])
+            inline_row = ft.ResponsiveRow(
+                columns=total_columns,
+                controls=inline_controls,
                 alignment=AlignmentStyles.AXIS_START,
-                vertical_alignment=AlignmentStyles.CROSS_CENTER,
+                vertical_alignment=self.__resolve_row_vertical_alignment(inline_controls),
             )
-            for group in fields.values()
-        ]
+            return cast(list[ft.Control], [inline_row])
+        rows: list[ft.Control] = []
+        for group in fields.values():
+            group_controls = cast(list[ft.Control], [part for part in group])
+            rows.append(
+                ft.ResponsiveRow(
+                    columns=group.columns,
+                    controls=group_controls,
+                    alignment=AlignmentStyles.AXIS_START,
+                    vertical_alignment=self.__resolve_row_vertical_alignment(group_controls),
+                )
+            )
+        return rows
 
     def _add_to_inputs(self, *fields: dict[str, FieldGroup]) -> None:
         for field in fields:
@@ -302,11 +308,14 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             max_lines=lines,
             expand=True,
             height=height,
+            text_style=ControlStyles.INPUT_TEXT_STYLE,
+            text_vertical_align=ft.VerticalAlignment.START if lines > 1 else None,
             border_radius = ControlStyles.FIELD_BORDER_RADIUS,
             border_color = ControlStyles.FIELD_BORDER_COLOR,
             focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
             content_padding = ControlStyles.FIELD_PADDING
         )
+        self.__register_control_base_height(text_field, height)
         if lines > 1:
             text_field.fit_parent_size = True
         return (
@@ -345,6 +354,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
             content_padding = ControlStyles.FIELD_PADDING
         )
+        self.__register_control_base_height(numeric_field, ControlStyles.TEXT_FIELD_HEIGHT)
         return (
             ft.Container(
                 content=numeric_field,
@@ -384,11 +394,13 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             enable_search=True,
             enable_filter=True,
             height=ControlStyles.TEXT_FIELD_HEIGHT,
+            text_style=ControlStyles.INPUT_TEXT_STYLE,
             border_radius=ControlStyles.FIELD_BORDER_RADIUS,
             border_color=ControlStyles.FIELD_BORDER_COLOR,
             focused_border_color=ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
             content_padding=ControlStyles.FIELD_PADDING,
         )
+        self.__register_control_base_height(dropdown, ControlStyles.TEXT_FIELD_HEIGHT)
         return (
             ft.Container(
                 content=dropdown,
@@ -418,6 +430,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             height=ControlStyles.TEXT_FIELD_HEIGHT,
             expand=True,
         )
+        self.__register_control_base_height(date_field, ControlStyles.TEXT_FIELD_HEIGHT)
         return (
             ft.Container(
                 content=date_field,
@@ -580,6 +593,38 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         if control is None or not hasattr(control, "value"):
             return
         setattr(control, "value", value)
+
+    def __resolve_row_vertical_alignment(self, controls: Sequence[ft.Control]) -> ft.CrossAxisAlignment:
+        for control in controls:
+            if not isinstance(control, ft.Container):
+                continue
+            control_height = control.height
+            if isinstance(control_height, (int, float)) and control_height > ControlStyles.TEXT_FIELD_HEIGHT:
+                return AlignmentStyles.CROSS_START
+        return AlignmentStyles.CROSS_CENTER
+
+    def __register_control_base_height(self, control: ft.Control, height: int | float) -> None:
+        self.__control_base_heights[id(control)] = float(height)
+
+    def __set_control_validation_height(
+        self,
+        input_container: ft.Container,
+        control: ft.Control | None,
+        message: str | None,
+    ) -> None:
+        if control is None:
+            return
+        base_height = self.__control_base_heights.get(id(control))
+        if base_height is None:
+            return
+        extra_height = ControlStyles.VALIDATION_ERROR_EXTRA_HEIGHT if message else 0
+        target_height = base_height + extra_height
+        set_validation_height = getattr(control, "set_validation_height", None)
+        if callable(set_validation_height):
+            set_validation_height(target_height)
+        elif hasattr(control, "height"):
+            setattr(control, "height", target_height)
+        input_container.height = target_height
 
     def __set_marker_state_for_non_search_mode(self, marker: ft.Control | None) -> None:
         if marker is None:
