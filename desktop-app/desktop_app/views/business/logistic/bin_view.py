@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ControlStyles
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -45,24 +46,37 @@ class BinView(BaseView):
             on_row_clicked=lambda row: self._controller.on_table_row_clicked(row["id"]),
             sort_by="id",
             with_button=False,
+            with_border=True,
+        )
+        items_label, _ = self._get_label("items", 4)
+        self.__items_row = ft.ResponsiveRow(
+            columns=12,
+            controls=[
+                items_label,
+                ft.Container(
+                    content=self.__items_table,
+                    col={"sm": 8.0},
+                    alignment=ControlStyles.INPUT_ALIGNMENT,
+                    height=AppDimensions.SECTION_HEIGHT_LARGE,
+                )
+            ],
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
         )
         columns = [
-            ft.Column(controls=main_grid + [self.__items_table], expand=3),
+            ft.Column(controls=main_grid + self._spacing_responsive_row + [self.__items_row], expand=True),
             self._spacing_column,
-            ft.Column(controls=meta_grid, expand=2),
+            ft.Column(controls=meta_grid + [self._spacing_row, self._buttons_row], expand=True),
         ]
         self._columns_row.controls.extend(columns)
-        self._master_column.controls.extend(self._rows)
+        self._master_column.controls.append(self._columns_row)
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
-        if self._mode not in {ViewMode.READ, ViewMode.EDIT}:
-            self.__items_table.read_only = True
-            self.__items_table.visible = False
-        elif self._mode == ViewMode.EDIT:
-            self.__items_table.read_only = True
-            self.__items_table.visible = True
-        else:
-            self.__items_table.read_only = False
-            self.__items_table.visible = True
+        is_read_mode = self._mode == ViewMode.READ
+        is_items_visible = self._mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__items_row.visible = is_items_visible
+        self.__items_table.visible = is_items_visible
+        self.__items_table.read_only = not is_read_mode
+        self.__items_row.update()
         self.__items_table.update()

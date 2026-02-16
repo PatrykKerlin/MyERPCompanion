@@ -62,9 +62,6 @@ class DataTable(ft.Container):
             content=table_vertical_scroller,
             height=height,
             clip_behavior=ft.ClipBehavior.HARD_EDGE,
-            border=ControlStyles.FIELD_BORDER if with_border else None,
-            border_radius=ControlStyles.FIELD_BORDER_RADIUS if with_border else None,
-            padding=ft.Padding.all(AppDimensions.SPACE_2XS) if with_border else None,
         )
 
         self.__add_button = ft.IconButton(
@@ -73,19 +70,42 @@ class DataTable(ft.Container):
             visible=with_button,
             disabled=not with_button or read_only,
             width=AppDimensions.ICON_BUTTON_WIDTH,
+            height=ControlStyles.TEXT_FIELD_HEIGHT,
+            icon_size=24,
             style=ButtonStyles.icon,
         )
 
-        self.content = ft.Column(
+        table_content: ft.Control = table_wrapper
+        if with_button:
+            table_content = ft.Stack(
+                controls=[
+                    table_wrapper,
+                    ft.Container(
+                        content=self.__add_button,
+                        right=AppDimensions.SPACE_XS,
+                        bottom=AppDimensions.SPACE_2XS,
+                    ),
+                ],
+                height=height,
+                expand=True,
+            )
+
+        content_column = ft.Column(
             controls=[
-                table_wrapper,
-                ft.Row(
-                    controls=[self.__add_button],
-                    alignment=AlignmentStyles.AXIS_END,
-                ),
+                table_content,
             ],
             expand=True,
         )
+        if with_border:
+            self.content = ft.Container(
+                content=content_column,
+                border=ControlStyles.FIELD_BORDER,
+                border_radius=ControlStyles.FIELD_BORDER_RADIUS,
+                padding=ft.Padding.all(AppDimensions.SPACE_2XS),
+                expand=True,
+            )
+        else:
+            self.content = content_column
 
     @property
     def add_button(self) -> ft.IconButton:

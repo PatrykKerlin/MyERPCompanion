@@ -7,7 +7,7 @@ from styles.dimensions import AppDimensions
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
-from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin
+from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin, DiscountTransferItem
 
 if TYPE_CHECKING:
     from controllers.business.logistic.category_controller import CategoryController
@@ -21,12 +21,13 @@ class CategoryView(BaseView, DiscountBulkTransferMixin):
         mode: ViewMode,
         key: View,
         data_row: dict[str, Any] | None,
-        discount_source_items: list[tuple[int, str]],
-        discount_target_items: list[tuple[int, str]],
+        discount_source_items: list[DiscountTransferItem],
+        discount_target_items: list[DiscountTransferItem],
         on_discount_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
         on_discount_delete_clicked: Callable[[list[int]], None] | None = None,
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
+        self.__buttons_spacing_row = ft.Row(height=AppDimensions.SPACE_2XL, visible=mode == ViewMode.EDIT)
         main_fields_definitions = [
             {"key": "name", "input": self._get_text_input},
             {"key": "code", "input": self._get_text_input},
@@ -40,10 +41,10 @@ class CategoryView(BaseView, DiscountBulkTransferMixin):
         columns = [
             ft.Column(
                 controls=main_grid,
-                expand=3,
+                expand=True
             ),
             self._spacing_column,
-            ft.Column(controls=meta_grid, expand=2),
+            ft.Column(controls=meta_grid, expand=True),
         ]
         self._columns_row.controls.extend(columns)
         self._init_discount_bulk_transfer(
@@ -60,10 +61,10 @@ class CategoryView(BaseView, DiscountBulkTransferMixin):
         self._master_column.controls.extend(
             [
                 self._columns_row,
-                ft.Row(height=AppDimensions.SPACE_2XL),
-                bulk_transfer_row,
-                ft.Row(height=AppDimensions.SPACE_2XL),
+                self._spacing_row,
                 self._buttons_row,
+                self.__buttons_spacing_row,
+                bulk_transfer_row
             ]
         )
 
@@ -72,5 +73,7 @@ class CategoryView(BaseView, DiscountBulkTransferMixin):
         return super().did_mount()
 
     def set_mode(self, mode: ViewMode) -> None:
+        self.__buttons_spacing_row.visible = mode == ViewMode.EDIT
         super().set_mode(mode)
         self._update_discount_bulk_transfer_mode(mode)
+        self.safe_update(self.__buttons_spacing_row)

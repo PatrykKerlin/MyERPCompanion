@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ControlStyles
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -57,7 +58,7 @@ class CarrierView(BaseView):
             },
         ]
         country_field_definition = [
-            {"key": "country", "input": self._get_text_input, "input_size": 3},
+            {"key": "country", "input": self._get_text_input},
         ]
         contact_fields_definitions = [
             {"key": "contact_person", "input": self._get_text_input},
@@ -73,7 +74,7 @@ class CarrierView(BaseView):
             {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
         ]
         notes_field_definition = [
-            {"key": "notes", "input": self._get_text_input, "lines": 5},
+            {"key": "notes", "input": self._get_text_input, "lines": 3},
         ]
 
         company_fields = self._build_field_groups(company_fields_definitions)
@@ -114,6 +115,25 @@ class CarrierView(BaseView):
             on_row_clicked=lambda row: self._controller.on_table_row_clicked(row["id"]),
             on_add_clicked=self._controller.on_add_delivery_method_clicked,
             sort_by="id",
+            with_border=True,
+        )
+        delivery_methods_section_height = (
+            AppDimensions.SECTION_HEIGHT_LARGE + AppDimensions.CONTROL_HEIGHT + AppDimensions.SPACE_2XS
+        )
+        delivery_methods_label, _ = self._get_label("delivery_methods", 4)
+        self.__delivery_methods_row = ft.ResponsiveRow(
+            columns=12,
+            controls=[
+                delivery_methods_label,
+                ft.Container(
+                    content=self.__delivery_methods_table,
+                    col={"sm": 8.0},
+                    alignment=ControlStyles.INPUT_ALIGNMENT,
+                    height=delivery_methods_section_height,
+                )
+            ],
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
         )
 
         columns = [
@@ -124,26 +144,26 @@ class CarrierView(BaseView):
                 + city_grid
                 + country_grid
                 + contact_grid
-                + [self.__delivery_methods_table],
-                expand=3,
+                + self._spacing_responsive_row
+                + [self.__delivery_methods_row],
+                expand=True,
             ),
             self._spacing_column,
-            ft.Column(controls=meta_grid + self._spacing_responsive_row + bank_grid + notes_grid, expand=2),
+            ft.Column(
+                controls=meta_grid + self._spacing_responsive_row + bank_grid + notes_grid + [self._spacing_row, self._buttons_row],
+                expand=True,
+            ),
         ]
 
         self._columns_row.controls.extend(columns)
-        self._master_column.controls.extend(self._rows)
+        self._master_column.controls.append(self._columns_row)
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
-        if self._mode not in {ViewMode.READ, ViewMode.EDIT}:
-            self.__delivery_methods_table.add_button.disabled = True
-            self.__delivery_methods_table.visible = False
-        elif self._mode == ViewMode.EDIT:
-            self.__delivery_methods_table.visible = True
-            self.__delivery_methods_table.read_only = True
-        elif self._mode == ViewMode.READ:
-            self.__delivery_methods_table.read_only = False
-            self.__delivery_methods_table.add_button.disabled = False
-            self.__delivery_methods_table.add_button.visible = True
+        is_read_mode = self._mode == ViewMode.READ
+        is_delivery_methods_visible = self._mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__delivery_methods_row.visible = is_delivery_methods_visible
+        self.__delivery_methods_table.visible = is_delivery_methods_visible
+        self.__delivery_methods_table.read_only = not is_read_mode
+        self.__delivery_methods_row.update()
         self.__delivery_methods_table.update()

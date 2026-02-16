@@ -19,6 +19,9 @@ from utils.translation import Translation
 from views.business.logistic.category_view import CategoryView
 
 
+DiscountTransferItem = tuple[int, str, str, float | None]
+
+
 class CategoryController(BaseViewController[CategoryService, CategoryView, CategoryPlainSchema, CategoryStrictSchema]):
     _plain_schema_cls = CategoryPlainSchema
     _strict_schema_cls = CategoryStrictSchema
@@ -45,11 +48,11 @@ class CategoryController(BaseViewController[CategoryService, CategoryView, Categ
         self._page.run_task(self.__handle_discount_delete, discount_ids)
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> CategoryView:
-        discount_source_items: list[tuple[int, str]] = []
-        discount_target_items: list[tuple[int, str]] = []
+        discount_source_items: list[DiscountTransferItem] = []
+        discount_target_items: list[DiscountTransferItem] = []
         if mode != ViewMode.SEARCH:
             discount_target_items = await self.__extract_category_discounts(event.data)
-            target_ids = {item_id for item_id, _ in discount_target_items}
+            target_ids = {item[0] for item in discount_target_items}
             discount_source_items = await self.__perform_get_category_discount_options(target_ids)
         return CategoryView(
             self,
@@ -85,15 +88,15 @@ class CategoryController(BaseViewController[CategoryService, CategoryView, Categ
         await self.__refresh_category_discount_lists(category_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_get_category_discount_options(self, exclude_ids: set[int]) -> list[tuple[int, str]]:
+    async def __perform_get_category_discount_options(self, exclude_ids: set[int]) -> list[DiscountTransferItem]:
         discounts = await self.__discount_service.get_all(Endpoint.DISCOUNTS, None, None, None, self._module_id)
-        options: list[tuple[int, str]] = []
+        options: list[DiscountTransferItem] = []
         for discount in discounts:
             if not discount.for_categories:
                 continue
             if discount.id in exclude_ids:
                 continue
-            options.append((discount.id, discount.code))
+            options.append((discount.id, discount.code, discount.name, discount.percent))
         return options
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
@@ -128,7 +131,7 @@ class CategoryController(BaseViewController[CategoryService, CategoryView, Categ
             Endpoint.CATEGORY_DISCOUNTS_DELETE_BULK, None, None, body_params, self._module_id
         )
 
-    async def __extract_category_discounts(self, data: dict[str, Any] | None) -> list[tuple[int, str]]:
+    async def __extract_category_discounts(self, data: dict[str, Any] | None) -> list[DiscountTransferItem]:
         if not data:
             return []
         category_id = data.get("id")
@@ -137,7 +140,7 @@ class CategoryController(BaseViewController[CategoryService, CategoryView, Categ
         assoc_rows = await self.__perform_get_category_discounts(category_id)
         discount_ids = [row.discount_id for row in assoc_rows]
         discounts = await self.__perform_get_discounts_by_ids(discount_ids)
-        return [(discount.id, discount.code) for discount in discounts]
+        return [(discount.id, discount.code, discount.name, discount.percent) for discount in discounts]
 
     async def __refresh_category_discount_lists(self, category_id: int) -> None:
         if not self._view:
@@ -145,8 +148,8 @@ class CategoryController(BaseViewController[CategoryService, CategoryView, Categ
         assoc_rows = await self.__perform_get_category_discounts(category_id)
         discount_ids = [row.discount_id for row in assoc_rows]
         discounts = await self.__perform_get_discounts_by_ids(discount_ids)
-        target_items = [(discount.id, discount.code) for discount in discounts]
-        target_ids = {item_id for item_id, _ in target_items}
+        target_items = [(discount.id, discount.code, discount.name, discount.percent) for discount in discounts]
+        target_ids = {item[0] for item in target_items}
         source_items = await self.__perform_get_category_discount_options(target_ids)
         self._view.set_discount_target_items(target_items)
         self._view.set_discount_source_items(source_items)

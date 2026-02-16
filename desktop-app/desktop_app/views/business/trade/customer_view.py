@@ -7,7 +7,7 @@ from styles.dimensions import AppDimensions
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
-from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin
+from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin, DiscountTransferItem
 from views.mixins.user_link_view_mixin import UserLinkViewMixin
 
 if TYPE_CHECKING:
@@ -22,8 +22,8 @@ class CustomerView(BaseView, DiscountBulkTransferMixin, UserLinkViewMixin):
         mode: ViewMode,
         key: View,
         data_row: dict[str, Any] | None,
-        discount_source_items: list[tuple[int, str]],
-        discount_target_items: list[tuple[int, str]],
+        discount_source_items: list[DiscountTransferItem],
+        discount_target_items: list[DiscountTransferItem],
         user_options: list[tuple[int, str]],
         on_discount_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
         on_discount_delete_clicked: Callable[[list[int]], None] | None = None,

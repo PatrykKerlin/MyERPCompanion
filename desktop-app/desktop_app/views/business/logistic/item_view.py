@@ -11,7 +11,7 @@ from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
 from views.controls.data_table_control import DataTable
-from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin
+from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin, DiscountTransferItem
 
 if TYPE_CHECKING:
     from controllers.business.logistic.item_controller import ItemController
@@ -29,8 +29,8 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         units: list[tuple[int, str]],
         suppliers: list[tuple[int, str]],
         bins: list[dict[str, Any]],
-        discount_source_items: list[tuple[int, str]],
-        discount_target_items: list[tuple[int, str]],
+        discount_source_items: list[DiscountTransferItem],
+        discount_target_items: list[DiscountTransferItem],
         on_discount_save_clicked: Callable[[ft.Event[ft.IconButton]], None] | None = None,
         on_discount_delete_clicked: Callable[[list[int]], None] | None = None,
     ) -> None:

@@ -34,10 +34,10 @@ class UnitView(BaseView):
         columns = [
             ft.Column(
                 controls=main_grid,
-                expand=3,
+                expand=True
             ),
             self._spacing_column,
-            ft.Column(controls=meta_grid, expand=2),
+            ft.Column(controls=meta_grid, expand=True),
         ]
         self._columns_row.controls.extend(columns)
         self._master_column.controls.extend(self._rows)

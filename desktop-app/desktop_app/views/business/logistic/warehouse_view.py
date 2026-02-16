@@ -54,7 +54,7 @@ class WarehouseView(BaseView):
             },
         ]
         country_field_definition = [
-            {"key": "country", "input": self._get_text_input, "input_size": 3},
+            {"key": "country", "input": self._get_text_input},
         ]
 
         name_field = self._build_field_groups(name_field_definition)
@@ -77,10 +77,10 @@ class WarehouseView(BaseView):
         columns = [
             ft.Column(
                 controls=name_grid + contact_grid + street_grid + house_grid + city_grid + country_grid,
-                expand=3,
+                expand=True,
             ),
             self._spacing_column,
-            ft.Column(controls=meta_grid, expand=2),
+            ft.Column(controls=meta_grid, expand=True),
         ]
         self._columns_row.controls.extend(columns)
         self._master_column.controls.extend(self._rows)

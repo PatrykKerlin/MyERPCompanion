@@ -25,6 +25,9 @@ from utils.translation import Translation
 from views.business.logistic.item_view import ItemView
 
 
+DiscountTransferItem = tuple[int, str, str, float | None]
+
+
 class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, ItemStrictSchema]):
     _plain_schema_cls = ItemPlainSchema
     _strict_schema_cls = ItemStrictSchema
@@ -84,11 +87,11 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
             bins = await self.__perform_get_bins_for_item(event.data["id"])
         else:
             bins = []
-        discount_source_items: list[tuple[int, str]] = []
-        discount_target_items: list[tuple[int, str]] = []
+        discount_source_items: list[DiscountTransferItem] = []
+        discount_target_items: list[DiscountTransferItem] = []
         if mode != ViewMode.SEARCH:
             discount_target_items = await self.__extract_item_discounts(event.data)
-            target_ids = {item_id for item_id, _ in discount_target_items}
+            target_ids = {item[0] for item in discount_target_items}
             discount_source_items = await self.__perform_get_item_discount_options(target_ids)
         return ItemView(
             self,
@@ -122,15 +125,15 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         return [(schema.id, schema.company_name) for schema in schemas]
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_get_item_discount_options(self, exclude_ids: set[int]) -> list[tuple[int, str]]:
+    async def __perform_get_item_discount_options(self, exclude_ids: set[int]) -> list[DiscountTransferItem]:
         discounts = await self.__discount_service.get_all(Endpoint.DISCOUNTS, None, None, None, self._module_id)
-        options: list[tuple[int, str]] = []
+        options: list[DiscountTransferItem] = []
         for discount in discounts:
             if not discount.for_items:
                 continue
             if discount.id in exclude_ids:
                 continue
-            options.append((discount.id, discount.code))
+            options.append((discount.id, discount.code, discount.name, discount.percent))
         return options
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
@@ -204,7 +207,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         await self.__perform_delete_item_discounts(item_id, discount_ids)
         await self.__refresh_item_discount_lists(item_id)
 
-    async def __extract_item_discounts(self, data: dict[str, Any] | None) -> list[tuple[int, str]]:
+    async def __extract_item_discounts(self, data: dict[str, Any] | None) -> list[DiscountTransferItem]:
         if not data:
             return []
         item_id = data.get("id")
@@ -213,7 +216,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         assoc_rows = await self.__perform_get_item_discounts(item_id)
         discount_ids = [row.discount_id for row in assoc_rows]
         discounts = await self.__perform_get_discounts_by_ids(discount_ids)
-        return [(discount.id, discount.code) for discount in discounts]
+        return [(discount.id, discount.code, discount.name, discount.percent) for discount in discounts]
 
     async def __refresh_item_discount_lists(self, item_id: int) -> None:
         if not self._view:
@@ -221,8 +224,8 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         assoc_rows = await self.__perform_get_item_discounts(item_id)
         discount_ids = [row.discount_id for row in assoc_rows]
         discounts = await self.__perform_get_discounts_by_ids(discount_ids)
-        target_items = [(discount.id, discount.code) for discount in discounts]
-        target_ids = {item_id for item_id, _ in target_items}
+        target_items = [(discount.id, discount.code, discount.name, discount.percent) for discount in discounts]
+        target_ids = {item[0] for item in target_items}
         source_items = await self.__perform_get_item_discount_options(target_ids)
         self._view.set_discount_target_items(target_items)
         self._view.set_discount_source_items(source_items)

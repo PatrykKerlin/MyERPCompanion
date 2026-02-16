@@ -154,15 +154,10 @@ class EmployeeView(BaseView, UserLinkViewMixin):
                 subordinates_label,
                 ft.Container(
                     content=self.__subordinates_table,
-                    col={"sm": 7.0},
+                    col={"sm": 8.0},
                     alignment=ControlStyles.INPUT_ALIGNMENT,
                     height=AppDimensions.SECTION_HEIGHT_REGULAR,
-                ),
-                ft.Container(
-                    col={"sm": 1.0},
-                    alignment=ControlStyles.INPUT_ALIGNMENT,
-                    height=AppDimensions.SECTION_HEIGHT_REGULAR,
-                ),
+                )
             ],
             alignment=AlignmentStyles.AXIS_START,
             vertical_alignment=AlignmentStyles.CROSS_START,

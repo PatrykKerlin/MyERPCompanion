@@ -43,9 +43,9 @@ class DeliveryMethodView(BaseView):
         main_grid = self._build_grid(main_fields)
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
         columns = [
-            ft.Column(controls=main_grid, expand=3),
+            ft.Column(controls=main_grid, expand=True),
             self._spacing_column,
-            ft.Column(controls=meta_grid, expand=2),
+            ft.Column(controls=meta_grid, expand=True),
         ]
 
         self._columns_row.controls.extend(columns)

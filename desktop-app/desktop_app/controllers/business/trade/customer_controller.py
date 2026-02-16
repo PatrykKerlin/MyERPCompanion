@@ -20,6 +20,9 @@ from utils.translation import Translation
 from views.business.trade.customer_view import CustomerView
 
 
+DiscountTransferItem = tuple[int, str, str, float | None]
+
+
 class CustomerController(
     UserLinkControllerMixin,
     BaseViewController[CustomerService, CustomerView, CustomerPlainSchema, CustomerStrictSchema],
@@ -50,17 +53,21 @@ class CustomerController(
         self._page.run_task(self.__handle_discount_delete, discount_ids)
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> CustomerView:
-        discount_source_items: list[tuple[int, str]] = []
-        discount_target_items: list[tuple[int, str]] = []
+        discount_source_items: list[DiscountTransferItem] = []
+        discount_target_items: list[DiscountTransferItem] = []
         user_options: list[tuple[int, str]] = []
         if mode != ViewMode.SEARCH:
             discounts = await self.__perform_get_all_customer_discounts()
             target_ids = set(self.__extract_discount_ids(event.data))
             discount_target_items = [
-                (discount.id, discount.code) for discount in discounts if discount.id in target_ids
+                (discount.id, discount.code, discount.name, discount.percent)
+                for discount in discounts
+                if discount.id in target_ids
             ]
             discount_source_items = [
-                (discount.id, discount.code) for discount in discounts if discount.id not in target_ids
+                (discount.id, discount.code, discount.name, discount.percent)
+                for discount in discounts
+                if discount.id not in target_ids
             ]
         if mode == ViewMode.SEARCH:
             users, customers = await asyncio.gather(
@@ -165,8 +172,16 @@ class CustomerController(
         data_row = customer.model_dump()
         discounts = await self.__perform_get_all_customer_discounts()
         target_ids = set(self.__extract_discount_ids(data_row))
-        target_items = [(discount.id, discount.code) for discount in discounts if discount.id in target_ids]
-        source_items = [(discount.id, discount.code) for discount in discounts if discount.id not in target_ids]
+        target_items = [
+            (discount.id, discount.code, discount.name, discount.percent)
+            for discount in discounts
+            if discount.id in target_ids
+        ]
+        source_items = [
+            (discount.id, discount.code, discount.name, discount.percent)
+            for discount in discounts
+            if discount.id not in target_ids
+        ]
         self._view.set_discount_target_items(target_items)
         self._view.set_discount_source_items(source_items)
 
