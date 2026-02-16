@@ -22,25 +22,23 @@ class PositionView(BaseView):
         currencies: list[tuple[int, str]],
         departments: list[tuple[int, str]],
     ) -> None:
-        super().__init__(controller, translation, mode, key, data_row, 5, 6)
+        super().__init__(controller, translation, mode, key, data_row, 4, 7)
         main_fields_definitions = [
             {"key": "name", "input": self._get_text_input},
             {"key": "description", "input": self._get_text_input, "lines": 3},
-            {"key": "code", "input": self._get_text_input, "input_size": 5},
-            {"key": "level", "input": self._get_numeric_input, "input_size": 3},
-            {"key": "min_salary", "input": self._get_numeric_input, "input_size": 5},
-            {"key": "max_salary", "input": self._get_numeric_input, "input_size": 5},
+            {"key": "code", "input": self._get_text_input, "input_size": 2},
+            {"key": "level", "input": self._get_numeric_input},
+            {"key": "min_salary", "input": self._get_numeric_input},
+            {"key": "max_salary", "input": self._get_numeric_input},
             {
                 "key": "currency_id",
                 "input": self._get_dropdown,
-                "options": currencies,
-                "input_size": 3,
+                "options": currencies
             },
             {
                 "key": "department_id",
                 "input": self._get_dropdown,
-                "options": departments,
-                "input_size": 3,
+                "options": departments
             },
         ]
         main_fields = self._build_field_groups(main_fields_definitions)
@@ -48,9 +46,9 @@ class PositionView(BaseView):
         main_grids = self._build_grid(main_fields)
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
         columns = [
-            ft.Column(controls=main_grids, expand=3),
+            ft.Column(controls=main_grids, expand=True),
             self._spacing_column,
-            ft.Column(controls=meta_grid, expand=2),
+            ft.Column(controls=meta_grid, expand=True),
         ]
         self._columns_row.controls.extend(columns)
         self._master_column.controls.extend(self._rows)

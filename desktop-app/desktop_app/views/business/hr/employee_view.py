@@ -34,12 +34,12 @@ class EmployeeView(BaseView, UserLinkViewMixin):
             {"key": "middle_name", "input": self._get_text_input},
             {"key": "last_name", "input": self._get_text_input},
             {"key": "pesel", "input": self._get_text_input},
-            {"key": "birth_date", "input": self._get_date_picker, "input_size": 4},
+            {"key": "birth_date", "input": self._get_date_picker},
             {"key": "birth_place", "input": self._get_text_input},
             {"key": "passport_number", "input": self._get_text_input},
-            {"key": "passport_expiry", "input": self._get_date_picker, "input_size": 4},
+            {"key": "passport_expiry", "input": self._get_date_picker},
             {"key": "id_card_number", "input": self._get_text_input},
-            {"key": "id_card_expiry", "input": self._get_date_picker, "input_size": 4},
+            {"key": "id_card_expiry", "input": self._get_date_picker},
         ]
         contact_fields_definitions = [
             {"key": "email", "input": self._get_text_input},
@@ -71,29 +71,26 @@ class EmployeeView(BaseView, UserLinkViewMixin):
             },
         ]
         country_field_definition = [
-            {"key": "country", "input": self._get_text_input, "input_size": 3},
+            {"key": "country", "input": self._get_text_input},
         ]
         employment_fields_definitions = [
-            {"key": "hire_date", "input": self._get_date_picker, "input_size": 5},
-            {"key": "termination_date", "input": self._get_date_picker, "input_size": 5},
+            {"key": "hire_date", "input": self._get_date_picker},
+            {"key": "termination_date", "input": self._get_date_picker},
             {
                 "key": "department_id",
                 "input": self._get_dropdown,
-                "input_size": 5,
                 "options": departments,
                 "callbacks": [self._controller.on_department_changed],
             },
             {
                 "key": "position_id",
                 "input": self._get_dropdown,
-                "input_size": 5,
                 "options": positions,
                 "callbacks": [self._controller.on_position_changed],
             },
             {
                 "key": "manager_id",
                 "input": self._get_dropdown,
-                "input_size": 5,
                 "options": managers,
             },
             {
@@ -103,7 +100,7 @@ class EmployeeView(BaseView, UserLinkViewMixin):
                 "options": [("false", "on_site"), ("true", "remote")],
                 "default": "false",
             },
-            {"key": "salary", "input": self._get_numeric_input, "input_size": 5},
+            {"key": "salary", "input": self._get_numeric_input},
         ]
         bank_fields_definitions = [
             {"key": "bank_account", "input": self._get_text_input},
@@ -155,7 +152,7 @@ class EmployeeView(BaseView, UserLinkViewMixin):
         columns = [
             ft.Column(
                 controls=personal_grid + contact_grid + street_grid + house_grid + city_grid + country_grid,
-                expand=3,
+                expand=True,
             ),
             self._spacing_column,
             ft.Column(
@@ -165,7 +162,7 @@ class EmployeeView(BaseView, UserLinkViewMixin):
                 + bank_grid
                 + user_grid
                 + [self.__subordinates_table],
-                expand=2,
+                expand=True,
             ),
         ]
         self._columns_row.controls.extend(columns)

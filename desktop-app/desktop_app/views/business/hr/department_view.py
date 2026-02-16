@@ -20,11 +20,11 @@ class DepartmentView(BaseView):
         key: View,
         data_row: dict[str, Any] | None,
     ) -> None:
-        super().__init__(controller, translation, mode, key, data_row, 2, 9)
+        super().__init__(controller, translation, mode, key, data_row, 4, 7)
         main_fields_definitions = [
             {"key": "name", "input": self._get_text_input},
             {"key": "description", "input": self._get_text_input, "lines": 3},
-            {"key": "code", "input": self._get_text_input, "input_size": 5},
+            {"key": "code", "input": self._get_text_input, "input_size": 2},
             {"key": "email", "input": self._get_text_input},
             {"key": "phone_number", "input": self._get_text_input},
         ]
@@ -33,9 +33,9 @@ class DepartmentView(BaseView):
         main_grid = self._build_grid(main_fields)
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
         columns = [
-            ft.Column(controls=main_grid, expand=3),
+            ft.Column(controls=main_grid, expand=True),
             self._spacing_column,
-            ft.Column(controls=meta_grid, expand=2),
+            ft.Column(controls=meta_grid, expand=True),
         ]
         self._columns_row.controls.extend(columns)
         self._master_column.controls.extend(self._rows)

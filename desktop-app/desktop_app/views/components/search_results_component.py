@@ -4,7 +4,8 @@ from math import ceil
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
-from styles.styles import ButtonStyles, ControlStyles
+from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ButtonStyles, ControlStyles
 from utils.translation import Translation
 from views.base.base_component import BaseComponent
 
@@ -26,8 +27,22 @@ class SearchResultsComponent(BaseComponent, ft.Column):
 
         buttons_row = self.__build_buttons()
         table_row = self.__build_table_row()
+        buttons_container = ft.Container(
+            content=buttons_row,
+            padding=ft.Padding.symmetric(horizontal=AppDimensions.SPACE_XS, vertical=AppDimensions.SPACE_XS),
+        )
+        table_container = ft.Container(
+            content=table_row,
+            padding=ft.Padding.symmetric(horizontal=AppDimensions.SPACE_XS),
+            expand=True,
+        )
 
-        ft.Column.__init__(self, controls=[buttons_row, table_row], expand=True)
+        ft.Column.__init__(
+            self,
+            controls=[buttons_container, table_container],
+            expand=True,
+            spacing=AppDimensions.SPACE_XS,
+        )
 
     def __build_table_row(self) -> ft.Row:
         data_table = ft.DataTable(
@@ -105,11 +120,13 @@ class SearchResultsComponent(BaseComponent, ft.Column):
         page_size_dropdown.border_color = ControlStyles.FIELD_BORDER_COLOR
         page_size_dropdown.focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR
         page_size_dropdown.content_padding = ControlStyles.FIELD_PADDING
+        page_size_dropdown.text_style = ControlStyles.INPUT_TEXT_STYLE
+        page_size_dropdown.height = ControlStyles.TEXT_FIELD_HEIGHT
 
         back_button = ft.Button(
             content=self._translation.get("back"),
             on_click=lambda _: self._controller.on_back_clicked(),
-            style=ButtonStyles.regular,
+            style=ButtonStyles.primary_regular,
         )
 
         return ft.Row(
@@ -121,5 +138,7 @@ class SearchResultsComponent(BaseComponent, ft.Column):
                 prev_button,
                 counter_text,
                 next_button,
-            ]
+            ],
+            spacing=AppDimensions.SPACE_MD,
+            vertical_alignment=AlignmentStyles.CROSS_CENTER,
         )
