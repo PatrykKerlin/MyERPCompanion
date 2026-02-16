@@ -176,7 +176,7 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
             close_dialog()
 
         dialog = BaseDialog(
-            title=translation.get("Find tab"),
+            title=translation.get("find_tab"),
             controls=[dropdown],
             actions=[
                 ft.TextButton(translation.get("cancel"), on_click=close_dialog),

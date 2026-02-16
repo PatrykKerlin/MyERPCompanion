@@ -177,16 +177,16 @@ class CustomerView(BaseView, DiscountBulkTransferMixin, UserLinkViewMixin):
             self._translation.get("customer_discounts"),
             on_discount_save_clicked,
             on_discount_delete_clicked,
-            height=AppDimensions.SECTION_HEIGHT,
+            height=AppDimensions.SECTION_HEIGHT_LARGE,
             visible_modes={ViewMode.READ, ViewMode.EDIT},
         )
         bulk_transfer_row = self._build_discount_bulk_transfer_row()
         self._master_column.controls.extend(
             [
                 self._columns_row,
-                ft.Row(height=AppDimensions.BASE_SPACING),
+                ft.Row(height=AppDimensions.SPACE_2XL),
                 bulk_transfer_row,
-                ft.Row(height=AppDimensions.BASE_SPACING),
+                ft.Row(height=AppDimensions.SPACE_2XL),
                 self._buttons_row,
             ]
         )

@@ -10,6 +10,6 @@ class ComponentStyles:
         return ft.Container(
             expand=expand,
             border=ft.Border.all(1, AppColors.OUTLINE),
-            border_radius=AppDimensions.BULK_TRANSFER_BORDER_RADIUS,
-            padding=AppDimensions.BULK_TRANSFER_PADDING,
+            border_radius=AppDimensions.RADIUS_SM,
+            padding=AppDimensions.SPACE_XS,
         )

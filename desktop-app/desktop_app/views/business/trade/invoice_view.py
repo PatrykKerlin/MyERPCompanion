@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
-from styles.dimensions import AppDimensions
+from styles import AppDimensions, ButtonStyles
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -80,15 +80,20 @@ class InvoiceView(BaseView):
                 self._translation.get("order_date"),
                 self._translation.get("total_gross"),
             ],
+            cancel_label=self._translation.get("cancel"),
+            confirm_label=self._translation.get("ok"),
+            delete_confirm_title=self._translation.get("confirm"),
+            delete_confirm_message=self._translation.get("delete_selected_items_q"),
         )
         self.__generate_pdf_button = ft.Button(
             content=self._translation.get("generate_pdf"),
             on_click=on_generate_pdf_clicked,
+            style=ButtonStyles.regular,
         )
         self._buttons_row.controls.insert(0, self.__generate_pdf_button)
         self.__set_generate_pdf_button_state(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT, ViewMode.CREATE}
-        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT if self.__bulk_transfer.visible else 0
+        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
 
@@ -108,7 +113,7 @@ class InvoiceView(BaseView):
             self.__apply_editable_fields(mode)
         self.__set_generate_pdf_button_state(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT, ViewMode.CREATE}
-        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT if self.__bulk_transfer.visible else 0
+        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()
         if self.__bulk_transfer.page:

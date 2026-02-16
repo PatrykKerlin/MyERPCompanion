@@ -1,7 +1,7 @@
 import asyncio
 
 import flet as ft
-from styles.colors import AppColors
+from styles import AppColors, ButtonStyles, ControlStyles
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 from views.controls.numeric_field_control import NumericField
@@ -27,7 +27,14 @@ class BinQuantityDialogComponent(BaseDialog):
             value=initial_key,
             expand=True,
             on_select=self.__on_bin_changed,
+            editable=True,
+            enable_search=True,
+            enable_filter=True,
         )
+        self.__bin_dropdown.border_radius = ControlStyles.DROPDOWN_BORDER_RADIUS
+        self.__bin_dropdown.border_color = ControlStyles.DROPDOWN_BORDER_COLOR
+        self.__bin_dropdown.focused_border_color = ControlStyles.DROPDOWN_FOCUSED_BORDER_COLOR
+        self.__bin_dropdown.content_padding = ControlStyles.DROPDOWN_PADDING
         max_value = min(self.__bin_map.get(initial_key, 0), self.__max_total)
         self.__quantity_field = NumericField(
             value=min(max_value, self.__default_quantity),
@@ -39,10 +46,12 @@ class BinQuantityDialogComponent(BaseDialog):
         cancel_button = ft.Button(
             content=translation.get("cancel"),
             on_click=lambda _: self.__set_result(None),
+            style=ButtonStyles.compact,
         )
         confirm_button = ft.Button(
             content=translation.get("ok"),
             on_click=lambda _: self.__set_result(self.__read_values()),
+            style=ButtonStyles.primary_compact,
         )
         super().__init__(
             controls=[

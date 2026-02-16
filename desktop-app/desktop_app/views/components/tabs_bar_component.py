@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 import flet as ft
+from styles import ButtonStyles
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
@@ -51,11 +52,13 @@ class TabsBarComponent(BaseComponent, ft.Container):
                     ft.TextButton(
                         content=title,
                         on_click=lambda _, title=title: self._controller.on_tab_clicked(title),
+                        style=ButtonStyles.compact,
                     ),
                     ft.IconButton(
                         icon=ft.Icons.CLOSE,
                         on_click=lambda _, title=title: self._controller.on_close_clicked(title),
                         expand=True,
+                        style=ButtonStyles.icon,
                     ),
                 ]
             )

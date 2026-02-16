@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
+from styles import ButtonStyles, ControlStyles
 from views.base.base_component import BaseComponent
 from views.base.base_dialog import BaseDialog
 
@@ -15,10 +16,22 @@ class AuthDialogComponent(BaseComponent, BaseDialog):
     def __init__(self, controller: AuthDialogController, translation: Translation) -> None:
         BaseComponent.__init__(self, controller, translation)
         login_field = ft.TextField(label=translation.get("login"), autofocus=True)
+        login_field.border_radius = ControlStyles.TEXT_FIELD_BORDER_RADIUS
+        login_field.border_color = ControlStyles.TEXT_FIELD_BORDER_COLOR
+        login_field.focused_border_color = ControlStyles.TEXT_FIELD_FOCUSED_BORDER_COLOR
+        login_field.height = ControlStyles.TEXT_FIELD_HEIGHT
+        login_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_SINGLE
+
         password_field = ft.TextField(label=translation.get("password"), password=True, can_reveal_password=True)
+        password_field.border_radius = ControlStyles.TEXT_FIELD_BORDER_RADIUS
+        password_field.border_color = ControlStyles.TEXT_FIELD_BORDER_COLOR
+        password_field.focused_border_color = ControlStyles.TEXT_FIELD_FOCUSED_BORDER_COLOR
+        password_field.height = ControlStyles.TEXT_FIELD_HEIGHT
+        password_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_SINGLE
         cancel_button = ft.Button(
             content=translation.get("cancel"),
             on_click=lambda _: controller.on_cancel_click(),
+            style=ButtonStyles.compact,
         )
         login_button = ft.Button(
             content=translation.get("log_in"),
@@ -26,6 +39,7 @@ class AuthDialogComponent(BaseComponent, BaseDialog):
                 login_field.value or "",
                 password_field.value or "",
             ),
+            style=ButtonStyles.primary_compact,
         )
         BaseDialog.__init__(
             self,

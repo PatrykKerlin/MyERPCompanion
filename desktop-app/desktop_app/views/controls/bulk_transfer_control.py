@@ -2,7 +2,7 @@ from typing import Any, Callable, cast
 
 import flet as ft
 from controllers.base.base_controller import BaseController
-from styles import AppColors, AppDimensions, ComponentStyles
+from styles import AppColors, AppDimensions, ButtonStyles, ComponentStyles
 from views.base.base_component import BaseComponent
 
 
@@ -19,6 +19,10 @@ class BulkTransfer(ft.Container):
         source_columns: list[str] | None = None,
         target_columns: list[str] | None = None,
         height: int | None = None,
+        cancel_label: str = "Cancel",
+        confirm_label: str = "OK",
+        delete_confirm_title: str = "Confirm",
+        delete_confirm_message: str = "Delete selected item(s)?",
     ) -> None:
         super().__init__(expand=True)
         self.__source_enabled = False
@@ -48,15 +52,32 @@ class BulkTransfer(ft.Container):
         self.__on_move_requested = on_move_requested
         self.__on_delete_clicked = on_delete_clicked
         self.__on_pending_reverted = on_pending_reverted
+        self.__cancel_label = cancel_label
+        self.__confirm_label = confirm_label
+        self.__delete_confirm_title = delete_confirm_title
+        self.__delete_confirm_message = delete_confirm_message
 
         self.__source_container = ComponentStyles.outlined_container(expand=True)
         self.__target_container = ComponentStyles.outlined_container(expand=True)
 
         self.__button_move = ft.IconButton(
-            icon=ft.Icons.ARROW_FORWARD, disabled=True, on_click=self.__handle_move_clicked
+            icon=ft.Icons.ARROW_FORWARD,
+            disabled=True,
+            on_click=self.__handle_move_clicked,
+            style=ButtonStyles.icon,
         )
-        self.__button_delete = ft.IconButton(icon=ft.Icons.DELETE, disabled=True, on_click=self.__handle_delete_clicked)
-        self.__button_save = ft.IconButton(icon=ft.Icons.SAVE, disabled=True, on_click=self.__handle_save_clicked)
+        self.__button_delete = ft.IconButton(
+            icon=ft.Icons.DELETE,
+            disabled=True,
+            on_click=self.__handle_delete_clicked,
+            style=ButtonStyles.icon,
+        )
+        self.__button_save = ft.IconButton(
+            icon=ft.Icons.SAVE,
+            disabled=True,
+            on_click=self.__handle_save_clicked,
+            style=ButtonStyles.icon,
+        )
 
         source_column = ft.Column(
             controls=[
@@ -64,14 +85,14 @@ class BulkTransfer(ft.Container):
                 self.__source_container,
             ],
             expand=True,
-            spacing=AppDimensions.COMPACT_SPACING,
+            spacing=AppDimensions.SPACE_XS,
         )
 
         buttons_column = ft.Column(
             controls=[self.__button_move, self.__button_delete, self.__button_save],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=AppDimensions.SMALL_SPACING,
+            spacing=AppDimensions.SPACE_MD,
         )
 
         target_column = ft.Column(
@@ -80,13 +101,13 @@ class BulkTransfer(ft.Container):
                 self.__target_container,
             ],
             expand=True,
-            spacing=AppDimensions.COMPACT_SPACING,
+            spacing=AppDimensions.SPACE_XS,
         )
 
         self.content = ft.Row(
             controls=[source_column, buttons_column, target_column],
             expand=True,
-            spacing=AppDimensions.MEDIUM_SPACING,
+            spacing=AppDimensions.SPACE_LG,
             vertical_alignment=ft.CrossAxisAlignment.STRETCH,
         )
         self.__render_source_table()
@@ -385,7 +406,9 @@ class BulkTransfer(ft.Container):
                     value=is_selected,
                     disabled=item_id not in selectable_ids,
                     on_change=(
-                        (lambda _, item_id=item_id: on_row_selected(item_id)) if item_id in selectable_ids else None
+                        (lambda _, item_id=item_id: on_row_selected(item_id))
+                        if item_id in selectable_ids
+                        else None
                     ),
                 )
             )
@@ -484,14 +507,14 @@ class BulkTransfer(ft.Container):
             self.__execute_delete(selected_ids)
 
         actions: list[ft.Control] = [
-            ft.TextButton("Cancel", on_click=lambda _: on_cancel()),
-            ft.TextButton("OK", on_click=lambda _: on_confirm()),
+            ft.TextButton(self.__cancel_label, on_click=lambda _: on_cancel(), style=ButtonStyles.compact),
+            ft.TextButton(self.__confirm_label, on_click=lambda _: on_confirm(), style=ButtonStyles.primary_compact),
         ]
 
         dialog = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Confirm"),
-            content=ft.Text("Delete selected item(s)?"),
+            title=ft.Text(self.__delete_confirm_title),
+            content=ft.Text(self.__delete_confirm_message),
             actions=actions,
         )
         BaseController.queue_dialog(page, dialog)

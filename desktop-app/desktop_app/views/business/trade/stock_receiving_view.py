@@ -69,6 +69,10 @@ class StockReceivingView(BaseView):
                 self._translation.get("name"),
                 self._translation.get("quantity"),
             ],
+            cancel_label=self._translation.get("cancel"),
+            confirm_label=self._translation.get("ok"),
+            delete_confirm_title=self._translation.get("confirm"),
+            delete_confirm_message=self._translation.get("delete_selected_items_q"),
         )
         self.__bulk_transfer.set_enabled_states(False, False, False)
 

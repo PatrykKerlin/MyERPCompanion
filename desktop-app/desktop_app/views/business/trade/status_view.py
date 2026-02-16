@@ -24,7 +24,7 @@ class StatusView(BaseView):
         main_fields_definitions = [
             {"key": "key", "input": self._get_text_input},
             {"key": "description", "input": self._get_text_input, "lines": 3},
-            {"key": "order", "input": self._get_numeric_input},
+            {"key": "order", "label": "sequence", "input": self._get_numeric_input},
         ]
         main_fields = self._build_field_groups(main_fields_definitions)
         self._add_to_inputs(main_fields)

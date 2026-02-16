@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
-from styles.dimensions import AppDimensions
+from styles import AppDimensions, ButtonStyles
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
@@ -18,67 +18,78 @@ class ToolbarComponent(BaseComponent, ft.Container):
             icon=ft.Icons.MENU,
             tooltip=translation.get("hide_menu"),
             on_click=lambda _: self._controller.on_toggle_menu_clicked(),
+            style=ButtonStyles.icon,
         )
         self.__lock_view_button = ft.IconButton(
             icon=ft.Icons.LOCK,
             tooltip=translation.get("unlock_form"),
             disabled=True,
             on_click=lambda _: self._controller.on_lock_view_clicked(),
+            style=ButtonStyles.icon,
         )
         self.__delete_record_button = ft.IconButton(
             icon=ft.Icons.DELETE,
             tooltip=translation.get("delete_record"),
             disabled=True,
             on_click=lambda _: self._controller.on_delete_clicked(),
+            style=ButtonStyles.icon,
         )
-        self.__nav_spacer = ft.Container(width=AppDimensions.MEDIUM_SPACING)
+        self.__nav_spacer = ft.Container(width=AppDimensions.SPACE_LG)
         self.__first_tab_button = ft.IconButton(
             icon=ft.Icons.FIRST_PAGE,
-            tooltip=translation.get("First tab"),
+            tooltip=translation.get("first_tab"),
             disabled=True,
             on_click=lambda _: self._controller.on_first_tab_clicked(),
+            style=ButtonStyles.icon,
         )
         self.__previous_tab_button = ft.IconButton(
             icon=ft.Icons.CHEVRON_LEFT,
-            tooltip=translation.get("Previous tab"),
+            tooltip=translation.get("previous_tab"),
             disabled=True,
             on_click=lambda _: self._controller.on_previous_tab_clicked(),
+            style=ButtonStyles.icon,
         )
         self.__search_tab_button = ft.IconButton(
             icon=ft.Icons.SEARCH,
-            tooltip=translation.get("Find tab"),
+            tooltip=translation.get("find_tab"),
             disabled=True,
             on_click=lambda _: self._controller.on_search_tab_clicked(),
+            style=ButtonStyles.icon,
         )
         self.__close_other_tabs_button = ft.IconButton(
             icon=ft.Icons.CLOSE_FULLSCREEN,
-            tooltip=translation.get("Close other tabs"),
+            tooltip=translation.get("close_other_tabs"),
             disabled=True,
             on_click=lambda _: self._controller.on_close_other_tabs_clicked(),
+            style=ButtonStyles.icon,
         )
         self.__close_all_tabs_button = ft.IconButton(
             icon=ft.Icons.CLOSE,
-            tooltip=translation.get("Close all tabs"),
+            tooltip=translation.get("close_all_tabs"),
             disabled=True,
             on_click=lambda _: self._controller.on_close_all_tabs_clicked(),
+            style=ButtonStyles.icon,
         )
         self.__next_tab_button = ft.IconButton(
             icon=ft.Icons.CHEVRON_RIGHT,
-            tooltip=translation.get("Next tab"),
+            tooltip=translation.get("next_tab"),
             disabled=True,
             on_click=lambda _: self._controller.on_next_tab_clicked(),
+            style=ButtonStyles.icon,
         )
         self.__last_tab_button = ft.IconButton(
             icon=ft.Icons.LAST_PAGE,
-            tooltip=translation.get("Last tab"),
+            tooltip=translation.get("last_tab"),
             disabled=True,
             on_click=lambda _: self._controller.on_last_tab_clicked(),
+            style=ButtonStyles.icon,
         )
         self.__refresh_button = ft.IconButton(
             icon=ft.Icons.REFRESH,
             tooltip=translation.get("refresh"),
             disabled=True,
             on_click=lambda _: self._controller.on_refresh_clicked(),
+            style=ButtonStyles.icon,
         )
         self.__user_label = ft.Text("")
         self.__pending_username: str | None = None
@@ -87,12 +98,14 @@ class ToolbarComponent(BaseComponent, ft.Container):
             tooltip=translation.get("open_user"),
             disabled=True,
             on_click=lambda _: self._controller.on_current_user_clicked(),
+            style=ButtonStyles.icon,
         )
         self.__logout_button = ft.IconButton(
             icon=ft.Icons.LOGOUT,
             tooltip=translation.get("log_out"),
             disabled=True,
             on_click=lambda _: self._controller.on_logout_clicked(),
+            style=ButtonStyles.icon,
         )
         self.__user_row = ft.Row(
             controls=[self.__user_label, self.__user_button, self.__logout_button],

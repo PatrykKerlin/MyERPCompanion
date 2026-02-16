@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
 from controllers.base.base_controller import BaseController
-from styles.dimensions import AppDimensions
+from styles import AppDimensions, ButtonStyles
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -40,7 +40,7 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
             {"key": "key", "input": self._get_text_input},
             {"key": "description", "input": self._get_text_input, "lines": 3},
             {"key": "in_side_menu", "input": self._get_checkbox, "input_size": 2},
-            {"key": "order", "input": self._get_numeric_input},
+            {"key": "order", "label": "sequence", "input": self._get_numeric_input},
         ]
         main_fields = self._build_field_groups(main_fields_definitions)
         self._add_to_inputs(main_fields)
@@ -61,16 +61,20 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
             source_columns=[
                 self._translation.get("key"),
                 self._translation.get("description"),
-                self._translation.get("order"),
+                self._translation.get("sequence"),
             ],
             target_columns=[
                 self._translation.get("key"),
                 self._translation.get("description"),
-                self._translation.get("order"),
+                self._translation.get("sequence"),
             ],
+            cancel_label=self._translation.get("cancel"),
+            confirm_label=self._translation.get("ok"),
+            delete_confirm_title=self._translation.get("confirm"),
+            delete_confirm_message=self._translation.get("delete_selected_items_q"),
         )
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
-        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT if self.__bulk_transfer.visible else 0
+        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__group_permissions: dict[int, tuple[bool, bool]] = {}
         bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
@@ -83,7 +87,7 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
             on_save_clicked=on_groups_save_clicked,
             on_delete_clicked=on_groups_delete_clicked,
             on_move_requested=self.__handle_group_move_requested,
-            height=AppDimensions.BULK_TRANSFER_HEIGHT,
+            height=AppDimensions.BULK_TRANSFER_HEIGHT_LARGE,
             visible_modes={ViewMode.READ, ViewMode.EDIT},
             target_columns=[
                 self._translation.get("key"),
@@ -96,11 +100,11 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
         self._master_column.controls.extend(
             [
                 self._columns_row,
-                ft.Row(height=AppDimensions.BASE_SPACING),
+                ft.Row(height=AppDimensions.SPACE_2XL),
                 bulk_transfer_row,
-                ft.Row(height=AppDimensions.BASE_SPACING),
+                ft.Row(height=AppDimensions.SPACE_2XL),
                 group_row,
-                ft.Row(height=AppDimensions.BASE_SPACING),
+                ft.Row(height=AppDimensions.SPACE_2XL),
                 self._buttons_row,
             ]
         )
@@ -128,7 +132,7 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
-        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT if self.__bulk_transfer.visible else 0
+        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()
         if self.__bulk_transfer.page:
@@ -171,8 +175,12 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
                 self.__group_permissions[target_id] = (can_read_value, can_modify_value)
 
         actions: list[ft.Control] = [
-            ft.TextButton(self._translation.get("cancel"), on_click=lambda _: on_cancel()),
-            ft.TextButton(self._translation.get("ok"), on_click=lambda _: on_confirm()),
+            ft.TextButton(self._translation.get("cancel"), on_click=lambda _: on_cancel(), style=ButtonStyles.compact),
+            ft.TextButton(
+                self._translation.get("ok"),
+                on_click=lambda _: on_confirm(),
+                style=ButtonStyles.primary_compact,
+            ),
         ]
 
         dialog = ft.AlertDialog(

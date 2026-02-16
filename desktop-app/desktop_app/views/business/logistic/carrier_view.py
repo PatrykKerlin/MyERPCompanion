@@ -110,7 +110,7 @@ class CarrierView(BaseView):
             columns=["id", "name", "description", "price_per_unit", "unit_id"],
             rows=delivery_methods,
             translation=self._translation,
-            height=AppDimensions.SECTION_HEIGHT,
+            height=AppDimensions.SECTION_HEIGHT_LARGE,
             on_row_clicked=lambda row: self._controller.on_table_row_clicked(row["id"]),
             on_add_clicked=self._controller.on_add_delivery_method_clicked,
             sort_by="id",

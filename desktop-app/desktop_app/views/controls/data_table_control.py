@@ -1,7 +1,7 @@
 from typing import Any, Callable
 
 import flet as ft
-from styles.dimensions import AppDimensions
+from styles import AppDimensions, ButtonStyles
 from utils.translation import Translation
 
 
@@ -68,6 +68,7 @@ class DataTable(ft.Container):
             visible=with_button,
             disabled=not with_button or read_only,
             width=AppDimensions.ICON_BUTTON_WIDTH,
+            style=ButtonStyles.icon,
         )
 
         self.content = ft.Column(

@@ -64,6 +64,10 @@ class BinTransferView(BaseView):
             on_pending_reverted=on_pending_reverted,
             source_columns=[self._translation.get("index"), self._translation.get("quantity")],
             target_columns=[self._translation.get("index"), self._translation.get("quantity")],
+            cancel_label=self._translation.get("cancel"),
+            confirm_label=self._translation.get("ok"),
+            delete_confirm_title=self._translation.get("confirm"),
+            delete_confirm_message=self._translation.get("delete_selected_items_q"),
         )
 
         inputs_row = ft.Row(

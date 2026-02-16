@@ -1,7 +1,7 @@
 import asyncio
 
 import flet as ft
-from styles.colors import AppColors
+from styles import AppColors, ButtonStyles
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 from views.controls.numeric_field_control import NumericField
@@ -29,10 +29,12 @@ class QuantityDialogComponent(BaseDialog):
         cancel_button = ft.Button(
             content=translation.get("cancel"),
             on_click=lambda _: self.__set_result(None),
+            style=ButtonStyles.compact,
         )
         confirm_button = ft.Button(
             content=translation.get("ok"),
             on_click=lambda _: self.__set_result(self.__read_quantity()),
+            style=ButtonStyles.primary_compact,
         )
         label = f"{translation.get('quantity')} ({min_value}-{max_value})"
         super().__init__(

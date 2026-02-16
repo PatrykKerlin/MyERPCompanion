@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
 from schemas.business.trade.order_view_schema import OrderViewDiscountSchema
-from styles.dimensions import AppDimensions
+from styles import AppDimensions, ControlStyles
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -86,9 +86,13 @@ class SalesOrderView(BaseView):
                 self._translation.get("category_discount"),
                 self._translation.get("discount"),
             ],
+            cancel_label=self._translation.get("cancel"),
+            confirm_label=self._translation.get("ok"),
+            delete_confirm_title=self._translation.get("confirm"),
+            delete_confirm_message=self._translation.get("delete_selected_items_q"),
         )
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
-        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT if self.__bulk_transfer.visible else 0
+        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
 
         main_fields_definitions = [
@@ -131,6 +135,7 @@ class SalesOrderView(BaseView):
             enable_search=True,
             enable_filter=True,
         )
+        self.__apply_dropdown_style(self.__customer_discount)
         self.__customer_discount_row = ft.ResponsiveRow(
             columns=12,
             controls=[
@@ -160,6 +165,7 @@ class SalesOrderView(BaseView):
             enable_search=True,
             enable_filter=True,
         )
+        self.__apply_dropdown_style(self.__category_filter)
         self.__category_filter.visible = mode in {ViewMode.READ, ViewMode.EDIT}
         self.__category_filter.disabled = mode == ViewMode.EDIT
         self.__category_filter_row = ft.Row(
@@ -186,7 +192,7 @@ class SalesOrderView(BaseView):
             columns=["status", "created_at"],
             rows=status_history,
             translation=self._translation,
-            height=AppDimensions.COMPACT_SECTION_HEIGHT,
+            height=AppDimensions.SECTION_HEIGHT_COMPACT,
             with_button=False,
             on_row_clicked=None,
             read_only=True,
@@ -195,13 +201,13 @@ class SalesOrderView(BaseView):
         self._master_column.controls.extend(
             [
                 self._columns_row,
-                ft.Row(height=AppDimensions.SMALL_SPACING),
+                ft.Row(height=AppDimensions.SPACE_MD),
                 self.__category_filter_row,
                 ft.Row(height=AppDimensions.SMALL_ROW_HEIGHT),
                 bulk_transfer_row,
                 ft.Row(height=AppDimensions.SMALL_ROW_HEIGHT),
                 self.__status_history_table,
-                ft.Row(height=AppDimensions.BASE_SPACING),
+                ft.Row(height=AppDimensions.SPACE_2XL),
                 self._buttons_row,
             ]
         )
@@ -215,7 +221,7 @@ class SalesOrderView(BaseView):
         if mode in {ViewMode.CREATE, ViewMode.EDIT}:
             self.__apply_editable_fields(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
-        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT if self.__bulk_transfer.visible else 0
+        self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()
         self.__status_history_table.visible = mode in {ViewMode.READ, ViewMode.EDIT}
@@ -557,6 +563,7 @@ class SalesOrderView(BaseView):
             enable_search=True,
             enable_filter=True,
         )
+        self.__apply_dropdown_style(dropdown)
         return dropdown
 
     def __build_item_discount_dropdown(self, item_id: int, editable: bool) -> ft.Dropdown:
@@ -572,7 +579,15 @@ class SalesOrderView(BaseView):
             enable_search=True,
             enable_filter=True,
         )
+        self.__apply_dropdown_style(dropdown)
         return dropdown
+
+    @staticmethod
+    def __apply_dropdown_style(dropdown: ft.Dropdown) -> None:
+        dropdown.border_radius = ControlStyles.DROPDOWN_BORDER_RADIUS
+        dropdown.border_color = ControlStyles.DROPDOWN_BORDER_COLOR
+        dropdown.focused_border_color = ControlStyles.DROPDOWN_FOCUSED_BORDER_COLOR
+        dropdown.content_padding = ControlStyles.DROPDOWN_PADDING
 
     def __on_item_discount_changed(self, event: ft.Event[ft.Dropdown], item_id: int) -> None:
         discount_id = self.__parse_dropdown_value(event.control.value)

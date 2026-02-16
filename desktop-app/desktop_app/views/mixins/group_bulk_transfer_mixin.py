@@ -57,6 +57,10 @@ class GroupBulkTransferMixin:
                 self._translation.get("description"),
             ],
             height=height,
+            cancel_label=self._translation.get("cancel"),
+            confirm_label=self._translation.get("ok"),
+            delete_confirm_title=self._translation.get("confirm"),
+            delete_confirm_message=self._translation.get("delete_selected_items_q"),
         )
         self._group_pending_source_rows = source_rows
         self._group_pending_target_rows = target_rows

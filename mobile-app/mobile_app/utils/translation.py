@@ -13,7 +13,7 @@ class Translation:
             "log_out": "Log out",
             "items": "Items",
             "bins": "Bins",
-            "bin_transfer": "Bin transfer",
+            "bin_transfer": "Item transfer",
             "order_picking": "Order picking",
             "stock_receiving": "Stock receiving",
         }

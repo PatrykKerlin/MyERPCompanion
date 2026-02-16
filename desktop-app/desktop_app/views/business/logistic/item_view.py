@@ -4,8 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
 from controllers.base.base_controller import BaseController
-from styles.colors import AppColors
-from styles.dimensions import AppDimensions, ItemViewDimensions
+from styles import AppColors, AppDimensions, ButtonStyles, ControlStyles, ItemViewDimensions
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -107,7 +106,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
 
         self.__image_gallery = ft.Row(
             scroll=ft.ScrollMode.AUTO,
-            spacing=AppDimensions.SMALL_SPACING,
+            spacing=AppDimensions.SPACE_MD,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
             expand=True,
         )
@@ -122,26 +121,44 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             tooltip=self._translation.get("add_image"),
             visible=False,
             width=AppDimensions.ICON_BUTTON_WIDTH,
+            style=ButtonStyles.icon,
         )
         self.__bins_table = DataTable(
             columns=["id", "location", "quantity"],
             rows=bins,
             on_row_clicked=lambda row: self._controller.on_table_row_clicked(row["id"]),
             translation=self._translation,
-            height=AppDimensions.SECTION_HEIGHT,
+            height=AppDimensions.SECTION_HEIGHT_LARGE,
             with_button=False,
         )
         self.__image_order_field = ft.TextField(
-            label=self._translation.get("order"),
+            label=self._translation.get("sequence"),
             keyboard_type=ft.KeyboardType.NUMBER,
         )
+        self.__image_order_field.border_radius = ControlStyles.TEXT_FIELD_BORDER_RADIUS
+        self.__image_order_field.border_color = ControlStyles.TEXT_FIELD_BORDER_COLOR
+        self.__image_order_field.focused_border_color = ControlStyles.TEXT_FIELD_FOCUSED_BORDER_COLOR
+        self.__image_order_field.height = ControlStyles.TEXT_FIELD_HEIGHT
+        self.__image_order_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_SINGLE
         self.__image_primary_checkbox = ft.Checkbox(
             label=self._translation.get("is_primary"),
         )
         dialog_buttons = [
-            ft.TextButton(self._translation.get("delete"), on_click=self.__on_image_delete_requested),
-            ft.TextButton(self._translation.get("cancel"), on_click=self.__on_image_edit_cancelled),
-            ft.Button(self._translation.get("save"), on_click=self.__on_image_edit_confirmed),
+            ft.TextButton(
+                self._translation.get("delete"),
+                on_click=self.__on_image_delete_requested,
+                style=ButtonStyles.compact,
+            ),
+            ft.TextButton(
+                self._translation.get("cancel"),
+                on_click=self.__on_image_edit_cancelled,
+                style=ButtonStyles.compact,
+            ),
+            ft.Button(
+                self._translation.get("save"),
+                on_click=self.__on_image_edit_confirmed,
+                style=ButtonStyles.compact,
+            ),
         ]
         self.__image_edit_dialog = ft.AlertDialog(
             title=ft.Text(self._translation.get("edit_image")),
@@ -171,13 +188,13 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             self._translation.get("item_discounts"),
             on_discount_save_clicked,
             on_discount_delete_clicked,
-            height=AppDimensions.SECTION_HEIGHT,
+            height=AppDimensions.SECTION_HEIGHT_LARGE,
         )
         bulk_transfer_row = self._build_discount_bulk_transfer_row()
         self._rows = [
             self._columns_row,
             self.__gallery_column,
-            ft.Row(height=AppDimensions.BASE_SPACING),
+            ft.Row(height=AppDimensions.SPACE_2XL),
             bulk_transfer_row,
             self._spacing_row,
             self._buttons_row,

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, TypeVar, cas
 import flet as ft
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from services.base.base_service import BaseService
-from styles.dimensions import AppDimensions
+from styles import AppDimensions, ButtonStyles, ControlStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -44,18 +44,24 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self._inputs: dict[str, FieldGroup] = {}
         self._search_disabled_fields: set[str] = set()
         self._master_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
-        self._spacing_column = ft.Column(width=AppDimensions.BASE_SPACING)
-        self._spacing_row = ft.Row(height=AppDimensions.BASE_SPACING)
-        self._spacing_responsive_row = [
-            ft.ResponsiveRow(controls=[ft.Container(content=ft.TextField(disabled=True), opacity=0.0, col={"sm": 1})])
-        ]
+        self._spacing_column = ft.Column(width=AppDimensions.SPACE_2XL)
+        self._spacing_row = ft.Row(height=AppDimensions.SPACE_2XL)
+        # Placeholder row used to keep multi-column sections vertically aligned.
+        self._spacing_responsive_row = [ft.Container(height=AppDimensions.CONTROL_HEIGHT)]
         self._columns_row = ft.Row(
             alignment=ft.MainAxisAlignment.START,
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
         self._caller_view_key = caller_view_key
+        self.__form_container = ft.Container(
+            content=self._master_column,
+            padding=ft.Padding.symmetric(
+                horizontal=AppDimensions.PADDING_FORM_HORIZONTAL,
+                vertical=AppDimensions.PADDING_FORM_VERTICAL,
+            ),
+        )
         self.__scrollable_wrapper = ft.Column(
-            controls=[self._master_column],
+            controls=[self.__form_container],
             expand=True,
             scroll=ft.ScrollMode.AUTO,
         )
@@ -68,20 +74,24 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self._cancel_button = ft.Button(
             content=self._translation.get("cancel"),
             on_click=lambda _: self._controller.on_cancel_clicked(),
+            style=ButtonStyles.regular,
         )
         self._save_button = ft.Button(
             content=self._translation.get("save"),
             on_click=lambda _: self._controller.on_save_clicked(),
             disabled=False,
+            style=ButtonStyles.primary_regular,
         )
         self._search_button = ft.Button(
             content=self._translation.get("search"),
             on_click=lambda _: self._controller.on_search_clicked(),
+            style=ButtonStyles.primary_regular,
         )
         self._buttons_row = ft.Row(
             controls=[self._search_button, self._cancel_button, self._save_button],
             alignment=ft.MainAxisAlignment.END,
             vertical_alignment=ft.CrossAxisAlignment.START,
+            spacing=AppDimensions.BUTTON_ROW_SPACING,
         )
         self._rows = [self._columns_row, self._spacing_row, self._buttons_row]
 
@@ -230,7 +240,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                     columns=total_columns,
                     controls=cast(list[ft.Control], inline_controls),
                     alignment=ft.MainAxisAlignment.START,
-                    vertical_alignment=ft.CrossAxisAlignment.START,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             ]
         return [
@@ -238,7 +248,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 columns=group.columns,
                 controls=[part for part in group],
                 alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.START,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
             )
             for group in fields.values()
         ]
@@ -251,38 +261,39 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         free_columns = columns - label_size
         id_marker_size = free_columns - id_size
         text_marker_size = free_columns - text_size
+        meta_height = AppDimensions.CONTROL_HEIGHT
         meta_fields = {
             "id": FieldGroup(
-                label=self._get_label("id", label_size),
-                input=self._get_text_input("id", id_size),
-                marker=self._get_marker("id", id_marker_size),
+                label=self._get_label("id", label_size, height=meta_height),
+                input=self._get_text_input("id", id_size, height=meta_height),
+                marker=self._get_marker("id", id_marker_size, height=meta_height),
             ),
             "created_by_username": FieldGroup(
-                label=self._get_label("created_by_username", label_size),
-                input=self._get_text_input("created_by_username", text_size),
-                marker=self._get_marker("created_by_username", text_marker_size),
+                label=self._get_label("created_by_username", label_size, height=meta_height),
+                input=self._get_text_input("created_by_username", text_size, height=meta_height),
+                marker=self._get_marker("created_by_username", text_marker_size, height=meta_height),
             ),
             "created_at": FieldGroup(
-                label=self._get_label("created_at", label_size),
-                input=self._get_text_input("created_at", text_size),
-                marker=self._get_marker("created_at", text_marker_size),
+                label=self._get_label("created_at", label_size, height=meta_height),
+                input=self._get_text_input("created_at", text_size, height=meta_height),
+                marker=self._get_marker("created_at", text_marker_size, height=meta_height),
             ),
             "modified_by_username": FieldGroup(
-                label=self._get_label("modified_by_username", label_size),
-                input=self._get_text_input("modified_by_username", text_size),
-                marker=self._get_marker("modified_by_username", text_marker_size),
+                label=self._get_label("modified_by_username", label_size, height=meta_height),
+                input=self._get_text_input("modified_by_username", text_size, height=meta_height),
+                marker=self._get_marker("modified_by_username", text_marker_size, height=meta_height),
             ),
             "modified_at": FieldGroup(
-                label=self._get_label("modified_at", label_size),
-                input=self._get_text_input("modified_at", text_size),
-                marker=self._get_marker("modified_at", text_marker_size),
+                label=self._get_label("modified_at", label_size, height=meta_height),
+                input=self._get_text_input("modified_at", text_size, height=meta_height),
+                marker=self._get_marker("modified_at", text_marker_size, height=meta_height),
             ),
         }
         self._inputs.update(meta_fields)
 
         return self._build_grid(meta_fields)
 
-    def _get_label(self, key: str, size: int, colon: bool = True) -> tuple[ft.Container, int]:
+    def _get_label(self, key: str, size: int, colon: bool = True, height: int | None = None) -> tuple[ft.Container, int]:
         text_value = self._translation.get(key)
         if colon and not text_value.endswith(":"):
             text_value = f"{text_value}:"
@@ -290,40 +301,73 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             ft.Container(
                 content=ft.Text(value=text_value),
                 col={"sm": float(size)},
-                alignment=self._base_alignment,
+                alignment=ft.Alignment.TOP_LEFT,
                 expand=True,
+                height=height,
             ),
             size,
         )
 
-    def _get_text_input(self, key: str, size: int, lines: int = 1) -> tuple[ft.Container, int]:
+    def _get_text_input(
+        self,
+        key: str,
+        size: int,
+        lines: int = 1,
+        height: int | None = None,
+    ) -> tuple[ft.Container, int]:
+        resolved_lines = lines if lines > 0 else 1
+        resolved_height = height
+        if resolved_lines > 1 and resolved_height is None:
+            resolved_height = resolved_lines * ControlStyles.TEXT_FIELD_HEIGHT
+
+        text_field = ft.TextField(
+            value="",
+            on_change=lambda event: self._controller.on_value_changed(event, key),
+            multiline=resolved_lines > 1,
+            min_lines=resolved_lines,
+            max_lines=resolved_lines,
+            expand=True,
+        )
+        text_field.border_radius = ControlStyles.TEXT_FIELD_BORDER_RADIUS
+        text_field.border_color = ControlStyles.TEXT_FIELD_BORDER_COLOR
+        text_field.focused_border_color = ControlStyles.TEXT_FIELD_FOCUSED_BORDER_COLOR
+        if resolved_lines > 1:
+            text_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_MULTILINE
+            text_field.fit_parent_size = True
+            if resolved_height is not None:
+                text_field.height = resolved_height
+        else:
+            text_field.height = resolved_height or ControlStyles.TEXT_FIELD_HEIGHT
+            text_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_SINGLE
         return (
             ft.Container(
-                content=ft.TextField(
-                    value="",
-                    on_change=lambda event: self._controller.on_value_changed(event, key),
-                    min_lines=lines,
-                    max_lines=lines,
-                    expand=True,
-                ),
+                content=text_field,
                 col={"sm": float(size)},
-                alignment=self._base_alignment,
+                alignment=ft.Alignment.TOP_LEFT if resolved_lines > 1 else self._base_alignment,
+                height=resolved_height,
             ),
             size,
         )
 
-    def _get_password_input(self, key: str, size: int) -> tuple[ft.Container, int]:
+    def _get_password_input(self, key: str, size: int, height: int | None = None) -> tuple[ft.Container, int]:
+        password_field = ft.TextField(
+            value="",
+            password=True,
+            can_reveal_password=True,
+            on_change=lambda event: self._controller.on_value_changed(event, key),
+            expand=True,
+        )
+        password_field.border_radius = ControlStyles.TEXT_FIELD_BORDER_RADIUS
+        password_field.border_color = ControlStyles.TEXT_FIELD_BORDER_COLOR
+        password_field.focused_border_color = ControlStyles.TEXT_FIELD_FOCUSED_BORDER_COLOR
+        password_field.height = height or ControlStyles.TEXT_FIELD_HEIGHT
+        password_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_SINGLE
         return (
             ft.Container(
-                content=ft.TextField(
-                    value="",
-                    password=True,
-                    can_reveal_password=True,
-                    on_change=lambda event: self._controller.on_value_changed(event, key),
-                    expand=True,
-                ),
+                content=password_field,
                 col={"sm": float(size)},
                 alignment=self._base_alignment,
+                height=height,
             ),
             size,
         )
@@ -339,21 +383,26 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         max_value: int | float | None = None,
         is_float: bool = False,
         expand: int | bool | None = True,
+        height: int | None = None,
     ) -> tuple[ft.Container, int]:
+        numeric_field = NumericField(
+            value=value,
+            step=step,
+            min_value=min_value,
+            max_value=max_value,
+            precision=precision,
+            is_float=is_float,
+            on_change=lambda event: self._controller.on_value_changed(event, key),
+            expand=expand,
+        )
+        if height is not None:
+            numeric_field.height = height
         return (
             ft.Container(
-                content=NumericField(
-                    value=value,
-                    step=step,
-                    min_value=min_value,
-                    max_value=max_value,
-                    precision=precision,
-                    is_float=is_float,
-                    on_change=lambda event: self._controller.on_value_changed(event, key),
-                    expand=expand,
-                ),
+                content=numeric_field,
                 col={"sm": float(size)},
                 alignment=self._base_alignment,
+                height=height,
             ),
             size,
         )
@@ -366,31 +415,39 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         callbacks: list[Callable[..., None]] | None = None,
         label: str | None = None,
         value: int | str | None = "0",
+        height: int | None = None,
     ) -> tuple[ft.Container, int]:
         resolved_value = "0"
         if value is not None:
             value_text = str(value).strip()
             if value_text not in {"", "0"}:
                 resolved_value = value_text
+        dropdown = ft.Dropdown(
+            options=(
+                [ft.dropdown.Option(key="0", text="")]
+                + [ft.dropdown.Option(key=str(option[0]), text=option[1]) for option in options]
+                if options
+                else []
+            ),
+            on_select=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
+            expand=True,
+            value=resolved_value,
+            label=label,
+            editable=True,
+            enable_search=True,
+            enable_filter=True,
+        )
+        dropdown.border_radius = ControlStyles.DROPDOWN_BORDER_RADIUS
+        dropdown.border_color = ControlStyles.DROPDOWN_BORDER_COLOR
+        dropdown.focused_border_color = ControlStyles.DROPDOWN_FOCUSED_BORDER_COLOR
+        dropdown.content_padding = ControlStyles.DROPDOWN_PADDING
+        dropdown.height = height or AppDimensions.CONTROL_HEIGHT
         return (
             ft.Container(
-                content=ft.Dropdown(
-                    options=(
-                        [ft.dropdown.Option(key="0", text="")]
-                        + [ft.dropdown.Option(key=str(option[0]), text=option[1]) for option in options]
-                        if options
-                        else []
-                    ),
-                    on_select=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
-                    expand=True,
-                    value=resolved_value,
-                    label=label,
-                    editable=True,
-                    enable_search=True,
-                    enable_filter=True,
-                ),
+                content=dropdown,
                 col={"sm": float(size)},
                 alignment=self._base_alignment,
+                height=height,
             ),
             size,
         )
@@ -404,19 +461,24 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         min_date: date | None = None,
         max_date: date | None = None,
         read_only: bool = True,
+        height: int | None = None,
     ) -> tuple[ft.Container, int]:
+        date_field = DateField(
+            value=value,
+            min_date=min_date,
+            max_date=max_date,
+            read_only=read_only,
+            on_change=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
+            expand=True,
+        )
+        if height is not None:
+            date_field.height = height
         return (
             ft.Container(
-                content=DateField(
-                    value=value,
-                    min_date=min_date,
-                    max_date=max_date,
-                    read_only=read_only,
-                    on_change=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
-                    expand=True,
-                ),
+                content=date_field,
                 col={"sm": float(size)},
                 alignment=self._base_alignment,
+                height=height,
             ),
             size,
         )
@@ -427,12 +489,14 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         size: int,
         options: list[tuple[str, str]],
         default: str | None = None,
+        height: int | None = None,
     ) -> tuple[ft.Container, int]:
+        radios = [ft.Radio(value=value, label=label) for value, label in options]
         return (
             ft.Container(
                 content=ft.RadioGroup(
                     content=ft.Row(
-                        controls=[ft.Radio(value=value, label=label) for value, label in options],
+                        controls=radios,
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         expand=True,
@@ -444,39 +508,68 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 col={"sm": float(size)},
                 alignment=self._base_alignment,
                 expand=True,
+                height=height,
             ),
             size,
         )
 
-    def _get_checkbox(self, key: str, size: int, value: bool | None = None) -> tuple[ft.Container, int]:
+    def _get_checkbox(
+        self,
+        key: str,
+        size: int,
+        value: bool | None = None,
+        height: int | None = None,
+    ) -> tuple[ft.Container, int]:
+        checkbox = ft.Checkbox(
+            on_change=lambda event, key=key: self._controller.on_value_changed(event, key),
+            animate_size=AppDimensions.ANIMATION_DURATION_MS,
+            value=value,
+            shape=ft.CircleBorder(),
+        )
         return (
             ft.Container(
-                content=ft.Checkbox(
-                    on_change=lambda event, key=key: self._controller.on_value_changed(event, key),
-                    animate_size=AppDimensions.ANIMATION_DURATION_MS,
-                    value=value,
-                    shape=ft.CircleBorder(),
-                ),
+                content=checkbox,
                 col={"sm": float(size)},
                 alignment=self._base_alignment,
+                height=height,
             ),
             size,
         )
 
-    def _get_marker(self, key: str, size: int) -> tuple[ft.Container, int]:
+    def _get_marker(self, key: str, size: int, height: int | None = None) -> tuple[ft.Container, int]:
+        marker = ft.Checkbox(
+            on_change=lambda event, key=key: self._controller.on_marker_clicked(event, key),
+            tooltip=self._translation.get("check_to_search"),
+            animate_size=AppDimensions.ANIMATION_DURATION_MS,
+            value=False,
+        )
         return (
             ft.Container(
-                content=ft.Checkbox(
-                    on_change=lambda event, key=key: self._controller.on_marker_clicked(event, key),
-                    tooltip=self._translation.get("check_to_search"),
-                    animate_size=AppDimensions.ANIMATION_DURATION_MS,
-                    value=False,
-                ),
+                content=marker,
                 col={"sm": float(size)},
-                alignment=self._base_alignment,
+                alignment=ft.Alignment.TOP_LEFT,
+                height=height,
             ),
             size,
         )
+
+    def __resolve_field_height(self, input_factory: Callable[..., Any], kwargs: dict[str, Any]) -> int | None:
+        input_name = getattr(input_factory, "__name__", "")
+        if input_name == "_get_text_input":
+            raw_lines = kwargs.get("lines", 1)
+            lines = int(raw_lines) if isinstance(raw_lines, int) and raw_lines > 0 else 1
+            # Match stacked single-line fields: control heights + inter-row gaps.
+            return (lines * ControlStyles.TEXT_FIELD_HEIGHT) + ((lines - 1) * AppDimensions.SPACE_MD)
+        if input_name in {
+            "_get_password_input",
+            "_get_numeric_input",
+            "_get_dropdown",
+            "_get_date_picker",
+            "_get_radio_group",
+            "_get_checkbox",
+        }:
+            return ControlStyles.TEXT_FIELD_HEIGHT
+        return None
 
     def __build_field_group(
         self,
@@ -498,11 +591,17 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             raise ValueError(
                 f"Invalid layout sizes: columns={columns}, " f"label_size={label_size}, input_size={input_size}"
             )
+        field_height = self.__resolve_field_height(input, kwargs)
 
         return FieldGroup(
-            label=self._get_label(key=label if label is not None else key, size=label_size, colon=colon),
-            input=input(key, size=input_size, **kwargs),
-            marker=self._get_marker(key, size=marker_size),
+            label=self._get_label(
+                key=label if label is not None else key,
+                size=label_size,
+                colon=colon,
+                height=field_height,
+            ),
+            input=input(key, size=input_size, height=field_height, **kwargs),
+            marker=self._get_marker(key, size=marker_size, height=field_height),
         )
 
     def __toggle_search_results(self) -> None:
@@ -516,7 +615,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             self.__scrollable_wrapper.controls.append(search_results)
         elif self._mode == ViewMode.SEARCH:
             self.__scrollable_wrapper.controls.clear()
-            self.__scrollable_wrapper.controls.append(self._master_column)
+            self.__scrollable_wrapper.controls.append(self.__form_container)
         self.__scrollable_wrapper.update()
 
     def __set_search_mode(self) -> None:

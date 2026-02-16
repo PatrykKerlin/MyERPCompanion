@@ -1,7 +1,7 @@
 import asyncio
 
 import flet as ft
-from styles.colors import AppColors
+from styles import AppColors, ButtonStyles
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 
@@ -12,10 +12,12 @@ class ConfirmDialogComponent(BaseDialog):
         cancel_button = ft.Button(
             content=translation.get("cancel"),
             on_click=lambda _: self.__set_result(False),
+            style=ButtonStyles.compact,
         )
         confirm_button = ft.Button(
             content=translation.get("ok"),
             on_click=lambda _: self.__set_result(True),
+            style=ButtonStyles.primary_compact,
         )
         super().__init__(
             controls=[ft.Text(translation.get(message_key))],

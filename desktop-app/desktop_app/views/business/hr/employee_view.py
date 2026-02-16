@@ -145,7 +145,7 @@ class EmployeeView(BaseView, UserLinkViewMixin):
             columns=["id", "first_name", "last_name"],
             rows=subordinate_rows,
             translation=self._translation,
-            height=AppDimensions.SUBSECTION_HEIGHT,
+            height=AppDimensions.SECTION_HEIGHT_REGULAR,
             with_button=False,
         )
         employment_grid = self._build_grid(employment_fields)

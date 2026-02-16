@@ -114,7 +114,7 @@ class UserView(BaseView, GroupBulkTransferMixin):
                 target_label=self._translation.get("user_groups"),
                 on_save_clicked=on_groups_save_clicked,
                 on_delete_clicked=on_groups_delete_clicked,
-                height=AppDimensions.BULK_TRANSFER_HEIGHT,
+                height=AppDimensions.BULK_TRANSFER_HEIGHT_LARGE,
                 visible_modes={ViewMode.READ, ViewMode.EDIT},
             )
             group_row = self._build_group_bulk_transfer_row()
@@ -124,9 +124,9 @@ class UserView(BaseView, GroupBulkTransferMixin):
         if group_row is not None:
             self._rows.extend(
                 [
-                    ft.Row(height=AppDimensions.BASE_SPACING),
+                    ft.Row(height=AppDimensions.SPACE_2XL),
                     group_row,
-                    ft.Row(height=AppDimensions.BASE_SPACING),
+                    ft.Row(height=AppDimensions.SPACE_2XL),
                 ]
             )
         self._rows.append(self._buttons_row)

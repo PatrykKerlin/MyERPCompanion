@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from typing import Callable, cast
 
 import flet as ft
-from styles.dimensions import AppDimensions
+from styles import AppDimensions, ButtonStyles, ControlStyles
 from views.base.base_component import BaseComponent
 
 
@@ -24,7 +24,7 @@ class DateField(ft.Row):
             vertical_alignment=ft.CrossAxisAlignment.START,
             width=width,
             expand=expand,
-            spacing=AppDimensions.COMPACT_SPACING,
+            spacing=AppDimensions.SPACE_XS,
         )
         self.__on_change = on_change
         self.__format = date_format
@@ -39,6 +39,11 @@ class DateField(ft.Row):
             expand=True,
             text_align=ft.TextAlign.CENTER,
         )
+        self.__text_field.border_radius = ControlStyles.TEXT_FIELD_BORDER_RADIUS
+        self.__text_field.border_color = ControlStyles.TEXT_FIELD_BORDER_COLOR
+        self.__text_field.focused_border_color = ControlStyles.TEXT_FIELD_FOCUSED_BORDER_COLOR
+        self.__text_field.height = ControlStyles.TEXT_FIELD_HEIGHT
+        self.__text_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_SINGLE
 
         self.__picker = ft.DatePicker(on_change=self.__handle_picker_change)
         if self.__min is not None:
@@ -53,12 +58,14 @@ class DateField(ft.Row):
             on_click=self.__open_picker,
             disabled=self.__read_only,
             width=AppDimensions.ICON_BUTTON_WIDTH,
+            style=ButtonStyles.icon,
         )
         self.__clear_button = ft.IconButton(
             icon=ft.Icons.CLEAR,
             on_click=self.__clear_date,
             disabled=self.__read_only or self.__value is None,
             width=AppDimensions.ICON_BUTTON_WIDTH,
+            style=ButtonStyles.icon,
         )
 
         self.controls = [

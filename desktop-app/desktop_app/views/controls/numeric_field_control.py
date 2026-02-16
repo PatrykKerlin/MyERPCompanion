@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from typing import Callable, cast
 
 import flet as ft
-from styles.dimensions import AppDimensions
+from styles import AppDimensions, ButtonStyles, ControlStyles
 
 
 class NumericField(ft.Row):
@@ -23,7 +23,7 @@ class NumericField(ft.Row):
             alignment=ft.MainAxisAlignment.START,
             vertical_alignment=ft.CrossAxisAlignment.START,
             expand=expand,
-            spacing=AppDimensions.TIGHT_SPACING,
+            spacing=AppDimensions.SPACE_2XS,
         )
         self.__precision = precision
         self.__on_change = on_change
@@ -48,18 +48,25 @@ class NumericField(ft.Row):
             on_change=self.__handle_text_change,
             read_only=self.__read_only,
         )
+        self.__text_field.border_radius = ControlStyles.TEXT_FIELD_BORDER_RADIUS
+        self.__text_field.border_color = ControlStyles.TEXT_FIELD_BORDER_COLOR
+        self.__text_field.focused_border_color = ControlStyles.TEXT_FIELD_FOCUSED_BORDER_COLOR
+        self.__text_field.height = ControlStyles.TEXT_FIELD_HEIGHT
+        self.__text_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_SINGLE
 
         self.__decrement_button = ft.IconButton(
             icon=ft.Icons.REMOVE,
             on_click=self.__decrement,
             disabled=self.__read_only,
             width=AppDimensions.ICON_BUTTON_WIDTH,
+            style=ButtonStyles.icon,
         )
         self.__increment_button = ft.IconButton(
             icon=ft.Icons.ADD,
             on_click=self.__increment,
             disabled=self.__read_only,
             width=AppDimensions.ICON_BUTTON_WIDTH,
+            style=ButtonStyles.icon,
         )
 
         self.controls = [

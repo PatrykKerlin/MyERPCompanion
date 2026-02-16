@@ -18,7 +18,7 @@ VALUES
 ('units', 'Units view', 5, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('categories', 'Categories view', 6, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('items', 'Items view', 7, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('bin_transfer', 'Bin transfer view', 8, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('bin_transfer', 'Item transfer between bins view', 8, 6, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('discounts', 'Discounts view', 1, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('customers', 'Customers view', 2, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('sales_orders', 'Sales orders view', 3, 7, TRUE, CURRENT_TIMESTAMP, :superuser_id),

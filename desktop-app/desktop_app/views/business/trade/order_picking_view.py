@@ -4,7 +4,7 @@ from datetime import date
 from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
-from styles import AppDimensions
+from styles import AppDimensions, ButtonStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -99,6 +99,10 @@ class OrderPickingView(BaseView):
                 self._translation.get("source_bin"),
                 self._translation.get("quantity"),
             ],
+            cancel_label=self._translation.get("cancel"),
+            confirm_label=self._translation.get("ok"),
+            delete_confirm_title=self._translation.get("confirm"),
+            delete_confirm_message=self._translation.get("delete_selected_items_q"),
         )
         self.__item_bulk_transfer.set_enabled_states(False, False, False)
 
@@ -120,12 +124,17 @@ class OrderPickingView(BaseView):
                 self._translation.get("source_bin"),
                 self._translation.get("quantity"),
             ],
+            cancel_label=self._translation.get("cancel"),
+            confirm_label=self._translation.get("ok"),
+            delete_confirm_title=self._translation.get("confirm"),
+            delete_confirm_message=self._translation.get("delete_selected_items_q"),
         )
         self.__package_bulk_transfer.set_enabled_states(False, False, False)
         self.__complete_button = ft.Button(
             content=self._translation.get("confirm"),
             on_click=lambda _: self._controller.on_complete_status_clicked(),
             disabled=True,
+            style=ButtonStyles.regular,
         )
         complete_row = ft.Row(
             controls=[self.__complete_button],
@@ -135,8 +144,8 @@ class OrderPickingView(BaseView):
 
         inputs_row = ft.ResponsiveRow(
             columns=12,
-            spacing=AppDimensions.FIELD_ROW_SPACING,
-            run_spacing=AppDimensions.FIELD_ROW_SPACING,
+            spacing=AppDimensions.SPACE_SM,
+            run_spacing=AppDimensions.SPACE_SM,
             controls=[
                 order_date_container,
                 customer_container,

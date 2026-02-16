@@ -47,6 +47,10 @@ class DiscountBulkTransferMixin:
             source_columns=[self._translation.get("code")],
             target_columns=[self._translation.get("code")],
             height=height,
+            cancel_label=self._translation.get("cancel"),
+            confirm_label=self._translation.get("ok"),
+            delete_confirm_title=self._translation.get("confirm"),
+            delete_confirm_message=self._translation.get("delete_selected_items_q"),
         )
         self._discount_pending_source_items = source_items
         self._discount_pending_target_items = target_items

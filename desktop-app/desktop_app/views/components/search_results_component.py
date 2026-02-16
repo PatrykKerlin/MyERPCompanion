@@ -4,6 +4,7 @@ from math import ceil
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
+from styles import ButtonStyles, ControlStyles
 from utils.translation import Translation
 from views.base.base_component import BaseComponent
 
@@ -68,11 +69,13 @@ class SearchResultsComponent(BaseComponent, ft.Column):
             icon=ft.Icons.ARROW_LEFT,
             on_click=lambda _: self._controller.on_page_clicked("prev"),
             disabled=not self._controller.search_params.has_prev,
+            style=ButtonStyles.icon,
         )
         next_button = ft.IconButton(
             icon=ft.Icons.ARROW_RIGHT,
             on_click=lambda _: self._controller.on_page_clicked("next"),
             disabled=not self._controller.search_params.has_next,
+            style=ButtonStyles.icon,
         )
 
         total_pages = 1
@@ -98,10 +101,15 @@ class SearchResultsComponent(BaseComponent, ft.Column):
             enable_search=True,
             enable_filter=True,
         )
+        page_size_dropdown.border_radius = ControlStyles.DROPDOWN_BORDER_RADIUS
+        page_size_dropdown.border_color = ControlStyles.DROPDOWN_BORDER_COLOR
+        page_size_dropdown.focused_border_color = ControlStyles.DROPDOWN_FOCUSED_BORDER_COLOR
+        page_size_dropdown.content_padding = ControlStyles.DROPDOWN_PADDING
 
         back_button = ft.Button(
             content=self._translation.get("back"),
             on_click=lambda _: self._controller.on_back_clicked(),
+            style=ButtonStyles.regular,
         )
 
         return ft.Row(

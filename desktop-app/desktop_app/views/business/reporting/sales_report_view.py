@@ -4,7 +4,7 @@ from datetime import date
 from typing import TYPE_CHECKING, cast
 
 import flet as ft
-from styles import AppDimensions
+from styles import AppDimensions, ButtonStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -85,8 +85,8 @@ class SalesReportView(BaseView):
 
         self.__totals_row = ft.ResponsiveRow(
             columns=14,
-            spacing=AppDimensions.FIELD_ROW_SPACING,
-            run_spacing=AppDimensions.FIELD_ROW_SPACING,
+            spacing=AppDimensions.SPACE_SM,
+            run_spacing=AppDimensions.SPACE_SM,
             controls=[],
         )
         self.__category_chart_container = ft.Container(expand=True, alignment=ft.Alignment.CENTER)
@@ -133,10 +133,12 @@ class SalesReportView(BaseView):
                 item_id=self.__item_input.value,
                 category_id=self.__category_input.value,
             ),
+            style=ButtonStyles.regular,
         )
         clear_button = ft.TextButton(
             self._translation.get("clear_filters"),
             on_click=lambda _: self._controller.on_clear_filters_clicked(),
+            style=ButtonStyles.compact,
         )
 
         filters = ft.ResponsiveRow(
@@ -160,7 +162,7 @@ class SalesReportView(BaseView):
 
         charts = ft.Row(
             expand=True,
-            spacing=AppDimensions.MEDIUM_SPACING,
+            spacing=AppDimensions.SPACE_LG,
             controls=[
                 ft.Container(expand=1, content=self.__category_chart_container),
                 ft.Container(expand=1, content=self.__daily_chart_container),
@@ -268,6 +270,7 @@ class SalesReportView(BaseView):
                 ft.TextButton(
                     self._translation.get("close"),
                     on_click=lambda _: self._controller._page.pop_dialog(),
+                    style=ButtonStyles.compact,
                 ),
             ],
             actions_alignment=ft.MainAxisAlignment.END,

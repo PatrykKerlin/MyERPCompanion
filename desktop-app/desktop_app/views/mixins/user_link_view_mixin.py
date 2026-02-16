@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Callable, cast
 
 import flet as ft
-from styles import AppDimensions
+from styles import AppDimensions, ButtonStyles
 from utils.enums import ViewMode
 from utils.field_group import FieldGroup
 
@@ -22,9 +22,12 @@ class UserLinkViewMixin:
         callbacks: list[Callable[..., None]] | None = None,
         label: str | None = None,
         value: int | str | None = "0",
+        height: int | None = None,
     ) -> tuple[ft.Container, int]: ...
-    def _get_label(self, key: str, size: int) -> tuple[ft.Container, int]: ...
-    def _get_marker(self, key: str, size: int) -> tuple[ft.Container, int]: ...
+    def _get_label(
+        self, key: str, size: int, colon: bool = True, height: int | None = None
+    ) -> tuple[ft.Container, int]: ...
+    def _get_marker(self, key: str, size: int, height: int | None = None) -> tuple[ft.Container, int]: ...
 
     def _init_user_link_field(
         self,
@@ -40,6 +43,7 @@ class UserLinkViewMixin:
         self._user_button = ft.IconButton(
             icon=ft.Icons.PERSON_ADD,
             on_click=on_add_user_clicked,
+            style=ButtonStyles.icon,
         )
         user_input = ft.Container(
             content=ft.Row(
@@ -47,10 +51,11 @@ class UserLinkViewMixin:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 expand=True,
-                spacing=AppDimensions.FIELD_ROW_SPACING,
+                spacing=AppDimensions.SPACE_SM,
             ),
             col={"sm": float(size)},
             alignment=self._base_alignment,
+            height=AppDimensions.CONTROL_HEIGHT,
         )
         user_field = {
             "user_id": FieldGroup(
