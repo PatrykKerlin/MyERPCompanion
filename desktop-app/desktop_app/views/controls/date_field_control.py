@@ -3,7 +3,8 @@ from types import SimpleNamespace
 from typing import Callable, cast
 
 import flet as ft
-from styles import AppDimensions, ButtonStyles, ControlStyles
+from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ButtonStyles, ControlStyles
 from views.base.base_component import BaseComponent
 
 
@@ -14,14 +15,17 @@ class DateField(ft.Row):
         min_date: date | None = None,
         max_date: date | None = None,
         date_format: str = "%Y-%m-%d",
+        height: int | float | None = None,
         width: float | None = None,
         expand: int | bool | None = None,
         read_only: bool = True,
         on_change: Callable[[ft.ControlEvent], None] | None = None,
     ) -> None:
+        resolved_height = height or ControlStyles.TEXT_FIELD_HEIGHT
         super().__init__(
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
+            height=resolved_height,
             width=width,
             expand=expand,
             spacing=AppDimensions.SPACE_XS,
@@ -38,12 +42,12 @@ class DateField(ft.Row):
             read_only=True,
             expand=True,
             text_align=ft.TextAlign.CENTER,
+            height=resolved_height,
+            border_radius=ControlStyles.FIELD_BORDER_RADIUS,
+            border_color=ControlStyles.FIELD_BORDER_COLOR,
+            focused_border_color=ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
+            content_padding=ControlStyles.FIELD_PADDING,
         )
-        self.__text_field.border_radius = ControlStyles.TEXT_FIELD_BORDER_RADIUS
-        self.__text_field.border_color = ControlStyles.TEXT_FIELD_BORDER_COLOR
-        self.__text_field.focused_border_color = ControlStyles.TEXT_FIELD_FOCUSED_BORDER_COLOR
-        self.__text_field.height = ControlStyles.TEXT_FIELD_HEIGHT
-        self.__text_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_SINGLE
 
         self.__picker = ft.DatePicker(on_change=self.__handle_picker_change)
         if self.__min is not None:
@@ -70,9 +74,9 @@ class DateField(ft.Row):
 
         self.controls = [
             self.__picker,
-            ft.Container(content=self.__open_button, alignment=ft.Alignment.TOP_CENTER),
+            ft.Container(content=self.__open_button, alignment=AlignmentStyles.TOP_CENTER),
             self.__text_field,
-            ft.Container(content=self.__clear_button, alignment=ft.Alignment.TOP_CENTER),
+            ft.Container(content=self.__clear_button, alignment=AlignmentStyles.TOP_CENTER),
         ]
 
     @property

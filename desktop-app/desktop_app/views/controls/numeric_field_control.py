@@ -3,7 +3,8 @@ from types import SimpleNamespace
 from typing import Callable, cast
 
 import flet as ft
-from styles import AppDimensions, ButtonStyles, ControlStyles
+from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ButtonStyles, ControlStyles
 
 
 class NumericField(ft.Row):
@@ -18,11 +19,22 @@ class NumericField(ft.Row):
         expand: int | bool | None = None,
         read_only: bool = True,
         on_change: Callable[[ft.ControlEvent], None] | None = None,
+        height: int | float | None = None,
+        border_radius: int | float | ft.BorderRadius | None = None,
+        border_color: ft.ColorValue | None = None,
+        focused_border_color: ft.ColorValue | None = None,
+        content_padding: ft.Padding | None = None,
     ) -> None:
+        resolved_height = height or ControlStyles.TEXT_FIELD_HEIGHT
+        resolved_border_radius = border_radius or ControlStyles.FIELD_BORDER_RADIUS
+        resolved_border_color = border_color or ControlStyles.FIELD_BORDER_COLOR
+        resolved_focused_border_color = focused_border_color or ControlStyles.FIELD_FOCUSED_BORDER_COLOR
+        resolved_content_padding = content_padding or ControlStyles.FIELD_PADDING
         super().__init__(
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
             expand=expand,
+            height=resolved_height,
             spacing=AppDimensions.SPACE_2XS,
         )
         self.__precision = precision
@@ -47,12 +59,12 @@ class NumericField(ft.Row):
             expand=True,
             on_change=self.__handle_text_change,
             read_only=self.__read_only,
+            height=resolved_height,
+            border_radius=resolved_border_radius,
+            border_color=resolved_border_color,
+            focused_border_color=resolved_focused_border_color,
+            content_padding=resolved_content_padding,
         )
-        self.__text_field.border_radius = ControlStyles.TEXT_FIELD_BORDER_RADIUS
-        self.__text_field.border_color = ControlStyles.TEXT_FIELD_BORDER_COLOR
-        self.__text_field.focused_border_color = ControlStyles.TEXT_FIELD_FOCUSED_BORDER_COLOR
-        self.__text_field.height = ControlStyles.TEXT_FIELD_HEIGHT
-        self.__text_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_SINGLE
 
         self.__decrement_button = ft.IconButton(
             icon=ft.Icons.REMOVE,
@@ -70,9 +82,9 @@ class NumericField(ft.Row):
         )
 
         self.controls = [
-            ft.Container(content=self.__decrement_button, alignment=ft.Alignment.TOP_CENTER),
+            ft.Container(content=self.__decrement_button, alignment=AlignmentStyles.TOP_CENTER),
             self.__text_field,
-            ft.Container(content=self.__increment_button, alignment=ft.Alignment.TOP_CENTER),
+            ft.Container(content=self.__increment_button, alignment=AlignmentStyles.TOP_CENTER),
         ]
 
     @property

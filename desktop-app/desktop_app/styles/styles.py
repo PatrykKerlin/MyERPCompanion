@@ -45,32 +45,42 @@ class ButtonStyles:
     )
 
 
-class ControlStyles:
-    TEXT_FIELD_BORDER_RADIUS = AppDimensions.RADIUS_MD
-    TEXT_FIELD_BORDER_COLOR: ft.ColorValue = AppColors.OUTLINE
-    TEXT_FIELD_FOCUSED_BORDER_COLOR: ft.ColorValue = AppColors.PRIMARY
-    TEXT_FIELD_HEIGHT = AppDimensions.CONTROL_HEIGHT
-    TEXT_FIELD_PADDING_SINGLE = ft.Padding.symmetric(
-        horizontal=AppDimensions.PADDING_INPUT_HORIZONTAL,
-        vertical=AppDimensions.PADDING_INPUT_VERTICAL,
-    )
-    TEXT_FIELD_PADDING_MULTILINE = ft.Padding.symmetric(
-        horizontal=AppDimensions.PADDING_INPUT_HORIZONTAL,
-        vertical=AppDimensions.PADDING_INPUT_VERTICAL,
-    )
+class AlignmentStyles:
+    CENTER = ft.Alignment.CENTER
+    CENTER_LEFT = ft.Alignment.CENTER_LEFT
+    TOP_LEFT = ft.Alignment.TOP_LEFT
+    TOP_CENTER = ft.Alignment.TOP_CENTER
 
-    DROPDOWN_BORDER_RADIUS = AppDimensions.RADIUS_MD
-    DROPDOWN_BORDER_COLOR: ft.ColorValue = AppColors.OUTLINE
-    DROPDOWN_FOCUSED_BORDER_COLOR: ft.ColorValue = AppColors.PRIMARY
-    DROPDOWN_PADDING = ft.Padding.symmetric(
+    AXIS_START = ft.MainAxisAlignment.START
+    AXIS_END = ft.MainAxisAlignment.END
+    AXIS_CENTER = ft.MainAxisAlignment.CENTER
+    AXIS_SPACE_BETWEEN = ft.MainAxisAlignment.SPACE_BETWEEN
+
+    CROSS_START = ft.CrossAxisAlignment.START
+    CROSS_CENTER = ft.CrossAxisAlignment.CENTER
+    CROSS_STRETCH = ft.CrossAxisAlignment.STRETCH
+
+
+class ControlStyles:
+    INPUT_ALIGNMENT = AlignmentStyles.CENTER_LEFT
+    LABEL_ALIGNMENT = AlignmentStyles.TOP_LEFT
+    MARKER_ALIGNMENT = AlignmentStyles.TOP_LEFT
+    FIELD_BORDER_RADIUS = AppDimensions.RADIUS_MD
+    FIELD_BORDER_COLOR: ft.ColorValue = AppColors.OUTLINE
+    FIELD_FOCUSED_BORDER_COLOR: ft.ColorValue = AppColors.PRIMARY
+    FIELD_BORDER = ft.Border.all(1, AppColors.OUTLINE)
+    FIELD_BORDER_SIDE = ft.BorderSide(width=1, color=AppColors.OUTLINE)
+    TEXT_FIELD_HEIGHT = AppDimensions.CONTROL_HEIGHT
+    FIELD_PADDING = ft.Padding.symmetric(
         horizontal=AppDimensions.PADDING_INPUT_HORIZONTAL,
         vertical=AppDimensions.PADDING_INPUT_VERTICAL,
     )
+    DISABLED_CONTENT_OPACITY = 0.5
 
 
 class MenuStyles:
     flat = ft.MenuStyle(
         elevation=0,
         bgcolor=AppColors.SURFACE,
-        alignment=ft.Alignment.TOP_LEFT,
+        alignment=AlignmentStyles.TOP_LEFT,
     )

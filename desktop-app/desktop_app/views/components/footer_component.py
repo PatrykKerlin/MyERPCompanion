@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
+from styles.styles import AlignmentStyles
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
@@ -31,7 +32,7 @@ class FooterComponent(BaseComponent, ft.Container):
             self,
             content=ft.Row(
                 controls=[self.__status_row, ft.Container(expand=True), self.timestamp],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                alignment=AlignmentStyles.AXIS_SPACE_BETWEEN,
             ),
             expand=False,
         )

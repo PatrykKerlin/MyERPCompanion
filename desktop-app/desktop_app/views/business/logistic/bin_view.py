@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
-from styles import AppDimensions
+from styles.dimensions import AppDimensions
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView

@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
 from schemas.business.trade.order_view_schema import OrderViewDiscountSchema
-from styles import AppDimensions, ControlStyles
+from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ControlStyles
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -143,11 +144,11 @@ class SalesOrderView(BaseView):
                 ft.Container(
                     content=self.__customer_discount,
                     col={"sm": 8.0},
-                    alignment=self._base_alignment,
+                    alignment=ControlStyles.INPUT_ALIGNMENT,
                 ),
             ],
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
         )
         self.__customer_discount_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
         self.__customer_discount.disabled = not self.__is_customer_discount_editable(mode)
@@ -173,8 +174,8 @@ class SalesOrderView(BaseView):
                 ft.Text(self._translation.get("category")),
                 self.__category_filter,
             ],
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_CENTER,
         )
         self.__category_filter_row.visible = self.__category_filter.visible
 
@@ -584,10 +585,10 @@ class SalesOrderView(BaseView):
 
     @staticmethod
     def __apply_dropdown_style(dropdown: ft.Dropdown) -> None:
-        dropdown.border_radius = ControlStyles.DROPDOWN_BORDER_RADIUS
-        dropdown.border_color = ControlStyles.DROPDOWN_BORDER_COLOR
-        dropdown.focused_border_color = ControlStyles.DROPDOWN_FOCUSED_BORDER_COLOR
-        dropdown.content_padding = ControlStyles.DROPDOWN_PADDING
+        dropdown.border_radius = ControlStyles.FIELD_BORDER_RADIUS
+        dropdown.border_color = ControlStyles.FIELD_BORDER_COLOR
+        dropdown.focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR
+        dropdown.content_padding = ControlStyles.FIELD_PADDING
 
     def __on_item_discount_changed(self, event: ft.Event[ft.Dropdown], item_id: int) -> None:
         discount_id = self.__parse_dropdown_value(event.control.value)

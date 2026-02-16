@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, TypeVar, cas
 import flet as ft
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from services.base.base_service import BaseService
-from styles import AppDimensions, ButtonStyles, ControlStyles
+from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ButtonStyles, ControlStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -40,17 +41,15 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self._mode = mode
         self._view_key = view_key
         self._data_row = data_row
-        self._base_alignment = ft.Alignment.CENTER_LEFT
         self._inputs: dict[str, FieldGroup] = {}
         self._search_disabled_fields: set[str] = set()
         self._master_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
         self._spacing_column = ft.Column(width=AppDimensions.SPACE_2XL)
         self._spacing_row = ft.Row(height=AppDimensions.SPACE_2XL)
-        # Placeholder row used to keep multi-column sections vertically aligned.
         self._spacing_responsive_row = [ft.Container(height=AppDimensions.CONTROL_HEIGHT)]
         self._columns_row = ft.Row(
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
         )
         self._caller_view_key = caller_view_key
         self.__form_container = ft.Container(
@@ -89,8 +88,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         )
         self._buttons_row = ft.Row(
             controls=[self._search_button, self._cancel_button, self._save_button],
-            alignment=ft.MainAxisAlignment.END,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            alignment=AlignmentStyles.AXIS_END,
+            vertical_alignment=AlignmentStyles.CROSS_START,
             spacing=AppDimensions.BUTTON_ROW_SPACING,
         )
         self._rows = [self._columns_row, self._spacing_row, self._buttons_row]
@@ -153,8 +152,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         self.__set_buttons()
 
     def set_input_state(self, input: ft.Control, enable: bool) -> None:
-        if hasattr(input, "disabled"):
-            setattr(input, "disabled", not enable)
+        self.__set_disabled_state(input, not enable)
         if hasattr(input, "read_only"):
             setattr(input, "read_only", not enable)
         input.update()
@@ -239,16 +237,16 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 ft.ResponsiveRow(
                     columns=total_columns,
                     controls=cast(list[ft.Control], inline_controls),
-                    alignment=ft.MainAxisAlignment.START,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    alignment=AlignmentStyles.AXIS_START,
+                    vertical_alignment=AlignmentStyles.CROSS_CENTER,
                 )
             ]
         return [
             ft.ResponsiveRow(
                 columns=group.columns,
                 controls=[part for part in group],
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                alignment=AlignmentStyles.AXIS_START,
+                vertical_alignment=AlignmentStyles.CROSS_CENTER,
             )
             for group in fields.values()
         ]
@@ -261,39 +259,38 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         free_columns = columns - label_size
         id_marker_size = free_columns - id_size
         text_marker_size = free_columns - text_size
-        meta_height = AppDimensions.CONTROL_HEIGHT
         meta_fields = {
             "id": FieldGroup(
-                label=self._get_label("id", label_size, height=meta_height),
-                input=self._get_text_input("id", id_size, height=meta_height),
-                marker=self._get_marker("id", id_marker_size, height=meta_height),
+                label=self._get_label("id", label_size),
+                input=self._get_text_input("id", id_size),
+                marker=self._get_marker("id", id_marker_size),
             ),
             "created_by_username": FieldGroup(
-                label=self._get_label("created_by_username", label_size, height=meta_height),
-                input=self._get_text_input("created_by_username", text_size, height=meta_height),
-                marker=self._get_marker("created_by_username", text_marker_size, height=meta_height),
+                label=self._get_label("created_by_username", label_size),
+                input=self._get_text_input("created_by_username", text_size),
+                marker=self._get_marker("created_by_username", text_marker_size),
             ),
             "created_at": FieldGroup(
-                label=self._get_label("created_at", label_size, height=meta_height),
-                input=self._get_text_input("created_at", text_size, height=meta_height),
-                marker=self._get_marker("created_at", text_marker_size, height=meta_height),
+                label=self._get_label("created_at", label_size),
+                input=self._get_text_input("created_at", text_size),
+                marker=self._get_marker("created_at", text_marker_size),
             ),
             "modified_by_username": FieldGroup(
-                label=self._get_label("modified_by_username", label_size, height=meta_height),
-                input=self._get_text_input("modified_by_username", text_size, height=meta_height),
-                marker=self._get_marker("modified_by_username", text_marker_size, height=meta_height),
+                label=self._get_label("modified_by_username", label_size),
+                input=self._get_text_input("modified_by_username", text_size),
+                marker=self._get_marker("modified_by_username", text_marker_size),
             ),
             "modified_at": FieldGroup(
-                label=self._get_label("modified_at", label_size, height=meta_height),
-                input=self._get_text_input("modified_at", text_size, height=meta_height),
-                marker=self._get_marker("modified_at", text_marker_size, height=meta_height),
+                label=self._get_label("modified_at", label_size),
+                input=self._get_text_input("modified_at", text_size),
+                marker=self._get_marker("modified_at", text_marker_size),
             ),
         }
         self._inputs.update(meta_fields)
 
         return self._build_grid(meta_fields)
 
-    def _get_label(self, key: str, size: int, colon: bool = True, height: int | None = None) -> tuple[ft.Container, int]:
+    def _get_label(self, key: str, size: int, colon: bool = True) -> tuple[ft.Container, int]:
         text_value = self._translation.get(key)
         if colon and not text_value.endswith(":"):
             text_value = f"{text_value}:"
@@ -301,9 +298,9 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             ft.Container(
                 content=ft.Text(value=text_value),
                 col={"sm": float(size)},
-                alignment=ft.Alignment.TOP_LEFT,
+                alignment=ControlStyles.LABEL_ALIGNMENT,
                 expand=True,
-                height=height,
+                height=ControlStyles.TEXT_FIELD_HEIGHT,
             ),
             size,
         )
@@ -313,60 +310,35 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         key: str,
         size: int,
         lines: int = 1,
-        height: int | None = None,
+        password: bool = False,
     ) -> tuple[ft.Container, int]:
-        resolved_lines = lines if lines > 0 else 1
-        resolved_height = height
-        if resolved_lines > 1 and resolved_height is None:
-            resolved_height = resolved_lines * ControlStyles.TEXT_FIELD_HEIGHT
+        if lines > 1:
+            height = (lines * ControlStyles.TEXT_FIELD_HEIGHT) + ((lines - 1) * AppDimensions.SPACE_MD)
+        else:
+            height = ControlStyles.TEXT_FIELD_HEIGHT
 
         text_field = ft.TextField(
             value="",
             on_change=lambda event: self._controller.on_value_changed(event, key),
-            multiline=resolved_lines > 1,
-            min_lines=resolved_lines,
-            max_lines=resolved_lines,
+            password=password,
+            can_reveal_password=password,
+            multiline=lines > 1,
+            min_lines=lines,
+            max_lines=lines,
             expand=True,
+            height=height,
+            border_radius = ControlStyles.FIELD_BORDER_RADIUS,
+            border_color = ControlStyles.FIELD_BORDER_COLOR,
+            focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
+            content_padding = ControlStyles.FIELD_PADDING
         )
-        text_field.border_radius = ControlStyles.TEXT_FIELD_BORDER_RADIUS
-        text_field.border_color = ControlStyles.TEXT_FIELD_BORDER_COLOR
-        text_field.focused_border_color = ControlStyles.TEXT_FIELD_FOCUSED_BORDER_COLOR
-        if resolved_lines > 1:
-            text_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_MULTILINE
+        if lines > 1:
             text_field.fit_parent_size = True
-            if resolved_height is not None:
-                text_field.height = resolved_height
-        else:
-            text_field.height = resolved_height or ControlStyles.TEXT_FIELD_HEIGHT
-            text_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_SINGLE
         return (
             ft.Container(
                 content=text_field,
                 col={"sm": float(size)},
-                alignment=ft.Alignment.TOP_LEFT if resolved_lines > 1 else self._base_alignment,
-                height=resolved_height,
-            ),
-            size,
-        )
-
-    def _get_password_input(self, key: str, size: int, height: int | None = None) -> tuple[ft.Container, int]:
-        password_field = ft.TextField(
-            value="",
-            password=True,
-            can_reveal_password=True,
-            on_change=lambda event: self._controller.on_value_changed(event, key),
-            expand=True,
-        )
-        password_field.border_radius = ControlStyles.TEXT_FIELD_BORDER_RADIUS
-        password_field.border_color = ControlStyles.TEXT_FIELD_BORDER_COLOR
-        password_field.focused_border_color = ControlStyles.TEXT_FIELD_FOCUSED_BORDER_COLOR
-        password_field.height = height or ControlStyles.TEXT_FIELD_HEIGHT
-        password_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_SINGLE
-        return (
-            ft.Container(
-                content=password_field,
-                col={"sm": float(size)},
-                alignment=self._base_alignment,
+                alignment=ControlStyles.INPUT_ALIGNMENT,
                 height=height,
             ),
             size,
@@ -381,9 +353,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         precision: int = 2,
         min_value: int | float | None = 0,
         max_value: int | float | None = None,
-        is_float: bool = False,
-        expand: int | bool | None = True,
-        height: int | None = None,
+        is_float: bool = False
     ) -> tuple[ft.Container, int]:
         numeric_field = NumericField(
             value=value,
@@ -393,16 +363,19 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             precision=precision,
             is_float=is_float,
             on_change=lambda event: self._controller.on_value_changed(event, key),
-            expand=expand,
+            expand=True,
+            height=ControlStyles.TEXT_FIELD_HEIGHT,
+            border_radius = ControlStyles.FIELD_BORDER_RADIUS,
+            border_color = ControlStyles.FIELD_BORDER_COLOR,
+            focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
+            content_padding = ControlStyles.FIELD_PADDING
         )
-        if height is not None:
-            numeric_field.height = height
         return (
             ft.Container(
                 content=numeric_field,
                 col={"sm": float(size)},
-                alignment=self._base_alignment,
-                height=height,
+                alignment=ControlStyles.INPUT_ALIGNMENT,
+                height=ControlStyles.TEXT_FIELD_HEIGHT,
             ),
             size,
         )
@@ -415,7 +388,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         callbacks: list[Callable[..., None]] | None = None,
         label: str | None = None,
         value: int | str | None = "0",
-        height: int | None = None,
     ) -> tuple[ft.Container, int]:
         resolved_value = "0"
         if value is not None:
@@ -436,18 +408,18 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             editable=True,
             enable_search=True,
             enable_filter=True,
+            height=ControlStyles.TEXT_FIELD_HEIGHT,
+            border_radius=ControlStyles.FIELD_BORDER_RADIUS,
+            border_color=ControlStyles.FIELD_BORDER_COLOR,
+            focused_border_color=ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
+            content_padding=ControlStyles.FIELD_PADDING,
         )
-        dropdown.border_radius = ControlStyles.DROPDOWN_BORDER_RADIUS
-        dropdown.border_color = ControlStyles.DROPDOWN_BORDER_COLOR
-        dropdown.focused_border_color = ControlStyles.DROPDOWN_FOCUSED_BORDER_COLOR
-        dropdown.content_padding = ControlStyles.DROPDOWN_PADDING
-        dropdown.height = height or AppDimensions.CONTROL_HEIGHT
         return (
             ft.Container(
                 content=dropdown,
                 col={"sm": float(size)},
-                alignment=self._base_alignment,
-                height=height,
+                alignment=ControlStyles.INPUT_ALIGNMENT,
+                height=ControlStyles.TEXT_FIELD_HEIGHT,
             ),
             size,
         )
@@ -461,7 +433,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         min_date: date | None = None,
         max_date: date | None = None,
         read_only: bool = True,
-        height: int | None = None,
     ) -> tuple[ft.Container, int]:
         date_field = DateField(
             value=value,
@@ -469,16 +440,15 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             max_date=max_date,
             read_only=read_only,
             on_change=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
+            height=ControlStyles.TEXT_FIELD_HEIGHT,
             expand=True,
         )
-        if height is not None:
-            date_field.height = height
         return (
             ft.Container(
                 content=date_field,
                 col={"sm": float(size)},
-                alignment=self._base_alignment,
-                height=height,
+                alignment=ControlStyles.INPUT_ALIGNMENT,
+                height=ControlStyles.TEXT_FIELD_HEIGHT,
             ),
             size,
         )
@@ -489,26 +459,30 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         size: int,
         options: list[tuple[str, str]],
         default: str | None = None,
-        height: int | None = None,
     ) -> tuple[ft.Container, int]:
         radios = [ft.Radio(value=value, label=label) for value, label in options]
         return (
             ft.Container(
                 content=ft.RadioGroup(
-                    content=ft.Row(
-                        controls=radios,
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                        expand=True,
-                        spacing=0,
+                    content=ft.Container(
+                        content=ft.Row(
+                            controls=cast(list[ft.Control], radios),
+                            alignment=AlignmentStyles.AXIS_SPACE_BETWEEN,
+                            vertical_alignment=AlignmentStyles.CROSS_CENTER,
+                            expand=True,
+                            spacing=0,
+                        ),
+                        alignment=ControlStyles.INPUT_ALIGNMENT,
+                        height=ControlStyles.TEXT_FIELD_HEIGHT,
+                        padding=ControlStyles.FIELD_PADDING,
                     ),
                     value=default,
                     on_change=lambda event, key=key: self._controller.on_value_changed(event, key),
                 ),
                 col={"sm": float(size)},
-                alignment=self._base_alignment,
+                alignment=ControlStyles.INPUT_ALIGNMENT,
                 expand=True,
-                height=height,
+                height=ControlStyles.TEXT_FIELD_HEIGHT,
             ),
             size,
         )
@@ -518,58 +492,46 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         key: str,
         size: int,
         value: bool | None = None,
-        height: int | None = None,
     ) -> tuple[ft.Container, int]:
         checkbox = ft.Checkbox(
             on_change=lambda event, key=key: self._controller.on_value_changed(event, key),
             animate_size=AppDimensions.ANIMATION_DURATION_MS,
             value=value,
             shape=ft.CircleBorder(),
+            border_side=ControlStyles.FIELD_BORDER_SIDE,
+            height=ControlStyles.TEXT_FIELD_HEIGHT,
         )
         return (
             ft.Container(
                 content=checkbox,
                 col={"sm": float(size)},
-                alignment=self._base_alignment,
-                height=height,
+                alignment=ControlStyles.INPUT_ALIGNMENT,
+                height=ControlStyles.TEXT_FIELD_HEIGHT,
+                padding=ControlStyles.FIELD_PADDING,
             ),
             size,
         )
 
-    def _get_marker(self, key: str, size: int, height: int | None = None) -> tuple[ft.Container, int]:
+    def _get_marker(self, key: str, size: int) -> tuple[ft.Container, int]:
         marker = ft.Checkbox(
             on_change=lambda event, key=key: self._controller.on_marker_clicked(event, key),
             tooltip=self._translation.get("check_to_search"),
             animate_size=AppDimensions.ANIMATION_DURATION_MS,
             value=False,
+            shape=ft.CircleBorder(),
+            border_side=ControlStyles.FIELD_BORDER_SIDE,
+            height=ControlStyles.TEXT_FIELD_HEIGHT,
         )
         return (
             ft.Container(
                 content=marker,
                 col={"sm": float(size)},
-                alignment=ft.Alignment.TOP_LEFT,
-                height=height,
+                alignment=ControlStyles.MARKER_ALIGNMENT,
+                height=ControlStyles.TEXT_FIELD_HEIGHT,
+                padding=ControlStyles.FIELD_PADDING,
             ),
             size,
         )
-
-    def __resolve_field_height(self, input_factory: Callable[..., Any], kwargs: dict[str, Any]) -> int | None:
-        input_name = getattr(input_factory, "__name__", "")
-        if input_name == "_get_text_input":
-            raw_lines = kwargs.get("lines", 1)
-            lines = int(raw_lines) if isinstance(raw_lines, int) and raw_lines > 0 else 1
-            # Match stacked single-line fields: control heights + inter-row gaps.
-            return (lines * ControlStyles.TEXT_FIELD_HEIGHT) + ((lines - 1) * AppDimensions.SPACE_MD)
-        if input_name in {
-            "_get_password_input",
-            "_get_numeric_input",
-            "_get_dropdown",
-            "_get_date_picker",
-            "_get_radio_group",
-            "_get_checkbox",
-        }:
-            return ControlStyles.TEXT_FIELD_HEIGHT
-        return None
 
     def __build_field_group(
         self,
@@ -591,17 +553,15 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             raise ValueError(
                 f"Invalid layout sizes: columns={columns}, " f"label_size={label_size}, input_size={input_size}"
             )
-        field_height = self.__resolve_field_height(input, kwargs)
 
         return FieldGroup(
             label=self._get_label(
                 key=label if label is not None else key,
                 size=label_size,
                 colon=colon,
-                height=field_height,
             ),
-            input=input(key, size=input_size, height=field_height, **kwargs),
-            marker=self._get_marker(key, size=marker_size, height=field_height),
+            input=input(key, size=input_size, **kwargs),
+            marker=self._get_marker(key, size=marker_size),
         )
 
     def __toggle_search_results(self) -> None:
@@ -618,6 +578,19 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             self.__scrollable_wrapper.controls.append(self.__form_container)
         self.__scrollable_wrapper.update()
 
+    def __set_disabled_state(self, control: ft.Control | None, disabled: bool) -> None:
+        if control is None:
+            return
+        if hasattr(control, "disabled"):
+            setattr(control, "disabled", disabled)
+        if isinstance(control, ft.RadioGroup):
+            container = control.content
+            if isinstance(container, ft.Container) and isinstance(container.content, ft.Row):
+                for item in container.content.controls:
+                    if isinstance(item, ft.Radio):
+                        item.disabled = disabled
+                        item.opacity = ControlStyles.DISABLED_CONTENT_OPACITY if disabled else 1.0
+
     def __set_search_mode(self) -> None:
         selected_inputs = self._controller.search_params.selected_inputs
         input_values = self._controller.search_params.input_values
@@ -633,12 +606,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                     setattr(marker, "width", 0)
                 if marker:
                     marker.update()
-
                 input = field.input.content
                 if hasattr(input, "read_only"):
                     setattr(input, "read_only", True)
-                if hasattr(input, "disabled"):
-                    setattr(input, "disabled", True)
+                self.__set_disabled_state(input, True)
                 if input:
                     input.update()
                 continue
@@ -670,8 +641,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                     setattr(input, "value", value)
             if hasattr(input, "read_only"):
                 setattr(input, "read_only", not is_selected)
-            if hasattr(input, "disabled"):
-                setattr(input, "disabled", not is_selected)
+            self.__set_disabled_state(input, not is_selected)
             if hasattr(marker, "disabled"):
                 setattr(marker, "disabled", False)
             if hasattr(marker, "value"):
@@ -691,19 +661,16 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             input = field.input.content
             marker_control = field.marker
             marker = marker_control.content if marker_control else None
-            if hasattr(input, "disabled"):
-                if key in self._controller.meta_fields:
-                    setattr(input, "disabled", True)
-                else:
-                    setattr(input, "disabled", False)
-                if (
-                    isinstance(input, ft.Dropdown)
-                    and self._data_row
-                    and self._caller_view_key
-                    and key in self._data_row
-                    and self._data_row.get(key) is not None
-                ):
-                    self.__limit_dropdown_options(input, key)
+            input_disabled = key in self._controller.meta_fields
+            self.__set_disabled_state(input, input_disabled)
+            if (
+                isinstance(input, ft.Dropdown)
+                and self._data_row
+                and self._caller_view_key
+                and key in self._data_row
+                and self._data_row.get(key) is not None
+            ):
+                self.__limit_dropdown_options(input, key)
             if hasattr(input, "read_only"):
                 if key in self._controller.meta_fields:
                     setattr(input, "read_only", True)
@@ -730,13 +697,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             marker = marker_control.content if marker_control else None
             if hasattr(input, "read_only"):
                 setattr(input, "read_only", True)
-            if hasattr(input, "disabled"):
-                if isinstance(input, (ft.TextField, ft.Dropdown, NumericField, DateField)):
-                    setattr(input, "disabled", False)
-                else:
-                    setattr(input, "disabled", True)
-                if isinstance(input, ft.Dropdown) and self._data_row:
-                    self.__limit_dropdown_options(input, key)
+            input_disabled = not isinstance(input, (ft.TextField, ft.Dropdown, NumericField, DateField))
+            self.__set_disabled_state(input, input_disabled)
+            if isinstance(input, ft.Dropdown) and self._data_row:
+                self.__limit_dropdown_options(input, key)
             if hasattr(marker, "disabled"):
                 setattr(marker, "disabled", True)
             if hasattr(marker, "width"):
@@ -766,11 +730,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
     def __set_edit_mode(self) -> None:
         for key, field in self._inputs.items():
             input = field.input.content
-            if hasattr(input, "disabled"):
-                if key in self._controller.meta_fields:
-                    setattr(input, "disabled", True)
-                else:
-                    setattr(input, "disabled", False)
+            input_disabled = key in self._controller.meta_fields
+            self.__set_disabled_state(input, input_disabled)
             if hasattr(input, "read_only"):
                 setattr(input, "read_only", False)
             if isinstance(input, ft.Dropdown):

@@ -4,7 +4,9 @@ from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
 from controllers.base.base_controller import BaseController
-from styles import AppColors, AppDimensions, ButtonStyles, ControlStyles, ItemViewDimensions
+from styles.colors import AppColors
+from styles.dimensions import AppDimensions, ItemViewDimensions
+from styles.styles import AlignmentStyles, ButtonStyles, ControlStyles
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -107,13 +109,13 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         self.__image_gallery = ft.Row(
             scroll=ft.ScrollMode.AUTO,
             spacing=AppDimensions.SPACE_MD,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            vertical_alignment=AlignmentStyles.CROSS_CENTER,
             expand=True,
         )
         self.__image_gallery_container = ft.Container(
             content=self.__image_gallery,
             height=self.__GALLERY_HEIGHT,
-            alignment=ft.Alignment.CENTER_LEFT,
+            alignment=AlignmentStyles.CENTER_LEFT,
         )
         self.__add_image_button = ft.IconButton(
             icon=ft.Icons.ADD_A_PHOTO,
@@ -135,11 +137,11 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             label=self._translation.get("sequence"),
             keyboard_type=ft.KeyboardType.NUMBER,
         )
-        self.__image_order_field.border_radius = ControlStyles.TEXT_FIELD_BORDER_RADIUS
-        self.__image_order_field.border_color = ControlStyles.TEXT_FIELD_BORDER_COLOR
-        self.__image_order_field.focused_border_color = ControlStyles.TEXT_FIELD_FOCUSED_BORDER_COLOR
+        self.__image_order_field.border_radius = ControlStyles.FIELD_BORDER_RADIUS
+        self.__image_order_field.border_color = ControlStyles.FIELD_BORDER_COLOR
+        self.__image_order_field.focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR
         self.__image_order_field.height = ControlStyles.TEXT_FIELD_HEIGHT
-        self.__image_order_field.content_padding = ControlStyles.TEXT_FIELD_PADDING_SINGLE
+        self.__image_order_field.content_padding = ControlStyles.FIELD_PADDING
         self.__image_primary_checkbox = ft.Checkbox(
             label=self._translation.get("is_primary"),
         )
@@ -174,7 +176,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
                 self.__image_gallery_container,
                 ft.Row(
                     controls=[self.__add_image_button],
-                    alignment=ft.MainAxisAlignment.END,
+                    alignment=AlignmentStyles.AXIS_END,
                 ),
                 self.__bins_table,
             ],
@@ -272,7 +274,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             height=self.__GALLERY_HEIGHT,
             padding=padding,
             border=border,
-            alignment=ft.Alignment.CENTER,
+            alignment=AlignmentStyles.CENTER,
             on_click=lambda _: self.__on_image_clicked(image),
         )
 

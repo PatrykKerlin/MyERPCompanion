@@ -1,7 +1,8 @@
 import asyncio
 
 import flet as ft
-from styles import AppColors, ButtonStyles
+from styles.colors import AppColors
+from styles.styles import ButtonStyles
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 from views.controls.numeric_field_control import NumericField

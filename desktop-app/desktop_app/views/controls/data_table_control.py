@@ -1,7 +1,8 @@
 from typing import Any, Callable
 
 import flet as ft
-from styles import AppDimensions, ButtonStyles
+from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ButtonStyles
 from utils.translation import Translation
 
 
@@ -76,7 +77,7 @@ class DataTable(ft.Container):
                 table_wrapper,
                 ft.Row(
                     controls=[self.__add_button],
-                    alignment=ft.MainAxisAlignment.END,
+                    alignment=AlignmentStyles.AXIS_END,
                 ),
             ],
             expand=True,

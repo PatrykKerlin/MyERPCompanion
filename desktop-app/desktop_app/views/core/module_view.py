@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
 from controllers.base.base_controller import BaseController
-from styles import AppDimensions, ButtonStyles
+from styles.dimensions import AppDimensions
+from styles.styles import ButtonStyles
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView

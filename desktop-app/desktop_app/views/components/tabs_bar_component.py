@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 import flet as ft
-from styles import ButtonStyles
+from styles.styles import ButtonStyles
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:

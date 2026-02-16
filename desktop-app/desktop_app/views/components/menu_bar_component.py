@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
-from styles import AppColors, AppDimensions
+from styles.colors import AppColors
+from styles.dimensions import AppDimensions
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:

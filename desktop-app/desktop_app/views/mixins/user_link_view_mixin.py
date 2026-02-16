@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import Any, Callable, cast
 
 import flet as ft
-from styles import AppDimensions, ButtonStyles
+from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ButtonStyles, ControlStyles
 from utils.enums import ViewMode
 from utils.field_group import FieldGroup
 
 
 class UserLinkViewMixin:
-    _base_alignment: ft.Alignment
     _data_row: dict[str, Any] | None
     _inputs: dict[str, FieldGroup]
     _mode: ViewMode
@@ -22,12 +22,9 @@ class UserLinkViewMixin:
         callbacks: list[Callable[..., None]] | None = None,
         label: str | None = None,
         value: int | str | None = "0",
-        height: int | None = None,
     ) -> tuple[ft.Container, int]: ...
-    def _get_label(
-        self, key: str, size: int, colon: bool = True, height: int | None = None
-    ) -> tuple[ft.Container, int]: ...
-    def _get_marker(self, key: str, size: int, height: int | None = None) -> tuple[ft.Container, int]: ...
+    def _get_label(self, key: str, size: int, colon: bool = True) -> tuple[ft.Container, int]: ...
+    def _get_marker(self, key: str, size: int) -> tuple[ft.Container, int]: ...
 
     def _init_user_link_field(
         self,
@@ -48,13 +45,13 @@ class UserLinkViewMixin:
         user_input = ft.Container(
             content=ft.Row(
                 controls=[cast(ft.Control, dropdown), self._user_button],
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                alignment=AlignmentStyles.AXIS_START,
+                vertical_alignment=AlignmentStyles.CROSS_CENTER,
                 expand=True,
                 spacing=AppDimensions.SPACE_SM,
             ),
             col={"sm": float(size)},
-            alignment=self._base_alignment,
+            alignment=ControlStyles.INPUT_ALIGNMENT,
             height=AppDimensions.CONTROL_HEIGHT,
         )
         user_field = {

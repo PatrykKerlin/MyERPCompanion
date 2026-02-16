@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
+from styles.styles import AlignmentStyles
 from styles.dimensions import AppDimensions
 from views.base.base_component import BaseComponent
 
@@ -26,10 +27,10 @@ class SideMenuComponent(BaseComponent, ft.Container):
                 controls=self.__controls,
                 expand=True,
                 scroll=ft.ScrollMode.ADAPTIVE,
-                alignment=ft.MainAxisAlignment.START,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                alignment=AlignmentStyles.AXIS_START,
+                horizontal_alignment=AlignmentStyles.CROSS_CENTER,
             ),
-            alignment=ft.Alignment.TOP_CENTER,
+            alignment=AlignmentStyles.TOP_CENTER,
             width=self.__calculate_width(),
             opacity=1.0,
             animate_opacity=AppDimensions.ANIMATION_DURATION_MS,

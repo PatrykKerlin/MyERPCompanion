@@ -4,7 +4,7 @@ from math import ceil
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
-from styles import ButtonStyles, ControlStyles
+from styles.styles import ButtonStyles, ControlStyles
 from utils.translation import Translation
 from views.base.base_component import BaseComponent
 
@@ -101,10 +101,10 @@ class SearchResultsComponent(BaseComponent, ft.Column):
             enable_search=True,
             enable_filter=True,
         )
-        page_size_dropdown.border_radius = ControlStyles.DROPDOWN_BORDER_RADIUS
-        page_size_dropdown.border_color = ControlStyles.DROPDOWN_BORDER_COLOR
-        page_size_dropdown.focused_border_color = ControlStyles.DROPDOWN_FOCUSED_BORDER_COLOR
-        page_size_dropdown.content_padding = ControlStyles.DROPDOWN_PADDING
+        page_size_dropdown.border_radius = ControlStyles.FIELD_BORDER_RADIUS
+        page_size_dropdown.border_color = ControlStyles.FIELD_BORDER_COLOR
+        page_size_dropdown.focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR
+        page_size_dropdown.content_padding = ControlStyles.FIELD_PADDING
 
         back_button = ft.Button(
             content=self._translation.get("back"),

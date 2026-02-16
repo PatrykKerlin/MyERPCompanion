@@ -1,7 +1,8 @@
 import asyncio
 
 import flet as ft
-from styles import AppColors, ButtonStyles, ControlStyles
+from styles.colors import AppColors
+from styles.styles import ButtonStyles, ControlStyles
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 from views.controls.numeric_field_control import NumericField
@@ -31,10 +32,10 @@ class BinQuantityDialogComponent(BaseDialog):
             enable_search=True,
             enable_filter=True,
         )
-        self.__bin_dropdown.border_radius = ControlStyles.DROPDOWN_BORDER_RADIUS
-        self.__bin_dropdown.border_color = ControlStyles.DROPDOWN_BORDER_COLOR
-        self.__bin_dropdown.focused_border_color = ControlStyles.DROPDOWN_FOCUSED_BORDER_COLOR
-        self.__bin_dropdown.content_padding = ControlStyles.DROPDOWN_PADDING
+        self.__bin_dropdown.border_radius = ControlStyles.FIELD_BORDER_RADIUS
+        self.__bin_dropdown.border_color = ControlStyles.FIELD_BORDER_COLOR
+        self.__bin_dropdown.focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR
+        self.__bin_dropdown.content_padding = ControlStyles.FIELD_PADDING
         max_value = min(self.__bin_map.get(initial_key, 0), self.__max_total)
         self.__quantity_field = NumericField(
             value=min(max_value, self.__default_quantity),

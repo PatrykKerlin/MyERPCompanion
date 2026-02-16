@@ -1,4 +1,5 @@
 import flet as ft
+from styles.styles import AlignmentStyles
 
 
 class BaseDialog(ft.AlertDialog):
@@ -11,13 +12,13 @@ class BaseDialog(ft.AlertDialog):
     ) -> None:
         super().__init__(
             modal=True,
-            alignment=ft.Alignment.CENTER,
+            alignment=AlignmentStyles.CENTER,
             content=ft.Container(
                 content=ft.Column(
                     controls=controls,
                     tight=True,
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    alignment=AlignmentStyles.AXIS_CENTER,
+                    horizontal_alignment=AlignmentStyles.CROSS_CENTER,
                 ),
             ),
             actions=actions or [],

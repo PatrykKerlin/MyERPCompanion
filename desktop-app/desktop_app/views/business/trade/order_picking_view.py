@@ -4,7 +4,8 @@ from datetime import date
 from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
-from styles import AppDimensions, ButtonStyles
+from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ButtonStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -138,8 +139,8 @@ class OrderPickingView(BaseView):
         )
         complete_row = ft.Row(
             controls=[self.__complete_button],
-            alignment=ft.MainAxisAlignment.END,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            alignment=AlignmentStyles.AXIS_END,
+            vertical_alignment=AlignmentStyles.CROSS_START,
         )
 
         inputs_row = ft.ResponsiveRow(
@@ -151,8 +152,8 @@ class OrderPickingView(BaseView):
                 customer_container,
                 order_container,
             ],
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
         )
 
         self._master_column.controls = [

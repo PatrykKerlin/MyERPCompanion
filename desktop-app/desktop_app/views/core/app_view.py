@@ -1,5 +1,6 @@
 import flet as ft
-from styles import AppDimensions
+from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles
 from utils.translation import Translation
 from views.base.base_view import BaseView
 from views.components.footer_component import FooterComponent
@@ -40,8 +41,8 @@ class AppView:
                 ),
                 self.__footer_container,
             ],
-            alignment=ft.MainAxisAlignment.START,
-            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+            alignment=AlignmentStyles.AXIS_START,
+            horizontal_alignment=AlignmentStyles.CROSS_STRETCH,
             expand=True,
             visible=False,
         )

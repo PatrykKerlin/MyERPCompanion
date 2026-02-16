@@ -1,7 +1,7 @@
 from collections.abc import Callable
 
 import flet as ft
-from styles import ButtonStyles
+from styles.styles import ButtonStyles
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 

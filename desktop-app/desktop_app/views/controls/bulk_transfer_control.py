@@ -2,7 +2,10 @@ from typing import Any, Callable, cast
 
 import flet as ft
 from controllers.base.base_controller import BaseController
-from styles import AppColors, AppDimensions, ButtonStyles, ComponentStyles
+from styles.colors import AppColors
+from styles.components import ComponentStyles
+from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ButtonStyles
 from views.base.base_component import BaseComponent
 
 
@@ -90,8 +93,8 @@ class BulkTransfer(ft.Container):
 
         buttons_column = ft.Column(
             controls=[self.__button_move, self.__button_delete, self.__button_save],
-            alignment=ft.MainAxisAlignment.CENTER,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=AlignmentStyles.AXIS_CENTER,
+            horizontal_alignment=AlignmentStyles.CROSS_CENTER,
             spacing=AppDimensions.SPACE_MD,
         )
 
@@ -108,7 +111,7 @@ class BulkTransfer(ft.Container):
             controls=[source_column, buttons_column, target_column],
             expand=True,
             spacing=AppDimensions.SPACE_LG,
-            vertical_alignment=ft.CrossAxisAlignment.STRETCH,
+            vertical_alignment=AlignmentStyles.CROSS_STRETCH,
         )
         self.__render_source_table()
         self.__render_target_table()

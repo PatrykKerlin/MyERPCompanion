@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
-from styles import AppDimensions, ButtonStyles
+from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ButtonStyles
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
@@ -109,8 +110,8 @@ class ToolbarComponent(BaseComponent, ft.Container):
         )
         self.__user_row = ft.Row(
             controls=[self.__user_label, self.__user_button, self.__logout_button],
-            alignment=ft.MainAxisAlignment.END,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=AlignmentStyles.AXIS_END,
+            vertical_alignment=AlignmentStyles.CROSS_CENTER,
         )
         self.__left_row = ft.Row(
             controls=[
@@ -127,13 +128,13 @@ class ToolbarComponent(BaseComponent, ft.Container):
                 self.__close_all_tabs_button,
                 self.__refresh_button,
             ],
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_CENTER,
         )
         self.__main_row = ft.Row(
             controls=[self.__left_row, self.__user_row],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=AlignmentStyles.AXIS_SPACE_BETWEEN,
+            vertical_alignment=AlignmentStyles.CROSS_CENTER,
             expand=True,
         )
         ft.Container.__init__(

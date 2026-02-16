@@ -51,8 +51,8 @@ class UserView(BaseView, GroupBulkTransferMixin):
         )
         self.__password_validation_ready = False
         main_fields_definitions = [
-            {"key": "password", "input": self._get_password_input},
-            {"key": "password_repeat", "input": self._get_password_input},
+            {"key": "password", "input": self._get_text_input, "password": True},
+            {"key": "password_repeat", "input": self._get_text_input, "password": True},
             {"key": "language_id", "input": self._get_dropdown, "options": languages},
             {"key": "theme", "input": self._get_dropdown, "options": themes},
         ]

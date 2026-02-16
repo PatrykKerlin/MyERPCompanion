@@ -4,7 +4,8 @@ from datetime import date
 from typing import TYPE_CHECKING, cast
 
 import flet as ft
-from styles import AppDimensions, ButtonStyles
+from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ButtonStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -89,8 +90,8 @@ class SalesReportView(BaseView):
             run_spacing=AppDimensions.SPACE_SM,
             controls=[],
         )
-        self.__category_chart_container = ft.Container(expand=True, alignment=ft.Alignment.CENTER)
-        self.__daily_chart_container = ft.Container(expand=True, alignment=ft.Alignment.CENTER)
+        self.__category_chart_container = ft.Container(expand=True, alignment=AlignmentStyles.CENTER)
+        self.__daily_chart_container = ft.Container(expand=True, alignment=AlignmentStyles.CENTER)
 
         self.__build_layout()
         self.__render_report()
@@ -154,7 +155,7 @@ class SalesReportView(BaseView):
                     col={"sm": 12},
                     content=ft.Row(
                         controls=[apply_button, clear_button],
-                        alignment=ft.MainAxisAlignment.END,
+                        alignment=AlignmentStyles.AXIS_END,
                     ),
                 ),
             ],
@@ -229,13 +230,13 @@ class SalesReportView(BaseView):
         if not chart:
             image_holder: ft.Control = ft.Container(
                 expand=True,
-                alignment=ft.Alignment.CENTER,
+                alignment=AlignmentStyles.CENTER,
                 content=ft.Text(self._translation.get("no_chart_data")),
             )
         else:
             image_holder = ft.Container(
                 expand=True,
-                alignment=ft.Alignment.CENTER,
+                alignment=AlignmentStyles.CENTER,
                 on_click=lambda _, image=(dialog_chart or chart), chart_title=title: self.__open_chart_dialog(
                     image,
                     chart_title,
@@ -263,7 +264,7 @@ class SalesReportView(BaseView):
             content=ft.Container(
                 width=width,
                 height=height,
-                alignment=ft.Alignment.CENTER,
+                alignment=AlignmentStyles.CENTER,
                 content=ft.Image(src=chart, fit=ft.BoxFit.CONTAIN, expand=True),
             ),
             actions=[
@@ -273,6 +274,6 @@ class SalesReportView(BaseView):
                     style=ButtonStyles.compact,
                 ),
             ],
-            actions_alignment=ft.MainAxisAlignment.END,
+            actions_alignment=AlignmentStyles.AXIS_END,
         )
         self._controller._queue_dialog(dialog)

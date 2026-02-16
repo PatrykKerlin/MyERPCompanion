@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
+from styles.styles import AlignmentStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -76,7 +77,7 @@ class BinTransferView(BaseView):
                 ft.Container(expand=True),
                 target_container,
             ],
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
         )
 
         self._master_column.controls = [inputs_row, self.__bulk_transfer]
