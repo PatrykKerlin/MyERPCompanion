@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, TypeVar, cas
 import flet as ft
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from services.base.base_service import BaseService
+from styles.colors import AppColors
 from styles.dimensions import AppDimensions
 from styles.styles import AlignmentStyles, ButtonStyles, ControlStyles
 from utils.enums import View, ViewMode
@@ -501,14 +502,20 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         )
 
     def _get_marker(self, key: str, size: int) -> tuple[ft.Container, int]:
-        marker = ft.Checkbox(
-            on_change=lambda event, key=key: self._controller.on_marker_clicked(event, key),
+        marker = ft.IconButton(
+            icon=ft.Icons.SEARCH_OFF,
+            selected_icon=ft.Icons.SEARCH,
+            selected=False,
+            icon_color=AppColors.CONTROL_UNSELECTED,
+            selected_icon_color=AppColors.PRIMARY,
+            style=ButtonStyles.icon,
+            on_click=lambda event, key=key: self.__handle_marker_click(event, key),
             tooltip=self._translation.get("check_to_search"),
-            animate_size=AppDimensions.ANIMATION_DURATION_MS,
-            value=False,
-            shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_SM),
-            border_side=ControlStyles.FIELD_BORDER_SIDE,
+            width=ControlStyles.TEXT_FIELD_HEIGHT,
+            height=ControlStyles.TEXT_FIELD_HEIGHT,
+            visual_density=ft.VisualDensity.COMPACT,
         )
+        setattr(marker, "value", False)
         return (
             ft.Container(
                 content=marker,
@@ -519,6 +526,13 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             ),
             size,
         )
+
+    def __handle_marker_click(self, event: ft.Event[ft.IconButton], key: str) -> None:
+        marker = event.control
+        new_value = not bool(getattr(marker, "value", False))
+        self.__set_marker_value(marker, new_value)
+        marker.update()
+        self._controller.on_marker_clicked(cast(ft.ControlEvent, event), key)
 
     def __build_field_group(
         self,
@@ -630,8 +644,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             return
         if hasattr(marker, "disabled"):
             setattr(marker, "disabled", True)
-        if hasattr(marker, "value"):
-            setattr(marker, "value", False)
+        self.__set_marker_value(marker, False)
         if hasattr(marker, "width"):
             setattr(marker, "width", 0)
 
@@ -640,10 +653,18 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             return
         if hasattr(marker, "disabled"):
             setattr(marker, "disabled", False)
+        self.__set_marker_value(marker, selected)
+        if hasattr(marker, "width"):
+            if isinstance(marker, ft.IconButton):
+                setattr(marker, "width", ControlStyles.TEXT_FIELD_HEIGHT)
+            else:
+                setattr(marker, "width", None)
+
+    def __set_marker_value(self, marker: ft.Control, selected: bool) -> None:
         if hasattr(marker, "value"):
             setattr(marker, "value", selected)
-        if hasattr(marker, "width"):
-            setattr(marker, "width", None)
+        if isinstance(marker, ft.IconButton):
+            marker.selected = selected
 
     def __get_default_value_for_control(self, control: ft.Control | None) -> Any:
         if isinstance(control, ft.TextField):
