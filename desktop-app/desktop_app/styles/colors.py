@@ -13,7 +13,7 @@ class AppColors:
     ERROR: ft.ColorValue = ft.Colors.ERROR
     WARNING: ft.ColorValue = ft.Colors.TERTIARY
     PRIMARY: ft.ColorValue = ft.Colors.PRIMARY
-    MATERIAL_BLUE: ft.ColorValue = ft.Colors.BLUE
+    MATERIAL_BLUE: ft.ColorValue = ft.Colors.BLUE_600
     ON_MATERIAL_BLUE: ft.ColorValue = ft.Colors.WHITE
     CONTROL_SELECTED: ft.ColorValue = ft.Colors.PRIMARY_CONTAINER
     CONTROL_SELECTED_CONTENT: ft.ColorValue = ft.Colors.ON_PRIMARY_CONTAINER

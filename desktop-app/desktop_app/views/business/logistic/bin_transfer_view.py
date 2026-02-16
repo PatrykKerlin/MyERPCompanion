@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
+from styles.dimensions import AppDimensions
 from styles.styles import AlignmentStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
@@ -29,14 +30,15 @@ class BinTransferView(BaseView):
     ) -> None:
         super().__init__(controller, translation, mode, key, None, 0, 12)
         self._master_column.scroll = None
+        self._master_column.spacing = AppDimensions.SPACE_2XL
 
-        source_container, _ = self._get_text_input("source_bin", 12)
+        source_container, _ = self._get_text_input("source_bin", 4)
         self.__source_input = cast(ft.TextField, source_container.content)
         self.__source_input.label = self._translation.get("source_bin")
         self.__source_input.on_submit = on_source_submitted
         source_container.expand = True
 
-        target_container, _ = self._get_text_input("target_bin", 12)
+        target_container, _ = self._get_text_input("target_bin", 4)
         self.__target_input = cast(ft.TextField, target_container.content)
         self.__target_input.label = self._translation.get("target_bin")
         self.__target_input.on_submit = on_target_submitted
@@ -46,12 +48,12 @@ class BinTransferView(BaseView):
             {
                 "source_bin": FieldGroup(
                     label=self._get_label("source_bin", 0, colon=False),
-                    input=(source_container, 12),
+                    input=(source_container, 4),
                     marker=self._get_marker("source_bin", 0),
                 ),
                 "target_bin": FieldGroup(
                     label=self._get_label("target_bin", 0, colon=False),
-                    input=(target_container, 12),
+                    input=(target_container, 4),
                     marker=self._get_marker("target_bin", 0),
                 ),
             }
@@ -71,17 +73,28 @@ class BinTransferView(BaseView):
             delete_confirm_message=self._translation.get("delete_selected_items_q"),
         )
 
-        inputs_row = ft.Row(
+        inputs_row = ft.ResponsiveRow(
+            columns=12,
+            spacing=AppDimensions.SPACE_SM,
+            run_spacing=AppDimensions.SPACE_SM,
             controls=[
                 source_container,
-                ft.Container(expand=True),
+                ft.Container(col={"sm": 4.0}),
                 target_container,
             ],
+            alignment=AlignmentStyles.AXIS_START,
             vertical_alignment=AlignmentStyles.CROSS_START,
         )
 
         self._master_column.controls = [inputs_row, self.__bulk_transfer]
-        self.content = ft.Container(content=self._master_column, expand=True)
+        self.content = ft.Container(
+            content=self._master_column,
+            expand=True,
+            padding=ft.Padding.symmetric(
+                horizontal=AppDimensions.PADDING_FORM_HORIZONTAL,
+                vertical=AppDimensions.PADDING_FORM_VERTICAL,
+            ),
+        )
 
     def get_pending_move_ids(self) -> list[int]:
         return self.__bulk_transfer.get_pending_move_ids()
@@ -108,9 +121,7 @@ class BinTransferView(BaseView):
         self.__bulk_transfer.update_existing_target(target_id, source_id, cast(list[Any], values))
 
     def set_source_error(self, message: str | None) -> None:
-        self.__source_input.error = message
-        self.update()
+        self.set_field_error("source_bin", message)
 
     def set_target_error(self, message: str | None) -> None:
-        self.__target_input.error = message
-        self.update()
+        self.set_field_error("target_bin", message)

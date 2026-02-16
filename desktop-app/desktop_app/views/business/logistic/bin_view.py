@@ -66,7 +66,7 @@ class BinView(BaseView):
         columns = [
             ft.Column(controls=main_grid + self._spacing_responsive_row + [self.__items_row], expand=True),
             self._spacing_column,
-            ft.Column(controls=meta_grid + [self._spacing_row, self._buttons_row], expand=True),
+            ft.Column(controls=meta_grid + self._spacing_responsive_row + [self._spacing_row, self._buttons_row], expand=True),
         ]
         self._columns_row.controls.extend(columns)
         self._master_column.controls.append(self._columns_row)

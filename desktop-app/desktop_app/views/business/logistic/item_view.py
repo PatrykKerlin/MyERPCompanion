@@ -35,8 +35,16 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         on_discount_delete_clicked: Callable[[list[int]], None] | None = None,
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
-        self.__GALLERY_HEIGHT = ItemViewDimensions.GALLERY_HEIGHT
+        self.__GALLERY_SECTION_HEIGHT = AppDimensions.SECTION_HEIGHT_LARGE
+        self.__GALLERY_HEIGHT = max(
+            ItemViewDimensions.GALLERY_HEIGHT,
+            self.__GALLERY_SECTION_HEIGHT
+            - (2 * AppDimensions.SPACE_2XS)
+            - ControlStyles.TEXT_FIELD_HEIGHT
+            - AppDimensions.SPACE_2XS,
+        )
         self.__PRIMARY_BORDER = ItemViewDimensions.PRIMARY_BORDER
+        self.__buttons_spacing_row = ft.Row(height=AppDimensions.SPACE_2XL, visible=mode == ViewMode.EDIT)
 
         product_fields_definitions = [
             {"key": "index", "input": self._get_text_input},
@@ -51,7 +59,6 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             {"key": "purchase_price", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "vat_rate", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "margin", "input": self._get_numeric_input, "is_float": True, "step": 0.001, "precision": 3},
-            {"key": "moq", "input": self._get_numeric_input},
             {"key": "lead_time", "input": self._get_numeric_input},
         ]
         param_fields_definitions = [
@@ -68,6 +75,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             {"key": "expiration_date", "input": self._get_date_picker},
         ]
         stock_fields_definitions = [
+            {"key": "moq", "input": self._get_numeric_input},
             {"key": "stock_quantity", "input": self._get_numeric_input},
             {"key": "reserved_quantity", "input": self._get_numeric_input},
             {"key": "outbound_quantity", "input": self._get_numeric_input},
@@ -87,7 +95,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         param_grid = self._build_grid(param_fields)
         dimensions_grid = self._build_grid(dimensions_fields)
         stock_grid = self._build_grid(stock_fields)
-        meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=5)
+        meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
 
         columns = [
             ft.Column(
@@ -99,8 +107,9 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
                 controls=meta_grid
                 + self._spacing_responsive_row
                 + dimensions_grid
-                + self._spacing_responsive_row
-                + param_grid,
+                + param_grid
+                + (4 * self._spacing_responsive_row)
+                + [self._spacing_row, self._buttons_row, self.__buttons_spacing_row],
                 expand=True,
             ),
         ]
@@ -132,16 +141,16 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             translation=self._translation,
             height=AppDimensions.SECTION_HEIGHT_LARGE,
             with_button=False,
+            with_border=True,
         )
         self.__image_order_field = ft.TextField(
             label=self._translation.get("sequence"),
-            keyboard_type=ft.KeyboardType.NUMBER,
+            border_radius = ControlStyles.FIELD_BORDER_RADIUS,
+            border_color = ControlStyles.FIELD_BORDER_COLOR,
+            focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
+            height = ControlStyles.TEXT_FIELD_HEIGHT,
+            content_padding = ControlStyles.FIELD_PADDING,
         )
-        self.__image_order_field.border_radius = ControlStyles.FIELD_BORDER_RADIUS
-        self.__image_order_field.border_color = ControlStyles.FIELD_BORDER_COLOR
-        self.__image_order_field.focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR
-        self.__image_order_field.height = ControlStyles.TEXT_FIELD_HEIGHT
-        self.__image_order_field.content_padding = ControlStyles.FIELD_PADDING
         self.__image_primary_checkbox = ft.Checkbox(
             label=self._translation.get("is_primary"),
         )
@@ -159,7 +168,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             ft.Button(
                 self._translation.get("save"),
                 on_click=self.__on_image_edit_confirmed,
-                style=ButtonStyles.compact,
+                style=ButtonStyles.primary_compact,
             ),
         ]
         self.__image_edit_dialog = ft.AlertDialog(
@@ -178,9 +187,56 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
                     controls=[self.__add_image_button],
                     alignment=AlignmentStyles.AXIS_END,
                 ),
-                self.__bins_table,
             ],
+            spacing=AppDimensions.SPACE_2XS,
             expand=True,
+        )
+        self.__gallery_container = ft.Container(
+            content=self.__gallery_column,
+            border=ControlStyles.FIELD_BORDER,
+            border_radius=ControlStyles.FIELD_BORDER_RADIUS,
+            padding=ft.Padding.all(AppDimensions.SPACE_2XS),
+            height=self.__GALLERY_SECTION_HEIGHT,
+            expand=True,
+        )
+        bins_label, _ = self._get_label("bins", 4)
+        self.__bins_row = ft.ResponsiveRow(
+            columns=12,
+            controls=[
+                bins_label,
+                ft.Container(
+                    content=self.__bins_table,
+                    col={"sm": 8.0},
+                    alignment=ControlStyles.INPUT_ALIGNMENT,
+                    height=self.__GALLERY_SECTION_HEIGHT,
+                ),
+            ],
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
+        )
+        gallery_label, _ = self._get_label("images", 4)
+        self.__gallery_row = ft.ResponsiveRow(
+            columns=12,
+            controls=[
+                gallery_label,
+                ft.Container(
+                    content=self.__gallery_container,
+                    col={"sm": 8.0},
+                    alignment=ControlStyles.INPUT_ALIGNMENT,
+                    height=self.__GALLERY_SECTION_HEIGHT,
+                ),
+            ],
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
+        )
+        self.__bins_gallery_row = ft.Row(
+            controls=[
+                ft.Column(controls=[self.__bins_row], expand=True),
+                ft.Container(width=AppDimensions.SPACE_2XL),
+                ft.Column(controls=[self.__gallery_row], expand=True),
+            ],
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
         )
         self._init_discount_bulk_transfer(
             mode,
@@ -195,11 +251,9 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         bulk_transfer_row = self._build_discount_bulk_transfer_row()
         self._rows = [
             self._columns_row,
-            self.__gallery_column,
-            ft.Row(height=AppDimensions.SPACE_2XL),
-            bulk_transfer_row,
+            self.__bins_gallery_row,
             self._spacing_row,
-            self._buttons_row,
+            bulk_transfer_row,
         ]
         self._master_column.controls.extend(self._rows)
 
@@ -215,28 +269,22 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         self.__image_gallery.update()
 
     def set_mode(self, mode: ViewMode) -> None:
+        self.__buttons_spacing_row.visible = mode == ViewMode.EDIT
         super().set_mode(mode)
         self.__apply_stock_quantity_rules(mode)
         self._update_discount_bulk_transfer_mode(mode)
-        if self._mode not in {ViewMode.READ, ViewMode.EDIT}:
-            self.__gallery_column.visible = False
-            self.__add_image_button.visible = False
-            self.__add_image_button.disabled = True
-            self.__bins_table.visible = False
-            self.__bins_table.read_only = True
-        elif self._mode == ViewMode.EDIT:
-            self.__gallery_column.visible = True
-            self.__add_image_button.visible = False
-            self.__add_image_button.disabled = True
-            self.__bins_table.visible = True
-            self.__bins_table.read_only = True
-        elif self._mode == ViewMode.READ:
-            self.__gallery_column.visible = True
-            self.__add_image_button.visible = True
-            self.__add_image_button.disabled = False
-            self.__bins_table.visible = True
-            self.__bins_table.read_only = False
-        self.__gallery_column.update()
+        show_gallery = mode in {ViewMode.READ, ViewMode.EDIT}
+        can_add_image = mode == ViewMode.READ
+        self.__bins_gallery_row.visible = show_gallery
+        self.__bins_row.visible = show_gallery
+        self.__gallery_row.visible = show_gallery
+        self.__gallery_container.visible = show_gallery
+        self.__add_image_button.visible = can_add_image
+        self.__add_image_button.disabled = not can_add_image
+        self.__bins_table.visible = show_gallery
+        self.__bins_table.read_only = not can_add_image
+        self.safe_update(self.__bins_gallery_row)
+        self.safe_update(self.__buttons_spacing_row)
 
     def __apply_stock_quantity_rules(self, mode: ViewMode) -> None:
         read_only_keys = ("stock_quantity", "reserved_quantity", "outbound_quantity")
@@ -264,7 +312,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         is_primary = image["is_primary"]
         image_height = self.__GALLERY_HEIGHT - 2 * self.__PRIMARY_BORDER
         padding = self.__PRIMARY_BORDER if is_primary else 0
-        border = ft.Border.all(2, AppColors.PRIMARY) if is_primary else None
+        border = ft.Border.all(self.__PRIMARY_BORDER, AppColors.MATERIAL_BLUE) if is_primary else None
         return ft.Container(
             content=ft.Image(
                 src=url,
