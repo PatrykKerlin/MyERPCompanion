@@ -129,6 +129,8 @@ class UserView(BaseView, GroupBulkTransferMixin):
                     ft.Row(height=AppDimensions.SPACE_2XL),
                 ]
             )
+        if caller_view_key == View.CURRENT_USER:
+            self._rows.append(self._spacing_row)
         self._rows.append(self._buttons_row)
         self._master_column.controls.extend(self._rows)
 

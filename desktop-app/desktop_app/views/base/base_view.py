@@ -642,6 +642,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
     def __set_marker_state_for_non_search_mode(self, marker: ft.Control | None) -> None:
         if marker is None:
             return
+        if hasattr(marker, "visible"):
+            setattr(marker, "visible", False)
         if hasattr(marker, "disabled"):
             setattr(marker, "disabled", True)
         self.__set_marker_value(marker, False)
@@ -651,6 +653,8 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
     def __set_marker_state_for_search_mode(self, marker: ft.Control | None, selected: bool) -> None:
         if marker is None:
             return
+        if hasattr(marker, "visible"):
+            setattr(marker, "visible", True)
         if hasattr(marker, "disabled"):
             setattr(marker, "disabled", False)
         self.__set_marker_value(marker, selected)
