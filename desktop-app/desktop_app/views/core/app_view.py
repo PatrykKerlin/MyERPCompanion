@@ -52,12 +52,28 @@ class AppView:
             visible=False,
             height=AppDimensions.CONTROL_HEIGHT,
             opacity=1.0,
-            clip_behavior=ft.ClipBehavior.HARD_EDGE,
+            clip_behavior=ft.ClipBehavior.NONE,
+            left=0,
+            top=0,
+            right=0,
             animate=AppDimensions.ANIMATION_DURATION_MS,
             animate_size=AppDimensions.ANIMATION_DURATION_MS,
             animate_opacity=AppDimensions.ANIMATION_DURATION_MS,
         )
         self.__views_stack = ft.Stack(expand=True, fit=ft.StackFit.EXPAND)
+        self.__views_stack_container = ft.Container(
+            content=self.__views_stack,
+            left=0,
+            right=0,
+            bottom=0,
+            top=0,
+            animate_position=AppDimensions.ANIMATION_DURATION_MS,
+        )
+        self.__tabs_card_stack = ft.Stack(
+            controls=[self.__views_stack_container, self.__tabs_bar_container],
+            expand=True,
+            fit=ft.StackFit.EXPAND,
+        )
         self.__auth_container = ft.Container(visible=False, expand=True)
         self.__content = ft.Column(
             controls=[
@@ -68,14 +84,7 @@ class AppView:
                 ft.Row(
                     controls=[
                         self.__side_menu_container,
-                        ft.Column(
-                            controls=[
-                                self.__tabs_bar_container,
-                                self.__views_stack,
-                            ],
-                            spacing=0,
-                            expand=True,
-                        ),
+                        self.__tabs_card_stack,
                     ],
                     expand=True,
                 ),
@@ -196,8 +205,12 @@ class AppView:
         has_tabs_bar_component = self.__tabs_bar_container.content is not None
         self.__tabs_bar_container.visible = has_tabs_bar_component
         if not has_tabs_bar_component:
+            self.__tabs_bar_container.height = 0
+            self.__views_stack_container.top = 0
             return
         if self.__is_tabs_bar_visible:
             self.__tabs_bar_container.height = AppDimensions.CONTROL_HEIGHT
+            self.__views_stack_container.top = AppDimensions.CONTROL_HEIGHT - AppDimensions.TAB_CARD_BORDER_WIDTH
         else:
             self.__tabs_bar_container.height = 0
+            self.__views_stack_container.top = 0

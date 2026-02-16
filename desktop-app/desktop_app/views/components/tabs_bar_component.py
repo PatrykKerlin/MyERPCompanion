@@ -56,43 +56,62 @@ class TabsBarComponent(BaseComponent, ft.Container):
         controls: list[ft.Control] = []
         for title in self.__tabs:
             is_active = title == self.__active_tab
-            controls.append(
-                ft.Container(
-                    content=ft.Row(
-                        controls=[
-                            ft.Container(
-                                content=ft.Text(
-                                    title,
-                                    overflow=ft.TextOverflow.ELLIPSIS,
-                                    no_wrap=True,
-                                ),
-                                padding=ft.Padding.only(left=AppDimensions.SPACE_MD),
+            tab_container = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Container(
+                            content=ft.Text(
+                                title,
+                                overflow=ft.TextOverflow.ELLIPSIS,
+                                no_wrap=True,
                             ),
-                            ft.IconButton(
-                                icon=ft.Icons.CLOSE,
-                                on_click=lambda _, title=title: self._controller.on_close_clicked(title),
-                                style=ButtonStyles.icon,
+                            padding=ft.Padding.only(left=AppDimensions.SPACE_MD),
+                        ),
+                        ft.IconButton(
+                            icon=ft.Icons.CLOSE,
+                            on_click=lambda _, title=title: self._controller.on_close_clicked(title),
+                            style=ButtonStyles.icon,
+                        ),
+                    ],
+                    spacing=AppDimensions.SPACE_2XS,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+                bgcolor=AppColors.CARD if is_active else None,
+                border_radius=ft.BorderRadius.only(
+                    top_left=AppDimensions.RADIUS_MD,
+                    top_right=AppDimensions.RADIUS_MD,
+                    bottom_left=0,
+                    bottom_right=0,
+                ),
+                border=ft.Border.all(AppDimensions.TAB_CARD_BORDER_WIDTH, AppColors.OUTLINE),
+                padding=ft.Padding.only(
+                    left=AppDimensions.SPACE_2XS,
+                    right=AppDimensions.SPACE_2XS,
+                    top=AppDimensions.SPACE_2XS,
+                    bottom=0,
+                ),
+                alignment=ft.Alignment.CENTER_LEFT,
+                clip_behavior=ft.ClipBehavior.ANTI_ALIAS_WITH_SAVE_LAYER,
+                ink=False,
+                on_click=lambda _, title=title: self._controller.on_tab_clicked(title),
+            )
+            if is_active:
+                controls.append(
+                    ft.Stack(
+                        controls=[
+                            tab_container,
+                            ft.Container(
+                                left=0,
+                                right=0,
+                                bottom=0,
+                                height=AppDimensions.TAB_CARD_BORDER_WIDTH,
+                                bgcolor=AppColors.CARD,
+                                ignore_interactions=True,
                             ),
                         ],
-                        spacing=AppDimensions.SPACE_2XS,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    ),
-                    bgcolor=AppColors.CARD if is_active else None,
-                    border_radius=ft.BorderRadius.only(
-                        top_left=AppDimensions.RADIUS_MD,
-                        top_right=AppDimensions.RADIUS_MD,
-                        bottom_left=0,
-                        bottom_right=0,
-                    ),
-                    padding=ft.Padding.only(
-                        left=AppDimensions.SPACE_2XS,
-                        right=AppDimensions.SPACE_2XS,
-                        top=AppDimensions.SPACE_2XS,
-                        bottom=0,
-                    ),
-                    alignment=ft.Alignment.CENTER_LEFT,
-                    ink=False,
-                    on_click=lambda _, title=title: self._controller.on_tab_clicked(title),
+                        fit=ft.StackFit.LOOSE,
+                    )
                 )
-            )
+            else:
+                controls.append(tab_container)
         cast(ft.Row, self.content).controls = cast(list[ft.Control], controls)

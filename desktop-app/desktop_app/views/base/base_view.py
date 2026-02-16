@@ -100,6 +100,14 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             self,
             content=self.__scrollable_wrapper,
             expand=True,
+            bgcolor=AppColors.CARD,
+            shape=ft.RoundedRectangleBorder(
+                radius=AppDimensions.RADIUS_MD,
+                side=ft.BorderSide(
+                    width=AppDimensions.TAB_CARD_BORDER_WIDTH,
+                    color=AppColors.OUTLINE,
+                ),
+            ),
             margin=ft.Margin.only(
                 top=0,
                 left=AppDimensions.SPACE_2XS,
