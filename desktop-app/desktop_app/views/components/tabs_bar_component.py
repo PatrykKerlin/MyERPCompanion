@@ -16,7 +16,10 @@ if TYPE_CHECKING:
 class TabsBarComponent(BaseComponent, ft.Container):
     def __init__(self, controller: TabsBarController, translation: Translation) -> None:
         BaseComponent.__init__(self, controller, translation)
-        ft.Container.__init__(self)
+        ft.Container.__init__(
+            self,
+            padding=ft.Padding.symmetric(horizontal=AppDimensions.TABS_BAR_EDGE_PADDING),
+        )
         self.__tabs: list[str] = []
         self.__active_tab = ""
         self.content = ft.Row(
@@ -75,7 +78,12 @@ class TabsBarComponent(BaseComponent, ft.Container):
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
                     bgcolor=AppColors.CARD if is_active else None,
-                    border_radius=AppDimensions.RADIUS_MD,
+                    border_radius=ft.BorderRadius.only(
+                        top_left=AppDimensions.RADIUS_MD,
+                        top_right=AppDimensions.RADIUS_MD,
+                        bottom_left=0,
+                        bottom_right=0,
+                    ),
                     padding=ft.Padding.only(
                         left=AppDimensions.SPACE_2XS,
                         right=AppDimensions.SPACE_2XS,
