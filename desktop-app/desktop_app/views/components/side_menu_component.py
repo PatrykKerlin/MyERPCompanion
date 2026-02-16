@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
+from styles.colors import AppColors
 from styles.styles import AlignmentStyles
 from styles.dimensions import AppDimensions
 from views.base.base_component import BaseComponent
@@ -34,6 +35,7 @@ class SideMenuComponent(BaseComponent, ft.Container):
             alignment=AlignmentStyles.TOP_CENTER,
             width=self.__calculate_width(),
             opacity=1.0,
+            border=self.__get_right_divider_border(),
             animate=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
             animate_opacity=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
             animate_size=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
@@ -41,6 +43,13 @@ class SideMenuComponent(BaseComponent, ft.Container):
 
     def set_scroll_enabled(self, enabled: bool) -> None:
         self.__menu_column.scroll = ft.ScrollMode.ADAPTIVE if enabled else ft.ScrollMode.HIDDEN
+
+    def set_divider_visible(self, visible: bool) -> None:
+        self.border = self.__get_right_divider_border() if visible else None
+
+    @staticmethod
+    def __get_right_divider_border() -> ft.Border:
+        return ft.Border(right=ft.BorderSide(width=1, color=AppColors.OUTLINE))
 
     def __build_controls(self) -> None:
         for module_key, view_params in self.__content.items():

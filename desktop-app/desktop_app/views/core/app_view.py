@@ -41,6 +41,12 @@ class AppView:
             color=AppColors.OUTLINE,
         )
         self.__side_menu_container = ft.Container(visible=False)
+        self.__footer_top_divider = ft.Divider(
+            visible=True,
+            height=1,
+            thickness=1,
+            color=AppColors.OUTLINE,
+        )
         self.__footer_container = ft.Container(visible=False)
         self.__tabs_bar_container = ft.Container(
             visible=False,
@@ -72,6 +78,7 @@ class AppView:
                     ],
                     expand=True,
                 ),
+                self.__footer_top_divider,
                 self.__footer_container,
             ],
             alignment=AlignmentStyles.AXIS_START,

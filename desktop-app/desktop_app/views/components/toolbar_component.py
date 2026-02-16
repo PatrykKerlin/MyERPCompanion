@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
+from styles.colors import AppColors
 from styles.dimensions import AppDimensions
 from styles.styles import AlignmentStyles, ButtonStyles
 from views.base.base_component import BaseComponent
@@ -35,7 +36,7 @@ class ToolbarComponent(BaseComponent, ft.Container):
             on_click=lambda _: self._controller.on_delete_clicked(),
             style=ButtonStyles.icon,
         )
-        self.__nav_spacer = ft.Container(width=AppDimensions.SPACE_LG)
+        self.__management_navigation_divider = self.__build_section_divider()
         self.__first_tab_button = ft.IconButton(
             icon=ft.Icons.FIRST_PAGE,
             tooltip=translation.get("first_tab"),
@@ -85,6 +86,7 @@ class ToolbarComponent(BaseComponent, ft.Container):
             on_click=lambda _: self._controller.on_last_tab_clicked(),
             style=ButtonStyles.icon,
         )
+        self.__navigation_actions_divider = self.__build_section_divider()
         self.__refresh_button = ft.IconButton(
             icon=ft.Icons.REFRESH,
             tooltip=translation.get("refresh"),
@@ -92,14 +94,15 @@ class ToolbarComponent(BaseComponent, ft.Container):
             on_click=lambda _: self._controller.on_refresh_clicked(),
             style=ButtonStyles.icon,
         )
-        self.__user_label = ft.Text("")
         self.__pending_username: str | None = None
-        self.__user_button = ft.IconButton(
+        self.__current_user_text = ft.Text("")
+        self.__current_user_button = ft.TextButton(
+            content=self.__current_user_text,
             icon=ft.Icons.PERSON,
             tooltip=translation.get("open_user"),
             disabled=True,
             on_click=lambda _: self._controller.on_current_user_clicked(),
-            style=ButtonStyles.icon,
+            style=ButtonStyles.toolbar_user,
         )
         self.__logout_button = ft.IconButton(
             icon=ft.Icons.LOGOUT,
@@ -109,7 +112,7 @@ class ToolbarComponent(BaseComponent, ft.Container):
             style=ButtonStyles.icon,
         )
         self.__user_row = ft.Row(
-            controls=[self.__user_label, self.__user_button, self.__logout_button],
+            controls=[self.__current_user_button, self.__logout_button],
             alignment=AlignmentStyles.AXIS_END,
             vertical_alignment=AlignmentStyles.CROSS_CENTER,
         )
@@ -118,18 +121,20 @@ class ToolbarComponent(BaseComponent, ft.Container):
                 self.__toggle_menu_button,
                 self.__lock_view_button,
                 self.__delete_record_button,
-                self.__nav_spacer,
+                self.__management_navigation_divider,
                 self.__first_tab_button,
                 self.__previous_tab_button,
                 self.__search_tab_button,
                 self.__next_tab_button,
                 self.__last_tab_button,
+                self.__navigation_actions_divider,
                 self.__close_other_tabs_button,
                 self.__close_all_tabs_button,
                 self.__refresh_button,
             ],
             alignment=AlignmentStyles.AXIS_START,
             vertical_alignment=AlignmentStyles.CROSS_CENTER,
+            spacing=AppDimensions.SPACE_2XS,
         )
         self.__main_row = ft.Row(
             controls=[self.__left_row, self.__user_row],
@@ -141,6 +146,15 @@ class ToolbarComponent(BaseComponent, ft.Container):
             self,
             content=self.__main_row,
             expand=True,
+        )
+
+    @staticmethod
+    def __build_section_divider() -> ft.Container:
+        return ft.Container(
+            content=ft.VerticalDivider(width=1, thickness=1, color=AppColors.OUTLINE),
+            alignment=AlignmentStyles.CENTER,
+            height=AppDimensions.CONTROL_HEIGHT - AppDimensions.SPACE_MD,
+            margin=ft.Margin.symmetric(horizontal=AppDimensions.SPACE_XS),
         )
 
     def set_lock_view_button_icon(self, unlocked: bool) -> None:
@@ -201,13 +215,13 @@ class ToolbarComponent(BaseComponent, ft.Container):
     def __apply_pending_username(self) -> None:
         username = self.__pending_username
         if username:
-            self.__user_label.value = username
-            self.__user_button.disabled = False
+            self.__current_user_text.value = username
+            self.__current_user_button.disabled = False
             self.__logout_button.disabled = False
         else:
-            self.__user_label.value = ""
-            self.__user_button.disabled = True
+            self.__current_user_text.value = ""
+            self.__current_user_button.disabled = True
             self.__logout_button.disabled = True
-        self.__user_label.update()
-        self.__user_button.update()
+        self.__current_user_text.update()
+        self.__current_user_button.update()
         self.__logout_button.update()

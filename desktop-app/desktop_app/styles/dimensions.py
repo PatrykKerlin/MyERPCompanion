@@ -37,6 +37,7 @@ class AppDimensions:
 
     # Shared values
     ICON_BUTTON_WIDTH = 48
+    TOOLBAR_USER_ICON_SIZE = 20
     SHORTCUT_FONT_SIZE = 10
     BUTTON_ROW_SPACING = SPACE_MD
     SIDE_MENU_MIN_WIDTH = 200

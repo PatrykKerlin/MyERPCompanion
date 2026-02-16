@@ -23,6 +23,16 @@ class ButtonStyles:
         ),
         shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
     )
+    toolbar_user = ft.ButtonStyle(
+        padding=ft.Padding.symmetric(
+            horizontal=AppDimensions.PADDING_BUTTON_HORIZONTAL_COMPACT,
+            vertical=AppDimensions.PADDING_BUTTON_VERTICAL_COMPACT,
+        ),
+        color=AppColors.ON_SURFACE,
+        icon_color=AppColors.ON_SURFACE,
+        icon_size=AppDimensions.TOOLBAR_USER_ICON_SIZE,
+        shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
+    )
     icon = ft.ButtonStyle(
         padding=ft.Padding.all(0),
         shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
