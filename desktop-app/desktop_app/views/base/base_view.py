@@ -485,9 +485,9 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             on_change=lambda event, key=key: self._controller.on_value_changed(event, key),
             animate_size=AppDimensions.ANIMATION_DURATION_MS,
             value=value,
-            shape=ft.CircleBorder(),
+            expand=True,
+            shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_SM),
             border_side=ControlStyles.FIELD_BORDER_SIDE,
-            height=ControlStyles.TEXT_FIELD_HEIGHT,
         )
         return (
             ft.Container(
@@ -506,15 +506,14 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             tooltip=self._translation.get("check_to_search"),
             animate_size=AppDimensions.ANIMATION_DURATION_MS,
             value=False,
-            shape=ft.CircleBorder(),
+            shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_SM),
             border_side=ControlStyles.FIELD_BORDER_SIDE,
-            height=ControlStyles.TEXT_FIELD_HEIGHT,
         )
         return (
             ft.Container(
                 content=marker,
                 col={"sm": float(size)},
-                alignment=ControlStyles.MARKER_ALIGNMENT,
+                alignment=ControlStyles.INPUT_ALIGNMENT,
                 height=ControlStyles.TEXT_FIELD_HEIGHT,
                 padding=ControlStyles.FIELD_PADDING,
             ),

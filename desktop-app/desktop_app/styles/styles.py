@@ -74,7 +74,7 @@ class ControlStyles:
     FIELD_BORDER_COLOR: ft.ColorValue = AppColors.OUTLINE
     FIELD_FOCUSED_BORDER_COLOR: ft.ColorValue = AppColors.PRIMARY
     FIELD_BORDER = ft.Border.all(1, AppColors.OUTLINE)
-    FIELD_BORDER_SIDE = ft.BorderSide(width=1, color=AppColors.OUTLINE)
+    FIELD_BORDER_SIDE = ft.BorderSide(width=1.25, color=AppColors.OUTLINE)
     TEXT_FIELD_HEIGHT = max(
         AppDimensions.CONTROL_HEIGHT,
         math.ceil((INPUT_FONT_SIZE * INPUT_FONT_LINE_HEIGHT) + (2 * AppDimensions.PADDING_INPUT_VERTICAL) + 2),
