@@ -103,9 +103,9 @@ class SalesOrderView(BaseView):
                 "options": customers,
                 "callbacks": [self.__on_customer_changed],
             },
+            {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
             {"key": "delivery_method_id", "input": self._get_dropdown, "options": delivery_methods},
             {"key": "status_id", "input": self._get_dropdown, "options": statuses},
-            {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
             {"key": "number", "input": self._get_text_input},
             {"key": "invoice_number", "input": self._get_text_input},
             {"key": "order_date", "input": self._get_date_picker},
@@ -117,8 +117,8 @@ class SalesOrderView(BaseView):
             {"key": "total_discount", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
         ]
         notes_fields_definitions = [
-            {"key": "notes", "input": self._get_text_input, "lines": 4},
-            {"key": "internal_notes", "input": self._get_text_input, "lines": 4},
+            {"key": "notes", "input": self._get_text_input, "lines": 3},
+            {"key": "internal_notes", "input": self._get_text_input, "lines": 3},
         ]
         main_fields = self._build_field_groups(main_fields_definitions)
         notes_fields = self._build_field_groups(notes_fields_definitions)
@@ -127,16 +127,12 @@ class SalesOrderView(BaseView):
         notes_grid = self._build_grid(notes_fields)
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
 
-        self.__customer_discount = ft.Dropdown(
+        self.__customer_discount = self.__create_dropdown_control(
+            key="customer_discount_id",
             options=self.__get_customer_discount_options(self.__get_selected_customer_id()),
             value="0",
             on_select=self.__on_customer_discount_changed,
-            expand=True,
-            editable=True,
-            enable_search=True,
-            enable_filter=True,
         )
-        self.__apply_dropdown_style(self.__customer_discount)
         self.__customer_discount_row = ft.ResponsiveRow(
             columns=12,
             controls=[
@@ -153,42 +149,28 @@ class SalesOrderView(BaseView):
         self.__customer_discount_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
         self.__customer_discount.disabled = not self.__is_customer_discount_editable(mode)
 
-        main_grid.append(self.__customer_discount_row)
-
-        category_options = [ft.dropdown.Option("all", self._translation.get("all"))]
-        category_options.extend(ft.dropdown.Option(str(category_id), label) for category_id, label in categories)
-        self.__category_filter = ft.Dropdown(
-            options=category_options,
+        self.__category_filter = self.__create_dropdown_control(
+            key="category_filter",
+            options=self.__get_category_filter_options(categories),
             value="all",
             on_select=self.__on_category_filter_changed,
-            expand=True,
-            editable=True,
-            enable_search=True,
-            enable_filter=True,
         )
-        self.__apply_dropdown_style(self.__category_filter)
         self.__category_filter.visible = mode in {ViewMode.READ, ViewMode.EDIT}
         self.__category_filter.disabled = mode == ViewMode.EDIT
-        self.__category_filter_row = ft.Row(
+        self.__category_filter_row = ft.ResponsiveRow(
+            columns=12,
             controls=[
-                ft.Text(self._translation.get("category")),
-                self.__category_filter,
+                self._get_label("category", 4, colon=True)[0],
+                ft.Container(
+                    content=self.__category_filter,
+                    col={"sm": 8.0},
+                    alignment=ControlStyles.INPUT_ALIGNMENT,
+                ),
             ],
             alignment=AlignmentStyles.AXIS_START,
-            vertical_alignment=AlignmentStyles.CROSS_CENTER,
+            vertical_alignment=AlignmentStyles.CROSS_START,
         )
         self.__category_filter_row.visible = self.__category_filter.visible
-
-        columns = [
-            ft.Column(
-                controls=main_grid,
-                expand=3,
-            ),
-            self._spacing_column,
-            ft.Column(controls=meta_grid + notes_grid, expand=2),
-        ]
-        self._columns_row.controls.extend(columns)
-        bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
         self.__status_history_table = DataTable(
             columns=["status", "created_at"],
             rows=status_history,
@@ -198,18 +180,63 @@ class SalesOrderView(BaseView):
             on_row_clicked=None,
             read_only=True,
             visible=mode in {ViewMode.READ, ViewMode.EDIT},
+            with_border=True,
+        )
+        self.__status_history_row = ft.ResponsiveRow(
+            columns=12,
+            controls=[
+                self._get_label("status_history", 4, colon=True)[0],
+                ft.Container(
+                    content=self.__status_history_table,
+                    col={"sm": 8.0},
+                    alignment=ControlStyles.INPUT_ALIGNMENT,
+                ),
+            ],
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
+            visible=mode in {ViewMode.READ, ViewMode.EDIT},
+        )
+        self.__details_row = ft.Row(
+            controls=[
+                ft.Column(
+                    controls=[self.__customer_discount_row, *(2 * self._spacing_responsive_row), self.__category_filter_row],
+                    expand=True,
+                    spacing=0,
+                ),
+                self._spacing_column,
+                ft.Column(controls=[self.__status_history_row], expand=True, spacing=0),
+            ],
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
+            visible=mode in {ViewMode.READ, ViewMode.EDIT},
+        )
+
+        columns = [
+            ft.Column(
+                controls=main_grid, expand=True
+            ),
+            self._spacing_column,
+            ft.Column(controls=meta_grid + self._spacing_responsive_row + notes_grid + self._spacing_responsive_row, expand=True),
+        ]
+        self._columns_row.controls.extend(columns)
+        bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
+        self.__buttons_spacing_row = ft.Row(
+            height=AppDimensions.SPACE_2XL,
+            visible=mode == ViewMode.EDIT,
+        )
+        self.__details_spacing_row = ft.Row(
+            height=AppDimensions.SPACE_2XL,
+            visible=mode in {ViewMode.READ, ViewMode.EDIT},
         )
         self._master_column.controls.extend(
             [
                 self._columns_row,
-                ft.Row(height=AppDimensions.SPACE_MD),
-                self.__category_filter_row,
-                ft.Row(height=AppDimensions.SMALL_ROW_HEIGHT),
-                bulk_transfer_row,
-                ft.Row(height=AppDimensions.SMALL_ROW_HEIGHT),
-                self.__status_history_table,
-                ft.Row(height=AppDimensions.SPACE_2XL),
+                self._spacing_row,
                 self._buttons_row,
+                self.__buttons_spacing_row,
+                self.__details_row,
+                self.__details_spacing_row,
+                bulk_transfer_row,
             ]
         )
         self.__pending_source_items = self.__get_filtered_source_items()
@@ -232,6 +259,10 @@ class SalesOrderView(BaseView):
         self.__category_filter_row.visible = self.__category_filter.visible
         self.__customer_discount_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
         self.__customer_discount.disabled = not self.__is_customer_discount_editable(mode)
+        self.__status_history_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__details_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__details_spacing_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__buttons_spacing_row.visible = mode == ViewMode.EDIT
         if self.__bulk_transfer.visible:
             self.__apply_category_filter()
         if self.__category_filter.page:
@@ -240,6 +271,14 @@ class SalesOrderView(BaseView):
             self.__category_filter_row.update()
         if self.__customer_discount_row.page:
             self.__customer_discount_row.update()
+        if self.__status_history_row.page:
+            self.__status_history_row.update()
+        if self.__details_row.page:
+            self.__details_row.update()
+        if self.__details_spacing_row.page:
+            self.__details_spacing_row.update()
+        if self.__buttons_spacing_row.page:
+            self.__buttons_spacing_row.update()
         if self.__status_history_table.page:
             self.__status_history_table.update()
 
@@ -325,8 +364,7 @@ class SalesOrderView(BaseView):
         self.__refresh_target_category_discounts()
 
     def update_category_options(self, categories: list[tuple[int, str]]) -> None:
-        options = [ft.dropdown.Option("all", self._translation.get("all"))]
-        options.extend(ft.dropdown.Option(str(category_id), label) for category_id, label in categories)
+        options = self.__get_category_filter_options(categories)
         self.__category_filter.options = options
         if self.__selected_category_id is not None:
             option_keys = {option.key for option in options}
@@ -485,14 +523,12 @@ class SalesOrderView(BaseView):
         rows = self.__get_filtered_source_items()
         if not self.__is_mounted:
             self.__pending_source_items = rows
-            self.__pending_source_selectable_ids = self.__source_selectable_ids
             return
         self.__bulk_transfer.set_source_rows(rows)
         self.__apply_source_selectable_ids(rows)
 
     def __apply_source_selectable_ids(self, rows: list[tuple[int, list[Any]]]) -> None:
         if not self.__is_mounted:
-            self.__pending_source_selectable_ids = self.__source_selectable_ids
             return
         if self.__source_selectable_ids is None:
             self.__bulk_transfer.set_source_selectable_ids(None)
@@ -554,41 +590,46 @@ class SalesOrderView(BaseView):
             if str(selected) not in option_keys:
                 selected = None
                 self.__selected_category_discount_ids_by_item[item_id] = None
-        dropdown = ft.Dropdown(
+        dropdown = self.__create_dropdown_control(
+            key="category_discount_id",
             options=options,
             value="0" if selected is None else str(selected),
             on_select=lambda event, item_id=item_id: self.__on_category_discount_changed(event, item_id),
-            expand=True,
-            disabled=self._mode == ViewMode.EDIT or not self.__bulk_transfer_enabled_in_read or not editable,
-            editable=True,
-            enable_search=True,
-            enable_filter=True,
         )
-        self.__apply_dropdown_style(dropdown)
+        dropdown.disabled = self._mode == ViewMode.EDIT or not self.__bulk_transfer_enabled_in_read or not editable
         return dropdown
 
     def __build_item_discount_dropdown(self, item_id: int, editable: bool) -> ft.Dropdown:
         options = self.__get_item_discount_options(item_id)
         selected = self.__selected_item_discount_ids.get(item_id)
-        dropdown = ft.Dropdown(
+        dropdown = self.__create_dropdown_control(
+            key="item_discount_id",
             options=options,
             value="0" if selected is None else str(selected),
             on_select=lambda event, item_id=item_id: self.__on_item_discount_changed(event, item_id),
-            expand=True,
-            disabled=self._mode == ViewMode.EDIT or not self.__bulk_transfer_enabled_in_read or not editable,
-            editable=True,
-            enable_search=True,
-            enable_filter=True,
         )
-        self.__apply_dropdown_style(dropdown)
+        dropdown.disabled = self._mode == ViewMode.EDIT or not self.__bulk_transfer_enabled_in_read or not editable
         return dropdown
 
-    @staticmethod
-    def __apply_dropdown_style(dropdown: ft.Dropdown) -> None:
-        dropdown.border_radius = ControlStyles.FIELD_BORDER_RADIUS
-        dropdown.border_color = ControlStyles.FIELD_BORDER_COLOR
-        dropdown.focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR
-        dropdown.content_padding = ControlStyles.FIELD_PADDING
+    def __create_dropdown_control(
+        self,
+        key: str,
+        options: list[ft.dropdown.Option],
+        value: int | str | None = "0",
+        on_select: Callable[[ft.Event[ft.Dropdown]], None] | None = None,
+    ) -> ft.Dropdown:
+        dropdown_container, _ = self._get_dropdown(key=key, size=12, options=[("0", "")], value=value)
+        dropdown = cast(ft.Dropdown, dropdown_container.content)
+        dropdown.options = options
+        resolved_value = "0"
+        if value is not None:
+            value_text = str(value).strip()
+            if value_text:
+                resolved_value = value_text
+        dropdown.value = resolved_value
+        if on_select is not None:
+            dropdown.on_select = on_select
+        return dropdown
 
     def __on_item_discount_changed(self, event: ft.Event[ft.Dropdown], item_id: int) -> None:
         discount_id = self.__parse_dropdown_value(event.control.value)
@@ -623,6 +664,11 @@ class SalesOrderView(BaseView):
         discounts = self.__customer_discount_map.get(customer_id or -1, [])
         options = [ft.dropdown.Option("0", "")]
         options.extend(ft.dropdown.Option(str(discount.id), discount.code) for discount in discounts)
+        return options
+
+    def __get_category_filter_options(self, categories: list[tuple[int, str]]) -> list[ft.dropdown.Option]:
+        options = [ft.dropdown.Option("all", self._translation.get("all"))]
+        options.extend(ft.dropdown.Option(str(category_id), label) for category_id, label in categories)
         return options
 
     def __get_category_discount_options(self, category_id: int | None) -> list[ft.dropdown.Option]:

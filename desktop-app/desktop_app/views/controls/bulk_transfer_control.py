@@ -14,7 +14,7 @@ class BulkTransfer(ft.Container):
         self,
         on_save_clicked: Callable[[ft.Event[ft.IconButton]], None],
         source_label: str,
-        target_label: str,
+        target_label: str | None = None,
         on_move_requested: Callable[[list[int]], None] | None = None,
         on_delete_clicked: Callable[[list[int]], None] | None = None,
         on_pending_reverted: Callable[[list[int]], None] | None = None,
@@ -32,8 +32,10 @@ class BulkTransfer(ft.Container):
         self.__target_enabled = False
         self.__buttons_enabled = False
         self.__allow_duplicate_targets = allow_duplicate_targets
+        resolved_target_label = source_label if target_label is None else target_label
+        target_label_text = target_label or ""
         self.__source_columns = source_columns or [source_label]
-        self.__target_columns = target_columns or [target_label]
+        self.__target_columns = target_columns or [resolved_target_label]
         self.__base_height = height
         if height is not None:
             self.height = height
@@ -98,11 +100,13 @@ class BulkTransfer(ft.Container):
             spacing=AppDimensions.SPACE_MD,
         )
 
+        target_controls: list[ft.Control] = [
+            ft.Text(target_label_text, weight=ft.FontWeight.W_600),
+            self.__target_container,
+        ]
+
         target_column = ft.Column(
-            controls=[
-                ft.Text(target_label, weight=ft.FontWeight.W_600),
-                self.__target_container,
-            ],
+            controls=target_controls,
             expand=True,
             spacing=AppDimensions.SPACE_XS,
         )

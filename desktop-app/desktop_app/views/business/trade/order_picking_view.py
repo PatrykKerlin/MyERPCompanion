@@ -36,10 +36,11 @@ class OrderPickingView(BaseView):
     ) -> None:
         super().__init__(controller, translation, mode, key, None, 0, 12)
         self._master_column.scroll = None
+        self._master_column.spacing = AppDimensions.SPACE_2XL
 
         order_date_container, _ = self._get_date_picker(
             "order_date",
-            4,
+            6,
             callbacks=[self.__handle_order_date_changed],
             value=default_order_date,
             read_only=False,
@@ -49,7 +50,7 @@ class OrderPickingView(BaseView):
 
         customer_container, _ = self._get_dropdown(
             "customer_id",
-            4,
+            6,
             customers,
             callbacks=[self.__handle_customer_changed],
         )
@@ -58,7 +59,7 @@ class OrderPickingView(BaseView):
         self.__customer_input.value = "0"
         customer_container.expand = True
 
-        order_container, _ = self._get_dropdown("order_id", 4, orders, callbacks=[self.__handle_order_changed])
+        order_container, _ = self._get_dropdown("order_id", 6, orders, callbacks=[self.__handle_order_changed])
         self.__order_input = cast(ft.Dropdown, order_container.content)
         self.__order_input.label = self._translation.get("order")
         order_container.expand = True
@@ -66,17 +67,17 @@ class OrderPickingView(BaseView):
             {
                 "order_date": FieldGroup(
                     label=self._get_label("order_date", 0, colon=False),
-                    input=(order_date_container, 4),
+                    input=(order_date_container, 6),
                     marker=self._get_marker("order_date", 0),
                 ),
                 "customer_id": FieldGroup(
                     label=self._get_label("customer", 0, colon=False),
-                    input=(customer_container, 4),
+                    input=(customer_container, 6),
                     marker=self._get_marker("customer_id", 0),
                 ),
                 "order_id": FieldGroup(
                     label=self._get_label("order", 0, colon=False),
-                    input=(order_container, 4),
+                    input=(order_container, 6),
                     marker=self._get_marker("order_id", 0),
                 ),
             }
@@ -85,7 +86,7 @@ class OrderPickingView(BaseView):
         self.__item_bulk_transfer = BulkTransfer(
             on_save_clicked=on_save_clicked,
             source_label=self._translation.get("order_items"),
-            target_label=self._translation.get("order_items"),
+            target_label=None,
             on_move_requested=on_move_requested,
             on_pending_reverted=on_pending_reverted,
             allow_duplicate_targets=True,
@@ -110,7 +111,7 @@ class OrderPickingView(BaseView):
         self.__package_bulk_transfer = BulkTransfer(
             on_save_clicked=on_package_save_clicked,
             source_label=self._translation.get("packages"),
-            target_label=self._translation.get("packages"),
+            target_label=None,
             on_move_requested=on_package_move_requested,
             on_pending_reverted=on_package_pending_reverted,
             allow_duplicate_targets=True,
@@ -135,7 +136,7 @@ class OrderPickingView(BaseView):
             content=self._translation.get("confirm"),
             on_click=lambda _: self._controller.on_complete_status_clicked(),
             disabled=True,
-            style=ButtonStyles.regular,
+            style=ButtonStyles.primary_regular,
         )
         complete_row = ft.Row(
             controls=[self.__complete_button],
@@ -144,12 +145,14 @@ class OrderPickingView(BaseView):
         )
 
         inputs_row = ft.ResponsiveRow(
-            columns=12,
-            spacing=AppDimensions.SPACE_SM,
+            columns=20,
+            spacing=0,
             run_spacing=AppDimensions.SPACE_SM,
             controls=[
                 order_date_container,
+                ft.Container(col={"sm": 1.0}),
                 customer_container,
+                ft.Container(col={"sm": 1.0}),
                 order_container,
             ],
             alignment=AlignmentStyles.AXIS_START,
@@ -162,7 +165,14 @@ class OrderPickingView(BaseView):
             self.__package_bulk_transfer,
             complete_row,
         ]
-        self.content = ft.Container(content=self._master_column, expand=True)
+        self.content = ft.Container(
+            content=self._master_column,
+            expand=True,
+            padding=ft.Padding.symmetric(
+                horizontal=AppDimensions.PADDING_FORM_HORIZONTAL,
+                vertical=AppDimensions.PADDING_FORM_VERTICAL,
+            ),
+        )
 
     def set_orders(self, orders: list[tuple[int, str]]) -> None:
         self.__order_input.options = [ft.dropdown.Option(key="0", text="")] + [

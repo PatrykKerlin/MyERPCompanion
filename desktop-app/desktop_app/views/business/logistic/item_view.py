@@ -249,10 +249,14 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             height=AppDimensions.SECTION_HEIGHT_LARGE,
         )
         bulk_transfer_row = self._build_discount_bulk_transfer_row()
+        self.__bins_gallery_spacing_row = ft.Row(
+            height=AppDimensions.SPACE_2XL,
+            visible=mode in {ViewMode.READ, ViewMode.EDIT},
+        )
         self._rows = [
             self._columns_row,
             self.__bins_gallery_row,
-            self._spacing_row,
+            self.__bins_gallery_spacing_row,
             bulk_transfer_row,
         ]
         self._master_column.controls.extend(self._rows)
@@ -276,6 +280,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         show_gallery = mode in {ViewMode.READ, ViewMode.EDIT}
         can_add_image = mode == ViewMode.READ
         self.__bins_gallery_row.visible = show_gallery
+        self.__bins_gallery_spacing_row.visible = show_gallery
         self.__bins_row.visible = show_gallery
         self.__gallery_row.visible = show_gallery
         self.__gallery_container.visible = show_gallery
@@ -284,6 +289,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         self.__bins_table.visible = show_gallery
         self.__bins_table.read_only = not can_add_image
         self.safe_update(self.__bins_gallery_row)
+        self.safe_update(self.__bins_gallery_spacing_row)
         self.safe_update(self.__buttons_spacing_row)
 
     def __apply_stock_quantity_rules(self, mode: ViewMode) -> None:

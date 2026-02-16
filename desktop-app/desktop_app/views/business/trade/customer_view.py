@@ -69,7 +69,7 @@ class CustomerView(BaseView, DiscountBulkTransferMixin, UserLinkViewMixin):
             },
         ]
         country_field_definition = [
-            {"key": "country", "input": self._get_text_input, "input_size": 3},
+            {"key": "country", "input": self._get_text_input},
         ]
         shipping_street_field_definition = [
             {"key": "shipping_street", "input": self._get_text_input},
@@ -97,7 +97,7 @@ class CustomerView(BaseView, DiscountBulkTransferMixin, UserLinkViewMixin):
             },
         ]
         shipping_country_field_definition = [
-            {"key": "shipping_country", "input": self._get_text_input, "input_size": 3},
+            {"key": "shipping_country", "input": self._get_text_input},
         ]
 
         company_fields = self._build_field_groups(company_fields_definitions)
@@ -152,20 +152,22 @@ class CustomerView(BaseView, DiscountBulkTransferMixin, UserLinkViewMixin):
                 + street_grid
                 + house_grid
                 + city_grid
-                + country_grid,
-                expand=3,
+                + country_grid
+                + self._spacing_responsive_row
+                + user_grid,
+                expand=True,
             ),
             self._spacing_column,
             ft.Column(
                 controls=meta_grid
                 + self._spacing_responsive_row
-                + user_grid
-                + self._spacing_responsive_row
                 + shipping_street_grid
                 + shipping_house_grid
                 + shipping_city_grid
-                + shipping_country_grid,
-                expand=2,
+                + shipping_country_grid
+                + self._spacing_responsive_row
+                + [self._spacing_row, self._buttons_row],
+                expand=True,
             ),
         ]
         self._columns_row.controls.extend(columns)
@@ -184,10 +186,8 @@ class CustomerView(BaseView, DiscountBulkTransferMixin, UserLinkViewMixin):
         self._master_column.controls.extend(
             [
                 self._columns_row,
-                ft.Row(height=AppDimensions.SPACE_2XL),
+                self._spacing_row,
                 bulk_transfer_row,
-                ft.Row(height=AppDimensions.SPACE_2XL),
-                self._buttons_row,
             ]
         )
 
