@@ -53,6 +53,7 @@ class AppView:
             height=AppDimensions.CONTROL_HEIGHT,
             opacity=1.0,
             clip_behavior=ft.ClipBehavior.NONE,
+            alignment=ft.Alignment.BOTTOM_LEFT,
             left=0,
             top=0,
             right=0,

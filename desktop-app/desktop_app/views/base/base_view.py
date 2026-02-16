@@ -105,7 +105,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 radius=AppDimensions.RADIUS_MD,
                 side=ft.BorderSide(
                     width=AppDimensions.TAB_CARD_BORDER_WIDTH,
-                    color=AppColors.OUTLINE,
+                    color=self.__resolve_active_border_color(mode),
                 ),
             ),
             margin=ft.Margin.only(
@@ -156,6 +156,13 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
 
     def set_mode(self, mode: ViewMode) -> None:
         self._mode = mode
+        self.shape = ft.RoundedRectangleBorder(
+            radius=AppDimensions.RADIUS_MD,
+            side=ft.BorderSide(
+                width=AppDimensions.TAB_CARD_BORDER_WIDTH,
+                color=self.__resolve_active_border_color(mode),
+            ),
+        )
         match mode:
             case ViewMode.SEARCH:
                 self.__set_search_mode()
@@ -170,6 +177,13 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             case ViewMode.STATIC:
                 return
         self.__set_buttons()
+        BaseComponent.safe_update(self)
+
+    @staticmethod
+    def __resolve_active_border_color(mode: ViewMode) -> ft.ColorValue:
+        if mode in (ViewMode.CREATE, ViewMode.EDIT):
+            return AppColors.ACTIVE_BORDER_RED
+        return AppColors.OUTLINE
 
     def set_input_state(self, input: ft.Control, enable: bool) -> None:
         self.__set_control_disabled_state(input, not enable)

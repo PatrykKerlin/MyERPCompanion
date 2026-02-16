@@ -117,6 +117,7 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
         if not self._component:
             return
         self._component.active_tab = state.title
+        self._component.active_mode = state.mode
         self._component.tabs = list(self.__active_tabs.keys())
         self._component.refresh()
 
