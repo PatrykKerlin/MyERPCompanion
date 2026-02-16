@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 import flet as ft
+from styles.colors import AppColors
+from styles.dimensions import AppDimensions
 from styles.styles import ButtonStyles
 from views.base.base_component import BaseComponent
 
@@ -20,6 +22,8 @@ class TabsBarComponent(BaseComponent, ft.Container):
         self.content = ft.Row(
             controls=[],
             scroll=ft.ScrollMode.AUTO,
+            spacing=AppDimensions.SPACE_2XS,
+            vertical_alignment=ft.CrossAxisAlignment.END,
             expand=True,
         )
         self._controller = controller
@@ -46,22 +50,41 @@ class TabsBarComponent(BaseComponent, ft.Container):
         self.update()
 
     def __build_controls(self) -> None:
-        controls = [
-            ft.Row(
-                controls=[
-                    ft.TextButton(
-                        content=title,
-                        on_click=lambda _, title=title: self._controller.on_tab_clicked(title),
-                        style=ButtonStyles.compact,
+        controls: list[ft.Control] = []
+        for title in self.__tabs:
+            is_active = title == self.__active_tab
+            controls.append(
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Container(
+                                content=ft.Text(
+                                    title,
+                                    overflow=ft.TextOverflow.ELLIPSIS,
+                                    no_wrap=True,
+                                ),
+                                padding=ft.Padding.only(left=AppDimensions.SPACE_MD),
+                            ),
+                            ft.IconButton(
+                                icon=ft.Icons.CLOSE,
+                                on_click=lambda _, title=title: self._controller.on_close_clicked(title),
+                                style=ButtonStyles.icon,
+                            ),
+                        ],
+                        spacing=AppDimensions.SPACE_2XS,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
-                    ft.IconButton(
-                        icon=ft.Icons.CLOSE,
-                        on_click=lambda _, title=title: self._controller.on_close_clicked(title),
-                        expand=True,
-                        style=ButtonStyles.icon,
+                    bgcolor=AppColors.CARD if is_active else None,
+                    border_radius=AppDimensions.RADIUS_MD,
+                    padding=ft.Padding.only(
+                        left=AppDimensions.SPACE_2XS,
+                        right=AppDimensions.SPACE_2XS,
+                        top=AppDimensions.SPACE_2XS,
+                        bottom=0,
                     ),
-                ]
+                    alignment=ft.Alignment.CENTER_LEFT,
+                    ink=False,
+                    on_click=lambda _, title=title: self._controller.on_tab_clicked(title),
+                )
             )
-            for title in self.__tabs
-        ]
         cast(ft.Row, self.content).controls = cast(list[ft.Control], controls)

@@ -30,9 +30,9 @@ class AppView:
             height=AppDimensions.CONTROL_HEIGHT,
             opacity=1.0,
             clip_behavior=ft.ClipBehavior.HARD_EDGE,
-            animate=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
-            animate_size=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
-            animate_opacity=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
+            animate=AppDimensions.ANIMATION_DURATION_MS,
+            animate_size=AppDimensions.ANIMATION_DURATION_MS,
+            animate_opacity=AppDimensions.ANIMATION_DURATION_MS,
         )
         self.__toolbar_bottom_divider = ft.Divider(
             visible=False,
@@ -53,9 +53,9 @@ class AppView:
             height=AppDimensions.CONTROL_HEIGHT,
             opacity=1.0,
             clip_behavior=ft.ClipBehavior.HARD_EDGE,
-            animate=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
-            animate_size=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
-            animate_opacity=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
+            animate=AppDimensions.ANIMATION_DURATION_MS,
+            animate_size=AppDimensions.ANIMATION_DURATION_MS,
+            animate_opacity=AppDimensions.ANIMATION_DURATION_MS,
         )
         self.__views_stack = ft.Stack(expand=True, fit=ft.StackFit.EXPAND)
         self.__auth_container = ft.Container(visible=False, expand=True)
@@ -73,6 +73,7 @@ class AppView:
                                 self.__tabs_bar_container,
                                 self.__views_stack,
                             ],
+                            spacing=0,
                             expand=True,
                         ),
                     ],

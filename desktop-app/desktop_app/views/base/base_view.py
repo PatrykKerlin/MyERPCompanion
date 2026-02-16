@@ -96,7 +96,17 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         )
         self._rows = [self._columns_row, self._spacing_row, self._buttons_row]
 
-        ft.Card.__init__(self, content=self.__scrollable_wrapper, expand=True)
+        ft.Card.__init__(
+            self,
+            content=self.__scrollable_wrapper,
+            expand=True,
+            margin=ft.Margin.only(
+                top=0,
+                left=AppDimensions.SPACE_2XS,
+                right=AppDimensions.SPACE_2XS,
+                bottom=AppDimensions.SPACE_2XS,
+            ),
+        )
 
     @property
     def view_key(self) -> View:

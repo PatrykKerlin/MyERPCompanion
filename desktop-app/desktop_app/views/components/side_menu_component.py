@@ -36,9 +36,9 @@ class SideMenuComponent(BaseComponent, ft.Container):
             width=self.__calculate_width(),
             opacity=1.0,
             border=self.__get_right_divider_border(),
-            animate=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
-            animate_opacity=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
-            animate_size=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
+            animate=AppDimensions.ANIMATION_DURATION_MS,
+            animate_opacity=AppDimensions.ANIMATION_DURATION_MS,
+            animate_size=AppDimensions.ANIMATION_DURATION_MS,
         )
 
     def set_scroll_enabled(self, enabled: bool) -> None:
