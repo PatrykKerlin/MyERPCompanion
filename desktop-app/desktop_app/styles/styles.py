@@ -89,7 +89,10 @@ class ControlStyles:
 
 class MenuStyles:
     flat = ft.MenuStyle(
+        shape=ft.RoundedRectangleBorder(radius=0),
         elevation=0,
+        shadow_color=ft.Colors.TRANSPARENT,
+        padding=ft.Padding.all(0),
         bgcolor=AppColors.SURFACE,
         alignment=AlignmentStyles.TOP_LEFT,
     )

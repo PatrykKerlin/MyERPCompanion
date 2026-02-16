@@ -1,4 +1,5 @@
 import flet as ft
+from styles.colors import AppColors
 from styles.dimensions import AppDimensions
 from styles.styles import AlignmentStyles
 from utils.translation import Translation
@@ -15,17 +16,49 @@ class AppView:
 
         self.__theme = theme
         self.__translation = translation
+        self.__is_toolbar_visible = True
+        self.__is_tabs_bar_visible = True
         self.__menu_bar_container = ft.Container(visible=False)
-        self.__toolbar_container = ft.Container(visible=False)
+        self.__menu_toolbar_divider = ft.Divider(
+            visible=False,
+            height=1,
+            thickness=1,
+            color=AppColors.OUTLINE,
+        )
+        self.__toolbar_container = ft.Container(
+            visible=False,
+            height=AppDimensions.CONTROL_HEIGHT,
+            opacity=1.0,
+            clip_behavior=ft.ClipBehavior.HARD_EDGE,
+            animate=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
+            animate_size=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
+            animate_opacity=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
+        )
+        self.__toolbar_bottom_divider = ft.Divider(
+            visible=False,
+            height=1,
+            thickness=1,
+            color=AppColors.OUTLINE,
+        )
         self.__side_menu_container = ft.Container(visible=False)
         self.__footer_container = ft.Container(visible=False)
-        self.__tabs_bar_container = ft.Container(visible=False)
+        self.__tabs_bar_container = ft.Container(
+            visible=False,
+            height=AppDimensions.CONTROL_HEIGHT,
+            opacity=1.0,
+            clip_behavior=ft.ClipBehavior.HARD_EDGE,
+            animate=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
+            animate_size=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
+            animate_opacity=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
+        )
         self.__views_stack = ft.Stack(expand=True, fit=ft.StackFit.EXPAND)
         self.__auth_container = ft.Container(visible=False, expand=True)
         self.__content = ft.Column(
             controls=[
                 self.__menu_bar_container,
+                self.__menu_toolbar_divider,
                 self.__toolbar_container,
+                self.__toolbar_bottom_divider,
                 ft.Row(
                     controls=[
                         self.__side_menu_container,
@@ -62,10 +95,12 @@ class AppView:
     def set_menu_bar(self, component: MenuBarComponent) -> None:
         self.__menu_bar_container.content = component
         self.__menu_bar_container.visible = True
+        self.__update_shell_dividers()
 
     def set_toolbar(self, component: ToolbarComponent) -> None:
         self.__toolbar_container.content = component
-        self.__toolbar_container.visible = True
+        self.__apply_toolbar_visibility()
+        self.__update_shell_dividers()
 
     def set_side_menu(self, component: SideMenuComponent) -> None:
         self.__side_menu_container.content = component
@@ -77,7 +112,7 @@ class AppView:
 
     def set_tabs_bar(self, component: TabsBarComponent) -> None:
         self.__tabs_bar_container.content = component
-        self.__tabs_bar_container.visible = True
+        self.__apply_tabs_bar_visibility()
 
     def set_auth_view(self, component: ft.Control | None) -> None:
         self.__auth_container.content = component
@@ -97,10 +132,13 @@ class AppView:
         page.update()
 
     def toggle_toolbar_visible(self) -> None:
-        self.__toolbar_container.visible = not self.__toolbar_container.visible
+        self.__is_toolbar_visible = not self.__is_toolbar_visible
+        self.__apply_toolbar_visibility()
+        self.__update_shell_dividers()
 
     def toggle_tabs_bar_visible(self) -> None:
-        self.__tabs_bar_container.visible = not self.__tabs_bar_container.visible
+        self.__is_tabs_bar_visible = not self.__is_tabs_bar_visible
+        self.__apply_tabs_bar_visibility()
 
     def set_stack_item(self, view: BaseView | None) -> None:
         if view is None:
@@ -129,3 +167,29 @@ class AppView:
         if theme == "light":
             return ft.ThemeMode.LIGHT
         return ft.ThemeMode.SYSTEM
+
+    def __update_shell_dividers(self) -> None:
+        has_menu = self.__menu_bar_container.visible and self.__menu_bar_container.content is not None
+        has_toolbar = self.__is_toolbar_visible and self.__toolbar_container.content is not None
+        self.__menu_toolbar_divider.visible = has_menu
+        self.__toolbar_bottom_divider.visible = has_toolbar
+
+    def __apply_toolbar_visibility(self) -> None:
+        has_toolbar_component = self.__toolbar_container.content is not None
+        self.__toolbar_container.visible = has_toolbar_component
+        if not has_toolbar_component:
+            return
+        if self.__is_toolbar_visible:
+            self.__toolbar_container.height = AppDimensions.CONTROL_HEIGHT
+        else:
+            self.__toolbar_container.height = 0
+
+    def __apply_tabs_bar_visibility(self) -> None:
+        has_tabs_bar_component = self.__tabs_bar_container.content is not None
+        self.__tabs_bar_container.visible = has_tabs_bar_component
+        if not has_tabs_bar_component:
+            return
+        if self.__is_tabs_bar_visible:
+            self.__tabs_bar_container.height = AppDimensions.CONTROL_HEIGHT
+        else:
+            self.__tabs_bar_container.height = 0

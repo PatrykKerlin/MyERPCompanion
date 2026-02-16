@@ -20,22 +20,27 @@ class SideMenuComponent(BaseComponent, ft.Container):
         self.__content = content
         self.__labels: list[str] = []
         self.__controls: list[ft.Control] = []
+        self.__menu_column = ft.Column(
+            controls=self.__controls,
+            expand=True,
+            scroll=ft.ScrollMode.ADAPTIVE,
+            alignment=AlignmentStyles.AXIS_START,
+            horizontal_alignment=AlignmentStyles.CROSS_CENTER,
+        )
         self.__build_controls()
         ft.Container.__init__(
             self,
-            content=ft.Column(
-                controls=self.__controls,
-                expand=True,
-                scroll=ft.ScrollMode.ADAPTIVE,
-                alignment=AlignmentStyles.AXIS_START,
-                horizontal_alignment=AlignmentStyles.CROSS_CENTER,
-            ),
+            content=self.__menu_column,
             alignment=AlignmentStyles.TOP_CENTER,
             width=self.__calculate_width(),
             opacity=1.0,
-            animate_opacity=AppDimensions.ANIMATION_DURATION_MS,
-            animate_size=AppDimensions.ANIMATION_DURATION_MS,
+            animate=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
+            animate_opacity=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
+            animate_size=AppDimensions.SHELL_TOGGLE_ANIMATION_MS,
         )
+
+    def set_scroll_enabled(self, enabled: bool) -> None:
+        self.__menu_column.scroll = ft.ScrollMode.ADAPTIVE if enabled else ft.ScrollMode.HIDDEN
 
     def __build_controls(self) -> None:
         for module_key, view_params in self.__content.items():

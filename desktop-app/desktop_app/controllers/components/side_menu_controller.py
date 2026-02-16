@@ -47,6 +47,6 @@ class SideMenuController(BaseComponentController[SideMenuComponent, SideMenuRequ
         if not self.__component_width:
             self.__component_width = self._component.width
         self.__is_component_visible = not self.__is_component_visible
+        self._component.set_scroll_enabled(self.__is_component_visible)
         self._component.width = self.__component_width if self.__is_component_visible else 0
-        self._component.opacity = 1.0 if self.__is_component_visible else 0.0
         self._page.update()
