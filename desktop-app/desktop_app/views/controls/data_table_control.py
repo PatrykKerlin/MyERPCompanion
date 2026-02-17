@@ -2,7 +2,7 @@ from typing import Any, Callable
 
 import flet as ft
 from styles.dimensions import AppDimensions
-from styles.styles import AlignmentStyles, ButtonStyles, ControlStyles
+from styles.styles import ButtonStyles, ControlStyles
 from utils.translation import Translation
 
 

@@ -51,6 +51,18 @@ class CustomerController(
             return
         self._page.run_task(self.__handle_discount_delete, discount_ids)
 
+    def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
+        hidden_fields = {
+            "shipping_street",
+            "shipping_house_number",
+            "shipping_apartment_number",
+            "shipping_postal_code",
+            "shipping_city",
+            "shipping_country",
+            "user_id",
+        }
+        return [field for field in available_fields if field not in hidden_fields]
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> CustomerView:
         discount_source_items: list[DiscountTransferItem] = []
         discount_target_items: list[DiscountTransferItem] = []

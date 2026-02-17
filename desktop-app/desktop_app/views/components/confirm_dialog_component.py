@@ -13,7 +13,7 @@ class ConfirmDialogComponent(BaseDialog):
         cancel_button = ft.Button(
             content=translation.get("cancel"),
             on_click=lambda _: self.__set_result(False),
-            style=ButtonStyles.compact,
+            style=ButtonStyles.regular,
         )
         confirm_button = ft.Button(
             content=translation.get("ok"),

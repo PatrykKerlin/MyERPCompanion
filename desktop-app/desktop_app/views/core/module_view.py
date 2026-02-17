@@ -8,6 +8,7 @@ from styles.dimensions import AppDimensions
 from styles.styles import ButtonStyles
 from utils.enums import View, ViewMode
 from utils.translation import Translation
+from views.base.base_dialog import BaseDialog
 from views.base.base_view import BaseView
 from views.controls.bulk_transfer_control import BulkTransfer
 from views.mixins.group_bulk_transfer_mixin import GroupBulkTransferMixin
@@ -196,7 +197,7 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
                 self.__group_permissions[target_id] = (can_read_value, can_modify_value)
 
         actions: list[ft.Control] = [
-            ft.TextButton(self._translation.get("cancel"), on_click=lambda _: on_cancel(), style=ButtonStyles.compact),
+            ft.TextButton(self._translation.get("cancel"), on_click=lambda _: on_cancel(), style=ButtonStyles.regular),
             ft.TextButton(
                 self._translation.get("ok"),
                 on_click=lambda _: on_confirm(),
@@ -204,10 +205,9 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
             ),
         ]
 
-        dialog = ft.AlertDialog(
-            modal=True,
+        dialog = BaseDialog(
             title=ft.Text(self._translation.get("permissions")),
-            content=ft.Column(controls=[can_read, can_modify], tight=True),
+            controls=[can_read, can_modify],
             actions=actions,
         )
         BaseController.queue_dialog(self.page, dialog)

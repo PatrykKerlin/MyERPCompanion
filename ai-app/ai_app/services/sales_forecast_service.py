@@ -150,7 +150,7 @@ class SalesForecastService:
 
         x_predict = torch.tensor(predict_features, dtype=torch.float32)
         logger.info(
-            f"Training data ready: train_rows={len(train_features)} " f"prediction_points={len(prediction_points)}"
+            f"Training data ready: train_rows={len(train_features)}, prediction_points={len(prediction_points)}"
         )
         return (
             x_train,

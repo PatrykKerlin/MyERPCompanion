@@ -7,6 +7,7 @@ from styles.components import ComponentStyles
 from styles.dimensions import AppDimensions
 from styles.styles import AlignmentStyles, ButtonStyles
 from views.base.base_component import BaseComponent
+from views.base.base_dialog import BaseDialog
 
 
 class BulkTransfer(ft.Container):
@@ -512,14 +513,13 @@ class BulkTransfer(ft.Container):
             self.__execute_delete(selected_ids)
 
         actions: list[ft.Control] = [
-            ft.TextButton(self.__cancel_label, on_click=lambda _: on_cancel(), style=ButtonStyles.compact),
+            ft.TextButton(self.__cancel_label, on_click=lambda _: on_cancel(), style=ButtonStyles.regular),
             ft.TextButton(self.__confirm_label, on_click=lambda _: on_confirm(), style=ButtonStyles.primary_compact),
         ]
 
-        dialog = ft.AlertDialog(
-            modal=True,
+        dialog = BaseDialog(
             title=ft.Text(self.__delete_confirm_title),
-            content=ft.Text(self.__delete_confirm_message),
+            controls=[ft.Text(self.__delete_confirm_message)],
             actions=actions,
         )
         BaseController.queue_dialog(page, dialog)

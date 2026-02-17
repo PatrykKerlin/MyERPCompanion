@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
 
 from repositories.business.reporting.sales_report_repository import SalesReportRepository
 from schemas.business.reporting.sales_report_schema import (

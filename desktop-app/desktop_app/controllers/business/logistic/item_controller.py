@@ -76,6 +76,17 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
             return
         self._page.run_task(self.__handle_discount_delete, discount_ids)
 
+    def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
+        hidden_fields = {
+            "category_id",
+            "unit_id",
+            "supplier_id",
+            "purchase_price",
+            "vat_rate",
+            "margin",
+        }
+        return [field for field in available_fields if field not in hidden_fields]
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> ItemView:
         categories, units, suppliers = await asyncio.gather(
             self.__perform_get_all_categories(),

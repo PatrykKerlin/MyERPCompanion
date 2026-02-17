@@ -84,6 +84,10 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
     def get_create_defaults(self) -> dict[str, Any]:
         return self.__build_create_defaults()
 
+    def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
+        hidden_fields = {"currency_id", "customer_id"}
+        return [field for field in available_fields if field not in hidden_fields]
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> InvoiceView:
         currencies, customers, statuses = await asyncio.gather(
             self.__perform_get_all_currencies(),

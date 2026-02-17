@@ -31,7 +31,7 @@ class AuthDialogComponent(BaseComponent, BaseDialog):
         cancel_button = ft.Button(
             content=translation.get("cancel"),
             on_click=lambda _: controller.on_cancel_click(),
-            style=ButtonStyles.compact,
+            style=ButtonStyles.regular,
         )
         login_button = ft.Button(
             content=translation.get("log_in"),

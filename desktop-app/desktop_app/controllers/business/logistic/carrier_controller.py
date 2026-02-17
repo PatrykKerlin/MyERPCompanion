@@ -38,6 +38,17 @@ class CarrierController(BaseViewController[CarrierService, CarrierView, CarrierP
     def on_add_delivery_method_clicked(self, _: ft.Event[ft.IconButton]) -> None:
         self._page.run_task(self.__open_delivery_method_create_tab)
 
+    def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
+        hidden_fields = {
+            "bank_account",
+            "bank_name",
+            "bank_swift",
+            "currency_id",
+            "notes",
+            "payment_term",
+        }
+        return [field for field in available_fields if field not in hidden_fields]
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> CarrierView:
         currencies = await self.__perform_get_all_currencies()
         if event.data:

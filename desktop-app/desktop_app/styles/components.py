@@ -1,5 +1,4 @@
 import flet as ft
-
 from styles.colors import AppColors
 from styles.dimensions import AppDimensions
 

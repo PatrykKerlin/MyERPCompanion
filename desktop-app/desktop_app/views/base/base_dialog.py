@@ -1,5 +1,5 @@
 import flet as ft
-from styles.styles import AlignmentStyles
+from styles.styles import DialogStyles
 
 
 class BaseDialog(ft.AlertDialog):
@@ -8,21 +8,32 @@ class BaseDialog(ft.AlertDialog):
         controls: list[ft.Control],
         actions: list[ft.Control] | None = None,
         title: str | ft.Control | None = None,
+        scrollable: bool = DialogStyles.SCROLLABLE,
         **kwargs,
     ) -> None:
-        super().__init__(
-            modal=True,
-            alignment=AlignmentStyles.CENTER,
-            content=ft.Container(
+        dialog_kwargs: dict[str, object] = {
+            "modal": DialogStyles.MODAL,
+            "title": title,
+            "content": ft.Container(
                 content=ft.Column(
                     controls=controls,
                     tight=True,
-                    alignment=AlignmentStyles.AXIS_CENTER,
-                    horizontal_alignment=AlignmentStyles.CROSS_CENTER,
+                    spacing=DialogStyles.CONTENT_SPACING,
+                    alignment=DialogStyles.CONTENT_ALIGNMENT,
+                    horizontal_alignment=DialogStyles.CONTENT_HORIZONTAL_ALIGNMENT,
                 ),
             ),
-            actions=actions or [],
-            title=title,
-            scrollable=True,
-            **kwargs,
-        )
+            "actions": actions or [],
+            "elevation": DialogStyles.ELEVATION,
+            "title_padding": DialogStyles.TITLE_PADDING,
+            "content_padding": DialogStyles.CONTENT_PADDING,
+            "actions_padding": DialogStyles.ACTIONS_PADDING,
+            "actions_alignment": DialogStyles.ACTIONS_ALIGNMENT,
+            "action_button_padding": DialogStyles.ACTION_BUTTON_PADDING,
+            "actions_overflow_button_spacing": DialogStyles.ACTIONS_OVERFLOW_BUTTON_SPACING,
+            "inset_padding": DialogStyles.INSET_PADDING,
+            "alignment": DialogStyles.ALIGNMENT,
+            "scrollable": scrollable,
+        }
+        dialog_kwargs.update(kwargs)
+        super().__init__(**dialog_kwargs)

@@ -98,6 +98,57 @@ class ControlStyles:
     DISABLED_CONTENT_OPACITY = 0.5
 
 
+class DialogStyles:
+    MODAL = False
+    ELEVATION = 24
+    ALIGNMENT = AlignmentStyles.CENTER
+    CONTENT_ALIGNMENT = AlignmentStyles.AXIS_START
+    CONTENT_HORIZONTAL_ALIGNMENT = AlignmentStyles.CROSS_STRETCH
+    ACTIONS_ALIGNMENT = AlignmentStyles.AXIS_END
+    CONTENT_SPACING = 14
+    SCROLLABLE = False
+
+    INSET_HORIZONTAL = 56
+    INSET_VERTICAL = 32
+    INSET_PADDING = ft.Padding.symmetric(horizontal=INSET_HORIZONTAL, vertical=INSET_VERTICAL)
+
+    TITLE_HORIZONTAL = 32
+    TITLE_TOP = 30
+    TITLE_PADDING = ft.Padding.only(
+        left=TITLE_HORIZONTAL,
+        top=TITLE_TOP,
+        right=TITLE_HORIZONTAL,
+        bottom=0,
+    )
+
+    CONTENT_HORIZONTAL = 32
+    CONTENT_TOP = 24
+    CONTENT_BOTTOM = 28
+    CONTENT_PADDING = ft.Padding.only(
+        left=CONTENT_HORIZONTAL,
+        top=CONTENT_TOP,
+        right=CONTENT_HORIZONTAL,
+        bottom=CONTENT_BOTTOM,
+    )
+
+    ACTIONS_HORIZONTAL = 32
+    ACTIONS_TOP = 12
+    ACTIONS_BOTTOM = 20
+    ACTIONS_PADDING = ft.Padding.only(
+        left=ACTIONS_HORIZONTAL,
+        top=ACTIONS_TOP,
+        right=ACTIONS_HORIZONTAL,
+        bottom=ACTIONS_BOTTOM,
+    )
+    ACTION_BUTTON_PADDING = ft.Padding.symmetric(horizontal=8, vertical=8)
+    ACTIONS_OVERFLOW_BUTTON_SPACING = 12
+
+    LOADING_ACTIONS_PADDING = ft.Padding.all(0)
+    LOADING_ACTION_BUTTON_PADDING = ft.Padding.all(0)
+    LOADING_ACTIONS_OVERFLOW_BUTTON_SPACING = 0
+    LOADING_SCROLLABLE = False
+
+
 class MenuStyles:
     flat = ft.MenuStyle(
         shape=ft.RoundedRectangleBorder(radius=0),

@@ -9,6 +9,7 @@ from styles.dimensions import AppDimensions, ItemViewDimensions
 from styles.styles import AlignmentStyles, ButtonStyles, ControlStyles
 from utils.enums import View, ViewMode
 from utils.translation import Translation
+from views.base.base_dialog import BaseDialog
 from views.base.base_view import BaseView
 from views.controls.data_table_control import DataTable
 from views.mixins.discount_bulk_transfer_mixin import DiscountBulkTransferMixin, DiscountTransferItem
@@ -158,12 +159,12 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             ft.TextButton(
                 self._translation.get("delete"),
                 on_click=self.__on_image_delete_requested,
-                style=ButtonStyles.compact,
+                style=ButtonStyles.regular,
             ),
             ft.TextButton(
                 self._translation.get("cancel"),
                 on_click=self.__on_image_edit_cancelled,
-                style=ButtonStyles.compact,
+                style=ButtonStyles.regular,
             ),
             ft.Button(
                 self._translation.get("save"),
@@ -171,12 +172,9 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
                 style=ButtonStyles.primary_compact,
             ),
         ]
-        self.__image_edit_dialog = ft.AlertDialog(
+        self.__image_edit_dialog = BaseDialog(
             title=ft.Text(self._translation.get("edit_image")),
-            content=ft.Column(
-                controls=[self.__image_order_field, self.__image_primary_checkbox],
-                tight=True,
-            ),
+            controls=[self.__image_order_field, self.__image_primary_checkbox],
             actions=dialog_buttons,
         )
         self.__selected_image_id: int | None = None

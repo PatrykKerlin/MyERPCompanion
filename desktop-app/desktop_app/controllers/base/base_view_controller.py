@@ -15,14 +15,14 @@ from events.events import (
     TabCloseRequested,
     TabRequested,
     ViewCopyRequested,
+    ViewModeRequested,
+    ViewPasteRequested,
     ViewReady,
     ViewRedoRequested,
     ViewRefreshRequested,
-    ViewSaveRequested,
-    ViewModeRequested,
-    ViewPasteRequested,
-    ViewUndoRequested,
     ViewRequested,
+    ViewSaveRequested,
+    ViewUndoRequested,
 )
 from pydantic import ValidationError
 from schemas.base import BasePlainSchema, BaseStrictSchema

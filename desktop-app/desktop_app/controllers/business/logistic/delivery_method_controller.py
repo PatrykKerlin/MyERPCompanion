@@ -26,6 +26,10 @@ class DeliveryMethodController(
         self.__carrier_service = CarrierService(self._settings, self._logger, self._tokens_accessor)
         self.__unit_service = UnitService(self._settings, self._logger, self._tokens_accessor)
 
+    def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
+        hidden_fields = {"carrier_id", "currency_id", "price_per_unit"}
+        return [field for field in available_fields if field not in hidden_fields]
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> DeliveryMethodView:
         carriers, units = await asyncio.gather(
             self.__perform_get_all_carriers(),

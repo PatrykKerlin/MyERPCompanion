@@ -21,6 +21,17 @@ class SupplierController(BaseViewController[SupplierService, SupplierView, Suppl
         super().__init__(context)
         self.__currency_service = CurrencyService(self._settings, self._logger, self._tokens_accessor)
 
+    def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
+        hidden_fields = {
+            "bank_account",
+            "bank_swift",
+            "bank_name",
+            "payment_term",
+            "currency_id",
+            "notes",
+        }
+        return [field for field in available_fields if field not in hidden_fields]
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> SupplierView:
         currencies = await self.__perform_get_all_currencies()
         return SupplierView(self, translation, mode, event.view_key, event.data, currencies)

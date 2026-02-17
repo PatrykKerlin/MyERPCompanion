@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 
 import flet as ft
 from styles.colors import AppColors
-from styles.styles import AlignmentStyles
 from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles
 from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:

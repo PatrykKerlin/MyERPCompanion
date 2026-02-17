@@ -122,14 +122,7 @@ class UserView(BaseView, GroupBulkTransferMixin):
             height=AppDimensions.SPACE_2XL,
             visible=show_spacing,
         )
-        group_controls: list[ft.Control] = (
-            [
-                self._spacing_row,
-                group_row
-            ]
-            if group_row is not None
-            else []
-        )
+        group_controls: list[ft.Control] = [self._spacing_row, group_row] if group_row is not None else []
         self._master_column.controls = [
             self._columns_row,
             self.__buttons_spacing_row,

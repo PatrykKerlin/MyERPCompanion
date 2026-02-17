@@ -119,6 +119,7 @@ class SalesForecastTrainer:
                 batch_size=SalesForecastTrainer._batch_size,
                 shuffle=True,
                 drop_last=False,
+                num_workers=0,
             ),
         )
 

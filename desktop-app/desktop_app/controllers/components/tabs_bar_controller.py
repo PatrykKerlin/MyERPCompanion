@@ -19,6 +19,7 @@ from events.events import (
     ViewRequested,
 )
 from states.states import ViewState
+from styles.styles import ButtonStyles
 from utils.enums import TabNavigationDirection, ViewMode
 from views.base.base_dialog import BaseDialog
 from views.base.base_view import BaseView
@@ -180,8 +181,8 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
             title=translation.get("find_tab"),
             controls=[dropdown],
             actions=[
-                ft.TextButton(translation.get("cancel"), on_click=close_dialog),
-                ft.TextButton(translation.get("ok"), on_click=confirm_dialog),
+                ft.TextButton(translation.get("cancel"), on_click=close_dialog, style=ButtonStyles.regular),
+                ft.TextButton(translation.get("ok"), on_click=confirm_dialog, style=ButtonStyles.primary_compact),
             ],
         )
         self._queue_dialog(dialog)

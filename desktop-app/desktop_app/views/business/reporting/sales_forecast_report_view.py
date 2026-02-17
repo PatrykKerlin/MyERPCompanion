@@ -7,10 +7,11 @@ from typing import TYPE_CHECKING, cast
 import flet as ft
 from styles.colors import AppColors
 from styles.dimensions import AppDimensions
-from styles.styles import AlignmentStyles, ButtonStyles
+from styles.styles import AlignmentStyles, ButtonStyles, DialogStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
+from views.base.base_dialog import BaseDialog
 from views.base.base_view import BaseView
 
 if TYPE_CHECKING:
@@ -244,10 +245,10 @@ class SalesForecastReportView(BaseView):
             ),
             style=ButtonStyles.primary_regular,
         )
-        clear_button = ft.TextButton(
-            self._translation.get("clear_filters"),
+        clear_button = ft.Button(
+            content=self._translation.get("clear_filters"),
             on_click=lambda _: self._controller.on_clear_filters_clicked(),
-            style=ButtonStyles.compact,
+            style=ButtonStyles.regular,
         )
 
         filters_top_row = ft.ResponsiveRow(
@@ -442,29 +443,53 @@ class SalesForecastReportView(BaseView):
     def __open_chart_dialog(self, chart: bytes, title: str) -> None:
         if not self.page:
             return
-        width = int((self.page.width or AppDimensions.DESKTOP_WINDOW_WIDTH) * AppDimensions.REPORT_DIALOG_WIDTH_RATIO)
-        height = int(
-            (self.page.height or AppDimensions.DESKTOP_WINDOW_HEIGHT) * AppDimensions.REPORT_DIALOG_HEIGHT_RATIO
-        )
-        dialog = ft.AlertDialog(
-            modal=True,
+        width = self.__resolve_chart_dialog_width()
+        height = self.__resolve_chart_dialog_height()
+        dialog = BaseDialog(
             title=ft.Text(title),
-            content=ft.Container(
-                width=width,
-                height=height,
-                alignment=AlignmentStyles.CENTER,
-                content=ft.Image(src=chart, fit=ft.BoxFit.CONTAIN, expand=True),
-            ),
+            controls=[
+                ft.Container(
+                    width=width,
+                    height=height,
+                    alignment=AlignmentStyles.CENTER,
+                    content=ft.Image(src=chart, fit=ft.BoxFit.CONTAIN, expand=True),
+                )
+            ],
             actions=[
                 ft.TextButton(
                     self._translation.get("close"),
                     on_click=lambda _: self._controller._page.pop_dialog(),
-                    style=ButtonStyles.compact,
+                    style=ButtonStyles.regular,
                 )
             ],
-            actions_alignment=AlignmentStyles.AXIS_END,
+            scrollable=False,
         )
         self._controller._queue_dialog(dialog)
+
+    def __resolve_chart_dialog_width(self) -> int:
+        page_width = int(self.page.width or AppDimensions.DESKTOP_WINDOW_WIDTH) if self.page else AppDimensions.DESKTOP_WINDOW_WIDTH
+
+        horizontal_overhead = 2 * (DialogStyles.INSET_HORIZONTAL + DialogStyles.CONTENT_HORIZONTAL)
+        max_width = max(320, page_width - horizontal_overhead)
+        width = min(int(page_width * AppDimensions.REPORT_DIALOG_WIDTH_RATIO), max_width)
+        return width
+
+    def __resolve_chart_dialog_height(self) -> int:
+        page_height = (
+            int(self.page.height or AppDimensions.DESKTOP_WINDOW_HEIGHT) if self.page else AppDimensions.DESKTOP_WINDOW_HEIGHT
+        )
+        vertical_overhead = (
+            (2 * DialogStyles.INSET_VERTICAL)
+            + DialogStyles.TITLE_TOP
+            + DialogStyles.CONTENT_TOP
+            + DialogStyles.CONTENT_BOTTOM
+            + DialogStyles.ACTIONS_TOP
+            + DialogStyles.ACTIONS_BOTTOM
+            + AppDimensions.CONTROL_HEIGHT
+        )
+        max_height = max(1, page_height - vertical_overhead)
+        height = min(int(page_height * AppDimensions.REPORT_DIALOG_HEIGHT_RATIO), max_height)
+        return height
 
     def __on_date_range_changed(self, event: ft.Event[ft.RangeSlider]) -> None:
         start_offset = self.__coerce_date_offset(event.control.start_value)
@@ -490,8 +515,7 @@ class SalesForecastReportView(BaseView):
             else self.__month_end(self.__date_slider_max_date).isoformat()
         )
         self.__date_range_text.value = (
-            f"{self._translation.get('date_from')}: {from_value}\n"
-            f"{self._translation.get('date_to')}: {to_value}"
+            f"{self._translation.get('date_from')}: {from_value}\n" f"{self._translation.get('date_to')}: {to_value}"
         )
 
     def __to_date_offset(self, value: date) -> int:
@@ -575,9 +599,7 @@ class SalesForecastReportView(BaseView):
         self.safe_update(self.__discount_range_text)
 
     def __update_discount_range_text(self) -> None:
-        from_value = (
-            self.__discount_from_value if self.__discount_from_value is not None else self.__discount_steps[0]
-        )
+        from_value = self.__discount_from_value if self.__discount_from_value is not None else self.__discount_steps[0]
         to_value = self.__discount_to_value if self.__discount_to_value is not None else self.__discount_steps[-1]
         self.__discount_range_text.value = (
             f"{self._translation.get('discount_from')}: {(from_value * 100):.0f}%\n"
@@ -600,11 +622,15 @@ class SalesForecastReportView(BaseView):
         parsed_from = self.__parse_discount_key(discount_from_key)
         parsed_to = self.__parse_discount_key(discount_to_key)
         start_offset = self.__to_discount_offset(parsed_from) if parsed_from is not None else 0
-        end_offset = self.__to_discount_offset(parsed_to) if parsed_to is not None else self.__discount_slider_max_offset
+        end_offset = (
+            self.__to_discount_offset(parsed_to) if parsed_to is not None else self.__discount_slider_max_offset
+        )
         if start_offset > end_offset:
             start_offset = end_offset
         normalized_from = None if start_offset <= 0 else self.__from_discount_offset(start_offset)
-        normalized_to = None if end_offset >= self.__discount_slider_max_offset else self.__from_discount_offset(end_offset)
+        normalized_to = (
+            None if end_offset >= self.__discount_slider_max_offset else self.__from_discount_offset(end_offset)
+        )
         return normalized_from, normalized_to
 
     def __to_discount_offset(self, value: float) -> int:

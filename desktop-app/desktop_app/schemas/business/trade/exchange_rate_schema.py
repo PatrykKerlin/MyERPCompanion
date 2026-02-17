@@ -33,3 +33,6 @@ class ExchangeRatePlainSchema(BasePlainSchema):
 
     base_currency_id: int
     quote_currency_id: int
+
+    base_currency_code: str
+    quote_currency_code: str

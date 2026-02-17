@@ -411,9 +411,7 @@ class SalesForecastReportController(
             axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
             axis.ticklabel_format(axis="y", style="plain", useOffset=False)
             axis.yaxis.set_major_formatter(
-                FuncFormatter(
-                    lambda value, _: SalesForecastReportController.__format_grouped_int(math.trunc(value))
-                )
+                FuncFormatter(lambda value, _: SalesForecastReportController.__format_grouped_int(math.trunc(value)))
             )
             axis.tick_params(axis="x", rotation=30)
             axis.grid(axis="y", alpha=0.35)

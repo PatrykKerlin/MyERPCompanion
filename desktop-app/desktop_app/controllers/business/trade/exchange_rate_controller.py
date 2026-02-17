@@ -23,6 +23,18 @@ class ExchangeRateController(
         super().__init__(context)
         self.__currency_service = CurrencyService(self._settings, self._logger, self._tokens_accessor)
 
+    def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
+        replacement_map = {
+            "base_currency_id": "base_currency_code",
+            "quote_currency_id": "quote_currency_code",
+        }
+        columns: list[str] = []
+        for field in available_fields:
+            column = replacement_map.get(field, field)
+            if column not in columns:
+                columns.append(column)
+        return columns
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> ExchangeRateView:
         currencies = await self.__perform_get_all_currencies()
         return ExchangeRateView(self, translation, mode, event.view_key, event.data, currencies)

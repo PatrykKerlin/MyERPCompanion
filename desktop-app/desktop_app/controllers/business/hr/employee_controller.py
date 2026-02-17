@@ -56,7 +56,7 @@ class EmployeeController(
         )
 
     def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
-        return [
+        available_fields = [
             "id",
             "first_name",
             "middle_name",
@@ -66,7 +66,12 @@ class EmployeeController(
             "hire_date",
             "termination_date",
             "is_remote",
+            "created_by_username",
+            "created_at",
+            "modified_by_username",
+            "modified_at",
         ]
+        return available_fields
 
     @property
     def _user_link_view_key(self) -> View:

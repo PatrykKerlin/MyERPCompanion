@@ -81,6 +81,18 @@ class PurchaseOrderController(
     def set_hidden_field_value(self, key: str, value: Any) -> None:
         self._request_data.input_values[key] = value
 
+    def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
+        hidden_fields = {
+            "customer_id",
+            "currency_id",
+            "delivery_method_id",
+            "status_id",
+            "status_ids",
+            "notes",
+            "internal_notes",
+        }
+        return [field for field in available_fields if field not in hidden_fields]
+
     def set_field_value(self, key: str, value: str | int | float | bool | date | None) -> None:
         if key == "is_sales":
             value = False

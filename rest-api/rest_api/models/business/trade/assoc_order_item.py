@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 class AssocOrderItem(BaseModel):
     __tablename__ = "order_items"
 
+    DISCOUNTS_ID: str = "discounts.id"
+
     quantity: Mapped[int] = Fields.integer()
     total_net: Mapped[float] = Fields.numeric_10_2()
     total_vat: Mapped[float] = Fields.numeric_10_2()
@@ -38,7 +40,7 @@ class AssocOrderItem(BaseModel):
         argument="Bin", back_populates="bin_order_items", foreign_keys=[bin_id], cascade_soft_delete=False
     )
 
-    category_discount_id: Mapped[int | None] = Fields.foreign_key(column="discounts.id", nullable=True)
+    category_discount_id: Mapped[int | None] = Fields.foreign_key(column=DISCOUNTS_ID, nullable=True)
     category_discount: Mapped[Discount | None] = Fields.relationship(
         argument="Discount",
         back_populates="category_order_items",
@@ -46,7 +48,7 @@ class AssocOrderItem(BaseModel):
         cascade_soft_delete=False,
     )
 
-    customer_discount_id: Mapped[int | None] = Fields.foreign_key(column="discounts.id", nullable=True)
+    customer_discount_id: Mapped[int | None] = Fields.foreign_key(column=DISCOUNTS_ID, nullable=True)
     customer_discount: Mapped[Discount | None] = Fields.relationship(
         argument="Discount",
         back_populates="customer_order_items",
@@ -54,7 +56,7 @@ class AssocOrderItem(BaseModel):
         cascade_soft_delete=False,
     )
 
-    item_discount_id: Mapped[int | None] = Fields.foreign_key(column="discounts.id", nullable=True)
+    item_discount_id: Mapped[int | None] = Fields.foreign_key(column=DISCOUNTS_ID, nullable=True)
     item_discount: Mapped[Discount | None] = Fields.relationship(
         argument="Discount",
         back_populates="item_order_items",
