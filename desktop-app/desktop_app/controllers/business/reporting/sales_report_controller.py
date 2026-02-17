@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import math
 from collections import defaultdict
 from datetime import date
 from io import BytesIO
-from typing import Literal
 
 import flet as ft
 import matplotlib.dates as mdates
@@ -14,6 +14,7 @@ from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
 from events.events import ViewRequested
+from matplotlib.ticker import FuncFormatter
 from schemas.business.logistic.category_schema import CategoryPlainSchema
 from schemas.business.logistic.item_schema import ItemPlainSchema
 from schemas.business.reporting.sales_report_schema import (
@@ -97,7 +98,7 @@ class SalesReportController(
         customer_options = self.__to_customer_options(customers or [])
         item_options = self.__to_item_options(items or [])
         category_options = self.__to_category_options(categories or [])
-        totals = self.__to_totals(response.totals, show_amounts=self.__currency_id is not None)
+        totals = self.__to_totals(response.totals)
         category_chart = self.__build_category_chart(response.items, for_dialog=False)
         daily_chart = self.__build_daily_chart(response.items, for_dialog=False)
         category_chart_dialog = self.__build_category_chart(response.items, for_dialog=True)
@@ -110,6 +111,7 @@ class SalesReportController(
             totals=totals,
             date_from=self.__date_from,
             date_to=self.__date_to,
+            first_sales_date=response.first_sales_date,
             currency_options=currency_options,
             customer_options=customer_options,
             item_options=item_options,
@@ -169,7 +171,7 @@ class SalesReportController(
         response = await self.__perform_get_report()
         if response is None:
             return
-        totals = self.__to_totals(response.totals, show_amounts=self.__currency_id is not None)
+        totals = self.__to_totals(response.totals)
         category_chart = self.__build_category_chart(response.items, for_dialog=False)
         daily_chart = self.__build_daily_chart(response.items, for_dialog=False)
         category_chart_dialog = self.__build_category_chart(response.items, for_dialog=True)
@@ -240,7 +242,7 @@ class SalesReportController(
 
     @staticmethod
     def __to_currency_options(currencies: list[CurrencyPlainSchema]) -> list[tuple[int, str]]:
-        options = [(currency.id, f"{currency.code} ({currency.name})") for currency in currencies]
+        options = [(currency.id, f"{currency.code} {currency.name}") for currency in currencies]
         return sorted(options, key=lambda option: option[1].lower())
 
     @staticmethod
@@ -254,27 +256,27 @@ class SalesReportController(
         return sorted(options, key=lambda option: option[1].lower())
 
     @staticmethod
-    def __to_totals(totals: SalesReportTotalsSchema, show_amounts: bool) -> dict[str, str]:
-        total_net = f"{totals.total_net:.2f}" if show_amounts else ""
-        total_vat = f"{totals.total_vat:.2f}" if show_amounts else ""
-        total_gross = f"{totals.total_gross:.2f}" if show_amounts else ""
-        total_discount = f"{totals.total_discount:.2f}" if show_amounts else ""
+    def __to_totals(totals: SalesReportTotalsSchema) -> dict[str, str]:
         return {
-            "orders_count": str(totals.orders_count),
-            "rows_count": str(totals.rows_count),
-            "quantity": str(totals.quantity),
-            "total_net": total_net,
-            "total_vat": total_vat,
-            "total_gross": total_gross,
-            "total_discount": total_discount,
+            "orders_count": SalesReportController.__format_grouped_int(totals.orders_count),
+            "rows_count": SalesReportController.__format_grouped_int(totals.rows_count),
+            "quantity": SalesReportController.__format_grouped_int(totals.quantity),
+            "total_net": SalesReportController.__format_grouped_int(math.trunc(totals.total_net)),
+            "total_vat": SalesReportController.__format_grouped_int(math.trunc(totals.total_vat)),
+            "total_gross": SalesReportController.__format_grouped_int(math.trunc(totals.total_gross)),
+            "total_discount": SalesReportController.__format_grouped_int(math.trunc(totals.total_discount)),
         }
+
+    @staticmethod
+    def __format_grouped_int(value: int) -> str:
+        return f"{value:,}".replace(",", " ")
 
     def __build_category_chart(self, rows: list[SalesReportRowSchema], for_dialog: bool) -> bytes | None:
         if not rows:
             return None
         category_sums: dict[str, float] = defaultdict(float)
         for row in rows:
-            category_sums[row.category_name] += row.total_gross
+            category_sums[row.category_name] += row.total_net
         if not category_sums:
             return None
         sorted_data = sorted(category_sums.items(), key=lambda item: item[1], reverse=True)[:8]
@@ -283,39 +285,42 @@ class SalesReportController(
         return self.__build_bar_chart(
             labels=labels,
             values=values,
-            title=self.__t("gross_by_category"),
+            title=self.__t("total_net"),
             for_dialog=for_dialog,
         )
 
     def __build_daily_chart(self, rows: list[SalesReportRowSchema], for_dialog: bool) -> bytes | None:
         if not rows:
             return None
-        date_sums: dict[date, float] = defaultdict(float)
+        date_sums: dict[date, int] = defaultdict(int)
         for row in rows:
-            date_sums[row.order_date] += row.total_gross
+            date_sums[row.order_date] += row.quantity
         if not date_sums:
             return None
         sorted_dates = sorted(date_sums.keys())
-        values = [date_sums[item] for item in sorted_dates]
+        values = [float(date_sums[item]) for item in sorted_dates]
         return self.__build_line_chart(
             date_values=sorted_dates,
             values=values,
-            title=self.__t("gross_by_day"),
+            title=self.__t("total_quantity"),
             for_dialog=for_dialog,
         )
 
     def __build_bar_chart(self, labels: list[str], values: list[float], title: str, for_dialog: bool) -> bytes | None:
-        theme_style = self.__get_chart_theme()
         chart_size, chart_dpi = self.__get_chart_render_settings(for_dialog)
         figure = None
         try:
-            sns.set_theme(style=theme_style)
+            self.__apply_chart_theme()
             figure, axis = plt.subplots(figsize=chart_size)
             sns.barplot(x=labels, y=values, ax=axis)
             axis.set_title(title)
             axis.set_xlabel("")
             axis.set_ylabel("")
             axis.tick_params(axis="x", rotation=30)
+            axis.ticklabel_format(axis="y", style="plain", useOffset=False)
+            axis.yaxis.set_major_formatter(
+                FuncFormatter(lambda value, _: SalesReportController.__format_grouped_int(math.trunc(value)))
+            )
             axis.grid(axis="y", alpha=0.35)
             figure.tight_layout()
             buffer = BytesIO()
@@ -332,11 +337,10 @@ class SalesReportController(
         title: str,
         for_dialog: bool,
     ) -> bytes | None:
-        theme_style = self.__get_chart_theme()
         chart_size, chart_dpi = self.__get_chart_render_settings(for_dialog)
         figure = None
         try:
-            sns.set_theme(style=theme_style)
+            self.__apply_chart_theme()
             figure, axis = plt.subplots(figsize=chart_size)
             sns.lineplot(
                 x=date_values,
@@ -349,6 +353,10 @@ class SalesReportController(
             axis.set_xlabel("")
             axis.set_ylabel("")
             axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+            axis.ticklabel_format(axis="y", style="plain", useOffset=False)
+            axis.yaxis.set_major_formatter(
+                FuncFormatter(lambda value, _: SalesReportController.__format_grouped_int(math.trunc(value)))
+            )
             axis.tick_params(axis="x", rotation=30)
             axis.grid(axis="y", alpha=0.35)
             figure.tight_layout()
@@ -365,12 +373,32 @@ class SalesReportController(
             return SalesReportController.__dialog_chart_size, SalesReportController.__dialog_chart_dpi
         return SalesReportController.__view_chart_size, SalesReportController.__view_chart_dpi
 
-    def __get_chart_theme(self) -> Literal["darkgrid", "whitegrid"]:
+    def __apply_chart_theme(self) -> None:
         if self.__is_dark_theme():
-            return "darkgrid"
-        return "whitegrid"
+            sns.set_theme(
+                style="darkgrid",
+                rc={
+                    "figure.facecolor": "#0F172A",
+                    "axes.facecolor": "#111827",
+                    "axes.edgecolor": "#E5E7EB",
+                    "axes.labelcolor": "#E5E7EB",
+                    "text.color": "#E5E7EB",
+                    "xtick.color": "#E5E7EB",
+                    "ytick.color": "#E5E7EB",
+                    "grid.color": "#334155",
+                    "savefig.facecolor": "#0F172A",
+                    "savefig.edgecolor": "#0F172A",
+                },
+            )
+            return
+        sns.set_theme(style="whitegrid")
 
     def __is_dark_theme(self) -> bool:
+        theme_mode = self._page.theme_mode
+        if theme_mode == ft.ThemeMode.DARK:
+            return True
+        if theme_mode == ft.ThemeMode.LIGHT:
+            return False
         user = self._state_store.app_state.user.current
         selected_theme = user.theme if user else self._settings.THEME
         if selected_theme == "dark":

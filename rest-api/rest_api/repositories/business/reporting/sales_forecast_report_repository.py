@@ -18,7 +18,7 @@ from sqlalchemy.sql.elements import ColumnElement
 class SalesForecastReportRepository:
     _task_key = "sales_forecast"
     _aggregation_net = "month_net"
-    _aggregation_gross = "month_gross"
+    _aggregation_quantity = "month_quantity"
 
     @staticmethod
     async def get_latest_successful_run(session: AsyncSession) -> tuple[int, datetime | None] | None:
@@ -97,7 +97,7 @@ class SalesForecastReportRepository:
             "rows_count": row.rows_count,
             "periods_count": row.periods_count,
             "total_predicted_net": row.total_predicted_net,
-            "total_predicted_gross": row.total_predicted_gross,
+            "total_predicted_quantity": row.total_predicted_quantity,
         }
 
     @staticmethod
@@ -149,18 +149,22 @@ class SalesForecastReportRepository:
             ),
             0,
         ).label("predicted_net")
-        predicted_gross = func.coalesce(
+        predicted_quantity = func.coalesce(
             func.sum(
                 case(
                     (
-                        SalesForecast.aggregation == SalesForecastReportRepository._aggregation_gross,
+                        SalesForecast.aggregation.in_(
+                            [
+                                SalesForecastReportRepository._aggregation_quantity,
+                            ]
+                        ),
                         SalesForecast.predicted_quantity,
                     ),
                     else_=0,
                 )
             ),
             0,
-        ).label("predicted_gross")
+        ).label("predicted_quantity")
         return (
             select(
                 func.min(SalesForecast.id).label("result_id"),
@@ -175,7 +179,7 @@ class SalesForecastReportRepository:
                 SalesForecast.currency_id.label("currency_id"),
                 Currency.code.label("currency_code"),
                 predicted_net,
-                predicted_gross,
+                predicted_quantity,
                 SalesForecast.discount_rate_assumption.label("discount_rate_assumption"),
                 SalesForecast.horizon_months.label("horizon_months"),
             )
@@ -241,10 +245,14 @@ class SalesForecastReportRepository:
                 ).label("total_predicted_net"),
                 func.coalesce(
                     func.sum(SalesForecast.predicted_quantity).filter(
-                        SalesForecast.aggregation == SalesForecastReportRepository._aggregation_gross
+                        SalesForecast.aggregation.in_(
+                            [
+                                SalesForecastReportRepository._aggregation_quantity,
+                            ]
+                        )
                     ),
                     0,
-                ).label("total_predicted_gross"),
+                ).label("total_predicted_quantity"),
             )
             .select_from(SalesForecast)
             .join(Item, SalesForecast.item_id == Item.id)
@@ -269,7 +277,10 @@ class SalesForecastReportRepository:
         where_clause = [
             SalesForecast.run_id == run_id,
             SalesForecast.aggregation.in_(
-                [SalesForecastReportRepository._aggregation_net, SalesForecastReportRepository._aggregation_gross]
+                [
+                    SalesForecastReportRepository._aggregation_net,
+                    SalesForecastReportRepository._aggregation_quantity,
+                ]
             ),
             SalesForecast.currency_id.is_not(None),
             SalesForecast.predicted_quantity.is_not(None),

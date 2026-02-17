@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import math
 from collections import defaultdict
 from datetime import date
 from io import BytesIO
-from typing import Literal
 
 import flet as ft
 import matplotlib.dates as mdates
@@ -115,10 +115,11 @@ class SalesForecastReportController(
         item_options = self.__to_item_options(items or [])
         category_options = self.__to_category_options(categories or [])
         totals = self.__to_totals(response.totals)
+        first_predicted_date, last_predicted_date = self.__resolve_predicted_date_bounds(response.items)
         net_monthly_chart = self.__build_monthly_net_chart(response.items, for_dialog=False)
-        gross_monthly_chart = self.__build_monthly_gross_chart(response.items, for_dialog=False)
+        quantity_monthly_chart = self.__build_monthly_quantity_chart(response.items, for_dialog=False)
         net_monthly_chart_dialog = self.__build_monthly_net_chart(response.items, for_dialog=True)
-        gross_monthly_chart_dialog = self.__build_monthly_gross_chart(response.items, for_dialog=True)
+        quantity_monthly_chart_dialog = self.__build_monthly_quantity_chart(response.items, for_dialog=True)
         return SalesForecastReportView(
             controller=self,
             translation=translation,
@@ -127,6 +128,8 @@ class SalesForecastReportController(
             totals=totals,
             date_from=self.__date_from,
             date_to=self.__date_to,
+            first_predicted_date=first_predicted_date,
+            last_predicted_date=last_predicted_date,
             currency_options=currency_options,
             customer_options=customer_options,
             item_options=item_options,
@@ -139,9 +142,9 @@ class SalesForecastReportController(
             discount_from_key=self.__to_discount_key(self.__discount_from),
             discount_to_key=self.__to_discount_key(self.__discount_to),
             net_monthly_chart=net_monthly_chart,
-            gross_monthly_chart=gross_monthly_chart,
+            quantity_monthly_chart=quantity_monthly_chart,
             net_monthly_chart_dialog=net_monthly_chart_dialog,
-            gross_monthly_chart_dialog=gross_monthly_chart_dialog,
+            quantity_monthly_chart_dialog=quantity_monthly_chart_dialog,
         )
 
     async def __handle_apply_filters(
@@ -206,15 +209,15 @@ class SalesForecastReportController(
             return
         totals = self.__to_totals(response.totals)
         net_monthly_chart = self.__build_monthly_net_chart(response.items, for_dialog=False)
-        gross_monthly_chart = self.__build_monthly_gross_chart(response.items, for_dialog=False)
+        quantity_monthly_chart = self.__build_monthly_quantity_chart(response.items, for_dialog=False)
         net_monthly_chart_dialog = self.__build_monthly_net_chart(response.items, for_dialog=True)
-        gross_monthly_chart_dialog = self.__build_monthly_gross_chart(response.items, for_dialog=True)
+        quantity_monthly_chart_dialog = self.__build_monthly_quantity_chart(response.items, for_dialog=True)
         self._view.set_report_data(
             totals=totals,
             net_monthly_chart=net_monthly_chart,
-            gross_monthly_chart=gross_monthly_chart,
+            quantity_monthly_chart=quantity_monthly_chart,
             net_monthly_chart_dialog=net_monthly_chart_dialog,
-            gross_monthly_chart_dialog=gross_monthly_chart_dialog,
+            quantity_monthly_chart_dialog=quantity_monthly_chart_dialog,
         )
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
@@ -313,11 +316,19 @@ class SalesForecastReportController(
     @staticmethod
     def __to_totals(totals: SalesForecastReportTotalsSchema) -> dict[str, str]:
         return {
-            "rows_count": str(totals.rows_count),
-            "periods_count": str(totals.periods_count),
-            "total_predicted_net": f"{totals.total_predicted_net:.2f}",
-            "total_predicted_gross": f"{totals.total_predicted_gross:.2f}",
+            "rows_count": SalesForecastReportController.__format_grouped_int(totals.rows_count),
+            "periods_count": SalesForecastReportController.__format_grouped_int(totals.periods_count),
+            "total_predicted_net": SalesForecastReportController.__format_grouped_int(
+                math.trunc(totals.total_predicted_net)
+            ),
+            "total_predicted_quantity": SalesForecastReportController.__format_grouped_int(
+                math.trunc(totals.total_predicted_quantity)
+            ),
         }
+
+    @staticmethod
+    def __format_grouped_int(value: int) -> str:
+        return f"{value:,}".replace(",", " ")
 
     @staticmethod
     def __to_discount_options(discount_steps: list[float]) -> list[tuple[str, str]]:
@@ -329,6 +340,13 @@ class SalesForecastReportController(
         if discount is None:
             return "0"
         return f"{discount:.4f}"
+
+    @staticmethod
+    def __resolve_predicted_date_bounds(rows: list[SalesForecastReportRowSchema]) -> tuple[date | None, date | None]:
+        if not rows:
+            return None, None
+        dates = [row.predicted_at for row in rows]
+        return min(dates), max(dates)
 
     def __build_monthly_net_chart(self, rows: list[SalesForecastReportRowSchema], for_dialog: bool) -> bytes | None:
         if not rows:
@@ -347,12 +365,16 @@ class SalesForecastReportController(
             for_dialog=for_dialog,
         )
 
-    def __build_monthly_gross_chart(self, rows: list[SalesForecastReportRowSchema], for_dialog: bool) -> bytes | None:
+    def __build_monthly_quantity_chart(
+        self,
+        rows: list[SalesForecastReportRowSchema],
+        for_dialog: bool,
+    ) -> bytes | None:
         if not rows:
             return None
         monthly_sums: dict[date, float] = defaultdict(float)
         for row in rows:
-            monthly_sums[row.predicted_at] += row.predicted_gross
+            monthly_sums[row.predicted_at] += row.predicted_quantity
         if not monthly_sums:
             return None
         sorted_dates = sorted(monthly_sums.keys())
@@ -360,7 +382,7 @@ class SalesForecastReportController(
         return self.__build_line_chart(
             date_values=sorted_dates,
             values=values,
-            title=self.__t("predicted_gross_by_month"),
+            title=self.__t("pred_qty_by_month"),
             for_dialog=for_dialog,
         )
 
@@ -371,11 +393,10 @@ class SalesForecastReportController(
         title: str,
         for_dialog: bool,
     ) -> bytes | None:
-        theme_style = self.__get_chart_theme()
         chart_size, chart_dpi = self.__get_chart_render_settings(for_dialog)
         figure = None
         try:
-            sns.set_theme(style=theme_style)
+            self.__apply_chart_theme()
             figure, axis = plt.subplots(figsize=chart_size)
             sns.lineplot(
                 x=date_values,
@@ -389,7 +410,11 @@ class SalesForecastReportController(
             axis.set_ylabel("")
             axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
             axis.ticklabel_format(axis="y", style="plain", useOffset=False)
-            axis.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.2f}"))
+            axis.yaxis.set_major_formatter(
+                FuncFormatter(
+                    lambda value, _: SalesForecastReportController.__format_grouped_int(math.trunc(value))
+                )
+            )
             axis.tick_params(axis="x", rotation=30)
             axis.grid(axis="y", alpha=0.35)
             figure.tight_layout()
@@ -406,12 +431,32 @@ class SalesForecastReportController(
             return SalesForecastReportController.__dialog_chart_size, SalesForecastReportController.__dialog_chart_dpi
         return SalesForecastReportController.__view_chart_size, SalesForecastReportController.__view_chart_dpi
 
-    def __get_chart_theme(self) -> Literal["darkgrid", "whitegrid"]:
+    def __apply_chart_theme(self) -> None:
         if self.__is_dark_theme():
-            return "darkgrid"
-        return "whitegrid"
+            sns.set_theme(
+                style="darkgrid",
+                rc={
+                    "figure.facecolor": "#0F172A",
+                    "axes.facecolor": "#111827",
+                    "axes.edgecolor": "#E5E7EB",
+                    "axes.labelcolor": "#E5E7EB",
+                    "text.color": "#E5E7EB",
+                    "xtick.color": "#E5E7EB",
+                    "ytick.color": "#E5E7EB",
+                    "grid.color": "#334155",
+                    "savefig.facecolor": "#0F172A",
+                    "savefig.edgecolor": "#0F172A",
+                },
+            )
+            return
+        sns.set_theme(style="whitegrid")
 
     def __is_dark_theme(self) -> bool:
+        theme_mode = self._page.theme_mode
+        if theme_mode == ft.ThemeMode.DARK:
+            return True
+        if theme_mode == ft.ThemeMode.LIGHT:
+            return False
         user = self._state_store.app_state.user.current
         selected_theme = user.theme if user else self._settings.THEME
         if selected_theme == "dark":

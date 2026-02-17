@@ -60,6 +60,7 @@ class ButtonStyles:
 class AlignmentStyles:
     CENTER = ft.Alignment.CENTER
     CENTER_LEFT = ft.Alignment.CENTER_LEFT
+    CENTER_RIGHT = ft.Alignment.CENTER_RIGHT
     TOP_LEFT = ft.Alignment.TOP_LEFT
     TOP_CENTER = ft.Alignment.TOP_CENTER
 

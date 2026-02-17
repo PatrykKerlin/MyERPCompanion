@@ -49,9 +49,9 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
 
         columns = [
-            ft.Column(controls=main_grid, expand=3),
+            ft.Column(controls=main_grid, expand=True),
             self._spacing_column,
-            ft.Column(controls=meta_grid, expand=2),
+            ft.Column(controls=meta_grid, expand=True),
         ]
         self._columns_row.controls.extend(columns)
         self.__bulk_transfer = BulkTransfer(
@@ -78,6 +78,19 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
         self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__group_permissions: dict[int, tuple[bool, bool]] = {}
+        self.__pre_buttons_spacing_row = ft.Row(
+            height=AppDimensions.SPACE_2XL,
+            visible=mode != ViewMode.READ,
+        )
+        show_details = self._is_details_mode(mode)
+        self.__details_spacing_row_top = ft.Row(
+            height=AppDimensions.SPACE_2XL,
+            visible=show_details,
+        )
+        self.__details_spacing_row_bottom = ft.Row(
+            height=AppDimensions.SPACE_2XL,
+            visible=show_details,
+        )
         bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
         self._init_group_bulk_transfer(
             mode=mode,
@@ -101,12 +114,12 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
         self._master_column.controls.extend(
             [
                 self._columns_row,
-                ft.Row(height=AppDimensions.SPACE_2XL),
-                bulk_transfer_row,
-                ft.Row(height=AppDimensions.SPACE_2XL),
-                group_row,
-                ft.Row(height=AppDimensions.SPACE_2XL),
+                self.__pre_buttons_spacing_row,
                 self._buttons_row,
+                self.__details_spacing_row_top,
+                bulk_transfer_row,
+                self.__details_spacing_row_bottom,
+                group_row,
             ]
         )
 
@@ -132,10 +145,17 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
-        self.__bulk_transfer.visible = self._is_details_mode(mode)
+        show_details = self._is_details_mode(mode)
+        self.__bulk_transfer.visible = show_details
         self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()
+        self.__pre_buttons_spacing_row.visible = mode != ViewMode.READ
+        self.__details_spacing_row_top.visible = show_details
+        self.__details_spacing_row_bottom.visible = show_details
+        self.safe_update(self.__pre_buttons_spacing_row)
+        self.safe_update(self.__details_spacing_row_top)
+        self.safe_update(self.__details_spacing_row_bottom)
         if self.__bulk_transfer.page:
             self.__bulk_transfer.update()
         self._update_group_bulk_transfer_mode(mode)

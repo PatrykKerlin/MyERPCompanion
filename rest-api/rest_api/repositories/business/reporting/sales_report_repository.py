@@ -66,6 +66,19 @@ class SalesReportRepository:
         }
 
     @staticmethod
+    async def get_first_sales_date(session: AsyncSession) -> date | None:
+        query = (
+            select(func.min(Order.order_date))
+            .select_from(AssocOrderItem)
+            .join(Order, AssocOrderItem.order_id == Order.id)
+            .join(Item, AssocOrderItem.item_id == Item.id)
+            .join(Category, Item.category_id == Category.id)
+            .outerjoin(Customer, Order.customer_id == Customer.id)
+        )
+        result = await session.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
     def __build_rows_query(
         date_from: date | None,
         date_to: date | None,

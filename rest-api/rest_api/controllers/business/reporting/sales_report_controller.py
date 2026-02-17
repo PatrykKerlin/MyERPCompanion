@@ -36,13 +36,14 @@ class SalesReportController:
     ) -> SalesReportResponseSchema:
         try:
             session = BaseController._get_request_session(request)
-            items, totals = await self._service.get_report(
+            items, totals, first_sales_date = await self._service.get_report(
                 session=session,
                 filters=filters,
             )
             return SalesReportResponseSchema(
                 items=items,
                 totals=totals,
+                first_sales_date=first_sales_date,
             )
         except HTTPException:
             self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.get_sales_report.__qualname__}")

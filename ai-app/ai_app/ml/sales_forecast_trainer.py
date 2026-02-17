@@ -158,7 +158,13 @@ class SalesForecastTrainer:
             state_dict = checkpoint["state_dict"]
         else:
             state_dict = checkpoint
-        model.load_state_dict(state_dict, strict=True)
+        try:
+            model.load_state_dict(state_dict, strict=True)
+        except RuntimeError:
+            logger.warning(
+                f"Incompatible checkpoint at {cls._checkpoint_path}, starting from current weights",
+                exc_info=True,
+            )
 
     @classmethod
     def __save_checkpoint(cls, model: nn.Module) -> None:

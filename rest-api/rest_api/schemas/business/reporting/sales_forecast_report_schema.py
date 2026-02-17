@@ -44,7 +44,7 @@ class SalesForecastReportRowSchema(BaseSchema):
     currency_code: str
 
     predicted_net: float
-    predicted_gross: float
+    predicted_quantity: float
     discount_rate_assumption: float
     horizon_months: int
 
@@ -53,7 +53,7 @@ class SalesForecastReportTotalsSchema(BaseSchema):
     rows_count: int = 0
     periods_count: int = 0
     total_predicted_net: float = 0
-    total_predicted_gross: float = 0
+    total_predicted_quantity: float = 0
     discount_steps: list[float] = []
     latest_run_id: int | None = None
     latest_run_finished_at: datetime | None = None

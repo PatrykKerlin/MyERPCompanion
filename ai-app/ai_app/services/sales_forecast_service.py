@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from datetime import date
 from typing import Any
 
@@ -14,7 +15,7 @@ logger = logging.getLogger("ai")
 
 class SalesForecastService:
     _aggregation_net = "month_net"
-    _aggregation_gross = "month_gross"
+    _aggregation_quantity = "month_quantity"
 
     def __init__(
         self,
@@ -72,6 +73,7 @@ class SalesForecastService:
             category_id = int(row["category_id"])
             currency_id = int(row["currency_id"])
             period_index = float(SalesForecastService.__months_between(min_period, row["period_start"])) / period_scale
+            month_sin, month_cos = SalesForecastService.__month_cycle_features(row["period_start"])
             discount_ratio = min(max(float(row["discount_ratio"]), 0.0), 0.90)
             train_features.append(
                 [
@@ -80,13 +82,15 @@ class SalesForecastService:
                     float(category_id) / category_scale,
                     float(currency_id) / currency_scale,
                     period_index,
+                    month_sin,
+                    month_cos,
                     discount_ratio,
                 ]
             )
             y_train_values.append(
                 [
                     float(row["total_net"]),
-                    float(row["total_gross"]),
+                    float(row["total_quantity"]),
                 ]
             )
 
@@ -113,6 +117,7 @@ class SalesForecastService:
         for month_offset in range(1, self._horizon_months + 1):
             predicted_date = SalesForecastService.__add_months(max_period, month_offset)
             period_index = float(SalesForecastService.__months_between(min_period, predicted_date)) / period_scale
+            month_sin, month_cos = SalesForecastService.__month_cycle_features(predicted_date)
             for item_id, customer_id, category_id, currency_id in prediction_keys:
                 for discount_rate in self._prediction_discount_rates:
                     predict_features.append(
@@ -122,6 +127,8 @@ class SalesForecastService:
                             float(category_id) / category_scale,
                             float(currency_id) / currency_scale,
                             period_index,
+                            month_sin,
+                            month_cos,
                             float(discount_rate),
                         ]
                     )
@@ -162,7 +169,7 @@ class SalesForecastService:
         rows_to_save: list[dict[str, Any]] = []
         for point, values in zip(prediction_points, forecast):
             predicted_net = float(values[0])
-            predicted_gross = float(values[1])
+            predicted_quantity = float(values[1])
             rows_to_save.append(
                 {
                     "run_id": run_id,
@@ -186,9 +193,9 @@ class SalesForecastService:
                     "category_id": point["category_id"],
                     "currency_id": point["currency_id"],
                     "predicted_at": point["predicted_date"],
-                    "predicted_quantity": predicted_gross,
+                    "predicted_quantity": predicted_quantity,
                     "samples": int(y_train.shape[0]),
-                    "aggregation": SalesForecastService._aggregation_gross,
+                    "aggregation": SalesForecastService._aggregation_quantity,
                     "horizon_months": int(point["horizon_months"]),
                     "discount_rate_assumption": float(point["discount_rate"]),
                 }
@@ -210,3 +217,9 @@ class SalesForecastService:
         year = value.year + month_zero_based // 12
         month = month_zero_based % 12 + 1
         return date(year, month, 1)
+
+    @staticmethod
+    def __month_cycle_features(value: date) -> tuple[float, float]:
+        # Encode month as a cyclical signal to capture seasonality.
+        angle = (2.0 * math.pi * float(value.month - 1)) / 12.0
+        return math.sin(angle), math.cos(angle)

@@ -65,7 +65,7 @@ class SalesForecastReportService:
                 currency_id=row.currency_id,
                 currency_code=row.currency_code,
                 predicted_net=SalesForecastReportService.__to_float(row.predicted_net),
-                predicted_gross=SalesForecastReportService.__to_float(row.predicted_gross),
+                predicted_quantity=SalesForecastReportService.__to_float(row.predicted_quantity),
                 discount_rate_assumption=SalesForecastReportService.__to_float(row.discount_rate_assumption),
                 horizon_months=int(row.horizon_months or 0),
             )
@@ -75,7 +75,7 @@ class SalesForecastReportService:
             rows_count=int(totals_row["rows_count"] or 0),
             periods_count=int(totals_row["periods_count"] or 0),
             total_predicted_net=SalesForecastReportService.__to_float(totals_row["total_predicted_net"]),
-            total_predicted_gross=SalesForecastReportService.__to_float(totals_row["total_predicted_gross"]),
+            total_predicted_quantity=SalesForecastReportService.__to_float(totals_row["total_predicted_quantity"]),
             discount_steps=discount_steps,
             latest_run_id=latest_run_id,
             latest_run_finished_at=latest_run_finished_at,

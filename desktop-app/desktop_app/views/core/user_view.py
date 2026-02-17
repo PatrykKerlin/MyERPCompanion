@@ -62,7 +62,6 @@ class UserView(BaseView, GroupBulkTransferMixin):
             main_fields_definitions.append(
                 {
                     "key": "warehouse_id",
-                    "label": "warehouses",
                     "input": self._get_dropdown,
                     "options": warehouse_pairs,
                 }
@@ -94,15 +93,15 @@ class UserView(BaseView, GroupBulkTransferMixin):
         if mode in {ViewMode.CREATE, ViewMode.EDIT}:
             self.__bind_password_validation()
         main_grid = self._build_grid(main_fields)
-        columns = [ft.Column(controls=main_grid, expand=1)]
+        columns: list[ft.Control] = [ft.Column(controls=main_grid, expand=True)]
         if show_meta:
             meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
             columns = [
-                ft.Column(controls=main_grid, expand=3),
+                ft.Column(controls=main_grid, expand=True),
                 self._spacing_column,
-                ft.Column(controls=meta_grid, expand=2),
+                ft.Column(controls=meta_grid, expand=True),
             ]
-        self._columns_row.controls.extend(columns)
+        self._columns_row.controls = columns
 
         group_row = None
         if show_groups:
@@ -118,24 +117,31 @@ class UserView(BaseView, GroupBulkTransferMixin):
                 visible_modes=set(self._DETAIL_MODES),
             )
             group_row = self._build_group_bulk_transfer_row()
-        self._rows = [
+        show_spacing = mode != ViewMode.READ
+        self.__buttons_spacing_row = ft.Row(
+            height=AppDimensions.SPACE_2XL,
+            visible=show_spacing,
+        )
+        group_controls: list[ft.Control] = (
+            [
+                self._spacing_row,
+                group_row
+            ]
+            if group_row is not None
+            else []
+        )
+        self._master_column.controls = [
             self._columns_row,
+            self.__buttons_spacing_row,
+            self._buttons_row,
+            *group_controls,
         ]
-        if group_row is not None:
-            self._rows.extend(
-                [
-                    ft.Row(height=AppDimensions.SPACE_2XL),
-                    group_row,
-                    ft.Row(height=AppDimensions.SPACE_2XL),
-                ]
-            )
-        if caller_view_key == View.CURRENT_USER:
-            self._rows.append(self._spacing_row)
-        self._rows.append(self._buttons_row)
-        self._master_column.controls.extend(self._rows)
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
+        show_spacing = mode != ViewMode.READ
+        self.__buttons_spacing_row.visible = show_spacing
+        self.safe_update(self.__buttons_spacing_row)
         if mode in {ViewMode.CREATE, ViewMode.EDIT} and self.__password_validation_ready:
             self.__validate_password_fields()
 

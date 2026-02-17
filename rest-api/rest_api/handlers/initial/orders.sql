@@ -20,14 +20,40 @@ INSERT INTO orders (
     created_by
 )
 WITH days AS (
-    SELECT generate_series(DATE '2025-01-01', DATE '2026-01-31', INTERVAL '1 day')::date AS order_date
+    SELECT generate_series(DATE '2024-01-01', DATE '2026-01-31', INTERVAL '1 day')::date AS order_date
 ),
 counts_sales AS (
     SELECT
         order_date,
         GREATEST(
             0,
-            floor(5 + random() * 6)
+            floor(
+                (
+                    4 + random() * 5
+                )
+                * CASE EXTRACT(MONTH FROM order_date)::int
+                    WHEN 1 THEN 0.55
+                    WHEN 2 THEN 0.65
+                    WHEN 3 THEN 0.85
+                    WHEN 4 THEN 1.00
+                    WHEN 5 THEN 1.25
+                    WHEN 6 THEN 0.80
+                    WHEN 7 THEN 0.45
+                    WHEN 8 THEN 0.55
+                    WHEN 9 THEN 1.10
+                    WHEN 10 THEN 1.60
+                    WHEN 11 THEN 2.30
+                    ELSE 2.80
+                END
+                * CASE
+                    WHEN EXTRACT(ISODOW FROM order_date)::int IN (6, 7) THEN 0.70
+                    ELSE 1.00
+                END
+                + CASE
+                    WHEN EXTRACT(DAY FROM order_date)::int BETWEEN 1 AND 7 THEN 1.0
+                    ELSE 0.0
+                END
+            )
         )::int AS orders_count
     FROM days
 ),

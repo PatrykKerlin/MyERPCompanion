@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+from calendar import monthrange
 from datetime import date
 from typing import TYPE_CHECKING, cast
 
 import flet as ft
+from styles.colors import AppColors
 from styles.dimensions import AppDimensions
 from styles.styles import AlignmentStyles, ButtonStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
 from views.base.base_view import BaseView
-from views.controls.date_field_control import DateField
 
 if TYPE_CHECKING:
     from controllers.business.reporting.sales_report_controller import SalesReportController
@@ -26,6 +27,7 @@ class SalesReportView(BaseView):
         totals: dict[str, str],
         date_from: date | None,
         date_to: date | None,
+        first_sales_date: date | None,
         currency_options: list[tuple[int, str]],
         customer_options: list[tuple[int, str]],
         item_options: list[tuple[int, str]],
@@ -41,18 +43,40 @@ class SalesReportView(BaseView):
     ) -> None:
         super().__init__(controller, translation, mode, key, None, 0, 12)
         self._master_column.scroll = None
+        self._master_column.spacing = AppDimensions.SPACE_2XL
 
         self.__totals = dict(totals)
         self.__category_chart = category_chart
         self.__daily_chart = daily_chart
         self.__category_chart_dialog = category_chart_dialog
         self.__daily_chart_dialog = daily_chart_dialog
-
-        date_from_container, _ = self._get_date_picker("date_from", 2, value=date_from, read_only=False)
-        self.__date_from_input = cast(DateField, date_from_container.content)
-
-        date_to_container, _ = self._get_date_picker("date_to", 2, value=date_to, read_only=False)
-        self.__date_to_input = cast(DateField, date_to_container.content)
+        self.__slider_min_date, self.__slider_max_date = self.__resolve_slider_bounds(first_sales_date)
+        self.__slider_max_offset = max(
+            self.__to_month_index(self.__slider_max_date) - self.__to_month_index(self.__slider_min_date),
+            1,
+        )
+        self.__date_from_value, self.__date_to_value = self.__normalize_initial_range(date_from, date_to)
+        self.__date_range_input = ft.RangeSlider(
+            min=0,
+            max=self.__slider_max_offset,
+            round=0,
+            start_value=self.__to_slider_offset(self.__date_from_value) if self.__date_from_value is not None else 0,
+            end_value=self.__to_slider_offset(self.__date_to_value) if self.__date_to_value is not None else self.__slider_max_offset,
+            on_change=self.__on_date_range_changed,
+            expand=True,
+        )
+        self.__date_range_styled = ft.Container(
+            content=self.__date_range_input,
+            theme=ft.Theme(
+                slider_theme=ft.SliderTheme(
+                    value_indicator_color=ft.Colors.TRANSPARENT,
+                    value_indicator_stroke_color=ft.Colors.TRANSPARENT,
+                    value_indicator_text_style=ft.TextStyle(color=ft.Colors.TRANSPARENT),
+                )
+            ),
+        )
+        self.__date_range_text = ft.Text(no_wrap=False, max_lines=2)
+        self.__update_date_range_text()
 
         currency_container, _ = self._get_dropdown("currency_id", 2, currency_options)
         self.__currency_input = cast(ft.Dropdown, currency_container.content)
@@ -75,8 +99,6 @@ class SalesReportView(BaseView):
         self.__category_input.value = str(category_id) if category_id is not None else "0"
         self._inputs.update(
             {
-                "date_from": FieldGroup(input=(date_from_container, 0)),
-                "date_to": FieldGroup(input=(date_to_container, 0)),
                 "currency_id": FieldGroup(input=(currency_container, 0)),
                 "customer_id": FieldGroup(input=(customer_container, 0)),
                 "item_id": FieldGroup(input=(item_container, 0)),
@@ -112,12 +134,17 @@ class SalesReportView(BaseView):
         self.__render_report()
 
     def reset_filters(self) -> None:
-        self.__date_from_input.value = None
-        self.__date_to_input.value = None
+        self.__date_from_value = None
+        self.__date_to_value = None
+        self.__date_range_input.start_value = 0
+        self.__date_range_input.end_value = self.__slider_max_offset
+        self.__update_date_range_text()
         self.__currency_input.value = "0"
         self.__customer_input.value = "0"
         self.__item_input.value = "0"
         self.__category_input.value = "0"
+        self.safe_update(self.__date_range_input)
+        self.safe_update(self.__date_range_text)
         self.safe_update(self.__currency_input)
         self.safe_update(self.__customer_input)
         self.safe_update(self.__item_input)
@@ -127,14 +154,14 @@ class SalesReportView(BaseView):
         apply_button = ft.Button(
             content=self._translation.get("apply_filters"),
             on_click=lambda _: self._controller.on_apply_filters_clicked(
-                date_from=self.__date_from_input.value,
-                date_to=self.__date_to_input.value,
+                date_from=self.__date_from_value,
+                date_to=self.__date_to_value,
                 currency_id=self.__currency_input.value,
                 customer_id=self.__customer_input.value,
                 item_id=self.__item_input.value,
                 category_id=self.__category_input.value,
             ),
-            style=ButtonStyles.regular,
+            style=ButtonStyles.primary_regular,
         )
         clear_button = ft.TextButton(
             self._translation.get("clear_filters"),
@@ -142,47 +169,105 @@ class SalesReportView(BaseView):
             style=ButtonStyles.compact,
         )
 
-        filters = ft.ResponsiveRow(
+        filters_top_row = ft.ResponsiveRow(
             columns=12,
+            spacing=AppDimensions.SPACE_SM,
+            run_spacing=AppDimensions.SPACE_SM,
             controls=[
-                self.__build_filter_input(self._translation.get("date_from"), self.__date_from_input),
-                self.__build_filter_input(self._translation.get("date_to"), self.__date_to_input),
-                self.__build_filter_input(self._translation.get("currency"), self.__currency_input),
-                self.__build_filter_input(self._translation.get("customer"), self.__customer_input),
-                self.__build_filter_input(self._translation.get("item"), self.__item_input),
-                self.__build_filter_input(self._translation.get("category"), self.__category_input),
+                self.__build_date_range_input(),
+                self.__build_filter_input(self._translation.get("currency"), self.__currency_input, md_size=2),
+                self.__build_filter_input(self._translation.get("customer"), self.__customer_input, md_size=2),
+                self.__build_filter_input(self._translation.get("item"), self.__item_input, md_size=2),
+                self.__build_filter_input(self._translation.get("category"), self.__category_input, md_size=2),
+            ],
+        )
+        filters_bottom_row = ft.ResponsiveRow(
+            columns=12,
+            spacing=AppDimensions.SPACE_SM,
+            run_spacing=AppDimensions.SPACE_SM,
+            controls=[
+                self.__build_date_range_caption(),
                 ft.Container(
-                    col={"sm": 12},
+                    col={"sm": 12, "md": 8},
+                    alignment=AlignmentStyles.CENTER_RIGHT,
                     content=ft.Row(
-                        controls=[apply_button, clear_button],
+                        controls=[clear_button, apply_button],
                         alignment=AlignmentStyles.AXIS_END,
                     ),
                 ),
             ],
+        )
+        filters = ft.Column(
+            spacing=AppDimensions.SPACE_SM,
+            controls=[filters_top_row, filters_bottom_row],
+        )
+        filters_section = ft.Container(
+            border=ft.Border.all(1, AppColors.OUTLINE),
+            border_radius=AppDimensions.RADIUS_SM,
+            padding=ft.Padding.all(AppDimensions.SPACE_SM),
+            content=filters,
         )
 
         charts = ft.Row(
             expand=True,
             spacing=AppDimensions.SPACE_LG,
             controls=[
-                ft.Container(expand=1, content=self.__category_chart_container),
-                ft.Container(expand=1, content=self.__daily_chart_container),
+                ft.Container(
+                    expand=1,
+                    border=ft.Border.all(1, AppColors.OUTLINE),
+                    border_radius=AppDimensions.RADIUS_SM,
+                    padding=ft.Padding.all(AppDimensions.SPACE_SM),
+                    content=self.__category_chart_container,
+                ),
+                ft.Container(
+                    expand=1,
+                    border=ft.Border.all(1, AppColors.OUTLINE),
+                    border_radius=AppDimensions.RADIUS_SM,
+                    padding=ft.Padding.all(AppDimensions.SPACE_SM),
+                    content=self.__daily_chart_container,
+                ),
             ],
         )
 
         self._master_column.controls = [
-            filters,
+            filters_section,
             self.__totals_row,
             charts,
         ]
-        self.content = ft.Container(content=self._master_column, expand=True)
+        self.content = ft.Container(
+            content=self._master_column,
+            expand=True,
+            padding=ft.Padding.symmetric(
+                horizontal=AppDimensions.PADDING_FORM_HORIZONTAL,
+                vertical=AppDimensions.PADDING_FORM_VERTICAL,
+            ),
+        )
 
-    def __build_filter_input(self, label: str, control: ft.Control) -> ft.Container:
+    def __build_filter_input(self, label: str, control: ft.Control, md_size: int = 2) -> ft.Container:
         return ft.Container(
-            col={"sm": 12, "md": 2},
+            col={"sm": 12, "md": md_size},
             content=ft.Column(
                 controls=[ft.Text(label), control],
+                spacing=AppDimensions.SPACE_2XS,
             ),
+        )
+
+    def __build_date_range_input(self) -> ft.Container:
+        return ft.Container(
+            col={"sm": 12, "md": 4},
+            content=ft.Column(
+                controls=[
+                    ft.Text(f"{self._translation.get('date_from')} / {self._translation.get('date_to')}"),
+                    self.__date_range_styled,
+                ],
+                spacing=AppDimensions.SPACE_2XS,
+            ),
+        )
+
+    def __build_date_range_caption(self) -> ft.Container:
+        return ft.Container(
+            col={"sm": 12, "md": 4},
+            content=self.__date_range_text,
         )
 
     def __render_report(self) -> None:
@@ -193,7 +278,7 @@ class SalesReportView(BaseView):
         self.__totals_row.controls = [
             self.__build_total_item("orders_count", self.__totals.get("orders_count", "0")),
             self.__build_total_item("rows_count", self.__totals.get("rows_count", "0")),
-            self.__build_total_item("quantity", self.__totals.get("quantity", "0")),
+            self.__build_total_item("total_quantity", self.__totals.get("quantity", "0")),
             self.__build_total_item("total_net", self.__totals.get("total_net", "0.00")),
             self.__build_total_item("total_vat", self.__totals.get("total_vat", "0.00")),
             self.__build_total_item("total_gross", self.__totals.get("total_gross", "0.00")),
@@ -204,22 +289,26 @@ class SalesReportView(BaseView):
     def __build_total_item(self, label_key: str, value: str) -> ft.Container:
         return ft.Container(
             col={"sm": 14, "md": 2},
+            border=ft.Border.all(1, AppColors.OUTLINE),
+            border_radius=AppDimensions.RADIUS_SM,
+            padding=ft.Padding.symmetric(horizontal=AppDimensions.SPACE_SM, vertical=AppDimensions.SPACE_XS),
             content=ft.Column(
                 controls=[
                     ft.Text(self._translation.get(label_key)),
                     ft.Text(value),
                 ],
+                spacing=AppDimensions.SPACE_2XS,
             ),
         )
 
     def __render_charts(self) -> None:
         self.__category_chart_container.content = self.__build_chart_content(
-            self._translation.get("gross_by_category"),
+            self._translation.get("total_net"),
             self.__category_chart,
             self.__category_chart_dialog,
         )
         self.__daily_chart_container.content = self.__build_chart_content(
-            self._translation.get("gross_by_day"),
+            self._translation.get("total_quantity"),
             self.__daily_chart,
             self.__daily_chart_dialog,
         )
@@ -246,9 +335,10 @@ class SalesReportView(BaseView):
         return ft.Column(
             expand=True,
             controls=[
-                ft.Text(title),
+                ft.Text(title, weight=ft.FontWeight.W_600),
                 image_holder,
             ],
+            spacing=AppDimensions.SPACE_SM,
         )
 
     def __open_chart_dialog(self, chart: bytes, title: str) -> None:
@@ -277,3 +367,87 @@ class SalesReportView(BaseView):
             actions_alignment=AlignmentStyles.AXIS_END,
         )
         self._controller._queue_dialog(dialog)
+
+    def __on_date_range_changed(self, event: ft.Event[ft.RangeSlider]) -> None:
+        start_offset = self.__coerce_slider_offset(event.control.start_value)
+        end_offset = self.__coerce_slider_offset(event.control.end_value)
+        event.control.start_value = start_offset
+        event.control.end_value = end_offset
+        start_month = self.__from_slider_offset(start_offset)
+        end_month = self.__from_slider_offset(end_offset)
+        self.__date_from_value = None if start_offset <= 0 else start_month
+        self.__date_to_value = None if end_offset >= self.__slider_max_offset else self.__month_end(end_month)
+        self.__update_date_range_text()
+        self.safe_update(self.__date_range_text)
+
+    def __update_date_range_text(self) -> None:
+        from_value = (
+            self.__date_from_value.isoformat()
+            if self.__date_from_value is not None
+            else self.__slider_min_date.isoformat()
+        )
+        to_value = (
+            self.__date_to_value.isoformat()
+            if self.__date_to_value is not None
+            else self.__month_end(self.__slider_max_date).isoformat()
+        )
+        self.__date_range_text.value = (
+            f"{self._translation.get('date_from')}: {from_value}\n"
+            f"{self._translation.get('date_to')}: {to_value}"
+        )
+
+    def __to_slider_offset(self, value: date) -> int:
+        offset = self.__to_month_index(self.__month_start(value)) - self.__to_month_index(self.__slider_min_date)
+        return max(0, min(offset, self.__slider_max_offset))
+
+    def __from_slider_offset(self, offset: int) -> date:
+        base_index = self.__to_month_index(self.__slider_min_date)
+        return self.__from_month_index(base_index + offset)
+
+    def __coerce_slider_offset(self, raw_offset: int | float) -> int:
+        offset = int(round(raw_offset))
+        return max(0, min(offset, self.__slider_max_offset))
+
+    @staticmethod
+    def __month_start(value: date) -> date:
+        return date(value.year, value.month, 1)
+
+    @staticmethod
+    def __month_end(value: date) -> date:
+        return date(value.year, value.month, monthrange(value.year, value.month)[1])
+
+    @staticmethod
+    def __to_month_index(value: date) -> int:
+        return value.year * 12 + (value.month - 1)
+
+    @staticmethod
+    def __from_month_index(index: int) -> date:
+        return date(index // 12, (index % 12) + 1, 1)
+
+    @staticmethod
+    def __resolve_slider_bounds(first_sales_date: date | None) -> tuple[date, date]:
+        today = date.today()
+        max_date = SalesReportView.__month_start(today)
+        min_date = SalesReportView.__month_start(first_sales_date) if first_sales_date is not None else max_date
+        if min_date > max_date:
+            min_date = max_date
+        return min_date, max_date
+
+    def __normalize_initial_range(self, date_from: date | None, date_to: date | None) -> tuple[date | None, date | None]:
+        range_min = self.__slider_min_date
+        range_max = self.__month_end(self.__slider_max_date)
+        normalized_from = self.__month_start(date_from) if date_from is not None else None
+        normalized_to = self.__month_end(date_to) if date_to is not None else None
+        if normalized_from is not None:
+            if normalized_from < range_min:
+                normalized_from = range_min
+            if normalized_from > range_max:
+                normalized_from = range_max
+        if normalized_to is not None:
+            if normalized_to < range_min:
+                normalized_to = range_min
+            if normalized_to > range_max:
+                normalized_to = range_max
+        if normalized_from is not None and normalized_to is not None and normalized_from > normalized_to:
+            normalized_from = normalized_to
+        return normalized_from, normalized_to

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from datetime import date
 
 from repositories.business.reporting.sales_report_repository import SalesReportRepository
 from schemas.business.reporting.sales_report_schema import (
@@ -16,7 +17,7 @@ class SalesReportService:
         self,
         session: AsyncSession,
         filters: SalesReportFilterSchema,
-    ) -> tuple[list[SalesReportRowSchema], SalesReportTotalsSchema]:
+    ) -> tuple[list[SalesReportRowSchema], SalesReportTotalsSchema, date | None]:
         rows_result = await SalesReportRepository.get_rows(
             session=session,
             date_from=filters.date_from,
@@ -35,6 +36,7 @@ class SalesReportService:
             category_id=filters.category_id,
             currency_id=filters.currency_id,
         )
+        first_sales_date = await SalesReportRepository.get_first_sales_date(session=session)
 
         rows = [
             SalesReportRowSchema(
@@ -65,7 +67,7 @@ class SalesReportService:
             total_gross=SalesReportService.__to_float(totals_row["total_gross"]),
             total_discount=SalesReportService.__to_float(totals_row["total_discount"]),
         )
-        return rows, totals
+        return rows, totals, first_sales_date
 
     @staticmethod
     def __to_float(value: Decimal | float | int | None) -> float:

@@ -6,6 +6,24 @@ WITH sales_orders AS (
         o.currency_id,
         row_number() OVER (ORDER BY o.order_date, o.id) AS rn,
         random() AS promo_roll,
+        CASE EXTRACT(MONTH FROM o.order_date)::int
+            WHEN 1 THEN 0.55
+            WHEN 2 THEN 0.65
+            WHEN 3 THEN 0.85
+            WHEN 4 THEN 1.00
+            WHEN 5 THEN 1.25
+            WHEN 6 THEN 0.80
+            WHEN 7 THEN 0.45
+            WHEN 8 THEN 0.55
+            WHEN 9 THEN 1.10
+            WHEN 10 THEN 1.60
+            WHEN 11 THEN 2.30
+            ELSE 2.80
+        END AS seasonality_weight,
+        CASE
+            WHEN EXTRACT(ISODOW FROM o.order_date)::int IN (6, 7) THEN 0.70
+            ELSE 1.00
+        END AS weekday_weight,
         CASE
             WHEN o.customer_id <= 8 THEN 1.4
             WHEN o.customer_id <= 20 THEN 1.1
@@ -20,6 +38,8 @@ item_counts AS (
         order_date,
         customer_id,
         currency_id,
+        seasonality_weight,
+        weekday_weight,
         customer_weight,
         rn,
         promo_roll,
@@ -36,6 +56,11 @@ item_counts AS (
                         WHEN 3 THEN 0.6
                         ELSE 0.0
                     END
+                    + seasonality_weight * 0.8
+                    + CASE
+                        WHEN weekday_weight < 1 THEN -0.3
+                        ELSE 0.0
+                    END
                 )::int
             )
         ) AS item_count
@@ -47,6 +72,8 @@ item_rows AS (
         ic.order_date,
         ic.customer_id,
         ic.currency_id,
+        ic.seasonality_weight,
+        ic.weekday_weight,
         ic.customer_weight,
         ic.rn,
         ic.promo_roll,
@@ -60,6 +87,8 @@ item_data AS (
         ir.order_date,
         ir.customer_id,
         ir.currency_id,
+        ir.seasonality_weight,
+        ir.weekday_weight,
         ir.customer_weight,
         ir.rn,
         ir.off,
@@ -101,6 +130,11 @@ item_pricing AS (
                         WHEN 0 THEN 0.0
                         WHEN 4 THEN 1.8
                         ELSE 0.9
+                    END
+                    + seasonality_weight * 1.1
+                    + CASE
+                        WHEN weekday_weight < 1 THEN -0.6
+                        ELSE 0.0
                     END
                     + quantity_noise * 2.4
                 )::int

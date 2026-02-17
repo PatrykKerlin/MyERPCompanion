@@ -57,3 +57,4 @@ class SalesReportTotalsSchema(BaseSchema):
 class SalesReportResponseSchema(BaseSchema):
     items: list[SalesReportRowSchema]
     totals: SalesReportTotalsSchema
+    first_sales_date: date | None = None
