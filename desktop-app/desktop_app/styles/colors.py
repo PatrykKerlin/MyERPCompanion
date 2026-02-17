@@ -3,7 +3,7 @@ import flet as ft
 
 class AppColors:
     SURFACE: ft.ColorValue = ft.Colors.SURFACE
-    CARD: ft.ColorValue = ft.Colors.SURFACE_CONTAINER_LOW
+    CARD: ft.ColorValue = ft.Colors.SURFACE_CONTAINER
     ACTIVE_BORDER_RED: ft.ColorValue = ft.Colors.RED
     SURFACE_CONTAINER_HIGH: ft.ColorValue = ft.Colors.SURFACE_CONTAINER_HIGH
     OUTLINE: ft.ColorValue = ft.Colors.OUTLINE
