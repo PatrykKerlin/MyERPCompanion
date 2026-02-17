@@ -80,18 +80,11 @@ class CustomerController(
                 for discount in discounts
                 if discount.id not in target_ids
             ]
-        if mode == ViewMode.SEARCH:
-            users, customers = await asyncio.gather(
-                self._perform_get_all_users(),
-                self._perform_get_all_customers(),
-            )
-            user_options = self._get_user_link_options(mode, event, users, [], customers)
-        else:
-            users, customers = await asyncio.gather(
-                self._perform_get_all_users(),
-                self._perform_get_all_customers(),
-            )
-            user_options = self._get_user_link_options(mode, event, users, [], customers)
+        users, customers = await asyncio.gather(
+            self._perform_get_all_users(),
+            self._perform_get_all_customers(),
+        )
+        user_options = self._get_user_link_options(mode, event, users, [], customers)
         return CustomerView(
             self,
             translation,
@@ -157,22 +150,19 @@ class CustomerController(
         await self.__assoc_customer_discount_service.delete_bulk(
             Endpoint.CUSTOMER_DISCOUNTS_DELETE_BULK, None, None, body_params, self._module_id
         )
+    
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_customer(self, customer_id: int) -> CustomerPlainSchema | None:
+        return await self._service.get_one(Endpoint.CUSTOMERS, customer_id, None, None, self._module_id)
 
     @staticmethod
     def __extract_discount_ids(data: dict[str, Any] | None) -> list[int]:
         if not data:
             return []
         raw_ids = data.get("discount_ids")
-        if isinstance(raw_ids, list):
-            return [item for item in raw_ids if isinstance(item, int)]
-        raw_discounts = data.get("discounts")
-        if isinstance(raw_discounts, list):
-            ids: list[int] = []
-            for raw in raw_discounts:
-                if isinstance(raw, dict) and isinstance(raw.get("id"), int):
-                    ids.append(raw["id"])
-            return ids
-        return []
+        if not isinstance(raw_ids, list):
+            return []
+        return [item for item in raw_ids if isinstance(item, int)]
 
     async def __refresh_customer_discount_lists(self, customer_id: int) -> None:
         if not self._view:
@@ -195,7 +185,3 @@ class CustomerController(
         ]
         self._view.set_discount_target_items(target_items)
         self._view.set_discount_source_items(source_items)
-
-    @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_get_customer(self, customer_id: int) -> CustomerPlainSchema | None:
-        return await self._service.get_one(Endpoint.CUSTOMERS, customer_id, None, None, self._module_id)

@@ -149,9 +149,8 @@ class OrderPickingController(
             return
         self._page.run_task(self.__handle_complete_status)
 
-    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> OrderPickingView:
-        mode = ViewMode.STATIC
+        view_mode = ViewMode.STATIC
         customers = await self.__perform_get_customers()
         customer_pairs = [(customer.id, self.__format_customer_label(customer)) for customer in customers]
         orders = await self.__load_eligible_orders(self.__selected_order_date, self.__selected_customer_id)
@@ -159,7 +158,7 @@ class OrderPickingController(
         view = OrderPickingView(
             self,
             translation,
-            mode,
+            view_mode,
             event.view_key,
             customer_pairs,
             self.__selected_order_date,
@@ -174,6 +173,7 @@ class OrderPickingController(
         await self.__load_package_items(view)
         return view
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_statuses(self) -> list[StatusPlainSchema]:
         return await self.__status_service.get_all(Endpoint.STATUSES, None, None, None, self._module_id)
 
@@ -457,17 +457,7 @@ class OrderPickingController(
     def __build_package_saved_target_rows(
         self, order_items: list[AssocOrderItemPlainSchema], bin_locations: dict[int, str]
     ) -> list[tuple[int, list[Any]]]:
-        rows: list[tuple[int, list[Any]]] = []
-        for order_item in order_items:
-            if order_item.bin_id is None:
-                continue
-            picked_quantity = max(order_item.quantity - order_item.to_process, 0)
-            if picked_quantity <= 0:
-                continue
-            index, name = self.__order_item_labels.get(order_item.item_id, (str(order_item.item_id), ""))
-            location = bin_locations.get(order_item.bin_id, "")
-            rows.append((order_item.id, [index, name, location, str(picked_quantity)]))
-        return rows
+        return self.__build_saved_target_rows(order_items, bin_locations)
 
     def __sync_transfer_state(self) -> None:
         if not self._view:
@@ -940,8 +930,7 @@ class OrderPickingController(
         current_status = status_by_order.get(latest_status.status_id)
         if current_status is None:
             current_status = next((status for status in statuses if status.id == latest_status.status_id), None)
-        current_order_value = current_status.order if current_status else None
-        if current_order_value == 2 and touched_item_ids:
+        if current_status and current_status.order == 2 and touched_item_ids:
             next_status = status_by_order.get(3) or next((status for status in statuses if status.order == 3), None)
             if next_status:
                 has_status = any(status.status_id == next_status.id for status in order_statuses)
@@ -949,8 +938,6 @@ class OrderPickingController(
                     await self.__perform_create_order_status(
                         AssocOrderStatusStrictSchema(order_id=order_id, status_id=next_status.id)
                     )
-                current_order_value = 3
-        return
 
     def __refresh_source_rows(self) -> None:
         if not self._view:

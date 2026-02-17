@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 class SalesReportView(BaseView):
     def __init__(
-        self,
+        self, # NOSONAR
         controller: SalesReportController,
         translation: Translation,
         mode: ViewMode,
@@ -373,7 +373,11 @@ class SalesReportView(BaseView):
         self._controller._queue_dialog(dialog)
 
     def __resolve_chart_dialog_width(self) -> int:
-        page_width = int(self.page.width or AppDimensions.DESKTOP_WINDOW_WIDTH) if self.page else AppDimensions.DESKTOP_WINDOW_WIDTH
+        page_width = (
+            int(self.page.width or AppDimensions.DESKTOP_WINDOW_WIDTH)
+            if self.page
+            else AppDimensions.DESKTOP_WINDOW_WIDTH
+        )
 
         horizontal_overhead = 2 * (DialogStyles.INSET_HORIZONTAL + DialogStyles.CONTENT_HORIZONTAL)
         max_width = max(320, page_width - horizontal_overhead)
@@ -382,7 +386,9 @@ class SalesReportView(BaseView):
 
     def __resolve_chart_dialog_height(self) -> int:
         page_height = (
-            int(self.page.height or AppDimensions.DESKTOP_WINDOW_HEIGHT) if self.page else AppDimensions.DESKTOP_WINDOW_HEIGHT
+            int(self.page.height or AppDimensions.DESKTOP_WINDOW_HEIGHT)
+            if self.page
+            else AppDimensions.DESKTOP_WINDOW_HEIGHT
         )
         vertical_overhead = (
             (2 * DialogStyles.INSET_VERTICAL)
@@ -421,7 +427,7 @@ class SalesReportView(BaseView):
             else self.__month_end(self.__slider_max_date).isoformat()
         )
         self.__date_range_text.value = (
-            f"{self._translation.get('date_from')}: {from_value}\n" f"{self._translation.get('date_to')}: {to_value}"
+            f"{self._translation.get('date_from')}: {from_value}\n{self._translation.get('date_to')}: {to_value}"
         )
 
     def __to_slider_offset(self, value: date) -> int:

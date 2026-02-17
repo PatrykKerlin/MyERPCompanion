@@ -56,7 +56,7 @@ class EmployeeController(
         )
 
     def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
-        available_fields = [
+        allowed_columns: list[str] = [
             "id",
             "first_name",
             "middle_name",
@@ -71,7 +71,7 @@ class EmployeeController(
             "modified_by_username",
             "modified_at",
         ]
-        return available_fields
+        return [field for field in available_fields if field in allowed_columns]
 
     @property
     def _user_link_view_key(self) -> View:
@@ -134,6 +134,7 @@ class EmployeeController(
                                     "last_name": employee.last_name,
                                 }
                             )
+
         return EmployeeView(
             self,
             translation,

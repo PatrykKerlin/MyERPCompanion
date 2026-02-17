@@ -12,7 +12,7 @@ from views.base.base_dialog import BaseDialog
 
 class BulkTransfer(ft.Container):
     def __init__(
-        self,
+        self, # NOSONAR
         on_save_clicked: Callable[[ft.Event[ft.IconButton]], None],
         source_label: str,
         target_label: str | None = None,
@@ -129,7 +129,7 @@ class BulkTransfer(ft.Container):
         super().update()
 
     def clear_pending_changes(self) -> None:
-        pending_ids = [target_id for target_id in self.__pending_target_map]
+        pending_ids = list(self.__pending_target_map)
         if pending_ids:
             self.remove_target_items(pending_ids)
         self.__selected_source_ids.clear()

@@ -1,15 +1,12 @@
 class AppDimensions:
-    # Window
     DESKTOP_WINDOW_WIDTH = 1600
     DESKTOP_WINDOW_HEIGHT = 900
     DESKTOP_WINDOW_MIN_WIDTH = 1024
     DESKTOP_WINDOW_MIN_HEIGHT = 768
 
-    # Universal scale: radius
     RADIUS_SM = 6
     RADIUS_MD = 8
 
-    # Universal scale: spacing
     SPACE_2XS = 4
     SPACE_XS = 6
     SPACE_SM = 8
@@ -18,14 +15,12 @@ class AppDimensions:
     SPACE_XL = 16
     SPACE_2XL = 25
 
-    # Universal scale: control heights
     CONTROL_HEIGHT = 44
     SECTION_HEIGHT_COMPACT = CONTROL_HEIGHT * 4
     SECTION_HEIGHT_REGULAR = 200
     SECTION_HEIGHT_LARGE = 250
     BULK_TRANSFER_HEIGHT_LARGE = 260
 
-    # Universal scale: paddings
     PADDING_INPUT_HORIZONTAL = 12
     PADDING_INPUT_VERTICAL = 8
     PADDING_FORM_HORIZONTAL = 18
@@ -35,7 +30,6 @@ class AppDimensions:
     PADDING_BUTTON_HORIZONTAL_COMPACT = 16
     PADDING_BUTTON_VERTICAL_COMPACT = 8
 
-    # Shared values
     ICON_BUTTON_WIDTH = 48
     TOOLBAR_USER_ICON_SIZE = 20
     SHORTCUT_FONT_SIZE = 10

@@ -75,13 +75,12 @@ class BinTransferController(
         for item_id in item_ids:
             self.__pending_move_quantities.pop(item_id, None)
 
-    @BaseController.handle_api_action(ApiActionError.SAVE)
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinTransferView:
-        mode = ViewMode.STATIC
+        view_mode = ViewMode.STATIC
         return BinTransferView(
             self,
             translation,
-            mode,
+            view_mode,
             event.view_key,
             self.on_source_bin_submit,
             self.on_target_bin_submit,

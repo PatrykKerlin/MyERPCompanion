@@ -6,7 +6,6 @@ from collections import defaultdict
 from datetime import date
 from io import BytesIO
 
-import flet as ft
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -86,7 +85,7 @@ class SalesReportController(
         self._page.run_task(self.__handle_clear_filters)
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> SalesReportView:
-        mode = ViewMode.STATIC
+        view_mode = ViewMode.STATIC
         currencies, customers, items, categories, response = await asyncio.gather(
             self.__perform_get_currencies(),
             self.__perform_get_customers(),
@@ -106,7 +105,7 @@ class SalesReportController(
         return SalesReportView(
             controller=self,
             translation=translation,
-            mode=mode,
+            mode=view_mode,
             key=event.view_key,
             totals=totals,
             date_from=self.__date_from,
@@ -135,8 +134,9 @@ class SalesReportController(
         item_id: str | None,
         category_id: str | None,
     ) -> None:
+        translation = self._state_store.app_state.translation.items
         if date_from and date_to and date_from > date_to:
-            self._open_error_dialog(message=self.__t("date_range_invalid"))
+            self._open_error_dialog(message=translation.get("date_range_invalid"))
             return
         try:
             parsed_currency_id = self.__parse_optional_positive_int(currency_id, "currency")
@@ -218,22 +218,20 @@ class SalesReportController(
         return await self._service.get_report(Endpoint.SALES_REPORT, None, params, None, self._module_id)
 
     def __parse_optional_positive_int(self, value: str | None, label_key: str) -> int | None:
+        translation = self._state_store.app_state.translation.items
         if value is None:
             return None
         stripped = value.strip()
         if stripped in {"", "0"}:
             return None
         if not stripped.isdigit():
-            label = self.__t(label_key)
-            raise ValueError(self.__t("must_be_positive_integer").format(label=label))
+            label = translation.get(label_key)
+            raise ValueError(translation.get("must_be_positive_integer").format(label=label))
         parsed_value = int(stripped)
         if parsed_value <= 0:
-            label = self.__t(label_key)
-            raise ValueError(self.__t("must_be_positive_integer").format(label=label))
+            label = translation.get(label_key)
+            raise ValueError(translation.get("must_be_positive_integer").format(label=label))
         return parsed_value
-
-    def __t(self, key: str) -> str:
-        return self._state_store.app_state.translation.items.get(key)
 
     @staticmethod
     def __to_customer_options(customers: list[CustomerPlainSchema]) -> list[tuple[int, str]]:
@@ -274,6 +272,7 @@ class SalesReportController(
     def __build_category_chart(self, rows: list[SalesReportRowSchema], for_dialog: bool) -> bytes | None:
         if not rows:
             return None
+        translation = self._state_store.app_state.translation.items
         category_sums: dict[str, float] = defaultdict(float)
         for row in rows:
             category_sums[row.category_name] += row.total_net
@@ -285,13 +284,14 @@ class SalesReportController(
         return self.__build_bar_chart(
             labels=labels,
             values=values,
-            title=self.__t("total_net"),
+            title=translation.get("total_net"),
             for_dialog=for_dialog,
         )
 
     def __build_daily_chart(self, rows: list[SalesReportRowSchema], for_dialog: bool) -> bytes | None:
         if not rows:
             return None
+        translation = self._state_store.app_state.translation.items
         date_sums: dict[date, int] = defaultdict(int)
         for row in rows:
             date_sums[row.order_date] += row.quantity
@@ -302,7 +302,7 @@ class SalesReportController(
         return self.__build_line_chart(
             date_values=sorted_dates,
             values=values,
-            title=self.__t("total_quantity"),
+            title=translation.get("total_quantity"),
             for_dialog=for_dialog,
         )
 
@@ -310,7 +310,7 @@ class SalesReportController(
         chart_size, chart_dpi = self.__get_chart_render_settings(for_dialog)
         figure = None
         try:
-            self.__apply_chart_theme()
+            sns.set_theme(style="darkgrid")
             figure, axis = plt.subplots(figsize=chart_size)
             sns.barplot(x=labels, y=values, ax=axis)
             axis.set_title(title)
@@ -340,7 +340,7 @@ class SalesReportController(
         chart_size, chart_dpi = self.__get_chart_render_settings(for_dialog)
         figure = None
         try:
-            self.__apply_chart_theme()
+            sns.set_theme(style="darkgrid")
             figure, axis = plt.subplots(figsize=chart_size)
             sns.lineplot(
                 x=date_values,
@@ -372,37 +372,3 @@ class SalesReportController(
         if for_dialog:
             return SalesReportController.__dialog_chart_size, SalesReportController.__dialog_chart_dpi
         return SalesReportController.__view_chart_size, SalesReportController.__view_chart_dpi
-
-    def __apply_chart_theme(self) -> None:
-        if self.__is_dark_theme():
-            sns.set_theme(
-                style="darkgrid",
-                rc={
-                    "figure.facecolor": "#0F172A",
-                    "axes.facecolor": "#111827",
-                    "axes.edgecolor": "#E5E7EB",
-                    "axes.labelcolor": "#E5E7EB",
-                    "text.color": "#E5E7EB",
-                    "xtick.color": "#E5E7EB",
-                    "ytick.color": "#E5E7EB",
-                    "grid.color": "#334155",
-                    "savefig.facecolor": "#0F172A",
-                    "savefig.edgecolor": "#0F172A",
-                },
-            )
-            return
-        sns.set_theme(style="whitegrid")
-
-    def __is_dark_theme(self) -> bool:
-        theme_mode = self._page.theme_mode
-        if theme_mode == ft.ThemeMode.DARK:
-            return True
-        if theme_mode == ft.ThemeMode.LIGHT:
-            return False
-        user = self._state_store.app_state.user.current
-        selected_theme = user.theme if user else self._settings.THEME
-        if selected_theme == "dark":
-            return True
-        if selected_theme == "light":
-            return False
-        return self._page.platform_brightness == ft.Brightness.DARK

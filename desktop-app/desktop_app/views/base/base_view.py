@@ -190,10 +190,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             return AppColors.ACTIVE_BORDER_RED
         return AppColors.OUTLINE
 
-    def set_input_state(self, input: ft.Control, enable: bool) -> None:
-        self.__set_control_disabled_state(input, not enable)
-        self.__set_control_read_only_state(input, not enable)
-        input.update()
+    def set_input_state(self, control: ft.Control, enable: bool) -> None:
+        self.__set_control_disabled_state(control, not enable)
+        self.__set_control_read_only_state(control, not enable)
+        control.update()
 
     def set_field_error(self, key: str, message: str | None) -> None:
         field = self._inputs[key]
@@ -212,29 +212,29 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
 
     def clear_inputs(self) -> None:
         for key, field in self._inputs.items():
-            input = field.input.content
+            input_control = field.input.content
             marker_control = field.marker
             marker = marker_control.content if marker_control else None
             if key in self._search_disabled_fields:
-                self.__set_control_value(input, self.__get_default_value_for_control(input))
-                self.__set_control_read_only_state(input, True)
-                self.__set_control_disabled_state(input, True)
+                self.__set_control_value(input_control, self.__get_default_value_for_control(input_control))
+                self.__set_control_read_only_state(input_control, True)
+                self.__set_control_disabled_state(input_control, True)
                 self.__set_marker_state_for_non_search_mode(marker)
                 self.set_field_error(key, None)
-                if input:
-                    input.update()
+                if input_control:
+                    input_control.update()
                 if marker:
                     marker.update()
                 continue
-            if self._data_row and self._data_row.get(key) and hasattr(input, "value"):
+            if self._data_row and self._data_row.get(key) and hasattr(input_control, "value"):
                 value = self._data_row[key]
-                if isinstance(input, DateField):
+                if isinstance(input_control, DateField):
                     value = self.__normalize_date_value(value)
-                self.__set_control_value(input, value)
+                self.__set_control_value(input_control, value)
             else:
-                self.__set_control_value(input, self.__get_default_value_for_control(input))
-            if input:
-                input.update()
+                self.__set_control_value(input_control, self.__get_default_value_for_control(input_control))
+            if input_control:
+                input_control.update()
 
     def reset_inputs(self) -> None:
         self._data_row = None
@@ -259,7 +259,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             return cast(list[ft.Control], [inline_row])
         rows: list[ft.Control] = []
         for group in fields.values():
-            group_controls = cast(list[ft.Control], [part for part in group])
+            group_controls = cast(list[ft.Control], list(group))
             rows.append(
                 ft.ResponsiveRow(
                     columns=group.columns,
@@ -589,7 +589,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
 
         if marker_size < 1:
             raise ValueError(
-                f"Invalid layout sizes: columns={columns}, " f"label_size={label_size}, input_size={input_size}"
+                f"Invalid layout sizes: columns={columns}, label_size={label_size}, input_size={input_size}"
             )
 
         return FieldGroup(
@@ -738,35 +738,34 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 self.__set_marker_state_for_non_search_mode(marker)
                 if marker:
                     marker.update()
-                input = field.input.content
-                self.__set_control_read_only_state(input, True)
-                self.__set_control_disabled_state(input, True)
-                if input:
-                    input.update()
+                input_control = field.input.content
+                self.__set_control_read_only_state(input_control, True)
+                self.__set_control_disabled_state(input_control, True)
+                if input_control:
+                    input_control.update()
                 continue
-            input = field.input.content
+            input_control = field.input.content
             marker_selected = bool(getattr(marker, "value", False)) if marker else False
             is_selected = key in selected_inputs or marker_selected
             if is_selected:
                 selected_inputs.add(key)
             else:
                 selected_inputs.discard(key)
-            if isinstance(input, ft.Dropdown):
-                self.__restore_dropdown_options(input, key)
-            if hasattr(input, "value"):
-                if key in input_values:
-                    value = input_values.get(key)
-                    if value is None:
-                        value = self.__get_default_value_for_control(input)
-                    if isinstance(input, DateField):
-                        value = self.__normalize_date_value(value)
-                    self.__set_control_value(input, value)
-            self.__set_control_read_only_state(input, not is_selected)
-            self.__set_control_disabled_state(input, not is_selected)
+            if isinstance(input_control, ft.Dropdown):
+                self.__restore_dropdown_options(input_control, key)
+            if hasattr(input_control, "value") and key in input_values:
+                value = input_values.get(key)
+                if value is None:
+                    value = self.__get_default_value_for_control(input_control)
+                if isinstance(input_control, DateField):
+                    value = self.__normalize_date_value(value)
+                self.__set_control_value(input_control, value)
+            self.__set_control_read_only_state(input_control, not is_selected)
+            self.__set_control_disabled_state(input_control, not is_selected)
             self.__set_marker_state_for_search_mode(marker, is_selected)
             self.set_field_error(key, None)
-            if input:
-                input.update()
+            if input_control:
+                input_control.update()
             if marker:
                 marker.update()
         self.__toggle_search_results()
@@ -774,25 +773,25 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
     def __set_create_mode(self) -> None:
         self.clear_inputs()
         for key, field in self._inputs.items():
-            input = field.input.content
+            input_control = field.input.content
             marker_control = field.marker
             marker = marker_control.content if marker_control else None
             input_disabled = key in self._controller.meta_fields
-            self.__set_control_disabled_state(input, input_disabled)
+            self.__set_control_disabled_state(input_control, input_disabled)
             if (
-                isinstance(input, ft.Dropdown)
+                isinstance(input_control, ft.Dropdown)
                 and self._data_row
                 and self._caller_view_key
                 and key in self._data_row
                 and self._data_row.get(key) is not None
             ):
-                self.__limit_dropdown_options(input, key)
-            self.__set_control_read_only_state(input, key in self._controller.meta_fields)
+                self.__limit_dropdown_options(input_control, key)
+            self.__set_control_read_only_state(input_control, key in self._controller.meta_fields)
             self.__set_marker_state_for_non_search_mode(marker)
-            if hasattr(input, "value"):
-                self._controller.set_field_value(key, getattr(input, "value", ""))
-            if input:
-                input.update()
+            if hasattr(input_control, "value"):
+                self._controller.set_field_value(key, getattr(input_control, "value", ""))
+            if input_control:
+                input_control.update()
             if marker:
                 marker.update()
 
@@ -801,40 +800,40 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
 
     def __set_read_mode(self) -> None:
         for key, field in self._inputs.items():
-            input = field.input.content
+            input_control = field.input.content
             marker_control = field.marker
             marker = marker_control.content if marker_control else None
-            self.__set_control_read_only_state(input, True)
-            input_disabled = not isinstance(input, (ft.TextField, ft.Dropdown, NumericField, DateField))
-            self.__set_control_disabled_state(input, input_disabled, sync_radio_option_disabled_state=False)
-            if isinstance(input, ft.Dropdown) and self._data_row:
-                self.__limit_dropdown_options(input, key)
+            self.__set_control_read_only_state(input_control, True)
+            input_disabled = not isinstance(input_control, (ft.TextField, ft.Dropdown, NumericField, DateField))
+            self.__set_control_disabled_state(input_control, input_disabled, sync_radio_option_disabled_state=False)
+            if isinstance(input_control, ft.Dropdown) and self._data_row:
+                self.__limit_dropdown_options(input_control, key)
             self.__set_marker_state_for_non_search_mode(marker)
-            if self._data_row and hasattr(input, "value"):
+            if self._data_row and hasattr(input_control, "value"):
                 if key in self._data_row:
                     value = self._data_row.get(key)
                 else:
-                    value = self.__get_default_value_for_control(input)
-                if isinstance(input, DateField):
+                    value = self.__get_default_value_for_control(input_control)
+                if isinstance(input_control, DateField):
                     value = self.__normalize_date_value(value)
-                self.__set_control_value(input, value)
-            if input:
-                input.update()
+                self.__set_control_value(input_control, value)
+            if input_control:
+                input_control.update()
             if marker:
                 marker.update()
 
     def __set_edit_mode(self) -> None:
         for key, field in self._inputs.items():
-            input = field.input.content
+            input_control = field.input.content
             input_disabled = key in self._controller.meta_fields
-            self.__set_control_disabled_state(input, input_disabled)
-            self.__set_control_read_only_state(input, False)
-            if isinstance(input, ft.Dropdown):
-                self.__restore_dropdown_options(input, key)
-            if hasattr(input, "value"):
-                self._controller.set_field_value(key, getattr(input, "value", ""))
-            if input:
-                input.update()
+            self.__set_control_disabled_state(input_control, input_disabled)
+            self.__set_control_read_only_state(input_control, False)
+            if isinstance(input_control, ft.Dropdown):
+                self.__restore_dropdown_options(input_control, key)
+            if hasattr(input_control, "value"):
+                self._controller.set_field_value(key, getattr(input_control, "value", ""))
+            if input_control:
+                input_control.update()
 
     def __set_buttons(self) -> None:
         if self._mode in [ViewMode.EDIT, ViewMode.CREATE]:
@@ -873,25 +872,25 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 return None
         return None
 
-    def __limit_dropdown_options(self, input: ft.Dropdown, key: str) -> None:
+    def __limit_dropdown_options(self, dropdown: ft.Dropdown, key: str) -> None:
         if not self._data_row:
             return
         source_options = self.__dropdown_options.get(key)
         if source_options is None:
-            source_options = list(input.options)
+            source_options = list(dropdown.options)
             self.__dropdown_options[key] = source_options
         value = self._data_row.get(key)
         if value in {None, "", "0", 0}:
-            input.options = [ft.dropdown.Option(key="0", text="")]
-            input.value = "0"
+            dropdown.options = [ft.dropdown.Option(key="0", text="")]
+            dropdown.value = "0"
             return
         value_key = str(value)
         matching_option = next((option for option in source_options if option.key == value_key), None)
         if matching_option is None:
             matching_option = ft.dropdown.Option(key=value_key, text=value_key)
-        input.options = [matching_option]
-        input.value = value_key
+        dropdown.options = [matching_option]
+        dropdown.value = value_key
 
-    def __restore_dropdown_options(self, input: ft.Dropdown, key: str) -> None:
+    def __restore_dropdown_options(self, dropdown: ft.Dropdown, key: str) -> None:
         if self.__dropdown_options.get(key) is not None:
-            input.options = self.__dropdown_options[key]
+            dropdown.options = self.__dropdown_options[key]

@@ -103,13 +103,13 @@ class StockReceivingController(
         self.__refresh_source_rows()
 
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> StockReceivingView:
-        mode = ViewMode.STATIC
+        view_mode = ViewMode.STATIC
         orders = await self.__load_eligible_orders()
         order_pairs = [(order.id, order.number) for order in orders]
         return StockReceivingView(
             self,
             translation,
-            mode,
+            view_mode,
             event.view_key,
             order_pairs,
             self.on_target_bin_submit,

@@ -155,14 +155,13 @@ class PurchaseOrderController(
             self.on_order_items_delete_clicked,
             self.on_order_items_pending_reverted,
         )
-        if mode in {ViewMode.READ, ViewMode.EDIT}:
-            if order_data:
-                view.set_order_totals(
-                    order_data.get("total_net", 0.0),
-                    order_data.get("total_vat", 0.0),
-                    order_data.get("total_gross", 0.0),
-                    order_data.get("total_discount", 0.0),
-                )
+        if mode in {ViewMode.READ, ViewMode.EDIT} and order_data:
+            view.set_order_totals(
+                order_data.get("total_net", 0.0),
+                order_data.get("total_vat", 0.0),
+                order_data.get("total_gross", 0.0),
+                order_data.get("total_discount", 0.0),
+            )
         return view
 
     async def _perform_get_page(
@@ -318,7 +317,7 @@ class PurchaseOrderController(
         return total_net, total_vat, total_gross, total_discount
 
     def __compute_order_totals(self, pending_targets: list[tuple[int, int]]) -> tuple[float, float, float, float]:
-        pending_by_target = {target_id: item_id for target_id, item_id in pending_targets}
+        pending_by_target = dict(pending_targets)
         pending_new_ids = [target_id for target_id in pending_by_target if target_id not in self.__order_items]
 
         total_net = 0.0

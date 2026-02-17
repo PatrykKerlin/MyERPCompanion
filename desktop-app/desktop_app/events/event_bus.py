@@ -51,13 +51,11 @@ class EventBus:
         if not self.__started:
             return
         self.__started = False
-        for task in self.__event_workers + self.__handler_workers:
+        tasks = self.__event_workers + self.__handler_workers
+        for task in tasks:
             task.cancel()
-        for task in self.__event_workers + self.__handler_workers:
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
         self.__event_workers.clear()
         self.__handler_workers.clear()
         with self.__subs_lock:
@@ -77,10 +75,7 @@ class EventBus:
 
     async def __run_event_worker(self) -> None:
         while True:
-            try:
-                event = await self.__event_queue.get()
-            except asyncio.CancelledError:
-                break
+            event = await self.__event_queue.get()
             try:
                 with self.__subs_lock:
                     handlers = list(self.__subscriptions.get(type(event), []))
@@ -91,10 +86,7 @@ class EventBus:
 
     async def __run_handler_worker(self) -> None:
         while True:
-            try:
-                handler, event = await self.__handler_queue.get()
-            except asyncio.CancelledError:
-                break
+            handler, event = await self.__handler_queue.get()
             try:
                 result = await handler(event)
                 if isinstance(result, Exception):

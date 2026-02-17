@@ -25,7 +25,7 @@ from events.events import (
     ViewUndoRequested,
 )
 from pydantic import ValidationError
-from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.base.base_schema import BaseSchema
 from schemas.core.param_schema import PaginatedResponseSchema
 from services.base.base_service import BaseService
@@ -218,9 +218,9 @@ class BaseViewController(
     def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
         return available_fields
 
-    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> TView: ...
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def _perform_get_page(
         self, service: BaseService[TServicePlainSchema, TServiceStrictSchema], endpoint: Endpoint
     ) -> PaginatedResponseSchema[TServicePlainSchema]:

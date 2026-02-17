@@ -1,3 +1,4 @@
+from typing import Any
 import flet as ft
 from styles.styles import DialogStyles
 
@@ -11,7 +12,7 @@ class BaseDialog(ft.AlertDialog):
         scrollable: bool = DialogStyles.SCROLLABLE,
         **kwargs,
     ) -> None:
-        dialog_kwargs: dict[str, object] = {
+        dialog_kwargs: dict[str, Any] = {
             "modal": DialogStyles.MODAL,
             "title": title,
             "content": ft.Container(

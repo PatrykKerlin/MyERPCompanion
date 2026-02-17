@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 class SalesForecastReportView(BaseView):
     def __init__(
-        self,
+        self, # NOSONAR
         controller: SalesForecastReportController,
         translation: Translation,
         mode: ViewMode,
@@ -467,7 +467,11 @@ class SalesForecastReportView(BaseView):
         self._controller._queue_dialog(dialog)
 
     def __resolve_chart_dialog_width(self) -> int:
-        page_width = int(self.page.width or AppDimensions.DESKTOP_WINDOW_WIDTH) if self.page else AppDimensions.DESKTOP_WINDOW_WIDTH
+        page_width = (
+            int(self.page.width or AppDimensions.DESKTOP_WINDOW_WIDTH)
+            if self.page
+            else AppDimensions.DESKTOP_WINDOW_WIDTH
+        )
 
         horizontal_overhead = 2 * (DialogStyles.INSET_HORIZONTAL + DialogStyles.CONTENT_HORIZONTAL)
         max_width = max(320, page_width - horizontal_overhead)
@@ -476,7 +480,9 @@ class SalesForecastReportView(BaseView):
 
     def __resolve_chart_dialog_height(self) -> int:
         page_height = (
-            int(self.page.height or AppDimensions.DESKTOP_WINDOW_HEIGHT) if self.page else AppDimensions.DESKTOP_WINDOW_HEIGHT
+            int(self.page.height or AppDimensions.DESKTOP_WINDOW_HEIGHT)
+            if self.page
+            else AppDimensions.DESKTOP_WINDOW_HEIGHT
         )
         vertical_overhead = (
             (2 * DialogStyles.INSET_VERTICAL)
@@ -515,7 +521,7 @@ class SalesForecastReportView(BaseView):
             else self.__month_end(self.__date_slider_max_date).isoformat()
         )
         self.__date_range_text.value = (
-            f"{self._translation.get('date_from')}: {from_value}\n" f"{self._translation.get('date_to')}: {to_value}"
+            f"{self._translation.get('date_from')}: {from_value}\n{self._translation.get('date_to')}: {to_value}"
         )
 
     def __to_date_offset(self, value: date) -> int:
@@ -675,4 +681,4 @@ class SalesForecastReportView(BaseView):
 
     @staticmethod
     def __to_discount_key(value: float) -> str:
-        return f"{value:.4f}"
+        return f"{value:.2f}"

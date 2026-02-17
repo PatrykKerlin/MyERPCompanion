@@ -1,5 +1,4 @@
 from typing import Any
-
 import flet as ft
 from config.context import Context
 from controllers.base.base_controller import BaseController
@@ -87,6 +86,10 @@ class CategoryController(BaseViewController[CategoryService, CategoryView, Categ
         await self.__refresh_category_discount_lists(category_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_category(self, category_id: int) -> CategoryPlainSchema | None:
+        return await self._service.get_one(Endpoint.CATEGORIES, category_id, None, None, self._module_id)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_category_discount_options(self, exclude_ids: set[int]) -> list[DiscountTransferItem]:
         discounts = await self.__discount_service.get_all(Endpoint.DISCOUNTS, None, None, None, self._module_id)
         options: list[DiscountTransferItem] = []
@@ -131,21 +134,28 @@ class CategoryController(BaseViewController[CategoryService, CategoryView, Categ
         )
 
     async def __extract_category_discounts(self, data: dict[str, Any] | None) -> list[DiscountTransferItem]:
-        if not data:
+        discount_ids = self.__extract_discount_ids(data)
+        if not discount_ids:
             return []
-        category_id = data.get("id")
-        if not isinstance(category_id, int):
-            return []
-        assoc_rows = await self.__perform_get_category_discounts(category_id)
-        discount_ids = [row.discount_id for row in assoc_rows]
         discounts = await self.__perform_get_discounts_by_ids(discount_ids)
         return [(discount.id, discount.code, discount.name, discount.percent) for discount in discounts]
+
+    @staticmethod
+    def __extract_discount_ids(data: dict[str, Any] | None) -> list[int]:
+        if not data:
+            return []
+        raw_ids = data.get("discount_ids")
+        if not isinstance(raw_ids, list):
+            return []
+        return [item for item in raw_ids if isinstance(item, int)]
 
     async def __refresh_category_discount_lists(self, category_id: int) -> None:
         if not self._view:
             return
-        assoc_rows = await self.__perform_get_category_discounts(category_id)
-        discount_ids = [row.discount_id for row in assoc_rows]
+        category = await self.__perform_get_category(category_id)
+        if not category:
+            return
+        discount_ids = self.__extract_discount_ids(category.model_dump())
         discounts = await self.__perform_get_discounts_by_ids(discount_ids)
         target_items = [(discount.id, discount.code, discount.name, discount.percent) for discount in discounts]
         target_ids = {item[0] for item in target_items}

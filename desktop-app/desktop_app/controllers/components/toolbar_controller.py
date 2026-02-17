@@ -208,9 +208,4 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         self._component.set_navigation_buttons_state(disabled=False)
 
     def __set_static_mode(self) -> None:
-        if not self._component:
-            return
-        self._component.set_lock_view_button_icon(unlocked=False)
-        self._component.set_lock_view_button_state(disabled=True)
-        self._component.set_delete_button_state(disabled=True)
-        self._component.set_navigation_buttons_state(disabled=False)
+        self.__set_list_mode()

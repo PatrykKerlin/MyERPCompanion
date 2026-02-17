@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 class PurchaseOrderView(BaseView):
     def __init__(
-        self,
+        self, # NOSONAR
         controller: PurchaseOrderController,
         translation: Translation,
         mode: ViewMode,

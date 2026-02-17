@@ -49,7 +49,6 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         self.__invoiced_status_id: int | None = None
         self.__orders_by_id: dict[int, OrderPlainSchema] = {}
         self.__selected_order_ids: set[int] = set()
-        self.__target_rows: list[tuple[int, list[Any]]] = []
         self.__pending_order_ids: set[int] = set()
 
     def on_value_changed(self, event: ft.ControlEvent, key: str, *after_change: Callable[[], None]) -> None:
@@ -144,6 +143,7 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             await self.__assign_invoice_to_orders(response.id)
         return response
 
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_currencies(self) -> list[tuple[int, str]]:
         schemas = await self.__currency_service.get_all(Endpoint.CURRENCIES, None, None, None, self._module_id)
         return [(schema.id, schema.code) for schema in schemas]
@@ -502,7 +502,6 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
     def __reset_orders(self, view: InvoiceView) -> None:
         self.__orders_by_id.clear()
         self.__selected_order_ids.clear()
-        self.__target_rows = []
         self.__pending_order_ids.clear()
         view.set_source_rows([])
         view.set_target_rows([])
@@ -596,7 +595,7 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             return
         status_id = self.__invoiced_status_id
         if status_id is None:
-            self._logger.warning("Missing invoiced status (order=5); skipping order status update.")
+            self._logger.warning("Missing invoiced status, skipping order status update.")
             return
         status_results = await asyncio.gather(*(self.__perform_get_order_statuses(order_id) for order_id in order_ids))
         payload: list[AssocOrderStatusStrictSchema] = []

@@ -32,13 +32,13 @@ class BaseController:
         self._tokens_accessor = TokensAccessor(self._state_store)
         self._loading_dialog: LoadingDialogComponent | None = None
         self._loading_min_visible_seconds = 0.25
+        self.__disposed: bool = False
+        self.__unsubscribers: list[Callable[[], None]] = []
         self.__loading_lock_acquired = False
         self.__loading_opened_at: float | None = None
         self.__loading_close_task: asyncio.Task[None] | None = None
-        self.__unsubscribers: list[Callable[[], None]] = []
-        self.__disposed: bool = False
 
-    async def dispose(self) -> None:
+    async def dispose(self) -> None:  # NOSONAR
         if self.__disposed:
             return
         self.__disposed = True
@@ -104,6 +104,48 @@ class BaseController:
             unsubscriber = self._state_store.subscribe(state, listener)
             self.__add_unsubscriber(unsubscriber)
 
+    def _get_tab_title(self, key: str, id: int | None) -> str:
+        translation_state = self._state_store.app_state.translation
+        title = translation_state.items.get(key)
+        if id:
+            return f"{title}: {id}"
+        return title
+
+    def _queue_dialog(self, dialog: Any, wait_for_future: Awaitable[Any] | None = None) -> None:
+        try:
+            self._page.run_task(self._show_dialog_serialized, dialog, wait_for_future)
+        except (AttributeError, RuntimeError):
+            self._logger.warning("Dialog fallback: showing without run_task", exc_info=True)
+            self._page.show_dialog(dialog)
+
+    def _open_error_dialog(self, message_key: str | None = None, message: str | None = None) -> None:
+        translation = self._state_store.app_state.translation.items
+        error_dialog = ErrorDialogComponent(
+            translation=translation,
+            message_key=message_key,
+            message=message,
+            on_ok_clicked=lambda _: self._page.pop_dialog(),
+        )
+        self._queue_dialog(error_dialog)
+
+    def _open_message_dialog(self, message_key: str) -> None:
+        translation = self._state_store.app_state.translation.items
+        message_dialog = MessageDialogComponent(
+            translation=translation,
+            message_key=message_key,
+            on_ok_clicked=lambda _: self._page.pop_dialog(),
+        )
+        self._queue_dialog(message_dialog)
+
+    async def _show_confirm_dialog(self, message_key: str) -> bool:
+        translation = self._state_store.app_state.translation.items
+        confirm_dialog = ConfirmDialogComponent(translation=translation, message_key=message_key)
+        try:
+            await self._show_dialog_serialized(confirm_dialog, wait_for_future=confirm_dialog.future)
+            return await confirm_dialog.future
+        finally:
+            self._page.pop_dialog()
+
     async def _open_loading_dialog(self) -> None:
         acquired = await self._try_acquire_dialog_slot()
         if not acquired:
@@ -144,40 +186,20 @@ class BaseController:
             return
         self.__loading_close_task = asyncio.create_task(self.__close_loading_after_delay(remaining))
 
-    def _open_error_dialog(self, message_key: str | None = None, message: str | None = None) -> None:
-        translation = self._state_store.app_state.translation.items
-        error_dialog = ErrorDialogComponent(
-            translation=translation,
-            message_key=message_key,
-            message=message,
-            on_ok_clicked=lambda _: self._page.pop_dialog(),
-        )
-        self._queue_dialog(error_dialog)
-
-    def _open_message_dialog(self, message_key: str) -> None:
-        translation = self._state_store.app_state.translation.items
-        message_dialog = MessageDialogComponent(
-            translation=translation,
-            message_key=message_key,
-            on_ok_clicked=lambda _: self._page.pop_dialog(),
-        )
-        self._queue_dialog(message_dialog)
-
-    async def _show_confirm_dialog(self, message_key: str) -> bool:
-        translation = self._state_store.app_state.translation.items
-        confirm_dialog = ConfirmDialogComponent(translation=translation, message_key=message_key)
+    async def _show_dialog_serialized(
+        self,
+        dialog: Any,
+        wait_for_future: Awaitable[Any] | None = None,
+    ) -> None:
+        await self._acquire_dialog_slot()
         try:
-            await self._show_dialog_serialized(confirm_dialog, wait_for_future=confirm_dialog.future)
-            return await confirm_dialog.future
+            self._page.show_dialog(dialog)
+            if wait_for_future is not None:
+                await wait_for_future
+            else:
+                await self._wait_for_dialog_closed(dialog)
         finally:
-            self._page.pop_dialog()
-
-    def _get_tab_title(self, key: str, id: int | None) -> str:
-        translation_state = self._state_store.app_state.translation
-        title = translation_state.items.get(key)
-        if id:
-            return f"{title}: {id}"
-        return title
+            self._release_dialog_slot()
 
     async def _acquire_dialog_slot(self) -> None:
         await BaseController._dialog_lock.acquire()
@@ -218,28 +240,6 @@ class BaseController:
             if not getattr(dialog, "open", True):
                 return
             await asyncio.sleep(0.05)
-
-    async def _show_dialog_serialized(
-        self,
-        dialog: Any,
-        wait_for_future: Awaitable[Any] | None = None,
-    ) -> None:
-        await self._acquire_dialog_slot()
-        try:
-            self._page.show_dialog(dialog)
-            if wait_for_future is not None:
-                await wait_for_future
-            else:
-                await self._wait_for_dialog_closed(dialog)
-        finally:
-            self._release_dialog_slot()
-
-    def _queue_dialog(self, dialog: Any, wait_for_future: Awaitable[Any] | None = None) -> None:
-        try:
-            self._page.run_task(self._show_dialog_serialized, dialog, wait_for_future)
-        except (AttributeError, RuntimeError):
-            self._logger.warning("Dialog fallback: showing without run_task", exc_info=True)
-            self._page.show_dialog(dialog)
 
     @classmethod
     async def _show_dialog_serialized_static(

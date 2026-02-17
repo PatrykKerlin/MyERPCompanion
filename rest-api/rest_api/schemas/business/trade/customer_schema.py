@@ -49,13 +49,11 @@ class CustomerStrictSchema(BaseStrictSchema):
             self.shipping_country,
         ]
 
-        if all(value is None for value in shipping_all_values):
-            return self
-
-        is_shipping_required_complete = all(value not in {None, ""} for value in shipping_required_values)
-
-        if not is_shipping_required_complete:
-            raise ValueError("Shipping address must be either completely empty or fully provided.")
+        has_any_shipping_value = any(value is not None for value in shipping_all_values)
+        if has_any_shipping_value:
+            is_shipping_required_complete = all(value not in {None, ""} for value in shipping_required_values)
+            if not is_shipping_required_complete:
+                raise ValueError("Shipping address must be either completely empty or fully provided.")
 
         return self
 

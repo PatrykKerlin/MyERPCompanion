@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
 from datetime import date
 from typing import Any, cast
@@ -16,7 +17,7 @@ from services.core import UserService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
 
 
-class UserLinkControllerMixin:
+class UserLinkControllerMixin(ABC):
     _view: Any | None
     _page: ft.Page
     _settings: Any
@@ -66,12 +67,12 @@ class UserLinkControllerMixin:
         self._user_link_customer_service = CustomerService(self._settings, self._logger, self._tokens_accessor)
 
     @property
-    def _user_link_view_key(self) -> View:
-        raise NotImplementedError
+    @abstractmethod
+    def _user_link_view_key(self) -> View: ...
 
     @property
-    def _user_link_entity_key(self) -> str:
-        raise NotImplementedError
+    @abstractmethod
+    def _user_link_entity_key(self) -> str: ...
 
     async def _open_user_create_tab(self) -> None:
         if not self._view or self._view.mode != ViewMode.READ:

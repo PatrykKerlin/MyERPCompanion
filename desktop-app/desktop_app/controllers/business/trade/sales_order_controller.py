@@ -129,13 +129,12 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
     def set_field_value(self, key: str, value: str | int | float | bool | date | None) -> None:
         if key == "is_sales":
             value = True
-        if key == "currency_id":
-            if isinstance(value, str):
-                value = value.strip()
-                if value in {"", "0"}:
-                    value = None
-                elif value.isdigit():
-                    value = int(value)
+        if key == "currency_id" and isinstance(value, str):
+            value = value.strip()
+            if value in {"", "0"}:
+                value = None
+            elif value.isdigit():
+                value = int(value)
         super().set_field_value(key, value)
         if key == "delivery_method_id":
             self.__recalculate_shipping_cost()
@@ -296,14 +295,13 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         )
         customer_discount_id = self.__resolve_target_customer_discount_selection()
         view.set_selected_customer_discount_id(customer_discount_id)
-        if mode in {ViewMode.READ, ViewMode.EDIT}:
-            if order_data:
-                view.set_order_totals(
-                    order_data.get("total_net", 0.0),
-                    order_data.get("total_vat", 0.0),
-                    order_data.get("total_gross", 0.0),
-                    order_data.get("total_discount", 0.0),
-                )
+        if mode in {ViewMode.READ, ViewMode.EDIT} and order_data:
+            view.set_order_totals(
+                order_data.get("total_net", 0.0),
+                order_data.get("total_vat", 0.0),
+                order_data.get("total_gross", 0.0),
+                order_data.get("total_discount", 0.0),
+            )
         return view
 
     async def _perform_get_page(
@@ -763,7 +761,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
 
     def __compute_order_totals(self, pending_targets: list[tuple[int, int]]) -> tuple[float, float, float, float]:
         context = self.__build_discount_context()
-        pending_by_target = {target_id: item_id for target_id, item_id in pending_targets}
+        pending_by_target = dict(pending_targets)
         pending_new_ids = [target_id for target_id in pending_by_target if target_id not in self.__order_items]
 
         total_net = 0.0
@@ -827,7 +825,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             return 0.0
 
         price_per_unit, max_width, max_height, max_length, max_weight, carrier_currency_id = delivery_method
-        pending_by_target = {target_id: item_id for target_id, item_id in pending_targets}
+        pending_by_target = dict(pending_targets)
         pending_new_ids = [target_id for target_id in pending_by_target if target_id not in self.__order_items]
 
         total_width = 0.0

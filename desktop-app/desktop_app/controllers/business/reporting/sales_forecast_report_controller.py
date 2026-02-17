@@ -6,7 +6,6 @@ from collections import defaultdict
 from datetime import date
 from io import BytesIO
 
-import flet as ft
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -97,12 +96,9 @@ class SalesForecastReportController(
         self._page.run_task(self.__handle_clear_filters)
 
     async def _build_view(
-        self,
-        translation: Translation,
-        mode: ViewMode,
-        event: ViewRequested,
+        self, translation: Translation, mode: ViewMode, event: ViewRequested
     ) -> SalesForecastReportView:
-        mode = ViewMode.STATIC
+        view_mode = ViewMode.STATIC
         currencies, customers, items, categories, response = await asyncio.gather(
             self.__perform_get_currencies(),
             self.__perform_get_customers(),
@@ -123,7 +119,7 @@ class SalesForecastReportController(
         return SalesForecastReportView(
             controller=self,
             translation=translation,
-            mode=mode,
+            mode=view_mode,
             key=event.view_key,
             totals=totals,
             date_from=self.__date_from,
@@ -158,8 +154,9 @@ class SalesForecastReportController(
         discount_from: str | None,
         discount_to: str | None,
     ) -> None:
+        translation = self._state_store.app_state.translation.items
         if date_from and date_to and date_from > date_to:
-            self._open_error_dialog(message=self.__t("date_range_invalid"))
+            self._open_error_dialog(message=translation.get("date_range_invalid"))
             return
         try:
             parsed_currency_id = self.__parse_optional_positive_int(currency_id, "currency")
@@ -176,7 +173,7 @@ class SalesForecastReportController(
             and parsed_discount_to is not None
             and parsed_discount_from > parsed_discount_to
         ):
-            self._open_error_dialog(message=self.__t("discount_range_invalid"))
+            self._open_error_dialog(message=translation.get("discount_range_invalid"))
             return
         self.__date_from = date_from
         self.__date_to = date_to
@@ -258,24 +255,23 @@ class SalesForecastReportController(
         return await self._service.get_report(Endpoint.SALES_FORECAST_REPORT, None, params, None, self._module_id)
 
     def __parse_optional_positive_int(self, value: str | None, label_key: str) -> int | None:
+        translation = self._state_store.app_state.translation.items
         if value is None:
             return None
         stripped = value.strip()
         if stripped in {"", "0"}:
             return None
         if not stripped.isdigit():
-            label = self.__t(label_key)
-            raise ValueError(self.__t("must_be_positive_integer").format(label=label))
+            label = translation.get(label_key)
+            raise ValueError(translation.get("must_be_positive_integer").format(label=label))
         parsed_value = int(stripped)
         if parsed_value <= 0:
-            label = self.__t(label_key)
-            raise ValueError(self.__t("must_be_positive_integer").format(label=label))
+            label = translation.get(label_key)
+            raise ValueError(translation.get("must_be_positive_integer").format(label=label))
         return parsed_value
 
-    def __t(self, key: str) -> str:
-        return self._state_store.app_state.translation.items.get(key)
-
     def __parse_optional_discount(self, value: str | None) -> float | None:
+        translation = self._state_store.app_state.translation.items
         if value is None:
             return None
         stripped = value.strip().replace(",", ".")
@@ -284,11 +280,11 @@ class SalesForecastReportController(
         try:
             parsed_value = float(stripped)
         except ValueError as error:
-            raise ValueError(self.__t("discount_percent_invalid")) from error
+            raise ValueError(translation.get("discount_percent_invalid")) from error
         if parsed_value < 0:
-            raise ValueError(self.__t("discount_percent_invalid"))
+            raise ValueError(translation.get("discount_percent_invalid"))
         if parsed_value > 100:
-            raise ValueError(self.__t("discount_percent_invalid"))
+            raise ValueError(translation.get("discount_percent_invalid"))
         if parsed_value > 1:
             return parsed_value / 100.0
         return parsed_value
@@ -332,14 +328,14 @@ class SalesForecastReportController(
 
     @staticmethod
     def __to_discount_options(discount_steps: list[float]) -> list[tuple[str, str]]:
-        unique_steps = sorted(set(float(step) for step in discount_steps))
+        unique_steps = sorted({float(step) for step in discount_steps})
         return [(SalesForecastReportController.__to_discount_key(step), f"{step * 100:.0f}%") for step in unique_steps]
 
     @staticmethod
     def __to_discount_key(discount: float | None) -> str:
         if discount is None:
             return "0"
-        return f"{discount:.4f}"
+        return f"{discount:.2f}"
 
     @staticmethod
     def __resolve_predicted_date_bounds(rows: list[SalesForecastReportRowSchema]) -> tuple[date | None, date | None]:
@@ -351,6 +347,7 @@ class SalesForecastReportController(
     def __build_monthly_net_chart(self, rows: list[SalesForecastReportRowSchema], for_dialog: bool) -> bytes | None:
         if not rows:
             return None
+        translation = self._state_store.app_state.translation.items
         monthly_sums: dict[date, float] = defaultdict(float)
         for row in rows:
             monthly_sums[row.predicted_at] += row.predicted_net
@@ -361,7 +358,7 @@ class SalesForecastReportController(
         return self.__build_line_chart(
             date_values=sorted_dates,
             values=values,
-            title=self.__t("predicted_net_by_month"),
+            title=translation.get("predicted_net_by_month"),
             for_dialog=for_dialog,
         )
 
@@ -372,6 +369,7 @@ class SalesForecastReportController(
     ) -> bytes | None:
         if not rows:
             return None
+        translation = self._state_store.app_state.translation.items
         monthly_sums: dict[date, float] = defaultdict(float)
         for row in rows:
             monthly_sums[row.predicted_at] += row.predicted_quantity
@@ -382,7 +380,7 @@ class SalesForecastReportController(
         return self.__build_line_chart(
             date_values=sorted_dates,
             values=values,
-            title=self.__t("pred_qty_by_month"),
+            title=translation.get("pred_qty_by_month"),
             for_dialog=for_dialog,
         )
 
@@ -396,7 +394,7 @@ class SalesForecastReportController(
         chart_size, chart_dpi = self.__get_chart_render_settings(for_dialog)
         figure = None
         try:
-            self.__apply_chart_theme()
+            sns.set_theme(style="darkgrid")
             figure, axis = plt.subplots(figsize=chart_size)
             sns.lineplot(
                 x=date_values,
@@ -428,37 +426,3 @@ class SalesForecastReportController(
         if for_dialog:
             return SalesForecastReportController.__dialog_chart_size, SalesForecastReportController.__dialog_chart_dpi
         return SalesForecastReportController.__view_chart_size, SalesForecastReportController.__view_chart_dpi
-
-    def __apply_chart_theme(self) -> None:
-        if self.__is_dark_theme():
-            sns.set_theme(
-                style="darkgrid",
-                rc={
-                    "figure.facecolor": "#0F172A",
-                    "axes.facecolor": "#111827",
-                    "axes.edgecolor": "#E5E7EB",
-                    "axes.labelcolor": "#E5E7EB",
-                    "text.color": "#E5E7EB",
-                    "xtick.color": "#E5E7EB",
-                    "ytick.color": "#E5E7EB",
-                    "grid.color": "#334155",
-                    "savefig.facecolor": "#0F172A",
-                    "savefig.edgecolor": "#0F172A",
-                },
-            )
-            return
-        sns.set_theme(style="whitegrid")
-
-    def __is_dark_theme(self) -> bool:
-        theme_mode = self._page.theme_mode
-        if theme_mode == ft.ThemeMode.DARK:
-            return True
-        if theme_mode == ft.ThemeMode.LIGHT:
-            return False
-        user = self._state_store.app_state.user.current
-        selected_theme = user.theme if user else self._settings.THEME
-        if selected_theme == "dark":
-            return True
-        if selected_theme == "light":
-            return False
-        return self._page.platform_brightness == ft.Brightness.DARK

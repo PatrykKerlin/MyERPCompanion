@@ -135,6 +135,10 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         return [(schema.id, schema.company_name) for schema in schemas]
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_item(self, item_id: int) -> ItemPlainSchema | None:
+        return await self._service.get_one(Endpoint.ITEMS, item_id, None, None, self._module_id)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_item_discount_options(self, exclude_ids: set[int]) -> list[DiscountTransferItem]:
         discounts = await self.__discount_service.get_all(Endpoint.DISCOUNTS, None, None, None, self._module_id)
         options: list[DiscountTransferItem] = []
@@ -218,21 +222,28 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         await self.__refresh_item_discount_lists(item_id)
 
     async def __extract_item_discounts(self, data: dict[str, Any] | None) -> list[DiscountTransferItem]:
-        if not data:
+        discount_ids = self.__extract_discount_ids(data)
+        if not discount_ids:
             return []
-        item_id = data.get("id")
-        if not isinstance(item_id, int):
-            return []
-        assoc_rows = await self.__perform_get_item_discounts(item_id)
-        discount_ids = [row.discount_id for row in assoc_rows]
         discounts = await self.__perform_get_discounts_by_ids(discount_ids)
         return [(discount.id, discount.code, discount.name, discount.percent) for discount in discounts]
+
+    @staticmethod
+    def __extract_discount_ids(data: dict[str, Any] | None) -> list[int]:
+        if not data:
+            return []
+        raw_ids = data.get("discount_ids")
+        if not isinstance(raw_ids, list):
+            return []
+        return [item for item in raw_ids if isinstance(item, int)]
 
     async def __refresh_item_discount_lists(self, item_id: int) -> None:
         if not self._view:
             return
-        assoc_rows = await self.__perform_get_item_discounts(item_id)
-        discount_ids = [row.discount_id for row in assoc_rows]
+        item = await self.__perform_get_item(item_id)
+        if not item:
+            return
+        discount_ids = self.__extract_discount_ids(item.model_dump())
         discounts = await self.__perform_get_discounts_by_ids(discount_ids)
         target_items = [(discount.id, discount.code, discount.name, discount.percent) for discount in discounts]
         target_ids = {item[0] for item in target_items}
@@ -251,8 +262,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         next_order = max_order + 1
         content_type = mimetypes.guess_type(file_path)[0] or "image/unknown"
         file_name = os.path.basename(file_path)
-        with open(file_path, "rb") as file:
-            data = file.read()
+        data = await asyncio.to_thread(self.__read_binary_file, file_path)
         form_data = {
             "is_primary": str(is_primary).lower(),
             "order": str(next_order),
@@ -401,3 +411,8 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
             images = self._view.data_row["images"]
         self._view.data_row["images"] = images
         self._view.set_images(images)
+
+    @staticmethod
+    def __read_binary_file(file_path: str) -> bytes:
+        with open(file_path, "rb") as file:
+            return file.read()
