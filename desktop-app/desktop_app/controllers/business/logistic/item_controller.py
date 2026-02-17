@@ -24,7 +24,6 @@ from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.logistic.item_view import ItemView
 
-
 DiscountTransferItem = tuple[int, str, str, float | None]
 
 

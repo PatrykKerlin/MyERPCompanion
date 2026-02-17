@@ -30,16 +30,8 @@ class PositionView(BaseView):
             {"key": "level", "input": self._get_numeric_input},
             {"key": "min_salary", "input": self._get_numeric_input},
             {"key": "max_salary", "input": self._get_numeric_input},
-            {
-                "key": "currency_id",
-                "input": self._get_dropdown,
-                "options": currencies
-            },
-            {
-                "key": "department_id",
-                "input": self._get_dropdown,
-                "options": departments
-            },
+            {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
+            {"key": "department_id", "input": self._get_dropdown, "options": departments},
         ]
         main_fields = self._build_field_groups(main_fields_definitions)
         self._add_to_inputs(main_fields)

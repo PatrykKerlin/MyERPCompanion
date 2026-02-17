@@ -26,6 +26,8 @@ TController = TypeVar(
 
 
 class BaseView(BaseComponent, Generic[TController], ft.Card):
+    _DETAIL_MODES = frozenset((ViewMode.READ, ViewMode.EDIT))
+
     def __init__(
         self,
         controller: TController,
@@ -123,6 +125,9 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
     @property
     def mode(self) -> ViewMode:
         return self._mode
+
+    def _is_details_mode(self, mode: ViewMode | None = None) -> bool:
+        return (mode or self._mode) in self._DETAIL_MODES
 
     @property
     def data_row(self) -> dict[str, Any] | None:
@@ -343,10 +348,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             height=height,
             text_style=ControlStyles.INPUT_TEXT_STYLE,
             text_vertical_align=ft.VerticalAlignment.START if lines > 1 else None,
-            border_radius = ControlStyles.FIELD_BORDER_RADIUS,
-            border_color = ControlStyles.FIELD_BORDER_COLOR,
-            focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
-            content_padding = ControlStyles.FIELD_PADDING
+            border_radius=ControlStyles.FIELD_BORDER_RADIUS,
+            border_color=ControlStyles.FIELD_BORDER_COLOR,
+            focused_border_color=ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
+            content_padding=ControlStyles.FIELD_PADDING,
         )
         self.__register_control_base_height(text_field, height)
         if lines > 1:
@@ -370,7 +375,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
         precision: int = 2,
         min_value: int | float | None = 0,
         max_value: int | float | None = None,
-        is_float: bool = False
+        is_float: bool = False,
     ) -> tuple[ft.Container, int]:
         numeric_field = NumericField(
             value=value,
@@ -382,10 +387,10 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             on_change=lambda event: self._controller.on_value_changed(event, key),
             expand=True,
             height=ControlStyles.TEXT_FIELD_HEIGHT,
-            border_radius = ControlStyles.FIELD_BORDER_RADIUS,
-            border_color = ControlStyles.FIELD_BORDER_COLOR,
-            focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
-            content_padding = ControlStyles.FIELD_PADDING
+            border_radius=ControlStyles.FIELD_BORDER_RADIUS,
+            border_color=ControlStyles.FIELD_BORDER_COLOR,
+            focused_border_color=ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
+            content_padding=ControlStyles.FIELD_PADDING,
         )
         self.__register_control_base_height(numeric_field, ControlStyles.TEXT_FIELD_HEIGHT)
         return (
@@ -779,7 +784,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 and self._data_row
                 and self._caller_view_key
                 and key in self._data_row
-                    and self._data_row.get(key) is not None
+                and self._data_row.get(key) is not None
             ):
                 self.__limit_dropdown_options(input, key)
             self.__set_control_read_only_state(input, key in self._controller.meta_fields)

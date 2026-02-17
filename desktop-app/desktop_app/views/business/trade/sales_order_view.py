@@ -46,6 +46,7 @@ class SalesOrderView(BaseView):
         on_items_pending_reverted: Callable[[list[int]], None] | None = None,
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
+        show_details = self._is_details_mode(mode)
         self.__create_defaults: dict[str, Any] = {}
         self.__editable_keys = {"customer_id", "delivery_method_id", "currency_id", "notes", "internal_notes"}
         self.__all_source_items = cast(list[tuple[int, list[Any]]], list(source_items))
@@ -92,7 +93,7 @@ class SalesOrderView(BaseView):
             delete_confirm_title=self._translation.get("confirm"),
             delete_confirm_message=self._translation.get("delete_selected_items_q"),
         )
-        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__bulk_transfer.visible = show_details
         self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
 
@@ -146,7 +147,7 @@ class SalesOrderView(BaseView):
             alignment=AlignmentStyles.AXIS_START,
             vertical_alignment=AlignmentStyles.CROSS_START,
         )
-        self.__customer_discount_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__customer_discount_row.visible = show_details
         self.__customer_discount.disabled = not self.__is_customer_discount_editable(mode)
 
         self.__category_filter = self.__create_dropdown_control(
@@ -155,7 +156,7 @@ class SalesOrderView(BaseView):
             value="all",
             on_select=self.__on_category_filter_changed,
         )
-        self.__category_filter.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__category_filter.visible = show_details
         self.__category_filter.disabled = mode == ViewMode.EDIT
         self.__category_filter_row = ft.ResponsiveRow(
             columns=12,
@@ -179,7 +180,7 @@ class SalesOrderView(BaseView):
             with_button=False,
             on_row_clicked=None,
             read_only=True,
-            visible=mode in {ViewMode.READ, ViewMode.EDIT},
+            visible=show_details,
             with_border=True,
         )
         self.__status_history_row = ft.ResponsiveRow(
@@ -194,12 +195,16 @@ class SalesOrderView(BaseView):
             ],
             alignment=AlignmentStyles.AXIS_START,
             vertical_alignment=AlignmentStyles.CROSS_START,
-            visible=mode in {ViewMode.READ, ViewMode.EDIT},
+            visible=show_details,
         )
         self.__details_row = ft.Row(
             controls=[
                 ft.Column(
-                    controls=[self.__customer_discount_row, *(2 * self._spacing_responsive_row), self.__category_filter_row],
+                    controls=[
+                        self.__customer_discount_row,
+                        *(2 * self._spacing_responsive_row),
+                        self.__category_filter_row,
+                    ],
                     expand=True,
                     spacing=0,
                 ),
@@ -208,15 +213,16 @@ class SalesOrderView(BaseView):
             ],
             alignment=AlignmentStyles.AXIS_START,
             vertical_alignment=AlignmentStyles.CROSS_START,
-            visible=mode in {ViewMode.READ, ViewMode.EDIT},
+            visible=show_details,
         )
 
         columns = [
-            ft.Column(
-                controls=main_grid, expand=True
-            ),
+            ft.Column(controls=main_grid, expand=True),
             self._spacing_column,
-            ft.Column(controls=meta_grid + self._spacing_responsive_row + notes_grid + self._spacing_responsive_row, expand=True),
+            ft.Column(
+                controls=meta_grid + self._spacing_responsive_row + notes_grid + self._spacing_responsive_row,
+                expand=True,
+            ),
         ]
         self._columns_row.controls.extend(columns)
         bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
@@ -226,7 +232,7 @@ class SalesOrderView(BaseView):
         )
         self.__details_spacing_row = ft.Row(
             height=AppDimensions.SPACE_2XL,
-            visible=mode in {ViewMode.READ, ViewMode.EDIT},
+            visible=show_details,
         )
         self._master_column.controls.extend(
             [
@@ -248,20 +254,21 @@ class SalesOrderView(BaseView):
             self.__apply_create_defaults()
         if mode in {ViewMode.CREATE, ViewMode.EDIT}:
             self.__apply_editable_fields(mode)
-        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        show_details = self._is_details_mode(mode)
+        self.__bulk_transfer.visible = show_details
         self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()
-        self.__status_history_table.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__status_history_table.visible = show_details
         self.__status_history_table.read_only = True
-        self.__category_filter.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__category_filter.visible = show_details
         self.__category_filter.disabled = mode == ViewMode.EDIT
         self.__category_filter_row.visible = self.__category_filter.visible
-        self.__customer_discount_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__customer_discount_row.visible = show_details
         self.__customer_discount.disabled = not self.__is_customer_discount_editable(mode)
-        self.__status_history_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
-        self.__details_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
-        self.__details_spacing_row.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__status_history_row.visible = show_details
+        self.__details_row.visible = show_details
+        self.__details_spacing_row.visible = show_details
         self.__buttons_spacing_row.visible = mode == ViewMode.EDIT
         if self.__bulk_transfer.visible:
             self.__apply_category_filter()

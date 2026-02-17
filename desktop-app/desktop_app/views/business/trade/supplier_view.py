@@ -70,7 +70,7 @@ class SupplierView(BaseView):
             {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
         ]
         notes_field_definition = [
-            {"key": "notes", "input": self._get_text_input, "lines": 3},
+            {"key": "notes", "input": self._get_text_input},
         ]
 
         company_fields = self._build_field_groups(company_fields_definitions)
@@ -113,12 +113,12 @@ class SupplierView(BaseView):
                 + house_grid
                 + city_grid
                 + country_grid,
-                expand=3,
+                expand=True,
             ),
             self._spacing_column,
             ft.Column(
                 controls=meta_grid + self._spacing_responsive_row + notes_grid,
-                expand=2,
+                expand=True,
             ),
         ]
 

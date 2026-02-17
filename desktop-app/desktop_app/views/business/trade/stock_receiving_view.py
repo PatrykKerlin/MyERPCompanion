@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Callable, cast
 
 import flet as ft
+from styles.dimensions import AppDimensions
 from styles.styles import AlignmentStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
@@ -29,28 +30,21 @@ class StockReceivingView(BaseView):
     ) -> None:
         super().__init__(controller, translation, mode, key, None, 0, 12)
         self._master_column.scroll = None
+        self._master_column.spacing = AppDimensions.SPACE_2XL
 
-        order_container, _ = self._get_dropdown("order_id", 12, orders, callbacks=[self.__handle_order_changed])
+        order_container, _ = self._get_dropdown("order_id", 4, orders, callbacks=[self.__handle_order_changed])
         self.__order_input = cast(ft.Dropdown, order_container.content)
         self.__order_input.label = self._translation.get("order")
         order_container.expand = True
-        target_container, _ = self._get_text_input("target_bin", 12)
+        target_container, _ = self._get_text_input("target_bin", 4)
         self.__target_input = cast(ft.TextField, target_container.content)
         self.__target_input.label = self._translation.get("target_bin")
         self.__target_input.on_submit = on_target_submitted
         target_container.expand = True
         self._add_to_inputs(
             {
-                "order_id": FieldGroup(
-                    label=self._get_label("order", 0, colon=False),
-                    input=(order_container, 12),
-                    marker=self._get_marker("order_id", 0),
-                ),
-                "target_bin": FieldGroup(
-                    label=self._get_label("target_bin", 0, colon=False),
-                    input=(target_container, 12),
-                    marker=self._get_marker("target_bin", 0),
-                ),
+                "order_id": FieldGroup(input=(order_container, 4)),
+                "target_bin": FieldGroup(input=(target_container, 4)),
             }
         )
 
@@ -77,17 +71,28 @@ class StockReceivingView(BaseView):
         )
         self.__bulk_transfer.set_enabled_states(False, False, False)
 
-        inputs_row = ft.Row(
+        inputs_row = ft.ResponsiveRow(
+            columns=12,
+            spacing=AppDimensions.SPACE_SM,
+            run_spacing=AppDimensions.SPACE_SM,
             controls=[
                 order_container,
-                ft.Container(expand=True),
+                ft.Container(col={"sm": 4.0}),
                 target_container,
             ],
+            alignment=AlignmentStyles.AXIS_START,
             vertical_alignment=AlignmentStyles.CROSS_START,
         )
 
         self._master_column.controls = [inputs_row, self.__bulk_transfer]
-        self.content = ft.Container(content=self._master_column, expand=True)
+        self.content = ft.Container(
+            content=self._master_column,
+            expand=True,
+            padding=ft.Padding.symmetric(
+                horizontal=AppDimensions.PADDING_FORM_HORIZONTAL,
+                vertical=AppDimensions.PADDING_FORM_VERTICAL,
+            ),
+        )
 
     def set_orders(self, orders: list[tuple[int, str]]) -> None:
         self.__order_input.options = [ft.dropdown.Option(key="0", text="")] + [

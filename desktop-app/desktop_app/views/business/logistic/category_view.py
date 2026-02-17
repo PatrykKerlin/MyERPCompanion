@@ -39,10 +39,7 @@ class CategoryView(BaseView, DiscountBulkTransferMixin):
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
 
         columns = [
-            ft.Column(
-                controls=main_grid,
-                expand=True
-            ),
+            ft.Column(controls=main_grid, expand=True),
             self._spacing_column,
             ft.Column(controls=meta_grid, expand=True),
         ]
@@ -59,13 +56,7 @@ class CategoryView(BaseView, DiscountBulkTransferMixin):
         )
         bulk_transfer_row = self._build_discount_bulk_transfer_row()
         self._master_column.controls.extend(
-            [
-                self._columns_row,
-                self._spacing_row,
-                self._buttons_row,
-                self.__buttons_spacing_row,
-                bulk_transfer_row
-            ]
+            [self._columns_row, self._spacing_row, self._buttons_row, self.__buttons_spacing_row, bulk_transfer_row]
         )
 
     def did_mount(self):

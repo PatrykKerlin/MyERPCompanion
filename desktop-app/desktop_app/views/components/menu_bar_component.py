@@ -113,18 +113,18 @@ class MenuBarComponent(BaseComponent, ft.MenuBar):
         )
 
     def __label_with_shortcut(self, key: str, shortcut: str | None = None) -> ft.Text:
-            label = self._translation.get(key)
-            if shortcut:
-                return ft.Text(
-                    spans=[
-                        ft.TextSpan(label),
-                        ft.TextSpan(
-                            f"  {shortcut}",
-                            style=ft.TextStyle(
-                                size=AppDimensions.SHORTCUT_FONT_SIZE,
-                                color=AppColors.SHORTCUT_TEXT,
-                            ),
+        label = self._translation.get(key)
+        if shortcut:
+            return ft.Text(
+                spans=[
+                    ft.TextSpan(label),
+                    ft.TextSpan(
+                        f"  {shortcut}",
+                        style=ft.TextStyle(
+                            size=AppDimensions.SHORTCUT_FONT_SIZE,
+                            color=AppColors.SHORTCUT_TEXT,
                         ),
-                    ]
-                )
-            return ft.Text(label)
+                    ),
+                ]
+            )
+        return ft.Text(label)

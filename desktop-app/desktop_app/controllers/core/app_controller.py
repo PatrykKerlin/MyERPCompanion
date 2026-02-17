@@ -99,7 +99,7 @@ class AppController(BaseController):
     async def __api_status_handler(self, event: ApiStatusRequested) -> None:
         if event.silent:
             ok = await self.__perform_api_health_check_silent()
-            
+
         else:
             ok = await self.__perform_api_health_check()
         await self._event_bus.publish(ApiStatusChecked(status=bool(ok)))

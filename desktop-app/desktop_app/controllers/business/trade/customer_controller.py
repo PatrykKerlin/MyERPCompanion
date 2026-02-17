@@ -19,7 +19,6 @@ from utils.enums import ApiActionError, Endpoint, View, ViewMode
 from utils.translation import Translation
 from views.business.trade.customer_view import CustomerView
 
-
 DiscountTransferItem = tuple[int, str, str, float | None]
 
 

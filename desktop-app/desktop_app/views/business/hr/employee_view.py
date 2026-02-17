@@ -157,7 +157,7 @@ class EmployeeView(BaseView, UserLinkViewMixin):
                     col={"sm": 8.0},
                     alignment=ControlStyles.INPUT_ALIGNMENT,
                     height=AppDimensions.SECTION_HEIGHT_REGULAR,
-                )
+                ),
             ],
             alignment=AlignmentStyles.AXIS_START,
             vertical_alignment=AlignmentStyles.CROSS_START,
@@ -199,7 +199,7 @@ class EmployeeView(BaseView, UserLinkViewMixin):
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
         self._apply_user_link_mode(mode)
-        is_subordinates_visible = self._mode in {ViewMode.READ, ViewMode.EDIT}
+        is_subordinates_visible = self._is_details_mode()
         self.__subordinates_row.visible = is_subordinates_visible
         self.__subordinates_table.visible = is_subordinates_visible
         self.__subordinates_table.read_only = True

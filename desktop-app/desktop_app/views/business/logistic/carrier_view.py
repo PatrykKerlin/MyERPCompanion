@@ -130,7 +130,7 @@ class CarrierView(BaseView):
                     col={"sm": 8.0},
                     alignment=ControlStyles.INPUT_ALIGNMENT,
                     height=delivery_methods_section_height,
-                )
+                ),
             ],
             alignment=AlignmentStyles.AXIS_START,
             vertical_alignment=AlignmentStyles.CROSS_START,
@@ -150,7 +150,11 @@ class CarrierView(BaseView):
             ),
             self._spacing_column,
             ft.Column(
-                controls=meta_grid + self._spacing_responsive_row + bank_grid + notes_grid + [self._spacing_row, self._buttons_row],
+                controls=meta_grid
+                + self._spacing_responsive_row
+                + bank_grid
+                + notes_grid
+                + [self._spacing_row, self._buttons_row],
                 expand=True,
             ),
         ]
@@ -161,7 +165,7 @@ class CarrierView(BaseView):
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
         is_read_mode = self._mode == ViewMode.READ
-        is_delivery_methods_visible = self._mode in {ViewMode.READ, ViewMode.EDIT}
+        is_delivery_methods_visible = self._is_details_mode()
         self.__delivery_methods_row.visible = is_delivery_methods_visible
         self.__delivery_methods_table.visible = is_delivery_methods_visible
         self.__delivery_methods_table.read_only = not is_read_mode

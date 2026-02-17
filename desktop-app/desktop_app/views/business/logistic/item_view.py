@@ -145,11 +145,11 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         )
         self.__image_order_field = ft.TextField(
             label=self._translation.get("sequence"),
-            border_radius = ControlStyles.FIELD_BORDER_RADIUS,
-            border_color = ControlStyles.FIELD_BORDER_COLOR,
-            focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
-            height = ControlStyles.TEXT_FIELD_HEIGHT,
-            content_padding = ControlStyles.FIELD_PADDING,
+            border_radius=ControlStyles.FIELD_BORDER_RADIUS,
+            border_color=ControlStyles.FIELD_BORDER_COLOR,
+            focused_border_color=ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
+            height=ControlStyles.TEXT_FIELD_HEIGHT,
+            content_padding=ControlStyles.FIELD_PADDING,
         )
         self.__image_primary_checkbox = ft.Checkbox(
             label=self._translation.get("is_primary"),
@@ -249,10 +249,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             height=AppDimensions.SECTION_HEIGHT_LARGE,
         )
         bulk_transfer_row = self._build_discount_bulk_transfer_row()
-        self.__bins_gallery_spacing_row = ft.Row(
-            height=AppDimensions.SPACE_2XL,
-            visible=mode in {ViewMode.READ, ViewMode.EDIT},
-        )
+        self.__bins_gallery_spacing_row = ft.Row(height=AppDimensions.SPACE_2XL, visible=self._is_details_mode(mode))
         self._rows = [
             self._columns_row,
             self.__bins_gallery_row,
@@ -277,7 +274,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         super().set_mode(mode)
         self.__apply_stock_quantity_rules(mode)
         self._update_discount_bulk_transfer_mode(mode)
-        show_gallery = mode in {ViewMode.READ, ViewMode.EDIT}
+        show_gallery = self._is_details_mode(mode)
         can_add_image = mode == ViewMode.READ
         self.__bins_gallery_row.visible = show_gallery
         self.__bins_gallery_spacing_row.visible = show_gallery

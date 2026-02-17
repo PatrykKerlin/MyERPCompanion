@@ -115,7 +115,7 @@ class UserView(BaseView, GroupBulkTransferMixin):
                 on_save_clicked=on_groups_save_clicked,
                 on_delete_clicked=on_groups_delete_clicked,
                 height=AppDimensions.BULK_TRANSFER_HEIGHT_LARGE,
-                visible_modes={ViewMode.READ, ViewMode.EDIT},
+                visible_modes=set(self._DETAIL_MODES),
             )
             group_row = self._build_group_bulk_transfer_row()
         self._rows = [

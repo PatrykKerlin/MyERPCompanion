@@ -46,16 +46,8 @@ class BinTransferView(BaseView):
 
         self._add_to_inputs(
             {
-                "source_bin": FieldGroup(
-                    label=self._get_label("source_bin", 0, colon=False),
-                    input=(source_container, 4),
-                    marker=self._get_marker("source_bin", 0),
-                ),
-                "target_bin": FieldGroup(
-                    label=self._get_label("target_bin", 0, colon=False),
-                    input=(target_container, 4),
-                    marker=self._get_marker("target_bin", 0),
-                ),
+                "source_bin": FieldGroup(input=(source_container, 4)),
+                "target_bin": FieldGroup(input=(target_container, 4)),
             }
         )
 

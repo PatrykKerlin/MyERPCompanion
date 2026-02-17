@@ -40,7 +40,7 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
         main_fields_definitions = [
             {"key": "key", "input": self._get_text_input},
             {"key": "description", "input": self._get_text_input, "lines": 3},
-            {"key": "in_side_menu", "input": self._get_checkbox, "input_size": 2},
+            {"key": "in_side_menu", "input": self._get_checkbox, "input_size": 1},
             {"key": "order", "label": "sequence", "input": self._get_numeric_input},
         ]
         main_fields = self._build_field_groups(main_fields_definitions)
@@ -74,7 +74,7 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
             delete_confirm_title=self._translation.get("confirm"),
             delete_confirm_message=self._translation.get("delete_selected_items_q"),
         )
-        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__bulk_transfer.visible = self._is_details_mode(mode)
         self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__group_permissions: dict[int, tuple[bool, bool]] = {}
@@ -89,7 +89,7 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
             on_delete_clicked=on_groups_delete_clicked,
             on_move_requested=self.__handle_group_move_requested,
             height=AppDimensions.BULK_TRANSFER_HEIGHT_LARGE,
-            visible_modes={ViewMode.READ, ViewMode.EDIT},
+            visible_modes=set(self._DETAIL_MODES),
             target_columns=[
                 self._translation.get("key"),
                 self._translation.get("description"),
@@ -132,7 +132,7 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
-        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__bulk_transfer.visible = self._is_details_mode(mode)
         self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()

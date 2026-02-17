@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
 from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ControlStyles
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -36,6 +37,7 @@ class PurchaseOrderView(BaseView):
         on_items_pending_reverted: Callable[[list[int]], None] | None = None,
     ) -> None:
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
+        show_details = self._is_details_mode(mode)
         self.__create_defaults: dict[str, Any] = {}
         self.__editable_keys = {"supplier_id", "notes", "internal_notes"}
         self.__pending_source_items = list(source_items)
@@ -52,8 +54,8 @@ class PurchaseOrderView(BaseView):
                 "options": suppliers,
                 "callbacks": [self.__on_supplier_changed],
             },
-            {"key": "status_id", "input": self._get_dropdown, "options": statuses},
             {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
+            {"key": "status_id", "input": self._get_dropdown, "options": statuses},
             {"key": "number", "input": self._get_text_input},
             {"key": "order_date", "input": self._get_date_picker},
             {"key": "tracking_number", "input": self._get_text_input},
@@ -64,8 +66,8 @@ class PurchaseOrderView(BaseView):
             {"key": "total_discount", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
         ]
         notes_fields_definitions = [
-            {"key": "notes", "input": self._get_text_input, "lines": 4},
-            {"key": "internal_notes", "input": self._get_text_input, "lines": 4},
+            {"key": "notes", "input": self._get_text_input, "lines": 3},
+            {"key": "internal_notes", "input": self._get_text_input, "lines": 3},
         ]
         main_fields = self._build_field_groups(main_fields_definitions)
         notes_fields = self._build_field_groups(notes_fields_definitions)
@@ -73,14 +75,43 @@ class PurchaseOrderView(BaseView):
         main_grid = self._build_grid(main_fields)
         notes_grid = self._build_grid(notes_fields)
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
+        self.__buttons_spacing_row = ft.Row(
+            height=AppDimensions.SPACE_2XL,
+            visible=show_details,
+        )
+        self.__status_history_table = DataTable(
+            columns=["status", "created_at"],
+            rows=status_history,
+            translation=self._translation,
+            height=AppDimensions.SECTION_HEIGHT_COMPACT,
+            with_button=False,
+            on_row_clicked=None,
+            read_only=True,
+            visible=show_details,
+            with_border=True,
+        )
+        self.__status_history_row = ft.ResponsiveRow(
+            columns=12,
+            controls=[
+                self._get_label("status_history", 4, colon=True)[0],
+                ft.Container(
+                    content=self.__status_history_table,
+                    col={"sm": 8.0},
+                    alignment=ControlStyles.INPUT_ALIGNMENT,
+                ),
+            ],
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
+            visible=show_details,
+        )
 
         columns = [
-            ft.Column(
-                controls=main_grid,
-                expand=3,
-            ),
+            ft.Column(controls=main_grid + self._spacing_responsive_row + [self.__status_history_row], expand=True),
             self._spacing_column,
-            ft.Column(controls=meta_grid + notes_grid, expand=2),
+            ft.Column(
+                controls=meta_grid + self._spacing_responsive_row + notes_grid + [self._spacing_row, self._buttons_row],
+                expand=True,
+            ),
         ]
         self._columns_row.controls.extend(columns)
         self.__bulk_transfer = BulkTransfer(
@@ -106,31 +137,11 @@ class PurchaseOrderView(BaseView):
             delete_confirm_title=self._translation.get("confirm"),
             delete_confirm_message=self._translation.get("delete_selected_items_q"),
         )
-        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__bulk_transfer.visible = show_details
         self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
-        self.__status_history_table = DataTable(
-            columns=["status", "created_at"],
-            rows=status_history,
-            translation=self._translation,
-            height=AppDimensions.SECTION_HEIGHT_COMPACT,
-            with_button=False,
-            on_row_clicked=None,
-            read_only=True,
-            visible=mode in {ViewMode.READ, ViewMode.EDIT},
-        )
-        self._master_column.controls.extend(
-            [
-                self._columns_row,
-                ft.Row(height=AppDimensions.SPACE_2XL),
-                bulk_transfer_row,
-                ft.Row(height=AppDimensions.SMALL_ROW_HEIGHT),
-                self.__status_history_table,
-                ft.Row(height=AppDimensions.SPACE_2XL),
-                self._buttons_row,
-            ]
-        )
+        self._master_column.controls.extend([self._columns_row, self.__buttons_spacing_row, bulk_transfer_row])
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
@@ -140,12 +151,19 @@ class PurchaseOrderView(BaseView):
             self.__apply_supplier_currency()
         if mode in {ViewMode.CREATE, ViewMode.EDIT}:
             self.__apply_editable_fields(mode)
-        self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        show_details = self._is_details_mode(mode)
+        self.__bulk_transfer.visible = show_details
         self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()
-        self.__status_history_table.visible = mode in {ViewMode.READ, ViewMode.EDIT}
+        self.__status_history_table.visible = show_details
         self.__status_history_table.read_only = True
+        self.__status_history_row.visible = show_details
+        self.__buttons_spacing_row.visible = show_details
+        if self.__buttons_spacing_row.page:
+            self.__buttons_spacing_row.update()
+        if self.__status_history_row.page:
+            self.__status_history_row.update()
         if self.__status_history_table.page:
             self.__status_history_table.update()
 

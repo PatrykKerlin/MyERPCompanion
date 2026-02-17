@@ -39,16 +39,16 @@ class InvoiceView(BaseView):
         self.__pending_totals: dict[str, float] = {}
         self.__is_mounted = False
         main_fields_definitions = [
+            {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
+            {"key": "customer_id", "input": self._get_dropdown, "options": customers},
             {"key": "number", "input": self._get_text_input},
             {"key": "issue_date", "input": self._get_date_picker},
             {"key": "due_date", "input": self._get_date_picker},
-            {"key": "is_paid", "input": self._get_checkbox},
             {"key": "total_net", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "total_vat", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "total_gross", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "total_discount", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
-            {"key": "currency_id", "input": self._get_dropdown, "options": currencies},
-            {"key": "customer_id", "input": self._get_dropdown, "options": customers},
+            {"key": "is_paid", "input": self._get_checkbox, "input_size": 1},
         ]
         main_fields = self._build_field_groups(main_fields_definitions)
         self._add_to_inputs(main_fields)
@@ -56,12 +56,9 @@ class InvoiceView(BaseView):
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
 
         columns = [
-            ft.Column(
-                controls=main_grid,
-                expand=3,
-            ),
+            ft.Column(controls=main_grid, expand=True),
             self._spacing_column,
-            ft.Column(controls=meta_grid, expand=2),
+            ft.Column(controls=meta_grid, expand=True),
         ]
         self._columns_row.controls.extend(columns)
 
@@ -89,18 +86,28 @@ class InvoiceView(BaseView):
         self.__generate_pdf_button = ft.Button(
             content=self._translation.get("generate_pdf"),
             on_click=on_generate_pdf_clicked,
-            style=ButtonStyles.regular,
+            style=ButtonStyles.primary_regular,
         )
         self._buttons_row.controls.insert(0, self.__generate_pdf_button)
         self.__set_generate_pdf_button_state(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT, ViewMode.CREATE}
         self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
         self.__set_bulk_transfer_state(mode)
-        bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
+        self.__buttons_spacing_row = ft.Row(
+            height=AppDimensions.SMALL_ROW_HEIGHT,
+            visible=self._is_details_mode(mode),
+        )
+        self.__bulk_transfer_row = ft.Row(controls=[self.__bulk_transfer])
 
-        self._master_column.controls.extend(self._rows)
-        self._master_column.controls.insert(-1, ft.Row(height=AppDimensions.SMALL_ROW_HEIGHT))
-        self._master_column.controls.insert(-1, bulk_transfer_row)
+        self._master_column.controls.extend(
+            [
+                self._columns_row,
+                self._spacing_row,
+                self._buttons_row,
+                self.__buttons_spacing_row,
+                self.__bulk_transfer_row,
+            ]
+        )
 
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
@@ -115,10 +122,13 @@ class InvoiceView(BaseView):
         self.__set_generate_pdf_button_state(mode)
         self.__bulk_transfer.visible = mode in {ViewMode.READ, ViewMode.EDIT, ViewMode.CREATE}
         self.__bulk_transfer.height = AppDimensions.BULK_TRANSFER_HEIGHT_LARGE if self.__bulk_transfer.visible else 0
+        self.__buttons_spacing_row.visible = self._is_details_mode(mode)
         self.__set_bulk_transfer_state(mode)
         self.__bulk_transfer.clear_pending_changes()
         if self.__bulk_transfer.page:
             self.__bulk_transfer.update()
+        if self.__buttons_spacing_row.page:
+            self.__buttons_spacing_row.update()
 
     def did_mount(self):
         result = super().did_mount()
@@ -213,8 +223,8 @@ class InvoiceView(BaseView):
         self.__bulk_transfer.set_enabled_states(enabled, enabled, enabled)
 
     def __set_generate_pdf_button_state(self, mode: ViewMode) -> None:
-        self.__generate_pdf_button.visible = mode in {ViewMode.READ, ViewMode.EDIT}
-        self.__generate_pdf_button.disabled = mode == ViewMode.EDIT
+        self.__generate_pdf_button.visible = mode == ViewMode.READ
+        self.__generate_pdf_button.disabled = False
         self.safe_update(self.__generate_pdf_button)
 
     def __set_total_value(self, key: str, value: float) -> None:

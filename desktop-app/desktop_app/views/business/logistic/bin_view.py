@@ -58,7 +58,7 @@ class BinView(BaseView):
                     col={"sm": 8.0},
                     alignment=ControlStyles.INPUT_ALIGNMENT,
                     height=AppDimensions.SECTION_HEIGHT_LARGE,
-                )
+                ),
             ],
             alignment=AlignmentStyles.AXIS_START,
             vertical_alignment=AlignmentStyles.CROSS_START,
@@ -66,7 +66,9 @@ class BinView(BaseView):
         columns = [
             ft.Column(controls=main_grid + self._spacing_responsive_row + [self.__items_row], expand=True),
             self._spacing_column,
-            ft.Column(controls=meta_grid + self._spacing_responsive_row + [self._spacing_row, self._buttons_row], expand=True),
+            ft.Column(
+                controls=meta_grid + self._spacing_responsive_row + [self._spacing_row, self._buttons_row], expand=True
+            ),
         ]
         self._columns_row.controls.extend(columns)
         self._master_column.controls.append(self._columns_row)
@@ -74,7 +76,7 @@ class BinView(BaseView):
     def set_mode(self, mode: ViewMode) -> None:
         super().set_mode(mode)
         is_read_mode = self._mode == ViewMode.READ
-        is_items_visible = self._mode in {ViewMode.READ, ViewMode.EDIT}
+        is_items_visible = self._is_details_mode()
         self.__items_row.visible = is_items_visible
         self.__items_table.visible = is_items_visible
         self.__items_table.read_only = not is_read_mode

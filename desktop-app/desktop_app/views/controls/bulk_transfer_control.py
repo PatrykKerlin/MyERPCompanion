@@ -413,9 +413,7 @@ class BulkTransfer(ft.Container):
                     value=is_selected,
                     disabled=item_id not in selectable_ids,
                     on_change=(
-                        (lambda _, item_id=item_id: on_row_selected(item_id))
-                        if item_id in selectable_ids
-                        else None
+                        (lambda _, item_id=item_id: on_row_selected(item_id)) if item_id in selectable_ids else None
                     ),
                 )
             )

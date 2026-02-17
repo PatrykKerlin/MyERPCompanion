@@ -65,21 +65,9 @@ class OrderPickingView(BaseView):
         order_container.expand = True
         self._add_to_inputs(
             {
-                "order_date": FieldGroup(
-                    label=self._get_label("order_date", 0, colon=False),
-                    input=(order_date_container, 6),
-                    marker=self._get_marker("order_date", 0),
-                ),
-                "customer_id": FieldGroup(
-                    label=self._get_label("customer", 0, colon=False),
-                    input=(customer_container, 6),
-                    marker=self._get_marker("customer_id", 0),
-                ),
-                "order_id": FieldGroup(
-                    label=self._get_label("order", 0, colon=False),
-                    input=(order_container, 6),
-                    marker=self._get_marker("order_id", 0),
-                ),
+                "order_date": FieldGroup(input=(order_date_container, 6)),
+                "customer_id": FieldGroup(input=(customer_container, 6)),
+                "order_id": FieldGroup(input=(order_container, 6)),
             }
         )
 

@@ -34,9 +34,9 @@ class DiscountView(BaseView):
             {"key": "min_value", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
         ]
         target_fields_definitions = [
-            {"key": "for_categories", "input": self._get_checkbox, "input_size": 2},
-            {"key": "for_customers", "input": self._get_checkbox, "input_size": 2},
-            {"key": "for_items", "input": self._get_checkbox, "input_size": 2},
+            {"key": "for_categories", "input": self._get_checkbox, "input_size": 1},
+            {"key": "for_customers", "input": self._get_checkbox, "input_size": 1},
+            {"key": "for_items", "input": self._get_checkbox, "input_size": 1},
         ]
         main_fields = self._build_field_groups(main_fields_definitions)
         target_fields = self._build_field_groups(target_fields_definitions)
@@ -46,10 +46,7 @@ class DiscountView(BaseView):
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
 
         columns = [
-            ft.Column(
-                controls=main_grid,
-                expand=True
-            ),
+            ft.Column(controls=main_grid, expand=True),
             self._spacing_column,
             ft.Column(controls=meta_grid + self._spacing_responsive_row + target_grid, expand=True),
         ]
