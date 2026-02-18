@@ -5,7 +5,7 @@ from torch import Tensor, nn
 
 class FeedForwardModel(nn.Module):
     _dropout_rate = 0.10
-    _hidden_dims = (256, 128, 64, 32, 16, 8)
+    _hidden_dims = (128, 64, 32, 16)
 
     def __init__(
         self,

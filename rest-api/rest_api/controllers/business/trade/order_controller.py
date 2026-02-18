@@ -2,7 +2,7 @@ from typing import Annotated
 
 from config.context import Context
 from controllers.base.base_controller import BaseController
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, Request, status
 from schemas.business.trade.order_schema import OrderPickingSummarySchema, OrderPlainSchema, OrderStrictSchema
 from schemas.core.param_schema import (
     FilterParamsSchema,
@@ -11,7 +11,6 @@ from schemas.core.param_schema import (
     SortingParamsSchema,
 )
 from services.business.trade.order_service import OrderService
-from sqlalchemy.exc import SQLAlchemyError
 from utils.auth import Auth
 from utils.enums import Action, Permission
 from utils.parsers import FilterParamsParser
@@ -68,6 +67,7 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
             },
         )
 
+    @BaseController.handle_exceptions()
     async def get_all_sales(
         self,
         request: Request,
@@ -75,33 +75,27 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
         filters: Annotated[FilterParamsSchema, Depends(FilterParamsParser())],
         sorting: Annotated[SortingParamsSchema, Depends()],
     ) -> PaginatedResponseSchema[OrderPlainSchema]:
-        try:
-            session = BaseController._get_request_session(request)
-            offset, limit = BaseController._get_offset_and_limit(pagination)
-            items, total = await self._service.get_all_sales(
-                session=session,
-                filters=filters.filters,
-                offset=offset,
-                limit=limit,
-                sort_by=sorting.sort_by,
-                sort_order=sorting.order,
-            )
-            has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
-            return PaginatedResponseSchema[OrderPlainSchema](
-                items=items,
-                total=total,
-                page=pagination.page,
-                page_size=pagination.page_size,
-                has_next=has_next,
-                has_prev=has_prev,
-            )
-        except HTTPException:
-            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.get_all_sales.__qualname__}")
-            raise
-        except SQLAlchemyError as err:
-            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.get_all_sales.__qualname__}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+        session = BaseController._get_request_session(request)
+        offset, limit = BaseController._get_offset_and_limit(pagination)
+        items, total = await self._service.get_all_sales(
+            session=session,
+            filters=filters.filters,
+            offset=offset,
+            limit=limit,
+            sort_by=sorting.sort_by,
+            sort_order=sorting.order,
+        )
+        has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
+        return PaginatedResponseSchema[OrderPlainSchema](
+            items=items,
+            total=total,
+            page=pagination.page,
+            page_size=pagination.page_size,
+            has_next=has_next,
+            has_prev=has_prev,
+        )
 
+    @BaseController.handle_exceptions()
     async def get_all_purchase(
         self,
         request: Request,
@@ -109,33 +103,27 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
         filters: Annotated[FilterParamsSchema, Depends(FilterParamsParser())],
         sorting: Annotated[SortingParamsSchema, Depends()],
     ) -> PaginatedResponseSchema[OrderPlainSchema]:
-        try:
-            session = BaseController._get_request_session(request)
-            offset, limit = BaseController._get_offset_and_limit(pagination)
-            items, total = await self._service.get_all_purchase(
-                session=session,
-                filters=filters.filters,
-                offset=offset,
-                limit=limit,
-                sort_by=sorting.sort_by,
-                sort_order=sorting.order,
-            )
-            has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
-            return PaginatedResponseSchema[OrderPlainSchema](
-                items=items,
-                total=total,
-                page=pagination.page,
-                page_size=pagination.page_size,
-                has_next=has_next,
-                has_prev=has_prev,
-            )
-        except HTTPException:
-            self._logger.exception(f"HTTPException in {self.__class__.__name__}.{self.get_all_purchase.__qualname__}")
-            raise
-        except SQLAlchemyError as err:
-            self._logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.get_all_purchase.__qualname__}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+        session = BaseController._get_request_session(request)
+        offset, limit = BaseController._get_offset_and_limit(pagination)
+        items, total = await self._service.get_all_purchase(
+            session=session,
+            filters=filters.filters,
+            offset=offset,
+            limit=limit,
+            sort_by=sorting.sort_by,
+            sort_order=sorting.order,
+        )
+        has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
+        return PaginatedResponseSchema[OrderPlainSchema](
+            items=items,
+            total=total,
+            page=pagination.page,
+            page_size=pagination.page_size,
+            has_next=has_next,
+            has_prev=has_prev,
+        )
 
+    @BaseController.handle_exceptions()
     async def get_all_picking_eligible(
         self,
         request: Request,
@@ -143,66 +131,45 @@ class OrderController(BaseController[OrderService, OrderStrictSchema, OrderPlain
         filters: Annotated[FilterParamsSchema, Depends(FilterParamsParser())],
         sorting: Annotated[SortingParamsSchema, Depends()],
     ) -> PaginatedResponseSchema[OrderPlainSchema]:
-        try:
-            token_client = getattr(request.state, "token_client", None)
-            if token_client == "mobile":
-                token_warehouse_id = getattr(request.state, "token_warehouse_id", None)
-                if isinstance(token_warehouse_id, int):
-                    filters.filters["warehouse_id"] = str(token_warehouse_id)
-                else:
-                    filters.filters["warehouse_id"] = "0"
-            session = BaseController._get_request_session(request)
-            offset, limit = BaseController._get_offset_and_limit(pagination)
-            items, total = await self._service.get_all_picking_eligible(
-                session=session,
-                filters=filters.filters,
-                offset=offset,
-                limit=limit,
-                sort_by=sorting.sort_by,
-                sort_order=sorting.order,
-            )
-            has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
-            return PaginatedResponseSchema[OrderPlainSchema](
-                items=items,
-                total=total,
-                page=pagination.page,
-                page_size=pagination.page_size,
-                has_next=has_next,
-                has_prev=has_prev,
-            )
-        except HTTPException:
-            self._logger.exception(
-                f"HTTPException in {self.__class__.__name__}.{self.get_all_picking_eligible.__qualname__}"
-            )
-            raise
-        except SQLAlchemyError as err:
-            self._logger.exception(
-                f"SQLAlchemyError in {self.__class__.__name__}.{self.get_all_picking_eligible.__qualname__}"
-            )
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+        token_client = getattr(request.state, "token_client", None)
+        if token_client == "mobile":
+            token_warehouse_id = getattr(request.state, "token_warehouse_id", None)
+            if isinstance(token_warehouse_id, int):
+                filters.filters["warehouse_id"] = str(token_warehouse_id)
+            else:
+                filters.filters["warehouse_id"] = "0"
+        session = BaseController._get_request_session(request)
+        offset, limit = BaseController._get_offset_and_limit(pagination)
+        items, total = await self._service.get_all_picking_eligible(
+            session=session,
+            filters=filters.filters,
+            offset=offset,
+            limit=limit,
+            sort_by=sorting.sort_by,
+            sort_order=sorting.order,
+        )
+        has_next, has_prev = BaseController._get_has_next_has_prev(offset, limit, total, pagination.page)
+        return PaginatedResponseSchema[OrderPlainSchema](
+            items=items,
+            total=total,
+            page=pagination.page,
+            page_size=pagination.page_size,
+            has_next=has_next,
+            has_prev=has_prev,
+        )
 
+    @BaseController.handle_exceptions()
     async def get_picking_summary(
         self,
         request: Request,
         filters: Annotated[FilterParamsSchema, Depends(FilterParamsParser())],
     ) -> OrderPickingSummarySchema:
-        try:
-            token_client = getattr(request.state, "token_client", None)
-            if token_client == "mobile":
-                token_warehouse_id = getattr(request.state, "token_warehouse_id", None)
-                if isinstance(token_warehouse_id, int):
-                    filters.filters["warehouse_id"] = str(token_warehouse_id)
-                else:
-                    filters.filters["warehouse_id"] = "0"
-            session = BaseController._get_request_session(request)
-            return await self._service.get_picking_summary(session=session, filters=filters.filters)
-        except HTTPException:
-            self._logger.exception(
-                f"HTTPException in {self.__class__.__name__}.{self.get_picking_summary.__qualname__}"
-            )
-            raise
-        except SQLAlchemyError as err:
-            self._logger.exception(
-                f"SQLAlchemyError in {self.__class__.__name__}.{self.get_picking_summary.__qualname__}"
-            )
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+        token_client = getattr(request.state, "token_client", None)
+        if token_client == "mobile":
+            token_warehouse_id = getattr(request.state, "token_warehouse_id", None)
+            if isinstance(token_warehouse_id, int):
+                filters.filters["warehouse_id"] = str(token_warehouse_id)
+            else:
+                filters.filters["warehouse_id"] = "0"
+        session = BaseController._get_request_session(request)
+        return await self._service.get_picking_summary(session=session, filters=filters.filters)

@@ -37,9 +37,9 @@ class AuthController:
                     raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error)
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_credentials")
             return JSONResponse(response)
-        except SQLAlchemyError as err:
+        except SQLAlchemyError:
             self.__logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.auth.__qualname__}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     async def refresh(self, request: Request) -> JSONResponse:
         try:
@@ -65,6 +65,6 @@ class AuthController:
         except (JWTError, KeyError, NoResultFound):
             self.__logger.exception(f"AuthError in {self.__class__.__name__}.{self.refresh.__qualname__}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-        except SQLAlchemyError as err:
+        except SQLAlchemyError:
             self.__logger.exception(f"SQLAlchemyError in {self.__class__.__name__}.{self.refresh.__qualname__}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

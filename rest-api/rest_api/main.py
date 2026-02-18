@@ -3,7 +3,6 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 
-import models.ai  # noqa: F401
 from config.context import Context
 from config.settings import Settings
 from controllers import core
@@ -37,7 +36,7 @@ class App:
         return self.__app
 
     async def startup(self) -> None:
-        async with self.__database.engine.begin() as conn:
+        async with self.__database.db_engine.begin() as conn:
             await conn.run_sync(Engine.get_base().metadata.create_all)
 
     def __include_routers(self) -> None:
@@ -150,7 +149,7 @@ def create_app() -> FastAPI:
     auth = Auth(context)
 
     def load_all_models() -> None:
-        for model_path in ("models.business.hr", "models.business.logistic", "models.business.trade", "models.core"):
+        for model_path in ("models.ai", "models.business.hr", "models.business.logistic", "models.business.trade", "models.core"):
             importlib.import_module(model_path)
 
     @asynccontextmanager

@@ -1,5 +1,6 @@
 from abc import ABC
 from collections.abc import Mapping
+from decimal import Decimal
 from typing import Generic, Sequence, TypeVar
 
 from models.base.base_model import BaseModel
@@ -108,7 +109,7 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         missing_ids = {model_id for model_id in ids if model_id not in existing_by_id.keys()}
         if missing_ids:
             raise NoResultFound(
-                self._not_found_message.format(model=self._model_cls.__name__, id=str(sorted(list(missing_ids))))
+                self._not_found_message.format(model=self._model_cls.__name__, id=str(sorted(missing_ids)))
             )
         for model_id, schema in items:
             model = existing_by_id[model_id]
@@ -141,8 +142,14 @@ class BaseService(ABC, Generic[TModel, TRepository, TInputSchema, TOutputSchema]
         missing_ids = [model_id for model_id in ids if model_id not in existing_ids]
         if missing_ids:
             raise NoResultFound(
-                self._not_found_message.format(model=self._model_cls.__name__, id=str(sorted(list(missing_ids))))
+                self._not_found_message.format(model=self._model_cls.__name__, id=str(sorted(missing_ids)))
             )
         for model in models:
             setattr(model, "modified_by", modified_by)
         await self._repository_cls.delete_many(session, models)
+
+    @staticmethod
+    def _to_float(value: Decimal | float | int | None) -> float:
+        if value is None:
+            return 0
+        return float(value)

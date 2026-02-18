@@ -23,7 +23,7 @@ class Engine:
 
     def __init__(self, settings: EngineSettings) -> None:
         if not self.__initialized:
-            self.engine: AsyncEngine = create_async_engine(
+            self.db_engine: AsyncEngine = create_async_engine(
                 settings.DATABASE_URL,
                 pool_size=settings.DB_POOL_SIZE,
                 max_overflow=settings.DB_MAX_OVERFLOW,
@@ -32,7 +32,7 @@ class Engine:
                 pool_pre_ping=settings.DB_POOL_PRE_PING,
             )
             self.__async_session_maker = async_sessionmaker(
-                bind=self.engine,
+                bind=self.db_engine,
                 expire_on_commit=False,
             )
             self.__initialized = True

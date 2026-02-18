@@ -27,8 +27,9 @@ class CurrentUserController(
             dependencies=self._restrict_access(permissions=[Permission.CAN_READ], secured=True),
         )
 
+    @BaseController.handle_exceptions()
     async def current_user(self, request: Request) -> UserPlainSchema:
-        user = request.state.user
-        if not user:
+        user = getattr(request.state, "user", None)
+        if user is None:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
         return user

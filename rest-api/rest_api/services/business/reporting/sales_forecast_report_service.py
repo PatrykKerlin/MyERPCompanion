@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-from decimal import Decimal
-
+from models.base.base_model import BaseModel
+from repositories.base.base_repository import BaseRepository
 from repositories.business.reporting.sales_forecast_report_repository import SalesForecastReportRepository
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.business.reporting.sales_forecast_report_schema import (
     SalesForecastReportFilterSchema,
     SalesForecastReportRowSchema,
     SalesForecastReportTotalsSchema,
 )
+from services.base.base_service import BaseService
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class SalesForecastReportService:
+class SalesForecastReportService(BaseService[BaseModel, BaseRepository[BaseModel], BaseStrictSchema, BasePlainSchema]):
     async def get_report(
         self,
         session: AsyncSession,
@@ -64,9 +66,9 @@ class SalesForecastReportService:
                 category_name=row.category_name,
                 currency_id=row.currency_id,
                 currency_code=row.currency_code,
-                predicted_net=SalesForecastReportService.__to_float(row.predicted_net),
-                predicted_quantity=SalesForecastReportService.__to_float(row.predicted_quantity),
-                discount_rate_assumption=SalesForecastReportService.__to_float(row.discount_rate_assumption),
+                predicted_net=self._to_float(row.predicted_net),
+                predicted_quantity=self._to_float(row.predicted_quantity),
+                discount_rate_assumption=self._to_float(row.discount_rate_assumption),
                 horizon_months=int(row.horizon_months or 0),
             )
             for row in rows_result
@@ -74,16 +76,10 @@ class SalesForecastReportService:
         totals = SalesForecastReportTotalsSchema(
             rows_count=int(totals_row["rows_count"] or 0),
             periods_count=int(totals_row["periods_count"] or 0),
-            total_predicted_net=SalesForecastReportService.__to_float(totals_row["total_predicted_net"]),
-            total_predicted_quantity=SalesForecastReportService.__to_float(totals_row["total_predicted_quantity"]),
+            total_predicted_net=self._to_float(totals_row["total_predicted_net"]),
+            total_predicted_quantity=self._to_float(totals_row["total_predicted_quantity"]),
             discount_steps=discount_steps,
             latest_run_id=latest_run_id,
             latest_run_finished_at=latest_run_finished_at,
         )
         return rows, totals
-
-    @staticmethod
-    def __to_float(value: Decimal | float | int | None) -> float:
-        if value is None:
-            return 0
-        return float(value)

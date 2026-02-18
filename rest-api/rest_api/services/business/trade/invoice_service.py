@@ -103,9 +103,9 @@ class InvoiceService(BaseService[Invoice, InvoiceRepository, InvoiceStrictSchema
                 [
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("BOX", (0, 0), (-1, -1), 0.25, colors.HexColor("#b0b0b0")),
-                    ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#d0d0d0")),
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f0f0f0")),
+                    ("BOX", (0, 0), (-1, -1), 0.25, colors.grey),
+                    ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.lightgrey),
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
                     ("TOPPADDING", (0, 0), (-1, -1), 4),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
                     ("LEFTPADDING", (0, 0), (-1, -1), 6),
@@ -150,12 +150,12 @@ class InvoiceService(BaseService[Invoice, InvoiceRepository, InvoiceStrictSchema
         items_table.setStyle(
             TableStyle(
                 [
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e6e6e6")),
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
                     ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
                     ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                     ("ALIGN", (3, 1), (-1, -1), "RIGHT"),
                     ("WORDWRAP", (1, 1), (2, -1), "CJK"),
-                    ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#b0b0b0")),
+                    ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
                     ("FONTNAME", (0, 0), (-1, 0), self.__font_bold),
                     ("FONTNAME", (0, 1), (-1, -1), self.__font_regular),
                     ("FONTSIZE", (0, 0), (-1, -1), 9),
@@ -183,7 +183,7 @@ class InvoiceService(BaseService[Invoice, InvoiceRepository, InvoiceStrictSchema
         totals_table.setStyle(
             TableStyle(
                 [
-                    ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#b0b0b0")),
+                    ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
                     ("ALIGN", (1, 0), (1, -1), "RIGHT"),
                     ("FONTNAME", (0, 0), (-1, -1), self.__font_regular),
                     ("FONTSIZE", (0, 0), (-1, -1), 10),

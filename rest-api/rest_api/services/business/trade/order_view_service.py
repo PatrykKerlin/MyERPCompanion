@@ -1,11 +1,14 @@
 from collections.abc import Sequence
 
+from models.base.base_model import BaseModel
 from models.business.logistic.item import Item
 from models.business.trade.assoc_order_item import AssocOrderItem
 from models.business.trade.assoc_order_status import AssocOrderStatus
 from models.business.trade.order import Order
+from repositories.base.base_repository import BaseRepository
 from repositories.business.trade.order_view_repository import OrderViewRepository
 from repositories.mixins.item_quantity_mixin import ItemQuantityMixin
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.business.trade.order_schema import OrderPlainSchema
 from schemas.business.trade.order_view_schema import (
     OrderViewCategorySchema,
@@ -21,10 +24,16 @@ from schemas.business.trade.order_view_schema import (
     OrderViewSupplierSchema,
     OrderViewTargetItemSchema,
 )
+from services.base.base_service import BaseService
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class OrderViewService(ItemQuantityMixin):
+class OrderViewService(
+    BaseService[BaseModel, BaseRepository[BaseModel], BaseStrictSchema, BasePlainSchema], ItemQuantityMixin
+):
+    _model_cls = Order
+
     async def get_view(
         self, session: AsyncSession, is_sales: bool, order_id: int | None = None
     ) -> OrderViewResponseSchema:
@@ -41,6 +50,8 @@ class OrderViewService(ItemQuantityMixin):
         order: Order | None = None
         if order_id is not None:
             order = await OrderViewRepository.get_order_with_relations(session, order_id, is_sales)
+            if order is None:
+                raise NoResultFound(f"Order with ID {order_id} not found.")
 
         source_items: Sequence[Item] = []
         order_items: Sequence[AssocOrderItem] = []
