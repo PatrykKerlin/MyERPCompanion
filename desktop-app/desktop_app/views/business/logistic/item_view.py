@@ -109,8 +109,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
                 + self._spacing_responsive_row
                 + dimensions_grid
                 + param_grid
-                + (4 * self._spacing_responsive_row)
-                + [self._spacing_row, self._buttons_row, self.__buttons_spacing_row],
+                + (4 * self._spacing_responsive_row),
                 expand=True,
             ),
         ]
@@ -245,11 +244,15 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             on_discount_save_clicked,
             on_discount_delete_clicked,
             height=AppDimensions.SECTION_HEIGHT_LARGE,
+            visible_modes={ViewMode.READ, ViewMode.EDIT},
         )
         bulk_transfer_row = self._build_discount_bulk_transfer_row()
         self.__bins_gallery_spacing_row = ft.Row(height=AppDimensions.SPACE_2XL, visible=self._is_details_mode(mode))
         self._rows = [
             self._columns_row,
+            self._spacing_row,
+            self._buttons_row,
+            self.__buttons_spacing_row,
             self.__bins_gallery_row,
             self.__bins_gallery_spacing_row,
             bulk_transfer_row,
