@@ -327,6 +327,7 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
         return {
             "id": order.id,
             "number": order.number,
+            "invoice_id": order.invoice_id,
             "order_date": self.__format_date(order.order_date),
             "invoice_due_date": self.__format_date(order.invoice_due_date) if order.invoice_due_date else None,
             "invoice_is_paid": order.invoice_is_paid,

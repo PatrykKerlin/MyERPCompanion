@@ -323,9 +323,14 @@ class OrdersView(BaseView["OrdersController"]):
             selected = order_id == self.__selected_order_id
             number = str(order.get("number") or "-")
             order_date = str(order.get("order_date") or "-")
+            has_invoice = isinstance(order.get("invoice_id"), int)
             due_date = self.__parse_iso_date(order.get("invoice_due_date"))
             is_paid = order.get("invoice_is_paid")
-            payment_status = self.__resolve_order_payment_status(due_date=due_date, is_paid=is_paid)
+            payment_status = self.__resolve_order_payment_status(
+                has_invoice=has_invoice,
+                due_date=due_date,
+                is_paid=is_paid,
+            )
             icon_control: ft.Control | None = None
             number_color: str | ft.Colors | None = None
             date_color: str | ft.Colors | None = None
@@ -394,7 +399,9 @@ class OrdersView(BaseView["OrdersController"]):
         return None
 
     @staticmethod
-    def __resolve_order_payment_status(due_date: date | None, is_paid: Any) -> str:
+    def __resolve_order_payment_status(has_invoice: bool, due_date: date | None, is_paid: Any) -> str:
+        if not has_invoice:
+            return "none"
         if is_paid:
             return "none"
         if due_date and due_date < date.today():
