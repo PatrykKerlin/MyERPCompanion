@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
+from functools import partial
+from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar, cast
 
 from pydantic import BaseModel
 from states.base.base_state import BaseState
@@ -35,13 +36,13 @@ class StateStore(Generic[TBaseModel]):
                 func(value)
 
     def subscribe(self, attr: str, func: Callable[[TState], None]) -> Callable[[], None]:
-        def unsubscribe() -> None:
-            try:
-                self.__listeners[attr].remove(func)
-                if not self.__listeners[attr]:
-                    del self.__listeners[attr]
-            except (ValueError, KeyError):
-                pass
-
         self.__listeners.setdefault(attr, []).append(func)
-        return unsubscribe
+        return cast(Callable[[], None], partial(self.__unsubscribe, attr, func))
+
+    def __unsubscribe(self, attr: str, func: Callable[[TState], None]) -> None:
+        try:
+            self.__listeners[attr].remove(func)
+            if not self.__listeners[attr]:
+                del self.__listeners[attr]
+        except (ValueError, KeyError):
+            pass

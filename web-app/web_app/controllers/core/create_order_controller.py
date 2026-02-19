@@ -726,14 +726,7 @@ class CreateOrderController(
         self.__delivery_method_options = [(item.id, item.label) for item in view_data.delivery_methods]
         default_status = next((item for item in view_data.statuses if item.status_number == 1), None)
         self.__default_status_id = default_status.id if default_status else None
-        self.__customer_discounts = []
-        seen_discount_ids: set[int] = set()
-        for customer in view_data.customers:
-            for discount in customer.discounts:
-                if discount.id in seen_discount_ids:
-                    continue
-                seen_discount_ids.add(discount.id)
-                self.__customer_discounts.append(discount)
+        self.__customer_discounts = [discount for customer in view_data.customers for discount in customer.discounts]
         self.__discount_percent_map.clear()
         for discount_list in (
             self.__item_discount_map.values(),

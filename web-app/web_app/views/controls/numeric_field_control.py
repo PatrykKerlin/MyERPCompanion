@@ -62,14 +62,12 @@ class NumericField(ft.Row):
             icon=ft.Icons.REMOVE,
             on_click=self.__decrement,
             disabled=self.__read_only,
-            width=AppDimensions.ICON_BUTTON_WIDTH,
             style=ButtonStyles.icon,
         )
         self.__increment_button = ft.IconButton(
             icon=ft.Icons.ADD,
             on_click=self.__increment,
             disabled=self.__read_only,
-            width=AppDimensions.ICON_BUTTON_WIDTH,
             style=ButtonStyles.icon,
         )
 

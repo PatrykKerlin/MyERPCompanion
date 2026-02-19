@@ -10,13 +10,13 @@ from views.base.base_component import BaseComponent
 class WebFooterComponent(BaseComponent[BaseController], ft.Container):
     def __init__(self, controller: BaseController, translation: Translation) -> None:
         BaseComponent.__init__(self, controller, translation)
-        self.__footer_app_name = ft.Text(self._translation.get("my_erp_companion"), style=TypographyStyles.FOOTER_TITLE)
-        self.__footer_portal = ft.Text(
+        self.__footer_app_name = self._get_label(self._translation.get("my_erp_companion"), style=TypographyStyles.FOOTER_TITLE)
+        self.__footer_portal = self._get_label(
             self._translation.get("footer_web_portal"),
             style=TypographyStyles.FOOTER_TEXT,
             color=AppViewStyles.FOOTER_MUTED_TEXT_COLOR,
         )
-        self.__footer_copy = ft.Text(
+        self.__footer_copy = self._get_label(
             self.__build_footer_copy(),
             style=TypographyStyles.FOOTER_TEXT,
             color=AppViewStyles.FOOTER_MUTED_TEXT_COLOR,
@@ -26,18 +26,18 @@ class WebFooterComponent(BaseComponent[BaseController], ft.Container):
             padding=AppViewStyles.FOOTER_PADDING,
             border=AppViewStyles.FOOTER_BORDER,
             content=ft.ResponsiveRow(
-                columns=12,
+                columns=AppViewStyles.FOOTER_ROW_COLUMNS,
                 controls=[
                     ft.Container(
-                        col={"sm": 12, "md": 7},
+                        col=AppViewStyles.FOOTER_LEFT_COL,
                         content=ft.Column(
-                            spacing=0,
+                            spacing=AppViewStyles.FOOTER_LEFT_COLUMN_SPACING,
                             tight=True,
                             controls=[self.__footer_app_name, self.__footer_portal],
                         ),
                     ),
                     ft.Container(
-                        col={"sm": 12, "md": 5},
+                        col=AppViewStyles.FOOTER_RIGHT_COL,
                         alignment=AlignmentStyles.CENTER_RIGHT,
                         content=self.__footer_copy,
                     ),

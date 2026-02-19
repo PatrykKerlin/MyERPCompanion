@@ -44,6 +44,9 @@ class AppController(BaseController):
         self.__view.set_cart_handler(self.__open_cart)
         self.__view.set_user_settings_handler(self.__open_current_user_settings)
         self.__view.set_logout_handler(self.__request_logout)
+        self.__current_user_settings_dialog: CurrentUserSettingsDialogComponent | None = None
+        self.__current_user_settings_user: UserPlainSchema | None = None
+        self.__current_user_settings_language_by_id: dict[int, LanguagePlainSchema] = {}
         self._page.on_connect = lambda event: self._page.run_task(self.__handle_web_reconnect, event)
 
         self._subscribe_event_handlers(
@@ -143,34 +146,30 @@ class AppController(BaseController):
             language_options.append((current_user.language.id, current_user.language.key))
             language_by_id[current_user.language.id] = current_user.language
 
-        def resolve_dialog_width() -> int:
-            viewport_width = self._page.width or self._page.window.width
-            if viewport_width:
-                return max(360, min(int(viewport_width * 0.9), 540))
-            return 520
-
-        dialog: CurrentUserSettingsDialogComponent | None = None
-
-        def on_save_clicked(_: ft.Event[ft.Button]) -> None:
-            if dialog is None:
-                return
-            self._page.run_task(
-                self.__save_current_user_settings,
-                dialog,
-                current_user,
-                language_by_id,
-            )
-
         dialog = CurrentUserSettingsDialogComponent(
             translation=translation,
             language_options=language_options,
             language_value=str(current_user.language.id),
             theme_value=current_user.theme,
             on_cancel_clicked=lambda _: self._page.pop_dialog(),
-            on_save_clicked=on_save_clicked,
-            width=resolve_dialog_width(),
+            on_save_clicked=self.__on_current_user_settings_save_clicked,
         )
+        self.__current_user_settings_dialog = dialog
+        self.__current_user_settings_user = current_user
+        self.__current_user_settings_language_by_id = language_by_id
         self._queue_dialog(dialog)
+
+    def __on_current_user_settings_save_clicked(self, _: ft.Event[ft.Button]) -> None:
+        dialog = self.__current_user_settings_dialog
+        current_user = self.__current_user_settings_user
+        if dialog is None or current_user is None:
+            return
+        self._page.run_task(
+            self.__save_current_user_settings,
+            dialog,
+            current_user,
+            self.__current_user_settings_language_by_id,
+        )
 
     def __open_orders(self) -> None:
         self._page.run_task(self.__open_orders_async)
@@ -257,6 +256,10 @@ class AppController(BaseController):
             closed_dialog = self._page.pop_dialog()
             if closed_dialog is None or closed_dialog is dialog:
                 break
+        if dialog is self.__current_user_settings_dialog:
+            self.__current_user_settings_dialog = None
+            self.__current_user_settings_user = None
+            self.__current_user_settings_language_by_id = {}
         previous_language = self._state_store.app_state.translation.language
         effective_user = updated_user
         if selected_language and updated_user.language.id != selected_language.id:

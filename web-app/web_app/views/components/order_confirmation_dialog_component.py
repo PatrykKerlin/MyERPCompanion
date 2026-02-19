@@ -11,16 +11,16 @@ class OrderConfirmationDialogComponent(BaseDialog):
         self,
         translation: Translation,
         order_number: str,
-        on_ok_clicked: Callable[[ft.Event[ft.TextButton]], ft.DialogControl | None],
+        on_ok_clicked: Callable[[ft.Event[ft.Button]], ft.DialogControl | None],
     ) -> None:
         super().__init__(
             title=translation.get("checkout"),
-            controls=[ft.Text(translation.get("order_created").format(order_number=order_number))],
+            controls=[self._get_label(translation.get("order_created").format(order_number=order_number))],
             actions=[
-                ft.TextButton(
-                    translation.get("ok"),
+                ft.Button(
+                    content=translation.get("ok"),
                     on_click=on_ok_clicked,
-                    style=ButtonStyles.regular,
+                    style=ButtonStyles.primary_regular,
                 )
             ],
         )

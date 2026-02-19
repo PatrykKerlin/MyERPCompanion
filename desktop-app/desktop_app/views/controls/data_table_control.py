@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Any, Callable
 
 import flet as ft
@@ -134,10 +135,14 @@ class DataTable(ft.Container):
     ) -> Callable[[Any], None] | None:
         if on_row_clicked is None:
             return None
+        return partial(self.__handle_row_select, row, on_row_clicked)
 
-        def handler(_: Any) -> None:
-            if self.__read_only:
-                return
-            on_row_clicked(row)
-
-        return handler
+    def __handle_row_select(
+        self,
+        row: dict[str, Any],
+        on_row_clicked: Callable[[dict[str, Any]], None],
+        _: Any,
+    ) -> None:
+        if self.__read_only:
+            return
+        on_row_clicked(row)

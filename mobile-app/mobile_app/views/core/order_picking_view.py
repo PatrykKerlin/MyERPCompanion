@@ -105,6 +105,10 @@ class OrderPickingView(BaseView):
         self.__pick_bin_available_by_id: dict[int, int] = {}
         self.__pick_unit_name: str | None = None
         self.__gallery_start_index = 0
+        self.__gallery_image_urls: list[str] = []
+        self.__gallery_thumbnails_row: ft.Row | None = None
+        self.__gallery_left_button: ft.IconButton | None = None
+        self.__gallery_right_button: ft.IconButton | None = None
 
         self.__title = ft.Text(size=20, weight=ft.FontWeight.BOLD)
         self.__subtitle = ft.Text(size=14)
@@ -577,59 +581,82 @@ class OrderPickingView(BaseView):
 
     def __build_gallery_control(self, image_urls: list[str]) -> ft.Control:
         if not image_urls:
+            self.__gallery_image_urls = []
+            self.__gallery_thumbnails_row = None
+            self.__gallery_left_button = None
+            self.__gallery_right_button = None
             return ft.Container(
                 content=ft.Text(self._translation.get("no_images"), text_align=ft.TextAlign.CENTER),
                 padding=ft.Padding.symmetric(vertical=8),
             )
-
-        thumbnails_row = ft.Row(spacing=8, run_spacing=8, alignment=ft.MainAxisAlignment.CENTER)
-
-        def update_buttons() -> None:
-            left_button.disabled = self.__gallery_start_index <= 0
-            right_button.disabled = self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE >= len(image_urls)
-            self.safe_update(left_button)
-            self.safe_update(right_button)
-
-        def render_thumbnails() -> None:
-            thumbnails_row.controls.clear()
-            window = image_urls[self.__gallery_start_index : self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE]
-            for url in window:
-                thumbnails_row.controls.append(
-                    ft.Container(
-                        width=self.__THUMBNAIL_SIZE,
-                        height=self.__THUMBNAIL_SIZE,
-                        content=ft.Image(
-                            src=url,
-                            width=self.__THUMBNAIL_SIZE,
-                            height=self.__THUMBNAIL_SIZE,
-                            fit=ft.BoxFit.CONTAIN,
-                        ),
-                        on_click=lambda _, image_url=url: self.__open_image_dialog(image_url),
-                    )
-                )
-            self.safe_update(thumbnails_row)
-            update_buttons()
-
-        def move_left(_: ft.Event[ft.IconButton]) -> None:
-            if self.__gallery_start_index <= 0:
-                return
-            self.__gallery_start_index -= 1
-            render_thumbnails()
-
-        def move_right(_: ft.Event[ft.IconButton]) -> None:
-            if self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE >= len(image_urls):
-                return
-            self.__gallery_start_index += 1
-            render_thumbnails()
-
-        left_button = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT, on_click=move_left, disabled=True)
-        right_button = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT, on_click=move_right, disabled=True)
-        render_thumbnails()
+        self.__gallery_image_urls = list(image_urls)
+        self.__gallery_thumbnails_row = ft.Row(spacing=8, run_spacing=8, alignment=ft.MainAxisAlignment.CENTER)
+        self.__gallery_left_button = ft.IconButton(
+            icon=ft.Icons.CHEVRON_LEFT,
+            on_click=self.__move_gallery_left,
+            disabled=True,
+        )
+        self.__gallery_right_button = ft.IconButton(
+            icon=ft.Icons.CHEVRON_RIGHT,
+            on_click=self.__move_gallery_right,
+            disabled=True,
+        )
+        self.__render_gallery_thumbnails()
         return ft.Row(
-            controls=[left_button, ft.Container(content=thumbnails_row, expand=True), right_button],
+            controls=[
+                self.__gallery_left_button,
+                ft.Container(content=self.__gallery_thumbnails_row, expand=True),
+                self.__gallery_right_button,
+            ],
             spacing=8,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
+
+    def __move_gallery_left(self, _: ft.Event[ft.IconButton]) -> None:
+        if self.__gallery_start_index <= 0:
+            return
+        self.__gallery_start_index -= 1
+        self.__render_gallery_thumbnails()
+
+    def __move_gallery_right(self, _: ft.Event[ft.IconButton]) -> None:
+        if self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE >= len(self.__gallery_image_urls):
+            return
+        self.__gallery_start_index += 1
+        self.__render_gallery_thumbnails()
+
+    def __render_gallery_thumbnails(self) -> None:
+        if self.__gallery_thumbnails_row is None:
+            return
+        self.__gallery_thumbnails_row.controls.clear()
+        window = self.__gallery_image_urls[
+            self.__gallery_start_index : self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE
+        ]
+        for url in window:
+            self.__gallery_thumbnails_row.controls.append(
+                ft.Container(
+                    width=self.__THUMBNAIL_SIZE,
+                    height=self.__THUMBNAIL_SIZE,
+                    content=ft.Image(
+                        src=url,
+                        width=self.__THUMBNAIL_SIZE,
+                        height=self.__THUMBNAIL_SIZE,
+                        fit=ft.BoxFit.CONTAIN,
+                    ),
+                    on_click=lambda _, image_url=url: self.__open_image_dialog(image_url),
+                )
+            )
+        self.safe_update(self.__gallery_thumbnails_row)
+        self.__update_gallery_buttons()
+
+    def __update_gallery_buttons(self) -> None:
+        if self.__gallery_left_button is None or self.__gallery_right_button is None:
+            return
+        self.__gallery_left_button.disabled = self.__gallery_start_index <= 0
+        self.__gallery_right_button.disabled = (
+            self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE >= len(self.__gallery_image_urls)
+        )
+        self.safe_update(self.__gallery_left_button)
+        self.safe_update(self.__gallery_right_button)
 
     def __open_image_dialog(self, url: str) -> None:
         dialog = BaseDialog(

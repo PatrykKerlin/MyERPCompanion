@@ -1,22 +1,20 @@
 from collections.abc import Callable, Sequence
 
 import flet as ft
-from styles.styles import ButtonStyles
+from styles.styles import ButtonStyles, CurrentUserSettingsDialogStyles, DialogStyles
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
-from views.mixins.input_controls_mixin import InputControlsMixin
 
 
-class CurrentUserSettingsDialogComponent(InputControlsMixin, BaseDialog):
+class CurrentUserSettingsDialogComponent(BaseDialog):
     def __init__(
         self,
         translation: Translation,
         language_options: Sequence[tuple[int | str, str]],
         language_value: str,
         theme_value: str,
-        on_cancel_clicked: Callable[[ft.Event[ft.TextButton]], ft.DialogControl | None],
+        on_cancel_clicked: Callable[[ft.Event[ft.Button]], ft.DialogControl | None],
         on_save_clicked: Callable[[ft.Event[ft.Button]], ft.DialogControl | None],
-        width: int,
     ) -> None:
         self.__password_field = self._get_text_field(password=True, expand=True)
         self.__password_repeat_field = self._get_text_field(password=True, expand=True)
@@ -40,9 +38,9 @@ class CurrentUserSettingsDialogComponent(InputControlsMixin, BaseDialog):
             expand=True,
         )
 
-        save_button = ft.Button(content=translation.get("save"), on_click=on_save_clicked)
-        cancel_button = ft.TextButton(
-            translation.get("cancel"),
+        save_button = ft.Button(content=translation.get("save"), on_click=on_save_clicked, style=ButtonStyles.primary_regular)
+        cancel_button = ft.Button(
+            content=translation.get("cancel"),
             on_click=on_cancel_clicked,
             style=ButtonStyles.regular,
         )
@@ -50,15 +48,15 @@ class CurrentUserSettingsDialogComponent(InputControlsMixin, BaseDialog):
         controls: list[ft.Control] = [
             ft.Container(
                 content=self.__build_labeled_control(translation.get("password"), self.__password_field),
-                padding=ft.Padding.only(bottom=8),
+                padding=CurrentUserSettingsDialogStyles.FIELD_BOTTOM_PADDING,
             ),
             ft.Container(
                 content=self.__build_labeled_control(translation.get("password_repeat"), self.__password_repeat_field),
-                padding=ft.Padding.only(bottom=8),
+                padding=CurrentUserSettingsDialogStyles.FIELD_BOTTOM_PADDING,
             ),
             ft.Container(
                 content=self.__build_labeled_control(translation.get("language_id"), self.__language_dropdown),
-                padding=ft.Padding.only(bottom=8),
+                padding=CurrentUserSettingsDialogStyles.FIELD_BOTTOM_PADDING,
             ),
             ft.Container(content=self.__build_labeled_control(translation.get("theme"), self.__theme_dropdown)),
         ]
@@ -71,8 +69,8 @@ class CurrentUserSettingsDialogComponent(InputControlsMixin, BaseDialog):
 
         dialog_content = self.content
         if isinstance(dialog_content, ft.Container):
+            dialog_content.width = DialogStyles.CURRENT_USER_SETTINGS_CONTENT_WIDTH
             dialog_content.alignment = ft.Alignment.TOP_LEFT
-            dialog_content.width = width
             content_column = dialog_content.content
             if isinstance(content_column, ft.Column):
                 content_column.alignment = ft.MainAxisAlignment.START
@@ -94,15 +92,14 @@ class CurrentUserSettingsDialogComponent(InputControlsMixin, BaseDialog):
     def theme_value(self) -> str | None:
         return self.__theme_dropdown.value
 
-    @staticmethod
-    def __build_labeled_control(label: str, control: ft.Control) -> ft.Row:
-        return ft.Row(
-            expand=True,
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=12,
+    def __build_labeled_control(self, label: str, control: ft.Control) -> ft.ResponsiveRow:
+        return ft.ResponsiveRow(
+            columns=CurrentUserSettingsDialogStyles.ROW_COLUMNS,
+            alignment=CurrentUserSettingsDialogStyles.ROW_ALIGNMENT,
+            vertical_alignment=CurrentUserSettingsDialogStyles.ROW_VERTICAL_ALIGNMENT,
+            spacing=CurrentUserSettingsDialogStyles.ROW_SPACING,
             controls=[
-                ft.Container(width=170, content=InputControlsMixin._get_label(label)),
-                ft.Container(expand=True, content=control),
+                ft.Container(col=CurrentUserSettingsDialogStyles.LABEL_COL, content=self._get_label(label, colon=True)),
+                ft.Container(col=CurrentUserSettingsDialogStyles.CONTROL_COL, content=control),
             ],
         )

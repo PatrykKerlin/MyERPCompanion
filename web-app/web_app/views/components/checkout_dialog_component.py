@@ -19,8 +19,3 @@ class CheckoutDialogComponent(BaseDialog):
         dialog_content = self.content
         if isinstance(dialog_content, ft.Container) and isinstance(dialog_content.content, ft.Column):
             dialog_content.content.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
-
-    def set_content_width(self, width: int) -> None:
-        dialog_content = self.content
-        if isinstance(dialog_content, ft.Container):
-            dialog_content.width = width

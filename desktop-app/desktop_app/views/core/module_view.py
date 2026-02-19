@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import partial
 from typing import TYPE_CHECKING, Any, Callable, cast
 
 import flet as ft
@@ -183,24 +184,20 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
         can_read = ft.Checkbox(label=self._translation.get("can_read"), value=True)
         can_modify = ft.Checkbox(label=self._translation.get("can_modify"), value=False)
 
-        def on_cancel() -> None:
-            self.page.pop_dialog()
-
-        def on_confirm() -> None:
-            self.page.pop_dialog()
-            items = self._group_bulk_transfer.get_source_items_by_ids(source_ids)
-            can_read_value = bool(can_read.value) or bool(can_modify.value)
-            can_modify_value = bool(can_modify.value)
-            for source_id, values in items:
-                target_values = list(values) + [str(can_read_value), str(can_modify_value)]
-                target_id = self._group_bulk_transfer.add_target_row(source_id, target_values, highlight=True)
-                self.__group_permissions[target_id] = (can_read_value, can_modify_value)
-
         actions: list[ft.Control] = [
-            ft.TextButton(self._translation.get("cancel"), on_click=lambda _: on_cancel(), style=ButtonStyles.regular),
+            ft.TextButton(
+                self._translation.get("cancel"),
+                on_click=self.__close_permissions_dialog,
+                style=ButtonStyles.regular,
+            ),
             ft.TextButton(
                 self._translation.get("ok"),
-                on_click=lambda _: on_confirm(),
+                on_click=partial(
+                    self.__confirm_group_move_permissions,
+                    source_ids,
+                    can_read,
+                    can_modify,
+                ),
                 style=ButtonStyles.primary_compact,
             ),
         ]
@@ -211,6 +208,26 @@ class ModuleView(BaseView, GroupBulkTransferMixin):
             actions=actions,
         )
         BaseController.queue_dialog(self.page, dialog)
+
+    def __close_permissions_dialog(self, _: ft.ControlEvent | None = None) -> None:
+        if self.page:
+            self.page.pop_dialog()
+
+    def __confirm_group_move_permissions(
+        self,
+        source_ids: list[int],
+        can_read: ft.Checkbox,
+        can_modify: ft.Checkbox,
+        _: ft.ControlEvent | None = None,
+    ) -> None:
+        self.__close_permissions_dialog()
+        items = self._group_bulk_transfer.get_source_items_by_ids(source_ids)
+        can_read_value = bool(can_read.value) or bool(can_modify.value)
+        can_modify_value = bool(can_modify.value)
+        for source_id, values in items:
+            target_values = list(values) + [str(can_read_value), str(can_modify_value)]
+            target_id = self._group_bulk_transfer.add_target_row(source_id, target_values, highlight=True)
+            self.__group_permissions[target_id] = (can_read_value, can_modify_value)
 
     def __set_bulk_transfer_state(self, mode: ViewMode) -> None:
         enabled = mode == ViewMode.READ

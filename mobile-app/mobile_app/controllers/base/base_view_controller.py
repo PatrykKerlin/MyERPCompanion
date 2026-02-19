@@ -2,6 +2,7 @@ import json
 from abc import ABC, abstractmethod
 from dataclasses import replace
 from datetime import date, datetime
+from functools import partial
 from typing import Any, Callable, Generic, TypeVar, cast
 
 import flet as ft
@@ -372,17 +373,21 @@ class BaseViewController(
     def __open_save_success_dialog(self, close_tab_title: str | None) -> None:
         translation = self._state_store.app_state.translation.items
 
-        def on_ok(_: ft.Event[ft.TextButton]) -> None:
-            self._page.pop_dialog()
-            if close_tab_title:
-                self._page.run_task(self._event_bus.publish, TabCloseRequested(close_tab_title))
-
         message_dialog = MessageDialogComponent(
             translation=translation,
             message_key="record_save_success",
-            on_ok_clicked=on_ok,
+            on_ok_clicked=partial(self.__on_save_success_dialog_ok, close_tab_title),
         )
         self._queue_dialog(message_dialog)
+
+    def __on_save_success_dialog_ok(
+        self,
+        close_tab_title: str | None,
+        _: ft.Event[ft.TextButton],
+    ) -> None:
+        self._page.pop_dialog()
+        if close_tab_title:
+            self._page.run_task(self._event_bus.publish, TabCloseRequested(close_tab_title))
 
     async def __record_delete_requested_handler(self, event: RecordDeleteRequested) -> None:
         if event.view_key != self._view_key:

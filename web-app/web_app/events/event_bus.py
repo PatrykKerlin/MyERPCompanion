@@ -1,7 +1,8 @@
 import asyncio
+from functools import partial
 from logging import Logger
 from threading import RLock
-from typing import Any, Awaitable, Callable, TypeVar
+from typing import Any, Awaitable, Callable, TypeVar, cast
 
 from events.base.base_event import BaseEvent
 
@@ -37,13 +38,11 @@ class EventBus:
         if not self.__started:
             return
         self.__started = False
-        for task in self.__event_workers + self.__handler_workers:
+        tasks = self.__event_workers + self.__handler_workers
+        for task in tasks:
             task.cancel()
-        for task in self.__event_workers + self.__handler_workers:
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
         self.__event_workers.clear()
         self.__handler_workers.clear()
         with self.__subs_lock:
@@ -64,23 +63,19 @@ class EventBus:
     def subscribe(self, event: type[BaseEvent], handler: Callable[[TEvent], Awaitable[None]]) -> Callable[[], None]:
         with self.__subs_lock:
             self.__subscriptions.setdefault(event, []).append(handler)
+        return cast(Callable[[], None], partial(self.__unsubscribe, event, handler))
 
-        def unsubscribe() -> None:
-            with self.__subs_lock:
-                handlers = self.__subscriptions.get(event, [])
-                if handler in handlers:
-                    handlers.remove(handler)
-                if not handlers and event in self.__subscriptions:
-                    del self.__subscriptions[event]
-
-        return unsubscribe
+    def __unsubscribe(self, event: type[BaseEvent], handler: Callable[[Any], Awaitable[None]]) -> None:
+        with self.__subs_lock:
+            handlers = self.__subscriptions.get(event, [])
+            if handler in handlers:
+                handlers.remove(handler)
+            if not handlers and event in self.__subscriptions:
+                del self.__subscriptions[event]
 
     async def __run_event_worker(self) -> None:
         while True:
-            try:
-                event = await self.__event_queue.get()
-            except asyncio.CancelledError:
-                break
+            event = await self.__event_queue.get()
             try:
                 with self.__subs_lock:
                     handlers = list(self.__subscriptions.get(type(event), []))
@@ -91,10 +86,7 @@ class EventBus:
 
     async def __run_handler_worker(self) -> None:
         while True:
-            try:
-                handler, event = await self.__handler_queue.get()
-            except asyncio.CancelledError:
-                break
+            handler, event = await self.__handler_queue.get()
             try:
                 result = await handler(event)
                 if isinstance(result, Exception):

@@ -12,9 +12,18 @@ class ButtonStyles:
             horizontal=AppDimensions.PADDING_BUTTON_HORIZONTAL,
             vertical=AppDimensions.PADDING_BUTTON_VERTICAL,
         ),
-        bgcolor=AppColors.SURFACE_CONTAINER_HIGH,
-        color=AppColors.ON_SURFACE,
-        side=ft.BorderSide(width=1, color=AppColors.OUTLINE),
+        bgcolor={
+            ft.ControlState.DEFAULT: AppColors.SURFACE_CONTAINER_HIGH,
+            ft.ControlState.DISABLED: AppColors.SURFACE,
+        },
+        color={
+            ft.ControlState.DEFAULT: AppColors.ON_SURFACE,
+            ft.ControlState.DISABLED: AppColors.ON_SURFACE_VARIANT,
+        },
+        side={
+            ft.ControlState.DEFAULT: ft.BorderSide(width=1, color=AppColors.OUTLINE),
+            ft.ControlState.DISABLED: ft.BorderSide(width=1, color=AppColors.OUTLINE_VARIANT),
+        },
         shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
     )
     compact = ft.ButtonStyle(
@@ -22,6 +31,18 @@ class ButtonStyles:
             horizontal=AppDimensions.PADDING_BUTTON_HORIZONTAL_COMPACT,
             vertical=AppDimensions.PADDING_BUTTON_VERTICAL_COMPACT,
         ),
+        bgcolor={
+            ft.ControlState.DEFAULT: AppColors.SURFACE_CONTAINER_HIGH,
+            ft.ControlState.DISABLED: AppColors.SURFACE,
+        },
+        color={
+            ft.ControlState.DEFAULT: AppColors.ON_SURFACE,
+            ft.ControlState.DISABLED: AppColors.ON_SURFACE_VARIANT,
+        },
+        side={
+            ft.ControlState.DEFAULT: ft.BorderSide(width=1, color=AppColors.OUTLINE),
+            ft.ControlState.DISABLED: ft.BorderSide(width=1, color=AppColors.OUTLINE_VARIANT),
+        },
         shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
     )
     icon = ft.ButtonStyle(
@@ -35,29 +56,14 @@ class ButtonStyles:
             right=AppDimensions.SPACE_MD,
             bottom=0,
         ),
-        color=AppColors.ON_MATERIAL_BLUE,
+        color={
+            ft.ControlState.DEFAULT: AppColors.ON_SURFACE,
+            ft.ControlState.DISABLED: AppColors.ON_SURFACE_VARIANT,
+        },
         bgcolor=ft.Colors.TRANSPARENT,
         shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
     )
     primary_regular = ft.ButtonStyle(
-        padding=ft.Padding.symmetric(
-            horizontal=AppDimensions.PADDING_BUTTON_HORIZONTAL,
-            vertical=AppDimensions.PADDING_BUTTON_VERTICAL,
-        ),
-        bgcolor=AppColors.MATERIAL_BLUE,
-        color=AppColors.ON_MATERIAL_BLUE,
-        shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
-    )
-    primary_compact = ft.ButtonStyle(
-        padding=ft.Padding.symmetric(
-            horizontal=AppDimensions.PADDING_BUTTON_HORIZONTAL_COMPACT,
-            vertical=AppDimensions.PADDING_BUTTON_VERTICAL_COMPACT,
-        ),
-        bgcolor=AppColors.MATERIAL_BLUE,
-        color=AppColors.ON_MATERIAL_BLUE,
-        shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
-    )
-    add_to_cart = ft.ButtonStyle(
         padding=ft.Padding.symmetric(
             horizontal=AppDimensions.PADDING_BUTTON_HORIZONTAL,
             vertical=AppDimensions.PADDING_BUTTON_VERTICAL,
@@ -72,7 +78,45 @@ class ButtonStyles:
         },
         side={
             ft.ControlState.DEFAULT: ft.BorderSide(0, ft.Colors.TRANSPARENT),
-            ft.ControlState.DISABLED: ft.BorderSide(1, AppColors.OUTLINE),
+            ft.ControlState.DISABLED: ft.BorderSide(1, AppColors.OUTLINE_VARIANT),
+        },
+        shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
+    )
+    primary_compact = ft.ButtonStyle(
+        padding=ft.Padding.symmetric(
+            horizontal=AppDimensions.PADDING_BUTTON_HORIZONTAL_COMPACT,
+            vertical=AppDimensions.PADDING_BUTTON_VERTICAL_COMPACT,
+        ),
+        bgcolor={
+            ft.ControlState.DEFAULT: AppColors.MATERIAL_BLUE,
+            ft.ControlState.DISABLED: AppColors.SURFACE_CONTAINER_HIGH,
+        },
+        color={
+            ft.ControlState.DEFAULT: AppColors.ON_MATERIAL_BLUE,
+            ft.ControlState.DISABLED: AppColors.ON_SURFACE_VARIANT,
+        },
+        side={
+            ft.ControlState.DEFAULT: ft.BorderSide(0, ft.Colors.TRANSPARENT),
+            ft.ControlState.DISABLED: ft.BorderSide(1, AppColors.OUTLINE_VARIANT),
+        },
+        shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
+    )
+    add_to_cart = ft.ButtonStyle(
+        padding=ft.Padding.symmetric(
+            horizontal=AppDimensions.PADDING_BUTTON_HORIZONTAL,
+            vertical=AppDimensions.PADDING_BUTTON_VERTICAL,
+        ),
+        bgcolor={
+            ft.ControlState.DEFAULT: AppColors.MATERIAL_BLUE,
+            ft.ControlState.DISABLED: AppColors.SURFACE,
+        },
+        color={
+            ft.ControlState.DEFAULT: AppColors.ON_MATERIAL_BLUE,
+            ft.ControlState.DISABLED: AppColors.ON_SURFACE_VARIANT,
+        },
+        side={
+            ft.ControlState.DEFAULT: ft.BorderSide(0, ft.Colors.TRANSPARENT),
+            ft.ControlState.DISABLED: ft.BorderSide(1, AppColors.OUTLINE_VARIANT),
         },
         shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
     )
@@ -145,6 +189,16 @@ class DialogStyles:
     ACTIONS_PADDING = ft.Padding.only(left=38, top=16, right=38, bottom=24)
     ACTION_BUTTON_PADDING = ft.Padding.symmetric(horizontal=12, vertical=10)
     ACTIONS_OVERFLOW_BUTTON_SPACING = 16
+    LOADING_ACTIONS_PADDING = ft.Padding.all(0)
+    LOADING_ACTION_BUTTON_PADDING = ft.Padding.all(0)
+    LOADING_ACTIONS_OVERFLOW_BUTTON_SPACING = 0
+    LOADING_SCROLLABLE = False
+    CURRENT_USER_SETTINGS_CONTENT_WIDTH = 540
+    ITEM_DETAILS_CONTENT_WIDTH = 380
+    ITEM_DETAILS_LABEL_WIDTH = 150
+    ITEM_DETAILS_VALUE_WIDTH = ITEM_DETAILS_CONTENT_WIDTH - ITEM_DETAILS_LABEL_WIDTH - AppDimensions.SPACE_MD
+    ITEM_DETAILS_SCROLL_HEIGHT = 360
+    ITEM_DETAILS_GALLERY_VISIBLE_COUNT = 3
 
 
 class AppViewStyles:
@@ -163,12 +217,18 @@ class AppViewStyles:
         vertical=AppDimensions.PADDING_BUTTON_VERTICAL,
     )
     FOOTER_BORDER = ft.Border(top=ft.BorderSide(1, AppColors.OUTLINE_VARIANT))
+    FOOTER_ROW_COLUMNS = 12
+    FOOTER_LEFT_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 7, "lg": 7, "xl": 7})
+    FOOTER_RIGHT_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 5, "lg": 5, "xl": 5})
+    FOOTER_LEFT_COLUMN_SPACING = 0
     CLICKABLE_TEXT_PADDING = ft.Padding.symmetric(horizontal=AppDimensions.SPACE_2XS)
     FOOTER_MUTED_TEXT_COLOR: ft.ColorValue = AppColors.ON_SURFACE_VARIANT
-    TOP_BAR_ACTION_COLOR: ft.ColorValue = AppColors.ON_MATERIAL_BLUE
 
 
 class AuthViewStyles:
+    HERO_CARD_WIDTH = int(AppDimensions.AUTH_CARD_WIDTH * 0.825)
+    ROOT_ROW_COLUMNS = 12
+    HERO_CARD_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 6, "lg": 4, "xl": 3})
     HERO_BODY_PADDING = ft.Padding.symmetric(
         horizontal=AppDimensions.AUTH_CARD_PADDING_HORIZONTAL,
         vertical=AppDimensions.AUTH_CARD_PADDING_VERTICAL,
@@ -190,15 +250,36 @@ class OrdersViewStyles:
     CARD_ELEVATION = 2
     CARD_BGCOLOR: ft.ColorValue = AppColors.CARD
     CARD_PADDING = ft.Padding.all(AppDimensions.PADDING_FORM_VERTICAL)
+    CARD_OUTER_PADDING = ft.Padding.symmetric(vertical=AppDimensions.SPACE_SM)
+    CARD_CONTENT_SPACING = AppDimensions.SPACE_LG
+    DETAILS_ROW_COLUMNS = 12
+    DETAILS_ROW_VERTICAL_ALIGNMENT = AlignmentStyles.CROSS_STRETCH
+    PANELS_ROW_COLUMNS = 12
+    PANELS_ROW_ALIGNMENT = AlignmentStyles.AXIS_START
+    PANELS_ROW_VERTICAL_ALIGNMENT = AlignmentStyles.CROSS_STRETCH
+    ROOT_ROW_COLUMNS = 12
+    ROOT_ROW_ALIGNMENT = AlignmentStyles.AXIS_CENTER
     ORDER_TILE_PADDING = ft.Padding.all(AppDimensions.SPACE_MD)
     ORDER_TILE_RADIUS = AppDimensions.RADIUS_MD
+    ORDER_TILE_ROW_COLUMNS = 12
+    ORDER_TILE_ROW_SPACING = AppDimensions.SPACE_SM
+    ORDER_TILE_TEXT_SPACING = AppDimensions.SPACE_2XS
     ORDER_META_HEADER_PADDING = ft.Padding.symmetric(horizontal=AppDimensions.SPACE_SM)
+    ITEMS_HEADER_ROW_COLUMNS = 12
+    ITEMS_HEADER_ROW_ALIGNMENT = AlignmentStyles.AXIS_START
+    ITEMS_HEADER_ROW_SPACING = AppDimensions.SPACE_LG
     ORDER_ITEMS_ROW_PADDING = ft.Padding.symmetric(vertical=AppDimensions.SPACE_XS, horizontal=AppDimensions.SPACE_SM)
     ORDER_ITEMS_ROW_BORDER = ft.Border.all(1, AppColors.OUTLINE_VARIANT)
     ORDER_ITEMS_ROW_RADIUS = AppDimensions.RADIUS_SM
+    ITEMS_ROW_COLUMNS = 12
+    ITEMS_ROW_ALIGNMENT = AlignmentStyles.AXIS_START
+    ITEMS_ROW_SPACING = AppDimensions.SPACE_LG
     STATUS_ROW_PADDING = ft.Padding.all(AppDimensions.SPACE_SM)
     STATUS_ROW_BORDER = ft.Border.all(1, AppColors.OUTLINE_VARIANT)
     STATUS_ROW_RADIUS = AppDimensions.RADIUS_SM
+    META_ROW_COLUMNS = 12
+    META_ROW_SPACING = AppDimensions.SPACE_LG
+    META_TRAILING_SPACING = AppDimensions.SPACE_SM
     ITEM_DIALOG_FALLBACK_PADDING = ft.Padding.all(AppDimensions.SPACE_SM)
     OVERDUE_COLOR: ft.ColorValue = AppColors.ERROR
     ORDER_SELECTED_BGCOLOR: ft.ColorValue = AppColors.PRIMARY_CONTAINER
@@ -207,6 +288,20 @@ class OrdersViewStyles:
     UNPAID_LIST_ICON_SIZE = 22
     OVERDUE_LEGEND_ICON_SIZE = 16
     OVERDUE_LIST_ICON_SIZE = 22
+    ORDER_TILE_TEXT_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 11, "lg": 11, "xl": 11})
+    ORDER_TILE_ICON_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 1, "lg": 1, "xl": 1})
+    ORDER_META_LABEL_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 4, "lg": 4, "xl": 4})
+    ORDER_META_VALUE_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 8, "lg": 8, "xl": 8})
+    ORDER_ITEM_INDEX_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 2, "lg": 2, "xl": 2})
+    ORDER_ITEM_NAME_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 2, "lg": 2, "xl": 2})
+    ORDER_ITEM_EAN_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 2, "lg": 2, "xl": 2})
+    ORDER_ITEM_QUANTITY_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 2, "lg": 2, "xl": 2})
+    ORDER_ITEM_DISCOUNTS_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 4, "lg": 4, "xl": 4})
+    CARD_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 11, "lg": 10, "xl": 9})
+    PANELS_LEFT_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 3, "lg": 3, "xl": 3})
+    PANELS_RIGHT_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 9, "lg": 9, "xl": 9})
+    DETAILS_ITEMS_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 8, "lg": 8, "xl": 8})
+    DETAILS_STATUS_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 4, "lg": 4, "xl": 4})
 
     @staticmethod
     def order_tile_border(selected: bool) -> ft.Border:
@@ -235,45 +330,76 @@ class CreateOrderViewStyles:
     RESPONSIVE_VERTICAL_ALIGNMENT = AlignmentStyles.CROSS_CENTER
     RESPONSIVE_SPACING = AppDimensions.SPACE_2XS
     RESPONSIVE_RUN_SPACING = AppDimensions.SPACE_2XS
+    ROOT_ROW_COLUMNS = 12
+    ROOT_ROW_ALIGNMENT = AlignmentStyles.AXIS_CENTER
+    CARD_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 11, "lg": 10, "xl": 9})
+    CARD_OUTER_PADDING = ft.Padding.symmetric(vertical=AppDimensions.SPACE_SM)
 
-    HEADER_BACK_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"sm": 12, "md": 2})
-    HEADER_FILTER_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"sm": 12, "md": 10})
+    HEADER_BACK_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 2, "lg": 2, "xl": 2})
+    HEADER_FILTER_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 3, "lg": 3, "xl": 3})
+    HEADER_SPACER_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 7, "lg": 7, "xl": 7})
 
-    CART_ITEM_NAME_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"sm": 12, "md": 3})
-    CART_ITEM_QUANTITY_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"sm": 6, "md": 3})
-    CART_ITEM_DISCOUNTS_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"sm": 12, "md": 5})
-    CART_ITEM_REMOVE_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"sm": 6, "md": 1})
+    CART_COLUMNS = 9
+    CART_ITEM_NAME_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 3, "lg": 3, "xl": 3})
+    CART_ITEM_QUANTITY_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 2, "lg": 2, "xl": 2})
+    CART_ITEM_DISCOUNTS_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 3, "lg": 3, "xl": 3})
+    CART_ITEM_REMOVE_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 1, "lg": 1, "xl": 1})
 
-    CHECKOUT_FILTER_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"sm": 12, "md": 4})
-    CHECKOUT_TOTAL_LABEL_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"sm": 6, "md": 4})
-    CHECKOUT_TOTAL_VALUE_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"sm": 6, "md": 8})
+    CHECKOUT_FILTER_COLUMNS = 15
+    CHECKOUT_CURRENCY_FILTER_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 4, "lg": 4, "xl": 4})
+    CHECKOUT_CUSTOMER_FILTER_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 5, "lg": 5, "xl": 5})
+    CHECKOUT_FILTER_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 6, "lg": 6, "xl": 6})
+    CHECKOUT_TOTAL_LABEL_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 4, "lg": 4, "xl": 4})
+    CHECKOUT_TOTAL_VALUE_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 8, "lg": 8, "xl": 8})
     CHECKOUT_TOTAL_ROW_SPACING = 0
     CHECKOUT_TOTAL_ROW_RUN_SPACING = 0
+    ITEM_ROW_IMAGE_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 1, "lg": 1, "xl": 1})
+    ITEM_ROW_DETAILS_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 2, "lg": 2, "xl": 2})
+    ITEM_ROW_CATEGORY_DISCOUNT_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 2, "lg": 2, "xl": 2})
+    ITEM_ROW_ITEM_DISCOUNT_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 2, "lg": 2, "xl": 2})
+    ITEM_ROW_QUANTITY_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 3, "lg": 3, "xl": 3})
+    ITEM_ROW_ADD_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 2, "lg": 2, "xl": 2})
 
     DETAILS_COLUMN_SPACING = AppDimensions.SPACE_2XS
     CART_HEADER_PADDING = ft.Padding.symmetric(vertical=AppDimensions.SPACE_2XS, horizontal=AppDimensions.SPACE_XS)
     CART_ITEM_PADDING = ft.Padding.symmetric(vertical=AppDimensions.SPACE_XS, horizontal=AppDimensions.SPACE_XS)
     CART_ITEM_BORDER = ft.Border.all(1, AppColors.OUTLINE_VARIANT)
 
-    CART_DIALOG_WIDTH_RATIO = 0.95
+    CART_DIALOG_WIDTH_RATIO = 0.66
     CART_DIALOG_BREAKPOINT_DESKTOP = 900
-    CART_DIALOG_MAX_WIDTH = 960
+    CART_DIALOG_MAX_WIDTH = 620
     CART_DIALOG_MIN_VIEWPORT_WIDTH = 320
     CART_DIALOG_CONTENT_WIDTH_RATIO = 0.72
-    CART_DIALOG_CONTENT_MIN_WIDTH = 380
-    CART_DIALOG_DEFAULT_WIDTH = 460
+    CART_DIALOG_CONTENT_MIN_WIDTH = 300
+    CART_DIALOG_DEFAULT_WIDTH = 320
+    CART_DIALOG_MIN_HEIGHT = 120
+    CART_DIALOG_HEADER_ESTIMATED_HEIGHT = 52
+    CART_DIALOG_ROW_ESTIMATED_HEIGHT = 68
     CART_DIALOG_HEIGHT_RATIO = 0.5
 
     CHECKOUT_DIALOG_MIN_WIDTH = 360
     CHECKOUT_DIALOG_WIDTH_RATIO = 0.9
     CHECKOUT_DIALOG_MAX_WIDTH = 720
     CHECKOUT_DIALOG_DEFAULT_WIDTH = 600
+    CHECKOUT_DIALOG_WIDTH_MULTIPLIER = 1.1
 
     CHECKOUT_ERROR_COLOR: ft.ColorValue = AppColors.ERROR
     CHECKOUT_MISSING_RATE_PADDING = ft.Padding.only(top=AppDimensions.SPACE_2XS)
     ITEM_IMAGE_BORDER = ft.Border.all(1, AppColors.OUTLINE_VARIANT)
+    ITEM_ROW_ELEMENT_PADDING = ft.Padding.symmetric(horizontal=AppDimensions.SPACE_XS)
+    ITEM_ROW_DETAILS_PADDING = ft.Padding.only(left=AppDimensions.SPACE_SM, right=AppDimensions.SPACE_XS)
     ITEM_ROW_PADDING = ft.Padding.all(AppDimensions.SPACE_SM)
 
 
 class FeedbackStyles:
     ERROR_ICON_COLOR: ft.ColorValue = AppColors.ERROR
+
+
+class CurrentUserSettingsDialogStyles:
+    FIELD_BOTTOM_PADDING = ft.Padding.only(bottom=AppDimensions.SPACE_SM)
+    ROW_COLUMNS = 12
+    ROW_ALIGNMENT = AlignmentStyles.AXIS_START
+    ROW_VERTICAL_ALIGNMENT = AlignmentStyles.CROSS_CENTER
+    ROW_SPACING = AppDimensions.SPACE_LG
+    LABEL_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 4, "lg": 4, "xl": 4})
+    CONTROL_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 8, "lg": 8, "xl": 8})

@@ -1,7 +1,8 @@
 import asyncio
+from functools import partial
 from logging import Logger
 from threading import RLock
-from typing import Any, Awaitable, Callable, TypeVar
+from typing import Any, Awaitable, Callable, TypeVar, cast
 
 from events.events import BaseEvent
 
@@ -24,16 +25,15 @@ class EventBus:
     def subscribe(self, event: type[BaseEvent], handler: Callable[[TEvent], Awaitable[None]]) -> Callable[[], None]:
         with self.__subs_lock:
             self.__subscriptions.setdefault(event, []).append(handler)
+        return cast(Callable[[], None], partial(self.__unsubscribe, event, handler))
 
-        def unsubscribe() -> None:
-            with self.__subs_lock:
-                handlers = self.__subscriptions.get(event, [])
-                if handler in handlers:
-                    handlers.remove(handler)
-                if not handlers and event in self.__subscriptions:
-                    del self.__subscriptions[event]
-
-        return unsubscribe
+    def __unsubscribe(self, event: type[BaseEvent], handler: Callable[[Any], Awaitable[None]]) -> None:
+        with self.__subs_lock:
+            handlers = self.__subscriptions.get(event, [])
+            if handler in handlers:
+                handlers.remove(handler)
+            if not handlers and event in self.__subscriptions:
+                del self.__subscriptions[event]
 
     async def publish(self, event: BaseEvent) -> None:
         await self.__event_queue.put(event)

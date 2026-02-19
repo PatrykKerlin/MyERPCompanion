@@ -17,7 +17,7 @@ class WebHeaderComponent(BaseComponent[BaseController], ft.Container):
         self.__on_user_settings: Callable[[], None] | None = None
         self.__on_logout: Callable[[], None] | None = None
 
-        self.__app_name = ft.Text(self._translation.get("my_erp_companion"), style=TypographyStyles.APP_HEADER)
+        self.__app_name = self._get_label(self._translation.get("my_erp_companion"), style=TypographyStyles.APP_HEADER)
         self.__app_name_container = ft.Container(
             content=self.__app_name,
             on_click=lambda _: self.__handle_browse_orders(),
@@ -28,7 +28,6 @@ class WebHeaderComponent(BaseComponent[BaseController], ft.Container):
             icon=ft.Icon(
                 ft.Icons.SHOPPING_CART_OUTLINED,
                 size=AppViewStyles.TOP_BAR_ICON_SIZE,
-                color=AppViewStyles.TOP_BAR_ACTION_COLOR,
             ),
             tooltip=self._translation.get("cart"),
             on_click=lambda _: self.__handle_cart(),
@@ -39,7 +38,6 @@ class WebHeaderComponent(BaseComponent[BaseController], ft.Container):
             icon=ft.Icon(
                 ft.Icons.PERSON_OUTLINE,
                 size=AppViewStyles.TOP_BAR_ICON_SIZE,
-                color=AppViewStyles.TOP_BAR_ACTION_COLOR,
             ),
             tooltip=self._translation.get("current_user"),
             on_click=lambda _: self.__handle_user_settings(),

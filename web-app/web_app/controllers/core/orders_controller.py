@@ -96,18 +96,16 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
 
     @staticmethod
     def __build_discount_label_map(view_data: OrderViewResponseSchema) -> dict[int, str]:
-        def absorb(discounts: list[OrderViewDiscountSchema], result: dict[int, str]) -> None:
-            for discount in discounts:
-                if discount.id not in result:
-                    result[discount.id] = discount.code
-
         result: dict[int, str] = {}
         for customer in view_data.customers:
-            absorb(customer.discounts, result)
+            for discount in customer.discounts:
+                result[discount.id] = discount.code
         for category in view_data.categories:
-            absorb(category.discounts, result)
+            for discount in category.discounts:
+                result[discount.id] = discount.code
         for item in view_data.source_items:
-            absorb(item.discounts, result)
+            for discount in item.discounts:
+                result[discount.id] = discount.code
         return result
 
     def __build_images_map(self, items: list[OrderViewSourceItemSchema]) -> dict[int, list[str]]:
@@ -139,7 +137,7 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
                 if discount_id is None:
                     continue
                 label = discount_label_map.get(discount_id)
-                if label and label not in discount_labels:
+                if label:
                     discount_labels.append(label)
             width = source.width if source else item.width
             height = source.height if source else item.height
@@ -193,7 +191,7 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
             if item.customer_discount_id is None:
                 continue
             label = discount_label_map.get(item.customer_discount_id)
-            if label and label not in customer_discount_labels:
+            if label:
                 customer_discount_labels.append(label)
         customer_discount = ", ".join(customer_discount_labels) if customer_discount_labels else "-"
         total_with_shipping = order.total_gross + order.shipping_cost

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import partial
 from typing import TYPE_CHECKING
 
 import flet as ft
@@ -164,28 +165,41 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
             editable=True,
         )
 
-        def close_dialog(_: ft.ControlEvent | None = None) -> None:
-            self._page.pop_dialog()
-
-        def confirm_dialog(_: ft.ControlEvent | None = None) -> None:
-            selected_title = dropdown.value
-            if selected_title:
-                target_view = self.__active_tabs.get(selected_title)
-                if target_view:
-                    self._state_store.update(
-                        view={"title": selected_title, "mode": target_view.mode, "view": target_view}
-                    )
-            close_dialog()
-
         dialog = BaseDialog(
             title=translation.get("find_tab"),
             controls=[dropdown],
             actions=[
-                ft.TextButton(translation.get("cancel"), on_click=close_dialog, style=ButtonStyles.regular),
-                ft.TextButton(translation.get("ok"), on_click=confirm_dialog, style=ButtonStyles.primary_compact),
+                ft.TextButton(
+                    translation.get("cancel"),
+                    on_click=self.__close_tab_search_dialog,
+                    style=ButtonStyles.regular,
+                ),
+                ft.TextButton(
+                    translation.get("ok"),
+                    on_click=partial(self.__confirm_tab_search_dialog, dropdown),
+                    style=ButtonStyles.primary_compact,
+                ),
             ],
         )
         self._queue_dialog(dialog)
+
+    def __close_tab_search_dialog(self, _: ft.ControlEvent | None = None) -> None:
+        if self._page:
+            self._page.pop_dialog()
+
+    def __confirm_tab_search_dialog(
+        self,
+        dropdown: ft.Dropdown,
+        _: ft.ControlEvent | None = None,
+    ) -> None:
+        selected_title = dropdown.value
+        if selected_title:
+            target_view = self.__active_tabs.get(selected_title)
+            if target_view:
+                self._state_store.update(
+                    view={"title": selected_title, "mode": target_view.mode, "view": target_view}
+                )
+        self.__close_tab_search_dialog()
 
     async def __close_all_tabs(self) -> None:
         if not self.__active_tabs:

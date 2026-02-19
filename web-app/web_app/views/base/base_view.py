@@ -10,7 +10,6 @@ from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
 from views.base.base_component import BaseComponent
-from views.mixins.input_controls_mixin import InputControlsMixin
 
 if TYPE_CHECKING:
     from controllers.base.base_view_controller import BaseViewController
@@ -20,7 +19,7 @@ TController = TypeVar(
 )
 
 
-class BaseView(BaseComponent, InputControlsMixin, Generic[TController], ft.Container):
+class BaseView(BaseComponent, Generic[TController], ft.Container):
     def __init__(
         self,
         controller: TController,

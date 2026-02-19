@@ -12,17 +12,19 @@ class ImagePreviewDialogComponent(BaseDialog):
         self,
         translation: Translation,
         image_url: str,
-        on_ok_clicked: Callable[[ft.Event[ft.TextButton]], ft.DialogControl | None],
+        on_ok_clicked: Callable[[ft.Event[ft.Button]], ft.DialogControl | None],
     ) -> None:
         super().__init__(
             title=None,
             controls=[
-                ft.Image(
-                    src=image_url,
-                    width=AppDimensions.DIALOG_IMAGE_SIZE,
+                ft.Container(
                     height=AppDimensions.DIALOG_IMAGE_SIZE,
-                    fit=ft.BoxFit.CONTAIN,
+                    content=ft.Image(
+                        src=image_url,
+                        height=AppDimensions.DIALOG_IMAGE_SIZE,
+                        fit=ft.BoxFit.CONTAIN,
+                    ),
                 )
             ],
-            actions=[ft.TextButton(translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.regular)],
+            actions=[ft.Button(content=translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_regular)],
         )

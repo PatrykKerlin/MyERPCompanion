@@ -15,19 +15,21 @@ if TYPE_CHECKING:
 class AuthDialogComponent(BaseComponent, BaseDialog):
     def __init__(self, controller: AuthDialogController, translation: Translation) -> None:
         BaseComponent.__init__(self, controller, translation)
-        login_field = ft.TextField(label=translation.get("login"), autofocus=True)
-        login_field.border_radius = ControlStyles.FIELD_BORDER_RADIUS
-        login_field.border_color = ControlStyles.FIELD_BORDER_COLOR
-        login_field.focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR
-        login_field.height = ControlStyles.TEXT_FIELD_HEIGHT
-        login_field.content_padding = ControlStyles.FIELD_PADDING
+        self.__login_field = ft.TextField(label=translation.get("login"), autofocus=True)
+        self.__login_field.border_radius = ControlStyles.FIELD_BORDER_RADIUS
+        self.__login_field.border_color = ControlStyles.FIELD_BORDER_COLOR
+        self.__login_field.focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR
+        self.__login_field.height = ControlStyles.TEXT_FIELD_HEIGHT
+        self.__login_field.content_padding = ControlStyles.FIELD_PADDING
+        self.__login_field.on_submit = lambda _: self.__on_login()
 
-        password_field = ft.TextField(label=translation.get("password"), password=True, can_reveal_password=True)
-        password_field.border_radius = ControlStyles.FIELD_BORDER_RADIUS
-        password_field.border_color = ControlStyles.FIELD_BORDER_COLOR
-        password_field.focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR
-        password_field.height = ControlStyles.TEXT_FIELD_HEIGHT
-        password_field.content_padding = ControlStyles.FIELD_PADDING
+        self.__password_field = ft.TextField(label=translation.get("password"), password=True, can_reveal_password=True)
+        self.__password_field.border_radius = ControlStyles.FIELD_BORDER_RADIUS
+        self.__password_field.border_color = ControlStyles.FIELD_BORDER_COLOR
+        self.__password_field.focused_border_color = ControlStyles.FIELD_FOCUSED_BORDER_COLOR
+        self.__password_field.height = ControlStyles.TEXT_FIELD_HEIGHT
+        self.__password_field.content_padding = ControlStyles.FIELD_PADDING
+        self.__password_field.on_submit = lambda _: self.__on_login()
         cancel_button = ft.Button(
             content=translation.get("cancel"),
             on_click=lambda _: controller.on_cancel_click(),
@@ -35,15 +37,18 @@ class AuthDialogComponent(BaseComponent, BaseDialog):
         )
         login_button = ft.Button(
             content=translation.get("log_in"),
-            on_click=lambda _: controller.on_login_click(
-                login_field.value or "",
-                password_field.value or "",
-            ),
+            on_click=lambda _: self.__on_login(),
             style=ButtonStyles.primary_compact,
         )
         BaseDialog.__init__(
             self,
-            controls=[login_field, password_field],
+            controls=[self.__login_field, self.__password_field],
             actions=[cancel_button, login_button],
             title=translation.get("login"),
+        )
+
+    def __on_login(self) -> None:
+        self._controller.on_login_click(
+            self.__login_field.value or "",
+            self.__password_field.value or "",
         )

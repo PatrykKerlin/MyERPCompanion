@@ -11,9 +11,9 @@ class MessageDialogComponent(BaseDialog):
         self,
         translation: Translation,
         message_key: str,
-        on_ok_clicked: Callable[[ft.Event[ft.TextButton]], ft.DialogControl | None],
+        on_ok_clicked: Callable[[ft.Event[ft.Button]], ft.DialogControl | None],
     ) -> None:
         super().__init__(
-            controls=[ft.Text(translation.get(message_key))],
-            actions=[ft.TextButton(translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.regular)],
+            controls=[self._get_label(translation.get(message_key))],
+            actions=[ft.Button(content=translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_regular)],
         )

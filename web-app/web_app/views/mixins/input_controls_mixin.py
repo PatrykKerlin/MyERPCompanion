@@ -9,11 +9,31 @@ from views.controls.numeric_field_control import NumericField
 
 class InputControlsMixin:
     @staticmethod
-    def _get_label(label: str, colon: bool = True) -> ft.Text:
+    def _get_label(
+        label: str,
+        colon: bool = False,
+        style: ft.TextStyle | None = None,
+        text_align: ft.TextAlign | None = None,
+        no_wrap: bool | None = None,
+        overflow: ft.TextOverflow | None = None,
+        max_lines: int | None = None,
+        color: ft.ColorValue | None = None,
+    ) -> ft.Text:
         text_value = label
         if colon and text_value and not text_value.endswith(":"):
             text_value = f"{text_value}:"
-        return ft.Text(value=text_value)
+        text = ft.Text(
+            value=text_value,
+            style=style,
+            no_wrap=no_wrap,
+            max_lines=max_lines,
+            color=color,
+        )
+        if text_align is not None:
+            text.text_align = text_align
+        if overflow is not None:
+            text.overflow = overflow
+        return text
 
     @staticmethod
     def _get_text_field(
@@ -23,6 +43,7 @@ class InputControlsMixin:
         password: bool = False,
         lines: int = 1,
         on_change: Callable[[ft.Event[ft.TextField]], object] | None = None,
+        on_submit: Callable[[ft.Event[ft.TextField]], object] | None = None,
         expand: bool = True,
         autofocus: bool = False,
     ) -> ft.TextField:
@@ -37,6 +58,7 @@ class InputControlsMixin:
             min_lines=resolved_lines if resolved_lines > 1 else None,
             max_lines=resolved_lines if resolved_lines > 1 else None,
             on_change=on_change,
+            on_submit=on_submit,
             expand=expand,
             autofocus=autofocus,
             height=ControlStyles.TEXT_FIELD_HEIGHT * resolved_lines,

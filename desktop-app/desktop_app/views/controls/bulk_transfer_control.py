@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Any, Callable, cast
 
 import flet as ft
@@ -505,16 +506,17 @@ class BulkTransfer(ft.Container):
             self.__render_target_table()
 
     def __show_delete_confirm(self, page: ft.Page, selected_ids: list[int]) -> None:
-        def on_cancel() -> None:
-            page.pop_dialog()
-
-        def on_confirm() -> None:
-            page.pop_dialog()
-            self.__execute_delete(selected_ids)
-
         actions: list[ft.Control] = [
-            ft.TextButton(self.__cancel_label, on_click=lambda _: on_cancel(), style=ButtonStyles.regular),
-            ft.TextButton(self.__confirm_label, on_click=lambda _: on_confirm(), style=ButtonStyles.primary_compact),
+            ft.TextButton(
+                self.__cancel_label,
+                on_click=partial(self.__close_delete_dialog, page),
+                style=ButtonStyles.regular,
+            ),
+            ft.TextButton(
+                self.__confirm_label,
+                on_click=partial(self.__confirm_delete, page, selected_ids),
+                style=ButtonStyles.primary_compact,
+            ),
         ]
 
         dialog = BaseDialog(
@@ -523,6 +525,18 @@ class BulkTransfer(ft.Container):
             actions=actions,
         )
         BaseController.queue_dialog(page, dialog)
+
+    def __close_delete_dialog(self, page: ft.Page, _: ft.ControlEvent | None = None) -> None:
+        page.pop_dialog()
+
+    def __confirm_delete(
+        self,
+        page: ft.Page,
+        selected_ids: list[int],
+        _: ft.ControlEvent | None = None,
+    ) -> None:
+        self.__close_delete_dialog(page)
+        self.__execute_delete(selected_ids)
 
     def __handle_save_clicked(self, event: ft.Event[ft.IconButton]) -> None:
         self.__on_save_clicked(event)

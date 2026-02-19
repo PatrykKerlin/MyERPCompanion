@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from functools import partial
 from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
@@ -60,8 +61,6 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         self.__cart_resize_handler: Callable[[ft.ControlEvent], None] | None = None
         self.__cart_previous_resize_handler: Callable[[ft.ControlEvent], None] | None = None
         self.__card: ft.Card | None = None
-        self.__card_resize_handler: Callable[[ft.ControlEvent], None] | None = None
-        self.__card_previous_resize_handler: Callable[[ft.ControlEvent], None] | None = None
         self.__checkout_dialog: CheckoutDialogComponent | None = None
         self.__checkout_currency_dropdown: ft.Dropdown | None = None
         self.__checkout_customer_discount_dropdown: ft.Dropdown | None = None
@@ -73,8 +72,6 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         self.__checkout_total_with_shipping_text: ft.Text | None = None
         self.__checkout_missing_rate_text: ft.Text | None = None
         self.__checkout_confirm_button: ft.Button | None = None
-        self.__checkout_resize_handler: Callable[[ft.ControlEvent], None] | None = None
-        self.__checkout_previous_resize_handler: Callable[[ft.ControlEvent], None] | None = None
         self.__items_by_id: dict[int, OrderViewSourceItemSchema] = {item.id: item for item in items}
         self.__category_discount_map: dict[int, list[OrderViewDiscountSchema]] = {
             category.id: list(category.discounts) for category in categories
@@ -93,7 +90,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         back_button = ft.TextButton(
             self._translation.get("back_to_orders"),
             on_click=lambda _: self._controller.on_back_to_orders_clicked(),
-            style=ButtonStyles.regular,
+            style=ButtonStyles.primary_regular,
         )
         header_row = self.__build_responsive_row(
             controls=[
@@ -106,6 +103,9 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                     col=CreateOrderViewStyles.HEADER_FILTER_COL,
                     content=self.__category_dropdown,
                     alignment=CreateOrderViewStyles.LEFT_ALIGNMENT,
+                ),
+                ft.Container(
+                    col=CreateOrderViewStyles.HEADER_SPACER_COL,
                 ),
             ],
         )
@@ -129,13 +129,22 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         self.content = ft.Container(
             expand=True,
             alignment=CreateOrderViewStyles.ROOT_ALIGNMENT,
-            content=self.__card,
+            padding=CreateOrderViewStyles.CARD_OUTER_PADDING,
+            content=ft.ResponsiveRow(
+                columns=CreateOrderViewStyles.ROOT_ROW_COLUMNS,
+                alignment=CreateOrderViewStyles.ROOT_ROW_ALIGNMENT,
+                controls=[
+                    ft.Container(
+                        col=CreateOrderViewStyles.CARD_COL,
+                        content=self.__card,
+                        expand=True,
+                    )
+                ],
+            ),
         )
-        self.__apply_card_size()
-        self.__register_card_resize_handler()
 
     def open_cart_dialog(self) -> None:
-        self.__cart_list = ft.Column(spacing=AppDimensions.SPACE_XS, tight=True, scroll=ft.ScrollMode.AUTO, expand=True)
+        self.__cart_list = ft.Column(spacing=AppDimensions.SPACE_XS, tight=True, scroll=ft.ScrollMode.AUTO)
         self.__cart_container = ft.Container(content=self.__cart_list)
         self.__cart_dialog = CartDialogComponent(
             translation=self._translation,
@@ -159,29 +168,62 @@ class CreateOrderView(BaseView["CreateOrderController"]):
     def __handle_cart_dialog_resize(self, event: ft.ControlEvent) -> None:
         if callable(self.__cart_previous_resize_handler):
             self.__cart_previous_resize_handler(event)
-        self.__apply_cart_dialog_size()
+        cart_items_count = len(self._controller.get_cart_snapshot())
+        self.__apply_cart_dialog_size(cart_items_count)
 
     def __resolve_viewport(self) -> tuple[int | None, int | None]:
         return self.get_viewport_size()
 
-    def __apply_cart_dialog_size(self) -> None:
-        if not self.__cart_container:
-            return
-        viewport_width, viewport_height = self.__resolve_viewport()
+    @staticmethod
+    def __resolve_cart_dialog_width(viewport_width: int | None) -> int:
         if viewport_width:
             target_width = int(viewport_width * CreateOrderViewStyles.CART_DIALOG_WIDTH_RATIO)
             if viewport_width >= CreateOrderViewStyles.CART_DIALOG_BREAKPOINT_DESKTOP:
                 target_width = min(target_width, CreateOrderViewStyles.CART_DIALOG_MAX_WIDTH)
-            target_width = max(CreateOrderViewStyles.CART_DIALOG_MIN_VIEWPORT_WIDTH, min(target_width, viewport_width))
-            target_width = max(
-                CreateOrderViewStyles.CART_DIALOG_CONTENT_MIN_WIDTH,
-                int(target_width * CreateOrderViewStyles.CART_DIALOG_CONTENT_WIDTH_RATIO),
+            viewport_limited = max(
+                CreateOrderViewStyles.CART_DIALOG_MIN_VIEWPORT_WIDTH,
+                viewport_width - (2 * AppDimensions.SPACE_LG),
             )
-            self.__cart_container.width = target_width
-        else:
-            self.__cart_container.width = CreateOrderViewStyles.CART_DIALOG_DEFAULT_WIDTH
-        if self.__cart_has_items and viewport_height:
-            self.__cart_container.height = int(viewport_height * CreateOrderViewStyles.CART_DIALOG_HEIGHT_RATIO)
+            return max(
+                CreateOrderViewStyles.CART_DIALOG_CONTENT_MIN_WIDTH,
+                min(target_width, viewport_limited),
+            )
+        return CreateOrderViewStyles.CART_DIALOG_DEFAULT_WIDTH
+
+    @staticmethod
+    def __resolve_checkout_dialog_width(viewport_width: int | None) -> int:
+        cart_width = CreateOrderView.__resolve_cart_dialog_width(viewport_width)
+        target_width = int(cart_width * CreateOrderViewStyles.CHECKOUT_DIALOG_WIDTH_MULTIPLIER)
+        if viewport_width:
+            viewport_limited = max(
+                CreateOrderViewStyles.CART_DIALOG_MIN_VIEWPORT_WIDTH,
+                viewport_width - (2 * AppDimensions.SPACE_LG),
+            )
+            return min(target_width, viewport_limited)
+        return target_width
+
+    def __apply_cart_dialog_size(self, items_count: int) -> None:
+        if not self.__cart_container:
+            return
+        viewport_width, viewport_height = self.__resolve_viewport()
+        self.__cart_container.width = self.__resolve_cart_dialog_width(viewport_width)
+
+        if self.__cart_has_items:
+            estimated_height = (
+                CreateOrderViewStyles.CART_DIALOG_HEADER_ESTIMATED_HEIGHT
+                + (items_count * CreateOrderViewStyles.CART_DIALOG_ROW_ESTIMATED_HEIGHT)
+            )
+            if viewport_height:
+                max_height = int(viewport_height * CreateOrderViewStyles.CART_DIALOG_HEIGHT_RATIO)
+                self.__cart_container.height = max(
+                    CreateOrderViewStyles.CART_DIALOG_MIN_HEIGHT,
+                    min(estimated_height, max_height),
+                )
+            else:
+                self.__cart_container.height = max(
+                    CreateOrderViewStyles.CART_DIALOG_MIN_HEIGHT,
+                    estimated_height,
+                )
         else:
             self.__cart_container.height = None
         self._safe_update(self.__cart_container)
@@ -191,9 +233,10 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         controls: Sequence[ft.Control],
         spacing: int | None = None,
         run_spacing: int | None = None,
+        columns: int | None = None,
     ) -> ft.ResponsiveRow:
         return ft.ResponsiveRow(
-            columns=CreateOrderViewStyles.RESPONSIVE_COLUMNS,
+            columns=CreateOrderViewStyles.RESPONSIVE_COLUMNS if columns is None else columns,
             spacing=CreateOrderViewStyles.RESPONSIVE_SPACING if spacing is None else spacing,
             run_spacing=CreateOrderViewStyles.RESPONSIVE_RUN_SPACING if run_spacing is None else run_spacing,
             alignment=CreateOrderViewStyles.RESPONSIVE_ALIGNMENT,
@@ -207,21 +250,20 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         align: ft.TextAlign | None = None,
         style: ft.TextStyle | None = None,
     ) -> ft.Text:
-        text_kwargs: dict[str, Any] = {
-            "no_wrap": True,
-            "overflow": ft.TextOverflow.ELLIPSIS,
-            "max_lines": 1,
-        }
-        if align is not None:
-            text_kwargs["text_align"] = align
-        if style is not None:
-            text_kwargs["style"] = style
-        return ft.Text(value, **text_kwargs)
+        return self._get_label(
+            value,
+            no_wrap=True,
+            overflow=ft.TextOverflow.ELLIPSIS,
+            max_lines=1,
+            text_align=align,
+            style=style,
+        )
 
     def __build_cart_header_row(self) -> ft.Container:
         return ft.Container(
             padding=CreateOrderViewStyles.CART_HEADER_PADDING,
             content=self.__build_responsive_row(
+                columns=CreateOrderViewStyles.CART_COLUMNS,
                 controls=[
                     ft.Container(
                         col=CreateOrderViewStyles.CART_ITEM_NAME_COL,
@@ -318,7 +360,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         return ft.Container(
             padding=CreateOrderViewStyles.CART_ITEM_PADDING,
             border=CreateOrderViewStyles.CART_ITEM_BORDER,
-            content=self.__build_responsive_row(controls=row_controls),
+            content=self.__build_responsive_row(controls=row_controls, columns=CreateOrderViewStyles.CART_COLUMNS),
         )
 
     def __render_cart_items(self) -> None:
@@ -328,21 +370,19 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         cart_items = self._controller.get_cart_snapshot()
         if not cart_items:
             self.__cart_has_items = False
-            self.__apply_cart_dialog_size()
-            self.__cart_list.controls.append(ft.Text(self._translation.get("cart_empty")))
-            self.__cart_proceed_button.disabled = True
-            self._safe_update(self.__cart_proceed_button)
+            self.__cart_list.controls.append(self._get_label(self._translation.get("cart_empty")))
+            self.__apply_cart_dialog_size(0)
+            self.__set_cart_proceed_button_state(enabled=False)
             self._safe_update(self.__cart_list)
             return
-        self.__cart_proceed_button.disabled = False
+        self.__set_cart_proceed_button_state(enabled=True)
         self.__cart_has_items = True
-        self.__apply_cart_dialog_size()
         self.__cart_list.controls.append(self.__build_cart_header_row())
         for entry in cart_items:
             row = self.__build_cart_item_row(entry)
             if row:
                 self.__cart_list.controls.append(row)
-        self._safe_update(self.__cart_proceed_button)
+        self.__apply_cart_dialog_size(len(cart_items))
         self._safe_update(self.__cart_list)
 
     def open_checkout_dialog(self) -> None:
@@ -377,15 +417,15 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         self.__checkout_total_discount_text = self.__build_single_line_text("", align=ft.TextAlign.END)
         self.__checkout_shipping_cost_text = self.__build_single_line_text("", align=ft.TextAlign.END)
         self.__checkout_total_with_shipping_text = self.__build_single_line_text("", align=ft.TextAlign.END)
-        self.__checkout_missing_rate_text = ft.Text(
+        self.__checkout_missing_rate_text = self._get_label(
             self._translation.get("missing_exchange_rate"),
             color=CreateOrderViewStyles.CHECKOUT_ERROR_COLOR,
-            visible=False,
         )
+        self.__checkout_missing_rate_text.visible = False
         self.__checkout_confirm_button = ft.Button(
             content=self._translation.get("confirm_order"),
             disabled=True,
-            style=ButtonStyles.primary_regular,
+            style=ButtonStyles.regular,
             on_click=lambda _: self.__on_checkout_confirm_clicked(),
         )
         back_button = ft.TextButton(
@@ -410,9 +450,11 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             back_button=back_button,
             confirm_button=self.__checkout_confirm_button,
         )
+        checkout_dialog_content = self.__checkout_dialog.content
+        if isinstance(checkout_dialog_content, ft.Container):
+            viewport_width, _ = self.__resolve_viewport()
+            checkout_dialog_content.width = self.__resolve_checkout_dialog_width(viewport_width)
         self.__update_checkout_totals()
-        self.__ensure_checkout_resize_handler()
-        self.__apply_checkout_dialog_width()
         self.queue_dialog(self.__checkout_dialog)
 
     def __build_checkout_dropdown(
@@ -461,14 +503,15 @@ class CreateOrderView(BaseView["CreateOrderController"]):
     def __build_checkout_controls(self, totals_rows: ft.Column) -> list[ft.Control]:
         controls: list[ft.Control] = [
             self.__build_responsive_row(
+                columns=CreateOrderViewStyles.CHECKOUT_FILTER_COLUMNS,
                 controls=[
                     ft.Container(
-                        col=CreateOrderViewStyles.CHECKOUT_FILTER_COL,
+                        col=CreateOrderViewStyles.CHECKOUT_CURRENCY_FILTER_COL,
                         content=self.__checkout_currency_dropdown,
                         expand=True,
                     ),
                     ft.Container(
-                        col=CreateOrderViewStyles.CHECKOUT_FILTER_COL,
+                        col=CreateOrderViewStyles.CHECKOUT_CUSTOMER_FILTER_COL,
                         content=self.__checkout_customer_discount_dropdown,
                         expand=True,
                     ),
@@ -515,9 +558,8 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             has_missing_rate,
         ) = self._controller.compute_checkout_summary(currency_id, customer_discount_id, delivery_method_id)
         self.__checkout_missing_rate_text.visible = has_missing_rate
-        self.__checkout_confirm_button.disabled = (
-            has_missing_rate or currency_id is None or not self._controller.get_cart_snapshot()
-        )
+        can_confirm = not (has_missing_rate or currency_id is None or not self._controller.get_cart_snapshot())
+        self.__set_checkout_confirm_button_state(enabled=can_confirm)
         if not has_missing_rate:
             self.__checkout_total_net_text.value = self.__format_checkout_amount(total_net, label)
             self.__checkout_total_gross_text.value = self.__format_checkout_amount(total_gross, label)
@@ -530,6 +572,19 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             self._safe_update(self.__checkout_shipping_cost_text)
             self._safe_update(self.__checkout_total_with_shipping_text)
         self._safe_update(self.__checkout_missing_rate_text)
+
+    def __set_cart_proceed_button_state(self, enabled: bool) -> None:
+        if self.__cart_proceed_button is None:
+            return
+        self.__cart_proceed_button.disabled = not enabled
+        self.__cart_proceed_button.style = ButtonStyles.primary_regular if enabled else ButtonStyles.regular
+        self._safe_update(self.__cart_proceed_button)
+
+    def __set_checkout_confirm_button_state(self, enabled: bool) -> None:
+        if self.__checkout_confirm_button is None:
+            return
+        self.__checkout_confirm_button.disabled = not enabled
+        self.__checkout_confirm_button.style = ButtonStyles.primary_regular if enabled else ButtonStyles.regular
         self._safe_update(self.__checkout_confirm_button)
 
     @staticmethod
@@ -538,52 +593,8 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             return f"{amount:.2f} {label}"
         return f"{amount:.2f}"
 
-    def __ensure_checkout_resize_handler(self) -> None:
-        page = self.app_page
-        if self.__checkout_resize_handler is not None:
-            return
-        self.__checkout_previous_resize_handler = page.on_resize
-        self.__checkout_resize_handler = self.__handle_checkout_dialog_resize
-        page.on_resize = self.__checkout_resize_handler
-
-    def __handle_checkout_dialog_resize(self, event: ft.ControlEvent) -> None:
-        if callable(self.__checkout_previous_resize_handler):
-            self.__checkout_previous_resize_handler(event)
-        self.__apply_checkout_dialog_width()
-
-    def __resolve_checkout_dialog_width(self) -> int:
-        page = self.app_page
-        viewport_width = page.width or page.window.width
-        if viewport_width:
-            return max(
-                CreateOrderViewStyles.CHECKOUT_DIALOG_MIN_WIDTH,
-                min(
-                    int(viewport_width * CreateOrderViewStyles.CHECKOUT_DIALOG_WIDTH_RATIO),
-                    CreateOrderViewStyles.CHECKOUT_DIALOG_MAX_WIDTH,
-                ),
-            )
-        return CreateOrderViewStyles.CHECKOUT_DIALOG_DEFAULT_WIDTH
-
-    def __apply_checkout_dialog_width(self) -> None:
-        if not self.__checkout_dialog:
-            return
-        self.__checkout_dialog.set_content_width(self.__resolve_checkout_dialog_width())
-        self._safe_update(self.__checkout_dialog)
-
     def refresh_items_list(self) -> None:
         self.__refresh_items_list()
-
-    def __apply_card_size(self) -> None:
-        if not self.__card:
-            return
-        page = self.app_page
-        viewport_width = page.width or page.window.width
-        viewport_height = page.height or page.window.height
-        if not viewport_width or not viewport_height:
-            return
-        self.__card.width = int(viewport_width * AppDimensions.CONTENT_WIDTH_RATIO)
-        self.__card.height = int(viewport_height * AppDimensions.CONTENT_HEIGHT_RATIO)
-        self._safe_update(self.__card)
 
     def __build_category_options(self) -> list[tuple[int | str, str]]:
         options: list[tuple[int | str, str]] = [(category.id, category.label) for category in self.__categories]
@@ -597,19 +608,23 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         key: str,
         options: list[tuple[int | str, str]],
         value: str | None = "",
-        callbacks: list[Any] | None = None,
+        callbacks: list[Callable[[], None]] | None = None,
     ) -> ft.Dropdown:
-        def handle_select(_: ft.Event[ft.Dropdown]) -> None:
-            for callback in callbacks or []:
-                callback()
-
         dropdown = self._get_dropdown(
             key=key,
             options=options,
             value=value if value is not None else "0",
-            on_select=handle_select,
+            on_select=partial(self.__handle_dropdown_select, callbacks),
         )
         return dropdown
+
+    @staticmethod
+    def __handle_dropdown_select(
+        callbacks: list[Callable[[], None]] | None,
+        _: ft.Event[ft.Dropdown],
+    ) -> None:
+        for callback in callbacks or []:
+            callback()
 
     def __build_numeric_input(
         self,
@@ -646,14 +661,14 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             cart_quantities = self.__normalize_cart_quantities(cart_quantities)
         image_url = self.__image_map.get(item.id)
         image = ft.Container(
-            width=AppDimensions.CREATE_ORDER_IMAGE_BOX_SIZE,
+            col=CreateOrderViewStyles.ITEM_ROW_IMAGE_COL,
             height=AppDimensions.CREATE_ORDER_IMAGE_BOX_SIZE,
             alignment=ft.Alignment.CENTER,
+            padding=CreateOrderViewStyles.ITEM_ROW_ELEMENT_PADDING,
             border=CreateOrderViewStyles.ITEM_IMAGE_BORDER,
             content=(
                 ft.Image(
                     src=image_url,
-                    width=AppDimensions.CREATE_ORDER_IMAGE_SIZE,
                     height=AppDimensions.CREATE_ORDER_IMAGE_SIZE,
                     fit=ft.BoxFit.CONTAIN,
                 )
@@ -663,19 +678,24 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             on_click=lambda _: self.__open_item_dialog(item),
         )
         available = self.__get_available_quantity(item, cart_quantities)
-        available_text = ft.Text(f"{self._translation.get('available')}: {available}")
+        available_text = self._get_label(f"{self._translation.get('available')}: {available}")
         self.__available_nodes[item.id] = available_text
         details = ft.Column(
             spacing=CreateOrderViewStyles.DETAILS_COLUMN_SPACING,
             controls=[
-                ft.Text(item.name, style=TypographyStyles.SECTION_TITLE),
-                ft.Text(f"{self._translation.get('index')}: {item.index}"),
+                self._get_label(item.name, style=TypographyStyles.SECTION_TITLE),
+                self._get_label(f"{self._translation.get('index')}: {item.index}"),
                 available_text,
-                ft.Text(f"{self._translation.get('moq')}: {item.moq}"),
+                self._get_label(f"{self._translation.get('moq')}: {item.moq}"),
             ],
             expand=True,
         )
-        details_container = ft.Container(content=details, expand=True, on_click=lambda _: self.__open_item_dialog(item))
+        details_container = ft.Container(
+            col=CreateOrderViewStyles.ITEM_ROW_DETAILS_COL,
+            padding=CreateOrderViewStyles.ITEM_ROW_DETAILS_PADDING,
+            content=details,
+            on_click=lambda _: self.__open_item_dialog(item),
+        )
         category_discount_dropdown = self.__build_dropdown(
             key=f"category_discount_{item.id}",
             options=self.__build_discount_options(self.__get_category_discounts(item.category_id)),
@@ -710,7 +730,8 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             read_only=False,
             on_change=lambda event: self.__handle_quantity_change(event, item),
         )
-        qty_input_container.expand = True
+        qty_input_container.col = CreateOrderViewStyles.ITEM_ROW_QUANTITY_COL
+        qty_input_container.padding = CreateOrderViewStyles.ITEM_ROW_ELEMENT_PADDING
         category_discount_dropdown.on_select = lambda _: self.__on_item_category_discount_changed(
             item,
             category_discount_dropdown,
@@ -734,18 +755,26 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         )
         return ft.Container(
             padding=CreateOrderViewStyles.ITEM_ROW_PADDING,
-            content=ft.Row(
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=AppDimensions.SPACE_LG,
-                expand=True,
+            content=self.__build_responsive_row(
                 controls=[
                     image,
                     details_container,
-                    ft.Container(content=category_discount_dropdown, expand=True),
-                    ft.Container(content=item_discount_dropdown, expand=True),
+                    ft.Container(
+                        col=CreateOrderViewStyles.ITEM_ROW_CATEGORY_DISCOUNT_COL,
+                        padding=CreateOrderViewStyles.ITEM_ROW_ELEMENT_PADDING,
+                        content=category_discount_dropdown,
+                    ),
+                    ft.Container(
+                        col=CreateOrderViewStyles.ITEM_ROW_ITEM_DISCOUNT_COL,
+                        padding=CreateOrderViewStyles.ITEM_ROW_ELEMENT_PADDING,
+                        content=item_discount_dropdown,
+                    ),
                     qty_input_container,
-                    ft.Container(content=add_button, expand=True),
+                    ft.Container(
+                        col=CreateOrderViewStyles.ITEM_ROW_ADD_COL,
+                        padding=CreateOrderViewStyles.ITEM_ROW_ELEMENT_PADDING,
+                        content=add_button,
+                    ),
                 ],
             ),
             expand=True,
@@ -929,19 +958,6 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         self.__items_list.controls = [self.__build_item_row(item, cart_quantities) for item in filtered_items]
         self._safe_update(self.__items_list)
 
-    def __register_card_resize_handler(self) -> None:
-        page = self.app_page
-        if self.__card_resize_handler is not None:
-            return
-        self.__card_previous_resize_handler = getattr(page, "on_resize", None)
-        self.__card_resize_handler = self.__handle_card_resize
-        setattr(page, "on_resize", self.__card_resize_handler)
-
-    def __handle_card_resize(self, event: ft.ControlEvent) -> None:
-        if callable(self.__card_previous_resize_handler):
-            self.__card_previous_resize_handler(event)
-        self.__apply_card_size()
-
     def __remove_cart_item(self, item_id: int) -> None:
         self._controller.remove_from_cart(item_id)
         self.__update_available_for_item(item_id)
@@ -965,10 +981,11 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         parent = qty_input.parent
         if not isinstance(parent, ft.Container):
             return
-        row = parent.parent
-        if not isinstance(row, ft.Row):
+        row_like = parent.parent
+        controls = getattr(row_like, "controls", None)
+        if not isinstance(controls, list):
             return
-        for control in row.controls:
+        for control in controls:
             if isinstance(control, ft.Container) and isinstance(control.content, ft.Button):
                 control.content.disabled = not enabled
                 self._safe_update(control.content)
