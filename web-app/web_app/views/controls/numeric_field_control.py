@@ -3,6 +3,8 @@ from types import SimpleNamespace
 from typing import Callable, cast
 
 import flet as ft
+from styles.dimensions import AppDimensions
+from styles.styles import AlignmentStyles, ButtonStyles, ControlStyles
 
 
 class NumericField(ft.Row):
@@ -18,11 +20,13 @@ class NumericField(ft.Row):
         read_only: bool = True,
         on_change: Callable[[ft.ControlEvent], None] | None = None,
     ) -> None:
+        resolved_height = ControlStyles.TEXT_FIELD_HEIGHT
         super().__init__(
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            alignment=AlignmentStyles.AXIS_START,
+            vertical_alignment=AlignmentStyles.CROSS_START,
             expand=expand,
-            spacing=4,
+            height=resolved_height,
+            spacing=AppDimensions.SPACE_2XS,
         )
         self.__precision = precision
         self.__on_change = on_change
@@ -46,19 +50,33 @@ class NumericField(ft.Row):
             expand=True,
             on_change=self.__handle_text_change,
             read_only=self.__read_only,
+            height=resolved_height,
+            text_style=ControlStyles.INPUT_TEXT_STYLE,
+            border_radius=ControlStyles.FIELD_BORDER_RADIUS,
+            border_color=ControlStyles.FIELD_BORDER_COLOR,
+            focused_border_color=ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
+            content_padding=ControlStyles.FIELD_PADDING,
         )
 
         self.__decrement_button = ft.IconButton(
-            icon=ft.Icons.REMOVE, on_click=self.__decrement, disabled=self.__read_only, width=48
+            icon=ft.Icons.REMOVE,
+            on_click=self.__decrement,
+            disabled=self.__read_only,
+            width=AppDimensions.ICON_BUTTON_WIDTH,
+            style=ButtonStyles.icon,
         )
         self.__increment_button = ft.IconButton(
-            icon=ft.Icons.ADD, on_click=self.__increment, disabled=self.__read_only, width=48
+            icon=ft.Icons.ADD,
+            on_click=self.__increment,
+            disabled=self.__read_only,
+            width=AppDimensions.ICON_BUTTON_WIDTH,
+            style=ButtonStyles.icon,
         )
 
         self.controls = [
-            ft.Container(content=self.__decrement_button, alignment=ft.Alignment.TOP_CENTER),
+            ft.Container(content=self.__decrement_button, alignment=AlignmentStyles.TOP_CENTER),
             self.__text_field,
-            ft.Container(content=self.__increment_button, alignment=ft.Alignment.TOP_CENTER),
+            ft.Container(content=self.__increment_button, alignment=AlignmentStyles.TOP_CENTER),
         ]
 
     @property

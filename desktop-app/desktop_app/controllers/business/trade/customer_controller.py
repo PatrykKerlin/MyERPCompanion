@@ -150,7 +150,7 @@ class CustomerController(
         await self.__assoc_customer_discount_service.delete_bulk(
             Endpoint.CUSTOMER_DISCOUNTS_DELETE_BULK, None, None, body_params, self._module_id
         )
-    
+
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_customer(self, customer_id: int) -> CustomerPlainSchema | None:
         return await self._service.get_one(Endpoint.CUSTOMERS, customer_id, None, None, self._module_id)

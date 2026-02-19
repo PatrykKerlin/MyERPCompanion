@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 class UserView(BaseView, GroupBulkTransferMixin):
     def __init__(
-        self, # NOSONAR
+        self,  # NOSONAR
         controller: UserController,
         translation: Translation,
         mode: ViewMode,

@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 class SalesForecastReportView(BaseView):
     def __init__(
-        self, # NOSONAR
+        self,  # NOSONAR
         controller: SalesForecastReportController,
         translation: Translation,
         mode: ViewMode,
@@ -458,13 +458,13 @@ class SalesForecastReportView(BaseView):
             actions=[
                 ft.TextButton(
                     self._translation.get("close"),
-                    on_click=lambda _: self._controller._page.pop_dialog(),
+                    on_click=lambda _: self.pop_dialog(),
                     style=ButtonStyles.regular,
                 )
             ],
             scrollable=False,
         )
-        self._controller._queue_dialog(dialog)
+        self.queue_dialog(dialog)
 
     def __resolve_chart_dialog_width(self) -> int:
         page_width = (

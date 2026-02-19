@@ -9,7 +9,7 @@ from styles.styles import AlignmentStyles, ButtonStyles, ControlStyles
 
 class NumericField(ft.Row):
     def __init__(
-        self, # NOSONAR
+        self,  # NOSONAR
         value: int | float = 0,
         step: int | float = 1,
         precision: int = 2,

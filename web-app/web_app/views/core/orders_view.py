@@ -4,10 +4,13 @@ from datetime import date
 from typing import TYPE_CHECKING, Any, Callable
 
 import flet as ft
+from styles.dimensions import AppDimensions
+from styles.styles import ButtonStyles, OrdersViewStyles, TypographyStyles
 from utils.enums import View, ViewMode
 from utils.translation import Translation
-from views.base.base_dialog import BaseDialog
 from views.base.base_view import BaseView
+from views.components.image_preview_dialog_component import ImagePreviewDialogComponent
+from views.components.item_details_dialog_component import ItemDetailsDialogComponent
 
 if TYPE_CHECKING:
     from controllers.core.orders_controller import OrdersController
@@ -42,75 +45,85 @@ class OrdersView(BaseView["OrdersController"]):
         self.__card: ft.Card | None = None
         self.__card_resize_handler: Callable[[ft.ControlEvent], None] | None = None
 
-        self.__orders_list = ft.ListView(spacing=8, expand=True)
-        self.__status_list = ft.ListView(spacing=8, expand=True)
-        self.__items_list = ft.ListView(spacing=6, expand=True)
-        self.__order_meta_column = ft.Column(spacing=2, tight=True)
+        self.__orders_list = ft.ListView(spacing=AppDimensions.SPACE_SM, expand=True)
+        self.__status_list = ft.ListView(spacing=AppDimensions.SPACE_SM, expand=True)
+        self.__items_list = ft.ListView(spacing=AppDimensions.SPACE_XS, expand=True)
+        self.__order_meta_column = ft.Column(spacing=AppDimensions.SPACE_2XS, tight=True)
         self.__status_loading = ft.Container(
             visible=False,
             alignment=ft.Alignment.CENTER,
-            content=ft.ProgressRing(width=20, height=20),
-            padding=ft.Padding.only(bottom=8),
+            content=ft.ProgressRing(
+                width=AppDimensions.STATUS_LOADING_RING_SIZE,
+                height=AppDimensions.STATUS_LOADING_RING_SIZE,
+            ),
+            padding=OrdersViewStyles.STATUS_LOADING_PADDING,
         )
         self.__download_invoice_button = ft.IconButton(
             icon=ft.Icons.DOWNLOAD,
             tooltip=self._translation.get("download_invoice_pdf"),
             on_click=lambda _: self.__handle_download_invoice_clicked(),
+            style=ButtonStyles.icon,
         )
         self.__download_invoice_placeholder = ft.IconButton(
             icon=ft.Icons.DOWNLOAD,
             disabled=True,
             opacity=0.0,
+            style=ButtonStyles.icon,
         )
 
         new_order_button = ft.Button(
             content=self._translation.get("create_order"),
             on_click=lambda _: self._controller.on_new_order_clicked(),
+            style=ButtonStyles.primary_regular,
         )
         header_row = ft.Row(
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
-                ft.Text(self._translation.get("browse_orders"), size=26, weight=ft.FontWeight.BOLD),
+                ft.Text(self._translation.get("browse_orders"), style=TypographyStyles.PAGE_TITLE),
                 new_order_button,
             ],
         )
         payment_legend = ft.Container(
-            padding=ft.Padding.symmetric(horizontal=8, vertical=6),
-            border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
-            border_radius=8,
+            padding=OrdersViewStyles.PAYMENT_LEGEND_PADDING,
+            border=OrdersViewStyles.PAYMENT_LEGEND_BORDER,
+            border_radius=OrdersViewStyles.PAYMENT_LEGEND_RADIUS,
             content=ft.Column(
-                spacing=4,
+                spacing=AppDimensions.SPACE_2XS,
                 tight=True,
                 controls=[
-                    ft.Text(self._translation.get("payment_status_legend"), size=11, weight=ft.FontWeight.W_600),
+                    ft.Text(self._translation.get("payment_status_legend"), style=TypographyStyles.LEGEND_TITLE),
                     ft.Row(
-                        spacing=6,
+                        spacing=AppDimensions.SPACE_XS,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         controls=[
-                            ft.Icon(ft.Icons.PENDING, size=16),
+                            ft.Icon(OrdersViewStyles.UNPAID_ICON, size=OrdersViewStyles.UNPAID_LEGEND_ICON_SIZE),
                             ft.Container(
                                 expand=True,
                                 content=ft.Text(
                                     self._translation.get("invoice_unpaid_before_due"),
-                                    size=11,
+                                    style=TypographyStyles.LEGEND_TEXT,
                                     no_wrap=False,
                                 ),
                             ),
                         ],
                     ),
                     ft.Row(
-                        spacing=6,
+                        spacing=AppDimensions.SPACE_XS,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         controls=[
-                            ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED, size=16, color=ft.Colors.ERROR),
+                            ft.Icon(
+                                ft.Icons.WARNING_AMBER_ROUNDED,
+                                size=OrdersViewStyles.OVERDUE_LEGEND_ICON_SIZE,
+                                color=OrdersViewStyles.OVERDUE_COLOR,
+                            ),
                             ft.Container(
                                 expand=True,
                                 content=ft.Text(
                                     self._translation.get("invoice_unpaid_overdue"),
-                                    size=11,
+                                    style=TypographyStyles.LEGEND_TEXT,
                                     no_wrap=False,
-                                    color=ft.Colors.ERROR,
+                                    color=OrdersViewStyles.OVERDUE_COLOR,
                                 ),
                             ),
                         ],
@@ -121,13 +134,13 @@ class OrdersView(BaseView["OrdersController"]):
 
         left_panel = ft.Container(
             expand=True,
-            padding=ft.Padding.all(12),
-            border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
-            border_radius=8,
+            padding=OrdersViewStyles.PANEL_PADDING,
+            border=OrdersViewStyles.PANEL_BORDER,
+            border_radius=OrdersViewStyles.PANEL_RADIUS,
             content=ft.Column(
                 expand=True,
                 controls=[
-                    ft.Text(self._translation.get("browse_orders"), weight=ft.FontWeight.BOLD),
+                    ft.Text(self._translation.get("browse_orders"), style=TypographyStyles.SECTION_TITLE),
                     payment_legend,
                     self.__orders_list,
                 ],
@@ -135,13 +148,13 @@ class OrdersView(BaseView["OrdersController"]):
         )
         right_panel = ft.Container(
             expand=True,
-            padding=ft.Padding.all(12),
-            border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
-            border_radius=8,
+            padding=OrdersViewStyles.PANEL_PADDING,
+            border=OrdersViewStyles.PANEL_BORDER,
+            border_radius=OrdersViewStyles.PANEL_RADIUS,
             content=ft.Column(
                 expand=True,
                 controls=[
-                    ft.Text(self._translation.get("order_details"), weight=ft.FontWeight.BOLD),
+                    ft.Text(self._translation.get("order_details"), style=TypographyStyles.SECTION_TITLE),
                     self.__order_meta_column,
                     ft.Divider(),
                     ft.ResponsiveRow(
@@ -155,7 +168,7 @@ class OrdersView(BaseView["OrdersController"]):
                                 content=ft.Column(
                                     expand=True,
                                     controls=[
-                                        ft.Text(self._translation.get("items"), weight=ft.FontWeight.BOLD),
+                                        ft.Text(self._translation.get("items"), style=TypographyStyles.SECTION_TITLE),
                                         self.__items_list,
                                     ],
                                 ),
@@ -163,10 +176,15 @@ class OrdersView(BaseView["OrdersController"]):
                             ft.Container(
                                 col={"sm": 12, "md": 4},
                                 expand=True,
+                                border=OrdersViewStyles.STATUS_COLUMN_BORDER,
+                                padding=OrdersViewStyles.STATUS_COLUMN_PADDING,
                                 content=ft.Column(
                                     expand=True,
                                     controls=[
-                                        ft.Text(self._translation.get("status_history"), weight=ft.FontWeight.BOLD),
+                                        ft.Text(
+                                            self._translation.get("status_history"),
+                                            style=TypographyStyles.SECTION_TITLE,
+                                        ),
                                         self.__status_loading,
                                         self.__status_list,
                                     ],
@@ -188,13 +206,14 @@ class OrdersView(BaseView["OrdersController"]):
             expand=True,
         )
         self.__card = ft.Card(
-            elevation=2,
+            elevation=OrdersViewStyles.CARD_ELEVATION,
+            bgcolor=OrdersViewStyles.CARD_BGCOLOR,
             content=ft.Container(
                 expand=True,
-                padding=ft.Padding.all(16),
+                padding=OrdersViewStyles.CARD_PADDING,
                 content=ft.Column(
                     expand=True,
-                    spacing=12,
+                    spacing=AppDimensions.SPACE_LG,
                     controls=[header_row, panels_row],
                 ),
             ),
@@ -233,40 +252,32 @@ class OrdersView(BaseView["OrdersController"]):
     def __apply_card_size(self) -> None:
         if not self.__card:
             return
-        page = self._controller._page
+        page = self.app_page
         viewport_width = page.width or page.window.width
         viewport_height = page.height or page.window.height
         if not viewport_width or not viewport_height:
             return
-        self.__card.width = int(viewport_width * 0.75)
-        self.__card.height = int(viewport_height * 0.75)
-        self.__safe_update(self.__card)
+        self.__card.width = int(viewport_width * AppDimensions.CONTENT_WIDTH_RATIO)
+        self.__card.height = int(viewport_height * AppDimensions.CONTENT_HEIGHT_RATIO)
+        self._safe_update(self.__card)
 
     def __open_image_dialog(self, url: str) -> None:
-        dialog = BaseDialog(
-            title=None,
-            controls=[ft.Image(src=url, width=800, height=800, fit=ft.BoxFit.CONTAIN)],
-            actions=[
-                ft.TextButton(self._translation.get("ok"), on_click=lambda _: self._controller._page.pop_dialog()),
-            ],
+        dialog = ImagePreviewDialogComponent(
+            translation=self._translation, image_url=url, on_ok_clicked=lambda _: self.pop_dialog()
         )
-        self._controller._queue_dialog(dialog)
+        self.queue_dialog(dialog)
 
     def __open_item_dialog(self, item: dict[str, Any]) -> None:
         is_fragile = item.get("is_fragile")
+        fragile_text = ""
+        if is_fragile is not None:
+            fragile_text = self._translation.get("yes") if bool(is_fragile) else self._translation.get("no")
         detail_rows: list[tuple[str, str]] = [
             ("name", str(item.get("name") or "")),
             ("index", str(item.get("index") or "")),
             ("ean", str(item.get("ean") or "")),
             ("description", str(item.get("description") or "")),
-            (
-                "is_fragile",
-                (
-                    ""
-                    if is_fragile is None
-                    else self._translation.get("yes") if bool(is_fragile) else self._translation.get("no")
-                ),
-            ),
+            ("is_fragile", fragile_text),
             ("expiration_date", str(item.get("expiration_date") or "")),
             ("category_name", str(item.get("category_name") or "")),
             ("available", str(item.get("available") or "")),
@@ -275,77 +286,20 @@ class OrdersView(BaseView["OrdersController"]):
             ("dimensions", str(item.get("dimensions") or "")),
             ("weight", str(item.get("weight") or "")),
         ]
-        labels_column = ft.Column(
-            controls=[ft.Text(self._translation.get(key)) for key, _ in detail_rows],
-            tight=True,
-        )
-        values_column = ft.Column(
-            controls=[ft.Text(value) for _, value in detail_rows],
-            tight=True,
-            expand=True,
-        )
         raw_images = item.get("images")
         image_urls = [url for url in raw_images if isinstance(url, str)] if isinstance(raw_images, list) else []
-        gallery_row: ft.Control | None
-        if image_urls:
-            start_index = 0
-            thumbnails_row = ft.Row(spacing=8, run_spacing=8)
-
-            def update_buttons() -> None:
-                left_button.disabled = start_index <= 0
-                right_button.disabled = start_index + 3 >= len(image_urls)
-                self.__safe_update(left_button)
-                self.__safe_update(right_button)
-
-            def render_thumbnails() -> None:
-                thumbnails_row.controls.clear()
-                window = image_urls[start_index : start_index + 3]
-                for url in window:
-                    thumbnails_row.controls.append(
-                        ft.Container(
-                            content=ft.Image(src=url, width=96, height=96, fit=ft.BoxFit.CONTAIN),
-                            on_click=lambda _, u=url: self.__open_image_dialog(u),
-                        )
-                    )
-                self.__safe_update(thumbnails_row)
-                update_buttons()
-
-            def move_left() -> None:
-                nonlocal start_index
-                if start_index <= 0:
-                    return
-                start_index -= 1
-                render_thumbnails()
-
-            def move_right() -> None:
-                nonlocal start_index
-                if start_index + 3 >= len(image_urls):
-                    return
-                start_index += 1
-                render_thumbnails()
-
-            left_button = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT, on_click=lambda: move_left(), disabled=True)
-            right_button = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT, on_click=lambda: move_right(), disabled=True)
-            render_thumbnails()
-            gallery_row = ft.Row(controls=[left_button, thumbnails_row, right_button], spacing=8)
-        else:
-            gallery_row = ft.Container(
-                content=ft.Text(self._translation.get("no_images")),
-                padding=8,
-            )
-        controls: list[ft.Control] = [ft.Row(controls=[labels_column, values_column], spacing=16, expand=True)]
-        controls.append(gallery_row)
-        dialog = BaseDialog(
-            title=self._translation.get("item_details"),
-            controls=controls,
-            actions=[
-                ft.TextButton(self._translation.get("ok"), on_click=lambda _: self._controller._page.pop_dialog()),
-            ],
+        dialog = ItemDetailsDialogComponent(
+            translation=self._translation,
+            detail_rows=detail_rows,
+            image_urls=image_urls,
+            on_image_clicked=self.__open_image_dialog,
+            on_ok_clicked=lambda _: self.pop_dialog(),
+            safe_update=self._safe_update,
         )
-        self._controller._queue_dialog(dialog)
+        self.queue_dialog(dialog)
 
     def __register_card_resize_handler(self) -> None:
-        page = self._controller._page
+        page = self.app_page
         if self.__card_resize_handler is not None:
             return
         previous_handler = getattr(page, "on_resize", None)
@@ -362,7 +316,7 @@ class OrdersView(BaseView["OrdersController"]):
         self.__orders_list.controls.clear()
         if not self.__orders:
             self.__orders_list.controls.append(ft.Text(self._translation.get("no_orders")))
-            self.__safe_update(self.__orders_list)
+            self._safe_update(self.__orders_list)
             return
         for order in self.__orders:
             order_id = order["id"]
@@ -376,19 +330,23 @@ class OrdersView(BaseView["OrdersController"]):
             number_color: str | ft.Colors | None = None
             date_color: str | ft.Colors | None = None
             if payment_status == "unpaid":
-                icon_control = ft.Icon(ft.Icons.PENDING, size=22)
+                icon_control = ft.Icon(OrdersViewStyles.UNPAID_ICON, size=OrdersViewStyles.UNPAID_LIST_ICON_SIZE)
             elif payment_status == "overdue":
-                icon_control = ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED, size=22, color=ft.Colors.ERROR)
-                number_color = ft.Colors.ERROR
-                date_color = ft.Colors.ERROR
+                icon_control = ft.Icon(
+                    ft.Icons.WARNING_AMBER_ROUNDED,
+                    size=OrdersViewStyles.OVERDUE_LIST_ICON_SIZE,
+                    color=OrdersViewStyles.OVERDUE_COLOR,
+                )
+                number_color = OrdersViewStyles.OVERDUE_COLOR
+                date_color = OrdersViewStyles.OVERDUE_COLOR
             item = ft.Container(
-                padding=ft.Padding.all(10),
-                border=ft.Border.all(1, ft.Colors.PRIMARY if selected else ft.Colors.OUTLINE_VARIANT),
-                border_radius=8,
-                bgcolor=ft.Colors.PRIMARY_CONTAINER if selected else None,
+                padding=OrdersViewStyles.ORDER_TILE_PADDING,
+                border=OrdersViewStyles.order_tile_border(selected),
+                border_radius=OrdersViewStyles.ORDER_TILE_RADIUS,
+                bgcolor=OrdersViewStyles.order_tile_bgcolor(selected),
                 on_click=lambda _, oid=order_id: self._controller.on_order_selected(oid),
                 content=ft.Row(
-                    spacing=8,
+                    spacing=AppDimensions.SPACE_SM,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     controls=[
                         ft.Container(
@@ -398,7 +356,7 @@ class OrdersView(BaseView["OrdersController"]):
                                 controls=[
                                     ft.Text(
                                         number,
-                                        weight=ft.FontWeight.BOLD,
+                                        style=TypographyStyles.SECTION_TITLE,
                                         no_wrap=True,
                                         overflow=ft.TextOverflow.ELLIPSIS,
                                         color=number_color,
@@ -413,8 +371,8 @@ class OrdersView(BaseView["OrdersController"]):
                             ),
                         ),
                         ft.Container(
-                            width=28,
-                            height=40,
+                            width=AppDimensions.ORDER_PAYMENT_ICON_SLOT_WIDTH,
+                            height=AppDimensions.ORDER_PAYMENT_ICON_SLOT_HEIGHT,
                             alignment=ft.Alignment.CENTER,
                             content=icon_control,
                         ),
@@ -422,7 +380,7 @@ class OrdersView(BaseView["OrdersController"]):
                 ),
             )
             self.__orders_list.controls.append(item)
-        self.__safe_update(self.__orders_list)
+        self._safe_update(self.__orders_list)
 
     @staticmethod
     def __parse_iso_date(raw: Any) -> date | None:
@@ -445,7 +403,7 @@ class OrdersView(BaseView["OrdersController"]):
 
     def __render_status(self) -> None:
         self.__status_loading.visible = self.__is_status_loading
-        self.__safe_update(self.__status_loading)
+        self._safe_update(self.__status_loading)
         self.__order_meta_column.controls.clear()
         if self.__selected_order_id is None:
             self.__order_meta_column.controls.append(ft.Text(self._translation.get("select_order")))
@@ -481,52 +439,56 @@ class OrdersView(BaseView["OrdersController"]):
                     trailing_control=invoice_trailing_control,
                 )
             )
-        self.__safe_update(self.__order_meta_column)
+        self._safe_update(self.__order_meta_column)
 
         self.__items_list.controls.clear()
         if self.__selected_order_id is None:
             self.__items_list.controls.append(ft.Text(self._translation.get("select_order")))
-            self.__safe_update(self.__items_list)
+            self._safe_update(self.__items_list)
         elif not self.__order_items:
             self.__items_list.controls.append(ft.Text(self._translation.get("no_items")))
-            self.__safe_update(self.__items_list)
+            self._safe_update(self.__items_list)
         else:
             self.__items_list.controls.append(
                 ft.Container(
-                    padding=ft.Padding.symmetric(horizontal=8),
+                    padding=OrdersViewStyles.ORDER_META_HEADER_PADDING,
                     content=ft.Row(
                         alignment=ft.MainAxisAlignment.START,
-                        spacing=12,
+                        spacing=AppDimensions.SPACE_LG,
                         controls=[
                             ft.Container(
-                                width=110,
+                                width=AppDimensions.ORDER_ITEMS_INDEX_COL_WIDTH,
                                 content=ft.Text(
-                                    self._translation.get("index"), weight=ft.FontWeight.BOLD, no_wrap=True
+                                    self._translation.get("index"), style=TypographyStyles.SECTION_TITLE, no_wrap=True
                                 ),
                             ),
                             ft.Container(
                                 expand=True,
-                                content=ft.Text(self._translation.get("name"), weight=ft.FontWeight.BOLD, no_wrap=True),
+                                content=ft.Text(
+                                    self._translation.get("name"), style=TypographyStyles.SECTION_TITLE, no_wrap=True
+                                ),
                             ),
                             ft.Container(
-                                width=130,
-                                content=ft.Text(self._translation.get("ean"), weight=ft.FontWeight.BOLD, no_wrap=True),
+                                width=AppDimensions.ORDER_ITEMS_EAN_COL_WIDTH,
+                                content=ft.Text(
+                                    self._translation.get("ean"), style=TypographyStyles.SECTION_TITLE, no_wrap=True
+                                ),
                             ),
                             ft.Container(
-                                width=90,
+                                width=AppDimensions.ORDER_ITEMS_QUANTITY_COL_WIDTH,
                                 alignment=ft.Alignment.CENTER_RIGHT,
                                 content=ft.Text(
                                     self._translation.get("quantity"),
-                                    weight=ft.FontWeight.BOLD,
+                                    style=TypographyStyles.SECTION_TITLE,
                                     no_wrap=True,
                                 ),
                             ),
-                            ft.Container(width=20),
+                            ft.Container(width=AppDimensions.ORDER_ITEMS_GAP_COL_WIDTH),
                             ft.Container(
-                                width=220,
+                                width=AppDimensions.ORDER_ITEMS_DISCOUNTS_COL_WIDTH,
                                 content=ft.Text(
                                     self._translation.get("discounts"),
-                                    weight=ft.FontWeight.BOLD,
+                                    style=TypographyStyles.SECTION_TITLE,
                                     no_wrap=True,
                                     overflow=ft.TextOverflow.ELLIPSIS,
                                 ),
@@ -543,16 +505,16 @@ class OrdersView(BaseView["OrdersController"]):
                 discounts = str(row.get("discounts") or "-")
                 self.__items_list.controls.append(
                     ft.Container(
-                        padding=ft.Padding.symmetric(vertical=6, horizontal=8),
-                        border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
-                        border_radius=6,
+                        padding=OrdersViewStyles.ORDER_ITEMS_ROW_PADDING,
+                        border=OrdersViewStyles.ORDER_ITEMS_ROW_BORDER,
+                        border_radius=OrdersViewStyles.ORDER_ITEMS_ROW_RADIUS,
                         on_click=lambda _, item=row: self.__open_item_dialog(item),
                         content=ft.Row(
                             alignment=ft.MainAxisAlignment.START,
-                            spacing=12,
+                            spacing=AppDimensions.SPACE_LG,
                             controls=[
                                 ft.Container(
-                                    width=110,
+                                    width=AppDimensions.ORDER_ITEMS_INDEX_COL_WIDTH,
                                     content=ft.Text(item_index, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                 ),
                                 ft.Container(
@@ -560,42 +522,42 @@ class OrdersView(BaseView["OrdersController"]):
                                     content=ft.Text(item_name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                 ),
                                 ft.Container(
-                                    width=130,
+                                    width=AppDimensions.ORDER_ITEMS_EAN_COL_WIDTH,
                                     content=ft.Text(item_ean, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                 ),
                                 ft.Container(
-                                    width=90,
+                                    width=AppDimensions.ORDER_ITEMS_QUANTITY_COL_WIDTH,
                                     alignment=ft.Alignment.CENTER_RIGHT,
                                     content=ft.Text(quantity, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                 ),
-                                ft.Container(width=20),
+                                ft.Container(width=AppDimensions.ORDER_ITEMS_GAP_COL_WIDTH),
                                 ft.Container(
-                                    width=220,
+                                    width=AppDimensions.ORDER_ITEMS_DISCOUNTS_COL_WIDTH,
                                     content=ft.Text(discounts, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                 ),
                             ],
                         ),
                     )
                 )
-            self.__safe_update(self.__items_list)
+            self._safe_update(self.__items_list)
 
         self.__status_list.controls.clear()
         if self.__selected_order_id is None:
             self.__status_list.controls.append(ft.Text(self._translation.get("select_order")))
-            self.__safe_update(self.__status_list)
+            self._safe_update(self.__status_list)
             return
         if not self.__status_history:
             self.__status_list.controls.append(ft.Text(self._translation.get("no_status_history")))
-            self.__safe_update(self.__status_list)
+            self._safe_update(self.__status_list)
             return
         for row in self.__status_history:
             status = str(row.get("status") or "-")
             created_at = str(row.get("created_at") or "-")
             self.__status_list.controls.append(
                 ft.Container(
-                    padding=ft.Padding.all(8),
-                    border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
-                    border_radius=6,
+                    padding=OrdersViewStyles.STATUS_ROW_PADDING,
+                    border=OrdersViewStyles.STATUS_ROW_BORDER,
+                    border_radius=OrdersViewStyles.STATUS_ROW_RADIUS,
                     content=ft.Row(
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -606,7 +568,7 @@ class OrdersView(BaseView["OrdersController"]):
                     ),
                 )
             )
-        self.__safe_update(self.__status_list)
+        self._safe_update(self.__status_list)
 
     def __handle_download_invoice_clicked(self) -> None:
         self._controller.on_download_invoice_clicked(self.__selected_invoice_id)
@@ -619,7 +581,7 @@ class OrdersView(BaseView["OrdersController"]):
     ) -> ft.Row:
         if trailing_control is not None:
             value_control: ft.Control = ft.Row(
-                spacing=8,
+                spacing=AppDimensions.SPACE_SM,
                 controls=[
                     ft.Text(str(value), no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                     trailing_control,
@@ -633,23 +595,15 @@ class OrdersView(BaseView["OrdersController"]):
         return ft.Row(
             controls=[
                 ft.Container(
-                    width=220,
+                    width=AppDimensions.ORDER_META_LABEL_COL_WIDTH,
                     content=ft.Text(
                         f"{label}:",
-                        weight=ft.FontWeight.W_600,
+                        style=TypographyStyles.SECTION_TITLE_SEMIBOLD,
                         no_wrap=True,
                         overflow=ft.TextOverflow.ELLIPSIS,
                     ),
                 ),
                 value_control,
             ],
-            spacing=12,
+            spacing=AppDimensions.SPACE_LG,
         )
-
-    @staticmethod
-    def __safe_update(control: ft.Control) -> None:
-        try:
-            _ = control.page
-        except RuntimeError:
-            return
-        control.update()

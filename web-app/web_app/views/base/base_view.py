@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, TypeVar
+from collections.abc import Awaitable
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import flet as ft
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
@@ -9,6 +10,7 @@ from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
 from views.base.base_component import BaseComponent
+from views.mixins.input_controls_mixin import InputControlsMixin
 
 if TYPE_CHECKING:
     from controllers.base.base_view_controller import BaseViewController
@@ -18,7 +20,7 @@ TController = TypeVar(
 )
 
 
-class BaseView(BaseComponent, Generic[TController], ft.Container):
+class BaseView(BaseComponent, InputControlsMixin, Generic[TController], ft.Container):
     def __init__(
         self,
         controller: TController,
@@ -52,32 +54,16 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     def view_key(self) -> View:
         return self._view_key
 
-    def _get_dropdown(
-        self,
-        key: str,
-        size: int,
-        options: Sequence[tuple[int | str, str]],
-        callbacks: list[Callable[..., None]] | None = None,
-    ) -> tuple[ft.Container, int]:
-        def handle_select() -> None:
-            for callback in callbacks or []:
-                callback()
+    @property
+    def app_page(self) -> Any:
+        return self._controller.page
 
-        return (
-            ft.Container(
-                content=ft.Dropdown(
-                    key=key,
-                    options=[ft.dropdown.Option(key="0", text="")]
-                    + [ft.dropdown.Option(key=str(option[0]), text=option[1]) for option in options],
-                    on_select=handle_select,
-                    expand=True,
-                    value="0",
-                    editable=True,
-                    enable_search=True,
-                    enable_filter=True,
-                ),
-                col={"sm": float(size)},
-                alignment=ft.Alignment.CENTER_LEFT,
-            ),
-            size,
-        )
+    def pop_dialog(self) -> Any:
+        return self._controller.pop_dialog()
+
+    def queue_dialog(self, dialog: Any, wait_for_future: Awaitable[Any] | None = None) -> None:
+        self._controller.queue_dialog(dialog, wait_for_future)
+
+    def get_viewport_size(self) -> tuple[int | None, int | None]:
+        page = self.app_page
+        return page.width or page.window.width, page.height or page.window.height

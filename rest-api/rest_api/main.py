@@ -149,7 +149,13 @@ def create_app() -> FastAPI:
     auth = Auth(context)
 
     def load_all_models() -> None:
-        for model_path in ("models.ai", "models.business.hr", "models.business.logistic", "models.business.trade", "models.core"):
+        for model_path in (
+            "models.ai",
+            "models.business.hr",
+            "models.business.logistic",
+            "models.business.trade",
+            "models.core",
+        ):
             importlib.import_module(model_path)
 
     @asynccontextmanager

@@ -5,7 +5,6 @@ import random
 import string
 from datetime import date
 
-import flet as ft
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
@@ -34,7 +33,7 @@ from utils.discount_context import DiscountContext
 from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
 from utils.media_url import MediaUrl
 from utils.translation import Translation
-from views.base.base_dialog import BaseDialog
+from views.components.order_confirmation_dialog_component import OrderConfirmationDialogComponent
 from views.core.create_order_view import CreateOrderView
 
 
@@ -261,7 +260,6 @@ class CreateOrderController(
                     raise
                 if track_missing:
                     self.__checkout_missing_exchange_rate = True
-                pass
             quantities[item_id] = quantity
             base_net_map[item_id] = purchase_price * quantity
 
@@ -331,7 +329,6 @@ class CreateOrderController(
                 raise
             if track_missing:
                 self.__checkout_missing_exchange_rate = True
-            pass
         base_net = purchase_price * quantity
         discount_percent = self.__get_cart_discount_percent(
             item_id,
@@ -427,7 +424,6 @@ class CreateOrderController(
                 raise
             if track_missing:
                 self.__checkout_missing_exchange_rate = True
-            pass
         return round(cost, 2)
 
     def __convert_to_currency(
@@ -832,9 +828,7 @@ class CreateOrderController(
                 data["total_gross"] = 0.0
                 data["total_discount"] = 0.0
                 continue
-            total_net, total_vat, total_gross, total_discount = self.__calculate_cart_item_totals(
-                item_id, quantity, context
-            )
+            total_net, _, total_gross, total_discount = self.__calculate_cart_item_totals(item_id, quantity, context)
             data["total_net"] = total_net
             data["total_gross"] = total_gross
             data["total_discount"] = total_discount
@@ -892,9 +886,9 @@ class CreateOrderController(
 
     def __show_order_confirmation(self, order_number: str) -> None:
         translation = self._state_store.app_state.translation.items
-        dialog = BaseDialog(
-            title=translation.get("checkout"),
-            controls=[ft.Text(translation.get("order_created").format(order_number=order_number))],
-            actions=[ft.TextButton(translation.get("ok"), on_click=lambda _: self._page.pop_dialog())],
+        dialog = OrderConfirmationDialogComponent(
+            translation=translation,
+            order_number=order_number,
+            on_ok_clicked=lambda _: self._page.pop_dialog(),
         )
         self._queue_dialog(dialog)

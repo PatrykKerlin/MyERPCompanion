@@ -12,7 +12,7 @@ from views.base.base_dialog import BaseDialog
 
 class BulkTransfer(ft.Container):
     def __init__(
-        self, # NOSONAR
+        self,  # NOSONAR
         on_save_clicked: Callable[[ft.Event[ft.IconButton]], None],
         source_label: str,
         target_label: str | None = None,

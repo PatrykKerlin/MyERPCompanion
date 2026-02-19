@@ -35,6 +35,7 @@ class ErrorDialogComponent(BaseDialog):
                     )
                 ],
             ),
+            scrollable=True,
             title=ft.Row(
                 controls=[
                     ft.Icon(icon=ft.Icons.ERROR, color=AppColors.ERROR),

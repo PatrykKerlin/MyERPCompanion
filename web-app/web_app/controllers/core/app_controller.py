@@ -25,7 +25,7 @@ from services.core.app_service import AppService
 from states.states import ViewState
 from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
 from utils.user_settings import UserSettings
-from views.base.base_dialog import BaseDialog
+from views.components.current_user_settings_dialog_component import CurrentUserSettingsDialogComponent
 from views.core.app_view import AppView as WebAppView
 
 if TYPE_CHECKING:
@@ -39,7 +39,7 @@ class AppController(BaseController):
         self.__service = AppService(self._settings, self._logger, self._tokens_accessor)
         self.__language_service = LanguageService(self._settings, self._logger, self._tokens_accessor)
         self.__user_service = UserService(self._settings, self._logger, self._tokens_accessor)
-        self.__view = WebAppView(self._state_store.app_state.translation.items, self._settings.THEME)
+        self.__view = WebAppView(self, self._state_store.app_state.translation.items, self._settings.THEME)
         self.__view.set_nav_handlers(self.__open_orders)
         self.__view.set_cart_handler(self.__open_cart)
         self.__view.set_user_settings_handler(self.__open_current_user_settings)
@@ -142,75 +142,6 @@ class AppController(BaseController):
         if current_user.language.id not in language_ids:
             language_options.append((current_user.language.id, current_user.language.key))
             language_by_id[current_user.language.id] = current_user.language
-        password_field = ft.TextField(
-            password=True,
-            can_reveal_password=True,
-            expand=True,
-        )
-        password_repeat_field = ft.TextField(
-            password=True,
-            can_reveal_password=True,
-            expand=True,
-        )
-        language_dropdown = ft.Dropdown(
-            options=[ft.dropdown.Option(key=str(option[0]), text=option[1]) for option in language_options],
-            value=str(current_user.language.id),
-            expand=True,
-            editable=True,
-            enable_search=True,
-            enable_filter=True,
-        )
-        theme_dropdown = ft.Dropdown(
-            options=[
-                ft.dropdown.Option(key="system", text=translation.get("system")),
-                ft.dropdown.Option(key="dark", text=translation.get("dark")),
-                ft.dropdown.Option(key="light", text=translation.get("light")),
-            ],
-            value=current_user.theme,
-            expand=True,
-        )
-
-        def build_labeled_control(label: str, control: ft.Control) -> ft.Row:
-            return ft.Row(
-                expand=True,
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=12,
-                controls=[
-                    ft.Container(width=170, content=ft.Text(label)),
-                    ft.Container(expand=True, content=control),
-                ],
-            )
-
-        save_button = ft.Button(content=translation.get("save"))
-        cancel_button = ft.TextButton(translation.get("cancel"), on_click=lambda _: self._page.pop_dialog())
-        controls: list[ft.Control] = [
-            ft.Container(
-                content=build_labeled_control(translation.get("password"), password_field),
-                padding=ft.Padding.only(bottom=8),
-            ),
-            ft.Container(
-                content=build_labeled_control(translation.get("password_repeat"), password_repeat_field),
-                padding=ft.Padding.only(bottom=8),
-            ),
-            ft.Container(
-                content=build_labeled_control(translation.get("language_id"), language_dropdown),
-                padding=ft.Padding.only(bottom=8),
-            ),
-            ft.Container(content=build_labeled_control(translation.get("theme"), theme_dropdown)),
-        ]
-        dialog = BaseDialog(
-            title=translation.get("current_user"),
-            controls=controls,
-            actions=[cancel_button, save_button],
-        )
-        dialog_content = dialog.content
-        if isinstance(dialog_content, ft.Container):
-            dialog_content.alignment = ft.Alignment.TOP_LEFT
-            content_column = dialog_content.content
-            if isinstance(content_column, ft.Column):
-                content_column.alignment = ft.MainAxisAlignment.START
-                content_column.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
 
         def resolve_dialog_width() -> int:
             viewport_width = self._page.width or self._page.window.width
@@ -218,19 +149,26 @@ class AppController(BaseController):
                 return max(360, min(int(viewport_width * 0.9), 540))
             return 520
 
-        target_width = resolve_dialog_width()
-        if isinstance(dialog_content, ft.Container):
-            dialog_content.width = target_width
+        dialog: CurrentUserSettingsDialogComponent | None = None
 
-        save_button.on_click = lambda _: self._page.run_task(
-            self.__save_current_user_settings,
-            dialog,
-            password_field,
-            password_repeat_field,
-            language_dropdown,
-            theme_dropdown,
-            current_user,
-            language_by_id,
+        def on_save_clicked(_: ft.Event[ft.Button]) -> None:
+            if dialog is None:
+                return
+            self._page.run_task(
+                self.__save_current_user_settings,
+                dialog,
+                current_user,
+                language_by_id,
+            )
+
+        dialog = CurrentUserSettingsDialogComponent(
+            translation=translation,
+            language_options=language_options,
+            language_value=str(current_user.language.id),
+            theme_value=current_user.theme,
+            on_cancel_clicked=lambda _: self._page.pop_dialog(),
+            on_save_clicked=on_save_clicked,
+            width=resolve_dialog_width(),
         )
         self._queue_dialog(dialog)
 
@@ -276,22 +214,18 @@ class AppController(BaseController):
 
     async def __save_current_user_settings(
         self,
-        dialog: BaseDialog,
-        password_field: ft.TextField,
-        password_repeat_field: ft.TextField,
-        language_dropdown: ft.Dropdown,
-        theme_dropdown: ft.Dropdown,
+        dialog: CurrentUserSettingsDialogComponent,
         current_user: UserPlainSchema,
         language_by_id: dict[int, LanguagePlainSchema],
     ) -> None:
-        selected_language_id = self.__parse_optional_int(language_dropdown.value)
+        selected_language_id = self.__parse_optional_int(dialog.language_value)
         if selected_language_id is None:
             self._open_error_dialog(message_key="value_required")
             return
         selected_language = language_by_id.get(selected_language_id)
-        selected_theme = self.__normalize_theme(theme_dropdown.value, current_user.theme)
-        password = self.__to_none_if_empty(password_field.value)
-        password_repeat = self.__to_none_if_empty(password_repeat_field.value)
+        selected_theme = self.__normalize_theme(dialog.theme_value, current_user.theme)
+        password = self.__to_none_if_empty(dialog.password_value)
+        password_repeat = self.__to_none_if_empty(dialog.password_repeat_value)
         try:
             payload = UserStrictUpdateAppSchema(
                 id=current_user.id,

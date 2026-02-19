@@ -2,6 +2,7 @@ from collections.abc import Callable
 from typing import cast
 
 import flet as ft
+from styles.styles import ButtonStyles, FeedbackStyles
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 
@@ -23,10 +24,13 @@ class ErrorDialogComponent(BaseDialog):
             final_message += message
         super().__init__(
             controls=[ft.Text(final_message)],
-            actions=cast(list[ft.Control], [ft.TextButton(translation.get("ok"), on_click=on_ok_clicked)]),
+            actions=cast(
+                list[ft.Control],
+                [ft.TextButton(translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_regular)],
+            ),
             title=ft.Row(
                 controls=[
-                    ft.Icon(icon=ft.Icons.ERROR, color=ft.Colors.RED),
+                    ft.Icon(icon=ft.Icons.ERROR, color=FeedbackStyles.ERROR_ICON_COLOR),
                     ft.Text(value=translation.get("error")),
                 ]
             ),

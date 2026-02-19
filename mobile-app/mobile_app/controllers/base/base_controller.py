@@ -46,6 +46,16 @@ class BaseController:
             func = self.__unsubscribers.pop()
             func()
 
+    @property
+    def page(self) -> Any:
+        return self._page
+
+    def pop_dialog(self) -> Any:
+        return self._page.pop_dialog()
+
+    def enqueue_dialog(self, dialog: Any, wait_for_future: Awaitable[Any] | None = None) -> None:
+        self._queue_dialog(dialog, wait_for_future)
+
     @classmethod
     def handle_api_action(
         cls, message_key: ApiActionError

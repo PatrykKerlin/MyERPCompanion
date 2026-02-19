@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Awaitable
 from datetime import date, datetime
 from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, TypeVar, cast
 
@@ -86,6 +87,16 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     @property
     def caller_view_key(self) -> View | None:
         return self._caller_view_key
+
+    @property
+    def app_page(self) -> Any:
+        return self._controller.page
+
+    def pop_dialog(self) -> Any:
+        return self._controller.pop_dialog()
+
+    def queue_dialog(self, dialog: Any, wait_for_future: Awaitable[Any] | None = None) -> None:
+        self._controller.enqueue_dialog(dialog, wait_for_future)
 
     @property
     def search_results(self) -> list[dict[str, Any]] | None:

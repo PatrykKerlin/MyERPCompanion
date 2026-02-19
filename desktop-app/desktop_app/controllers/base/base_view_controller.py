@@ -25,8 +25,7 @@ from events.events import (
     ViewUndoRequested,
 )
 from pydantic import ValidationError
-from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
-from schemas.base.base_schema import BaseSchema
+from schemas.base.base_schema import BasePlainSchema, BaseSchema, BaseStrictSchema
 from schemas.core.param_schema import PaginatedResponseSchema
 from services.base.base_service import BaseService
 from states.states import ViewState

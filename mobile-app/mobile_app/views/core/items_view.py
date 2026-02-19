@@ -351,7 +351,7 @@ class ItemsView(BaseView):
             ],
             actions=[ft.TextButton(self._translation.get("close"), on_click=lambda _: self.__close_dialog())],
         )
-        self._controller._queue_dialog(dialog)
+        self.queue_dialog(dialog)
 
     def __close_dialog(self) -> None:
         try:

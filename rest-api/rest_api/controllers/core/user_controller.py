@@ -2,7 +2,7 @@ from typing import Union
 
 from config.context import Context
 from controllers.base.base_controller import BaseController
-from fastapi import Request, status
+from fastapi import Request
 from schemas.core.user_schema import UserPlainSchema, UserStrictCreateApiSchema, UserStrictUpdateApiSchema
 from services.core import UserService
 from utils.auth import Auth

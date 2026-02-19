@@ -36,13 +36,23 @@ class BaseController:
         self.__unsubscribers: list[Callable[[], None]] = []
         self.__disposed: bool = False
 
-    async def dispose(self) -> None:
+    async def dispose(self) -> None:  # NOSONAR
         if self.__disposed:
             return
         self.__disposed = True
         while self.__unsubscribers:
             func = self.__unsubscribers.pop()
             func()
+
+    @property
+    def page(self) -> Any:
+        return self._page
+
+    def pop_dialog(self) -> Any:
+        return self._page.pop_dialog()
+
+    def queue_dialog(self, dialog: Any, wait_for_future: Awaitable[Any] | None = None) -> None:
+        self._queue_dialog(dialog, wait_for_future)
 
     @classmethod
     def handle_api_action(

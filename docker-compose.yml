@@ -90,7 +90,7 @@ services:
     depends_on:
       - rest-api
     command:
-      sh -c "flet run main.py"
+      sh -c "dbus-run-session -- flet run main.py"
 
   mobile-app:
     build:
