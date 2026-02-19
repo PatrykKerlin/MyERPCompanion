@@ -87,8 +87,8 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         self.__items_list = ft.ListView(spacing=AppDimensions.SPACE_SM, expand=True)
         self.__refresh_items_list()
 
-        back_button = ft.TextButton(
-            self._translation.get("back_to_orders"),
+        back_button = self._get_text_button(
+            content=self._translation.get("back_to_orders"),
             on_click=lambda _: self._controller.on_back_to_orders_clicked(),
             style=ButtonStyles.primary_regular,
         )
@@ -318,7 +318,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         item_discounts = item.discounts if item else []
         category_label = self.__get_discount_label(category_discount_id, category_discounts)
         item_label = self.__get_discount_label(item_discount_id, item_discounts)
-        remove_button = ft.IconButton(
+        remove_button = self._get_icon_button(
             icon=ft.Icons.DELETE_OUTLINE,
             tooltip=self._translation.get("remove"),
             on_click=lambda _, selected_item_id=item_id: self.__remove_cart_item(selected_item_id),
@@ -422,14 +422,14 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             color=CreateOrderViewStyles.CHECKOUT_ERROR_COLOR,
         )
         self.__checkout_missing_rate_text.visible = False
-        self.__checkout_confirm_button = ft.Button(
+        self.__checkout_confirm_button = self._get_button(
             content=self._translation.get("confirm_order"),
             disabled=True,
             style=ButtonStyles.regular,
             on_click=lambda _: self.__on_checkout_confirm_clicked(),
         )
-        back_button = ft.TextButton(
-            self._translation.get("back_to_cart"),
+        back_button = self._get_text_button(
+            content=self._translation.get("back_to_cart"),
             on_click=lambda _: self.__on_checkout_back_clicked(),
             style=ButtonStyles.regular,
         )
@@ -742,7 +742,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             item_discount_dropdown,
             lambda: None,
         )
-        add_button = ft.Button(
+        add_button = self._get_button(
             content=self._translation.get("add_to_cart"),
             disabled=True,
             style=ButtonStyles.add_to_cart,

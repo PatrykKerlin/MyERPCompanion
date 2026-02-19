@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from typing import TYPE_CHECKING
 
 from controllers.base.base_component_controller import BaseComponentController
@@ -40,7 +39,7 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
         self.__mobile_login_warehouses_username = normalized_username
         self.__mobile_login_warehouses_request_id += 1
         request_id = self.__mobile_login_warehouses_request_id
-        self.__schedule_mobile_login_warehouses_load(normalized_username, request_id)
+        self._page.run_task(self.__load_mobile_login_warehouses, normalized_username, request_id)
 
     async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
         translation_state = self._state_store.app_state.translation
@@ -49,17 +48,6 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
         self._component = MobileAuthView(controller=self, translation=translation_state.items)
         await self._event_bus.publish(AuthViewReady(component=self._component))
         self.on_mobile_username_changed(None, force=True)
-
-    def __schedule_mobile_login_warehouses_load(self, username: str | None, request_id: int) -> None:
-        try:
-            self._page.run_task(self.__load_mobile_login_warehouses, username, request_id)
-            return
-        except (AttributeError, RuntimeError):
-            pass
-        try:
-            asyncio.create_task(self.__load_mobile_login_warehouses(username, request_id))
-        except RuntimeError:
-            self._logger.exception("Unable to schedule mobile login warehouse load.")
 
     async def __handle_login(self, username: str, password: str, warehouse_id: int | None = None) -> None:
         tokens = await self.__perform_fetch_tokens(username, password, warehouse_id)
@@ -138,12 +126,9 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
     ) -> TokenPlainSchema | None:
         return await self.__service.fetch_tokens(username, password, warehouse_id)
 
+    @BaseController.handle_api_action(ApiActionError.FETCH, show_loading=False)
     async def __perform_get_login_warehouses(self, username: str | None) -> list[WarehouseLoginOptionSchema] | None:
-        try:
-            return await self.__service.get_login_warehouses(username)
-        except Exception:
-            self._logger.exception("Failed to load login warehouses for mobile auth")
-            return None
+        return await self.__service.get_login_warehouses(username)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_modules(self) -> list[ModulePlainSchema] | None:

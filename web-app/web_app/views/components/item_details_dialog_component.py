@@ -70,7 +70,7 @@ class ItemDetailsDialogComponent(BaseDialog):
                     content=ft.Column(controls=controls, tight=True, spacing=AppDimensions.SPACE_LG),
                 )
             ],
-            actions=[ft.Button(content=translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_regular)],
+            actions=[self._get_button(content=translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_regular)],
         )
         self.scrollable = False
 
@@ -96,13 +96,13 @@ class ItemDetailsDialogComponent(BaseDialog):
             run_spacing=AppDimensions.SPACE_SM,
             expand=True,
         )
-        self.__gallery_left_button = ft.IconButton(
+        self.__gallery_left_button = self._get_icon_button(
             icon=ft.Icons.CHEVRON_LEFT,
             disabled=True,
             style=ButtonStyles.icon,
             on_click=self.__move_left,
         )
-        self.__gallery_right_button = ft.IconButton(
+        self.__gallery_right_button = self._get_icon_button(
             icon=ft.Icons.CHEVRON_RIGHT,
             style=ButtonStyles.icon,
             on_click=self.__move_right,

@@ -41,9 +41,11 @@ class AppController(BaseController):
         self.__order_service = OrderService(self._settings, self._logger, self._tokens_accessor)
         self.__view = MobileAppView(self._state_store.app_state.translation.items, self._settings.THEME)
         self.__view.set_navigation_handler(self.__request_mobile_view)
+        self.__view.set_refresh_handler(self.__request_refresh)
         self.__view.set_user_settings_handler(self.__open_current_user_settings)
         self.__view.set_logout_handler(self.__request_logout)
         self.__main_menu: MainMenuView | None = None
+        self.__last_view_request: ViewRequested | None = None
 
         self._subscribe_event_handlers(
             {
@@ -133,6 +135,7 @@ class AppController(BaseController):
         self.__view.set_content_visible(False)
         self.__view.set_content(None)
         self.__main_menu = None
+        self.__last_view_request = None
         self._state_store.update(
             view={"title": "", "mode": ViewMode.NONE, "view": None},
             modules={"items": []},
@@ -182,6 +185,7 @@ class AppController(BaseController):
         self.__view.set_warehouse_name(self._get_mobile_selected_warehouse_name())
 
     async def __open_main_menu_view(self) -> None:
+        self.__last_view_request = None
         self.__main_menu = MainMenuView(self._state_store.app_state.translation.items)
         summary = await self.__load_mobile_picking_summary()
         self.__main_menu.set_summary(
@@ -197,42 +201,75 @@ class AppController(BaseController):
     async def __load_mobile_picking_summary(self) -> OrderPickingSummarySchema:
         if self._state_store.app_state.user.current is None:
             return OrderPickingSummarySchema()
-        try:
-            return await self.__order_service.get_picking_summary(
-                Endpoint.ORDERS_PICKING_SUMMARY,
-                None,
-                None,
-                None,
-                Module.MOBILE,
-            )
-        except Exception:
-            self._logger.exception("Failed to load mobile picking summary.")
-            return OrderPickingSummarySchema()
+        summary = await self.__perform_get_mobile_picking_summary()
+        return summary or OrderPickingSummarySchema()
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_mobile_picking_summary(self) -> OrderPickingSummarySchema:
+        return await self.__order_service.get_picking_summary(
+            Endpoint.ORDERS_PICKING_SUMMARY,
+            None,
+            None,
+            None,
+            Module.MOBILE,
+        )
 
     def __request_mobile_view(self, view_key: View) -> None:
-        self._page.run_task(
-            self._event_bus.publish,
-            ViewRequested(
-                module_id=Module.MOBILE,
-                view_key=view_key,
-                mode=ViewMode.STATIC,
-            ),
+        event = ViewRequested(
+            module_id=Module.MOBILE,
+            view_key=view_key,
+            mode=ViewMode.STATIC,
         )
+        self.__last_view_request = event
+        self._page.run_task(self._event_bus.publish, event)
 
     def __open_current_user_settings(self) -> None:
         current_user = self._state_store.app_state.user.current
         if current_user is None:
             return
-        self._page.run_task(
-            self._event_bus.publish,
-            ViewRequested(
-                module_id=Module.CORE,
-                view_key=View.USERS,
-                record_id=current_user.id,
-                mode=ViewMode.STATIC,
-                caller_view_key=View.CURRENT_USER,
-            ),
+        event = ViewRequested(
+            module_id=Module.CORE,
+            view_key=View.USERS,
+            record_id=current_user.id,
+            mode=ViewMode.STATIC,
+            caller_view_key=View.CURRENT_USER,
         )
+        self.__last_view_request = event
+        self._page.run_task(self._event_bus.publish, event)
 
     def __request_logout(self) -> None:
         self._page.run_task(self._event_bus.publish, LogoutRequested())
+
+    def __request_refresh(self) -> None:
+        self._page.run_task(self.__refresh_current_content)
+
+    async def __refresh_current_content(self) -> None:
+        if self._state_store.app_state.user.current is None:
+            return
+
+        if self.__main_menu is not None:
+            await self.__open_main_menu_view()
+            return
+
+        if self.__last_view_request is None:
+            await self.__open_main_menu_view()
+            return
+
+        event = self.__last_view_request
+        if event.view_key == View.USERS and event.caller_view_key == View.CURRENT_USER:
+            current_user = self._state_store.app_state.user.current
+            if current_user is None:
+                return
+            event = ViewRequested(
+                module_id=event.module_id,
+                view_key=event.view_key,
+                record_id=current_user.id,
+                mode=event.mode,
+                caller_view_key=event.caller_view_key,
+                caller_data=event.caller_data,
+                width_ratio=event.width_ratio,
+                save_succeeded=False,
+            )
+            self.__last_view_request = event
+
+        await self._event_bus.publish(event)

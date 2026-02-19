@@ -69,7 +69,7 @@ class Constraints:
     TaxId = Annotated[str, Field(min_length=10, max_length=10, pattern=__digits_only_regex)]  # NOSONAR
     TaxIdOptional = Annotated[str | None, Field(min_length=10, max_length=10, pattern=__digits_only_regex)]  # NOSONAR
     Theme = Literal["system", "dark", "light"]  # NOSONAR
-    AuthClient = Literal["desktop", "web"]  # NOSONAR
+    AuthClient = Literal["desktop", "web", "mobile"]  # NOSONAR
     Username = Annotated[str, Field(min_length=5, max_length=20)]  # NOSONAR
     WebsiteOptional = Annotated[  # NOSONAR
         HttpUrl | None,

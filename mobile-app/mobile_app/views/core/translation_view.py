@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from styles.styles import BaseViewStyles
 from utils.enums import View, ViewMode
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -27,6 +28,6 @@ class TranslationView(BaseView):
             mode=mode,
             view_key=key,
             data_row=data_row,
-            base_label_size=0,
-            base_input_size=0,
+            base_label_size=BaseViewStyles.EMPTY_LABEL_SIZE,
+            base_input_size=BaseViewStyles.EMPTY_INPUT_SIZE,
         )

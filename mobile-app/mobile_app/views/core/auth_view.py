@@ -3,47 +3,47 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
+from styles.styles import AlignmentStyles, AuthViewStyles, ButtonStyles
 from utils.translation import Translation
 from views.base.base_component import BaseComponent
+from views.mixins.input_controls_mixin import InputControlsMixin
 
 if TYPE_CHECKING:
     from controllers.components.auth_dialog_controller import AuthDialogController
 
 
-class AuthView(ft.Container):
-    __FORM_WIDTH = 320
-    __CARD_WIDTH = 344
-
+class AuthView(InputControlsMixin, ft.Container):
     def __init__(self, controller: AuthDialogController, translation: Translation) -> None:
         self.__controller = controller
         self.__translation = translation
-        form_width = self.__FORM_WIDTH
 
-        self.__login_field = ft.TextField(
+        self.__login_field = self._get_text_field(
             label=self.__translation.get("login"),
             autofocus=True,
             on_change=self.__on_username_changed,
-            width=form_width,
+            expand=True,
+            auto_submit_on_tap_outside=False,
         )
-        self.__password_field = ft.TextField(
+        self.__password_field = self._get_text_field(
             label=self.__translation.get("password"),
             password=True,
             can_reveal_password=True,
-            width=form_width,
+            expand=True,
         )
-        self.__warehouse_dropdown = ft.Dropdown(
+        self.__warehouse_dropdown = self._get_dropdown(
             label=self.__translation.get("warehouses"),
             options=[],
             disabled=True,
-            width=form_width,
+            expand=True,
         )
 
         self.__login_field.on_submit = lambda _: self.__password_field.focus()
         self.__password_field.on_submit = self.__on_login
 
-        login_button = ft.Button(
+        login_button = self._get_button(
             content=self.__translation.get("log_in"),
             on_click=self.__on_login,
+            style=ButtonStyles.primary_regular,
         )
 
         form = ft.Column(
@@ -54,38 +54,51 @@ class AuthView(ft.Container):
                 login_button,
             ],
             tight=True,
-            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
-            width=form_width,
+            horizontal_alignment=AuthViewStyles.FORM_STRETCH,
+        )
+        form_row = ft.ResponsiveRow(
+            controls=[ft.Container(content=form, col=AuthViewStyles.FORM_COL)],
+            columns=AuthViewStyles.FORM_ROW_COLUMNS,
+            alignment=AlignmentStyles.AXIS_CENTER,
+            vertical_alignment=AlignmentStyles.CROSS_START,
         )
 
-        app_name = self.__translation.get("my_erp_companion")
-        title_text = self.__translation.get("employee_portal_title").format(app_name=app_name)
-        subtitle_text = self.__translation.get("employee_portal_subtitle")
-        portal_text = ft.Text(
+        title_text = self.__translation.get("my_erp_companion")
+        subtitle_text = self.__translation.get("mobile_portal")
+        portal_text = self._get_label(
             title_text,
-            size=18,
-            weight=ft.FontWeight.BOLD,
-            text_align=ft.TextAlign.CENTER,
+            style=AuthViewStyles.TITLE_STYLE,
+            text_align=AuthViewStyles.TITLE_ALIGN,
         )
-        subtitle = ft.Text(
+        subtitle = self._get_label(
             subtitle_text,
-            text_align=ft.TextAlign.CENTER,
+            text_align=AuthViewStyles.SUBTITLE_ALIGN,
         )
 
         hero_body = ft.Container(
-            alignment=ft.Alignment.CENTER,
-            padding=ft.Padding.all(16),
+            alignment=AuthViewStyles.HERO_ALIGNMENT,
+            padding=AuthViewStyles.HERO_PADDING,
             content=ft.Column(
-                controls=[portal_text, subtitle, ft.Container(height=12), form],
-                tight=True,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    portal_text,
+                    subtitle,
+                    ft.Container(height=AuthViewStyles.HERO_FORM_SPACER_HEIGHT),
+                    form_row,
+                ],
+                tight=AuthViewStyles.HERO_COLUMN_TIGHT,
+                horizontal_alignment=AuthViewStyles.HERO_COLUMN_HORIZONTAL_ALIGNMENT,
             ),
         )
-        hero_card = ft.Card(content=hero_body, width=self.__CARD_WIDTH)
+        hero_card = ft.Card(content=hero_body, bgcolor=AuthViewStyles.HERO_CARD_BGCOLOR)
         hero_wrapper = ft.Container(
-            content=hero_card,
-            alignment=ft.Alignment.CENTER,
-            padding=ft.Padding.symmetric(horizontal=12, vertical=20),
+            content=ft.ResponsiveRow(
+                controls=[ft.Container(content=hero_card, col=AuthViewStyles.HERO_COL)],
+                columns=AuthViewStyles.HERO_ROW_COLUMNS,
+                alignment=AlignmentStyles.AXIS_CENTER,
+                vertical_alignment=AlignmentStyles.CROSS_START,
+            ),
+            alignment=AlignmentStyles.CENTER,
+            padding=AuthViewStyles.HERO_WRAPPER_PADDING,
         )
         centered_layout = ft.Column(
             controls=[
@@ -94,15 +107,15 @@ class AuthView(ft.Container):
                 ft.Container(expand=True),
             ],
             expand=True,
-            spacing=0,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=AuthViewStyles.CENTERED_LAYOUT_SPACING,
+            horizontal_alignment=AuthViewStyles.CENTERED_LAYOUT_HORIZONTAL_ALIGNMENT,
         )
 
         ft.Container.__init__(
             self,
             content=centered_layout,
             expand=True,
-            alignment=ft.Alignment.CENTER,
+            alignment=AlignmentStyles.CENTER,
         )
 
     def set_warehouse_options(self, options: list[tuple[int, str]]) -> None:

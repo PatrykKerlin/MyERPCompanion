@@ -14,12 +14,12 @@ class CartDialogComponent(BaseDialog):
         on_continue_clicked: Callable[[ft.Event[ft.TextButton]], ft.DialogControl | None],
         on_proceed_clicked: Callable[[ft.Event[ft.Button]], ft.DialogControl | None],
     ) -> None:
-        continue_button = ft.TextButton(
-            translation.get("continue_shopping"),
+        continue_button = self._get_text_button(
+            content=translation.get("continue_shopping"),
             on_click=on_continue_clicked,
             style=ButtonStyles.regular,
         )
-        proceed_button = ft.Button(
+        proceed_button = self._get_button(
             content=translation.get("proceed_to_checkout"),
             on_click=on_proceed_clicked,
             style=ButtonStyles.primary_regular,

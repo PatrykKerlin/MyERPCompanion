@@ -263,7 +263,6 @@ class OrderRepository(BaseRepository[Order]):
             .where(
                 AssocOrderItem.order_id == cls._model_cls.id,
                 AssocOrderItem.is_active.is_(True),
-                AssocOrderItem.to_process > 0,
                 AssocBinItem.is_active.is_(True),
                 AssocBinItem.quantity > 0,
                 Bin.is_active.is_(True),

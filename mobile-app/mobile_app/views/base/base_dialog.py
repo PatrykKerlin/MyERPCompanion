@@ -1,4 +1,5 @@
 import flet as ft
+from styles.styles import BaseDialogStyles
 
 
 class BaseDialog(ft.AlertDialog):
@@ -10,18 +11,18 @@ class BaseDialog(ft.AlertDialog):
         **kwargs,
     ) -> None:
         super().__init__(
-            modal=True,
-            alignment=ft.Alignment.CENTER,
+            modal=BaseDialogStyles.MODAL,
+            alignment=BaseDialogStyles.ALIGNMENT,
             content=ft.Container(
                 content=ft.Column(
                     controls=controls,
-                    tight=True,
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    tight=BaseDialogStyles.CONTENT_TIGHT,
+                    alignment=BaseDialogStyles.CONTENT_ALIGNMENT,
+                    horizontal_alignment=BaseDialogStyles.CONTENT_HORIZONTAL_ALIGNMENT,
                 ),
             ),
             actions=actions or [],
             title=title,
-            scrollable=True,
+            scrollable=BaseDialogStyles.SCROLLABLE,
             **kwargs,
         )

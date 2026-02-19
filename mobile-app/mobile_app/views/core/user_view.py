@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast
 
 import flet as ft
+from styles.styles import ButtonStyles, MobileCommonViewStyles, TypographyStyles, UserViewStyles
 from schemas.validation.constraints import Constraints
 from utils.enums import View, ViewMode
 from utils.translation import Translation
@@ -29,41 +30,48 @@ class UserView(BaseView):
         self.__selected_language_id = selected_language_id
         self.__selected_theme = selected_theme
 
-        self.__title = ft.Text(size=20, weight=ft.FontWeight.BOLD)
-        self.__subtitle = ft.Text(size=14)
-        self.__back_button = ft.Button(on_click=self.__on_back_click, width=220)
+        self.__title = self._get_label("", style=TypographyStyles.HEADER_TITLE)
+        self.__back_button = self._get_button(
+            content=self._translation.get("back"),
+            on_click=self.__on_back_click,
+            style=ButtonStyles.primary_regular,
+        )
         self.__header_texts = ft.Column(
-            controls=[self.__title, self.__subtitle],
-            spacing=2,
-            expand=True,
+            controls=[self.__title],
+            spacing=MobileCommonViewStyles.HEADER_TEXTS_SPACING,
         )
-        self.__header_row = ft.Row(
+        self.__header_row = ft.ResponsiveRow(
             controls=[
-                self.__header_texts,
-                ft.Container(content=self.__back_button, alignment=ft.Alignment.CENTER_RIGHT),
+                ft.Container(content=self.__header_texts, col=MobileCommonViewStyles.HEADER_TEXTS_COL),
+                ft.Container(
+                    content=self.__back_button,
+                    col=MobileCommonViewStyles.HEADER_ACTION_COL,
+                    alignment=MobileCommonViewStyles.HEADER_BACK_ALIGNMENT,
+                ),
             ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            columns=MobileCommonViewStyles.HEADER_ROW_COLUMNS,
+            alignment=MobileCommonViewStyles.HEADER_ROW_ALIGNMENT,
+            vertical_alignment=MobileCommonViewStyles.HEADER_ROW_VERTICAL_ALIGNMENT,
         )
 
-        self.__password_input = ft.TextField(password=True, can_reveal_password=True, expand=True)
-        self.__password_repeat_input = ft.TextField(password=True, can_reveal_password=True, expand=True)
+        self.__password_input = self._get_text_field(password=True, can_reveal_password=True, expand=True)
+        self.__password_repeat_input = self._get_text_field(password=True, can_reveal_password=True, expand=True)
 
-        self.__language_dropdown = ft.Dropdown(
-            options=[ft.dropdown.Option(key=str(language_id), text=label) for language_id, label in self.__languages],
+        self.__language_dropdown = self._get_dropdown(
+            options=self.__languages,
             value=str(self.__selected_language_id),
             editable=True,
             enable_search=True,
             enable_filter=True,
             expand=True,
         )
-        self.__theme_dropdown = ft.Dropdown(
+        self.__theme_dropdown = self._get_dropdown(
             options=[],
             value=self.__selected_theme,
             expand=True,
         )
 
-        self.__save_button = ft.Button(on_click=self.__on_save_click)
+        self.__save_button = self._get_button(on_click=self.__on_save_click)
 
         self.__fields = ft.Column(
             controls=[
@@ -72,18 +80,18 @@ class UserView(BaseView):
                 ft.Container(content=self.__language_dropdown),
                 ft.Container(content=self.__theme_dropdown),
             ],
-            spacing=10,
+            spacing=UserViewStyles.FIELDS_SPACING,
         )
         self.__actions_row = ft.Row(
             controls=[self.__save_button],
-            alignment=ft.MainAxisAlignment.END,
+            alignment=UserViewStyles.ACTIONS_ALIGNMENT,
         )
 
         self._master_column.controls = [
             self.__header_row,
-            ft.Divider(height=1),
+            ft.Divider(height=MobileCommonViewStyles.DIVIDER_HEIGHT),
             self.__fields,
-            ft.Divider(height=1),
+            ft.Divider(height=MobileCommonViewStyles.DIVIDER_HEIGHT),
             self.__actions_row,
         ]
         self.__render_static_texts()
@@ -110,8 +118,7 @@ class UserView(BaseView):
 
     def __render_static_texts(self) -> None:
         self.__title.value = self._translation.get("current_user")
-        self.__subtitle.value = self._translation.get("employee_portal_subtitle")
-        self.__back_button.content = self._translation.get("back_to_menu")
+        self.__back_button.content = self._translation.get("back")
         self.__save_button.content = self._translation.get("save")
 
         self.__password_input.label = self._translation.get("password")

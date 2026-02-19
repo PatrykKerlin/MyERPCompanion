@@ -4,6 +4,7 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING, Any, cast
 
 import flet as ft
+from styles.styles import AlignmentStyles, ButtonStyles, MobileCommonViewStyles, OrderPickingViewStyles, TypographyStyles
 from schemas.business.logistic.item_schema import ItemPlainSchema
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
@@ -78,9 +79,6 @@ class OrderPickingView(BaseView):
         "expiration_date",
     ]
 
-    __GALLERY_WINDOW_SIZE = 3
-    __THUMBNAIL_SIZE = 88
-
     def __init__(
         self,
         controller: OrderPickingController,
@@ -110,61 +108,60 @@ class OrderPickingView(BaseView):
         self.__gallery_left_button: ft.IconButton | None = None
         self.__gallery_right_button: ft.IconButton | None = None
 
-        self.__title = ft.Text(size=20, weight=ft.FontWeight.BOLD)
-        self.__subtitle = ft.Text(size=14)
+        self.__title = self._get_label("", style=TypographyStyles.HEADER_TITLE)
 
         order_date_container, _ = self._get_date_picker(
             "order_date",
-            4,
+            OrderPickingViewStyles.ORDER_DATE_INPUT_SIZE,
             callbacks=[self.__handle_order_date_changed],
             value=default_order_date,
             read_only=False,
         )
         self.__order_date_input = cast(DateField, order_date_container.content)
 
-        customer_container, _ = self._get_dropdown(
+        customer_container, _ = self._get_dropdown_input(
             "customer_id",
-            4,
+            OrderPickingViewStyles.CUSTOMER_INPUT_SIZE,
             customers,
             callbacks=[self.__handle_customer_changed],
         )
         self.__customer_input = cast(ft.Dropdown, customer_container.content)
 
-        order_container, _ = self._get_dropdown(
+        order_container, _ = self._get_dropdown_input(
             "order_id",
-            4,
+            OrderPickingViewStyles.ORDER_INPUT_SIZE,
             [],
             callbacks=[self.__handle_order_changed],
         )
         self.__order_input = cast(ft.Dropdown, order_container.content)
 
-        package_item_container, _ = self._get_dropdown(
+        package_item_container, _ = self._get_dropdown_input(
             "package_item_id",
-            8,
+            OrderPickingViewStyles.PACKAGE_ITEM_INPUT_SIZE,
             [],
         )
-        package_item_container.col = {"xs": 8.0, "sm": 8.0}
+        package_item_container.col = OrderPickingViewStyles.PACKAGE_ITEM_COL
         self.__package_item_input = cast(ft.Dropdown, package_item_container.content)
         self.__package_item_input.disabled = True
-        self.__add_package_button = ft.Button(
+        self.__add_package_button = self._get_button(
             on_click=self.__on_add_package_clicked,
             disabled=True,
         )
         package_button_container = ft.Container(
             content=self.__add_package_button,
-            col={"xs": 4.0, "sm": 4.0},
-            alignment=ft.Alignment.CENTER_LEFT,
+            col=OrderPickingViewStyles.PACKAGE_BUTTON_COL,
+            alignment=AlignmentStyles.CENTER_LEFT,
         )
         self.__packages_row = ft.ResponsiveRow(
             controls=[package_item_container, package_button_container],
-            columns=12,
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            columns=OrderPickingViewStyles.PACKAGE_ROW_COLUMNS,
+            alignment=OrderPickingViewStyles.PACKAGE_ROW_ALIGNMENT,
+            vertical_alignment=OrderPickingViewStyles.PACKAGE_ROW_VERTICAL_ALIGNMENT,
         )
 
-        pick_bin_container, _ = self._get_dropdown(
+        pick_bin_container, _ = self._get_dropdown_input(
             "pick_bin_id",
-            12,
+            OrderPickingViewStyles.PICK_BIN_INPUT_SIZE,
             [],
             callbacks=[self.__handle_pick_bin_changed],
         )
@@ -172,7 +169,7 @@ class OrderPickingView(BaseView):
 
         pick_quantity_container, _ = self._get_numeric_input(
             "pick_quantity",
-            12,
+            OrderPickingViewStyles.PICK_QUANTITY_INPUT_SIZE,
             value=1,
             step=1,
             precision=0,
@@ -183,58 +180,67 @@ class OrderPickingView(BaseView):
 
         self._add_to_inputs(
             {
-                "order_date": FieldGroup(input=(order_date_container, 4)),
-                "customer_id": FieldGroup(input=(customer_container, 4)),
-                "order_id": FieldGroup(input=(order_container, 4)),
-                "package_item_id": FieldGroup(input=(package_item_container, 8)),
-                "pick_bin_id": FieldGroup(input=(pick_bin_container, 12)),
-                "pick_quantity": FieldGroup(input=(pick_quantity_container, 12)),
+                "order_date": FieldGroup(input=(order_date_container, OrderPickingViewStyles.ORDER_DATE_INPUT_SIZE)),
+                "customer_id": FieldGroup(input=(customer_container, OrderPickingViewStyles.CUSTOMER_INPUT_SIZE)),
+                "order_id": FieldGroup(input=(order_container, OrderPickingViewStyles.ORDER_INPUT_SIZE)),
+                "package_item_id": FieldGroup(input=(package_item_container, OrderPickingViewStyles.PACKAGE_ITEM_INPUT_SIZE)),
+                "pick_bin_id": FieldGroup(input=(pick_bin_container, OrderPickingViewStyles.PICK_BIN_INPUT_SIZE)),
+                "pick_quantity": FieldGroup(input=(pick_quantity_container, OrderPickingViewStyles.PICK_QUANTITY_INPUT_SIZE)),
             }
         )
 
         self.__orders_row = ft.ResponsiveRow(
             controls=[order_date_container, customer_container, order_container],
-            columns=12,
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            columns=OrderPickingViewStyles.ORDERS_ROW_COLUMNS,
+            alignment=OrderPickingViewStyles.ORDERS_ROW_ALIGNMENT,
+            vertical_alignment=OrderPickingViewStyles.ORDERS_ROW_VERTICAL_ALIGNMENT,
         )
 
-        self.__items_list = ft.Column(spacing=8)
-        self.__picked_items_header = ft.Text(weight=ft.FontWeight.W_600, size=14)
-        self.__picked_items_list = ft.Column(spacing=8)
+        self.__items_header = self._get_label("", style=TypographyStyles.PENDING_TITLE)
+        self.__items_list = ft.Column(spacing=MobileCommonViewStyles.LIST_SPACING)
+        self.__picked_items_header = self._get_label("", style=TypographyStyles.PENDING_TITLE)
+        self.__picked_items_list = ft.Column(spacing=MobileCommonViewStyles.LIST_SPACING)
         self.__picked_items_section = ft.Column(
             controls=[self.__picked_items_header, self.__picked_items_list],
-            spacing=8,
+            spacing=MobileCommonViewStyles.SECTION_SPACING,
         )
         self.__list_section = ft.Column(
             controls=[
                 self.__packages_row,
-                ft.Divider(height=1),
+                ft.Divider(height=MobileCommonViewStyles.DIVIDER_HEIGHT),
+                self.__items_header,
                 self.__items_list,
-                ft.Divider(height=1),
+                ft.Divider(height=MobileCommonViewStyles.DIVIDER_HEIGHT),
                 self.__picked_items_section,
             ],
             expand=True,
-            spacing=8,
+            spacing=MobileCommonViewStyles.SECTION_SPACING,
             scroll=ft.ScrollMode.AUTO,
             visible=True,
         )
 
-        self.__pick_item_title = ft.Text(size=16, weight=ft.FontWeight.W_600)
+        self.__pick_item_title = self._get_label("", style=TypographyStyles.SUMMARY_TITLE)
         self.__pick_details_container = ft.Container()
         self.__pick_gallery_container = ft.Container()
-        self.__pick_bin_info_text = ft.Text(size=13)
-        self.__pick_buttons_row = ft.Row(
-            controls=[],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=10,
-            expand=True,
+        self.__pick_bin_info_text = self._get_label("", style=TypographyStyles.HEADER_SUBTITLE)
+        self.__pick_save_button = self._get_button(
+            on_click=self.__on_pick_save_clicked,
+            style=ButtonStyles.primary_regular,
         )
-
-        self.__pick_save_button = ft.Button(on_click=self.__on_pick_save_clicked, width=140)
-        self.__pick_back_button = ft.Button(on_click=self.__on_pick_cancel_clicked, width=140)
-        self.__pick_buttons_row.controls = [self.__pick_back_button, self.__pick_save_button]
+        self.__pick_back_button = self._get_button(
+            content=self._translation.get("back"),
+            on_click=self.__on_pick_cancel_clicked,
+            style=ButtonStyles.regular,
+        )
+        self.__pick_buttons_row = ft.ResponsiveRow(
+            controls=[
+                ft.Container(content=self.__pick_back_button, col=OrderPickingViewStyles.PICK_BACK_BUTTON_COL),
+                ft.Container(content=self.__pick_save_button, col=OrderPickingViewStyles.PICK_SAVE_BUTTON_COL),
+            ],
+            columns=OrderPickingViewStyles.PICK_BUTTONS_ROW_COLUMNS,
+            alignment=OrderPickingViewStyles.PICK_BUTTONS_ROW_ALIGNMENT,
+            vertical_alignment=OrderPickingViewStyles.PICK_BUTTONS_ROW_VERTICAL_ALIGNMENT,
+        )
 
         self.__pick_section = ft.Column(
             controls=[
@@ -243,30 +249,38 @@ class OrderPickingView(BaseView):
                 self.__pick_bin_info_text,
                 pick_quantity_container,
                 self.__pick_buttons_row,
-                ft.Divider(height=1),
+                ft.Divider(height=MobileCommonViewStyles.DIVIDER_HEIGHT),
                 self.__pick_details_container,
-                ft.Divider(height=1),
+                ft.Divider(height=MobileCommonViewStyles.DIVIDER_HEIGHT),
                 self.__pick_gallery_container,
             ],
             expand=True,
-            spacing=8,
+            spacing=MobileCommonViewStyles.SECTION_SPACING,
             scroll=ft.ScrollMode.AUTO,
             visible=False,
         )
 
-        self.__back_button = ft.Button(on_click=self.__on_back_to_menu_clicked, width=220)
-        self.__header_texts = ft.Column(
-            controls=[self.__title, self.__subtitle],
-            spacing=2,
-            expand=True,
+        self.__back_button = self._get_button(
+            content=self._translation.get("back"),
+            on_click=self.__on_back_to_menu_clicked,
+            style=ButtonStyles.primary_regular,
         )
-        self.__header_row = ft.Row(
+        self.__header_texts = ft.Column(
+            controls=[self.__title],
+            spacing=MobileCommonViewStyles.HEADER_TEXTS_SPACING,
+        )
+        self.__header_row = ft.ResponsiveRow(
             controls=[
-                self.__header_texts,
-                ft.Container(content=self.__back_button, alignment=ft.Alignment.CENTER_RIGHT),
+                ft.Container(content=self.__header_texts, col=MobileCommonViewStyles.HEADER_TEXTS_COL),
+                ft.Container(
+                    content=self.__back_button,
+                    col=MobileCommonViewStyles.HEADER_ACTION_COL,
+                    alignment=MobileCommonViewStyles.HEADER_BACK_ALIGNMENT,
+                ),
             ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            columns=MobileCommonViewStyles.HEADER_ROW_COLUMNS,
+            alignment=MobileCommonViewStyles.HEADER_ROW_ALIGNMENT,
+            vertical_alignment=MobileCommonViewStyles.HEADER_ROW_VERTICAL_ALIGNMENT,
         )
 
         self._master_column.controls = [
@@ -282,7 +296,6 @@ class OrderPickingView(BaseView):
             self.__customer_input.value = "0"
 
         self.__render_static_texts()
-        self.__render_subtitle()
 
     def did_mount(self) -> None:
         try:
@@ -294,7 +307,6 @@ class OrderPickingView(BaseView):
     def update_translation(self, translation: Translation) -> None:
         self._translation = translation
         self.__render_static_texts()
-        self.__render_subtitle()
         self.__render_items_list()
         if self.__mode == self.__MODE_PICK:
             self.__render_pick_form()
@@ -307,15 +319,11 @@ class OrderPickingView(BaseView):
         ]
         self.__order_input.value = str(selected_order_id) if selected_order_id is not None else "0"
         self.safe_update(self.__order_input)
-        self.__render_subtitle()
-        self.safe_update(self.__subtitle)
 
     def reset_order_selection(self) -> None:
         self.__selected_order_id = None
         self.__order_input.value = "0"
         self.safe_update(self.__order_input)
-        self.__render_subtitle()
-        self.safe_update(self.__subtitle)
 
     def set_order_items(self, rows: list[OrderPickingItemRow]) -> None:
         self.__order_rows = rows
@@ -348,7 +356,6 @@ class OrderPickingView(BaseView):
         self.__list_section.visible = True
         self.__back_button.visible = True
         self.__render_static_texts()
-        self.__render_subtitle()
         self.__render_items_list()
         self.safe_update(self)
 
@@ -400,7 +407,6 @@ class OrderPickingView(BaseView):
         self.__back_button.visible = False
 
         self.__render_static_texts()
-        self.__render_subtitle()
         self.__render_pick_form()
         self.safe_update(self)
 
@@ -408,36 +414,29 @@ class OrderPickingView(BaseView):
         self.__title.value = self._translation.get("order_picking")
         self.__order_input.label = self._translation.get("order")
         self.__customer_input.label = self._translation.get("customer")
+        self.__items_header.value = self._translation.get("items_to_pick")
         self.__picked_items_header.value = self._translation.get("picked_items")
         self.__package_item_input.label = self._translation.get("packages")
-        self.__add_package_button.content = self._translation.get("add_package")
+        self.__add_package_button.content = self._translation.get("add")
         self.__pick_bin_input.label = self._translation.get("source_bin")
-        self.__back_button.content = self._translation.get("back_to_menu")
+        self.__back_button.content = self._translation.get("back")
         self.__pick_back_button.content = self._translation.get("back")
-        self.__pick_save_button.content = self._translation.get("save")
-
-    def __render_subtitle(self) -> None:
-        if self.__mode == self.__MODE_PICK and self.__pick_item is not None:
-            self.__subtitle.value = self.__pick_item.name
-            return
-        if self.__selected_order_id is None:
-            self.__subtitle.value = self._translation.get("select_order")
-            return
-        self.__subtitle.value = f"{self._translation.get('order')}: {self.__selected_order_id}"
+        self.__pick_save_button.content = self._translation.get("add")
 
     def __render_items_list(self) -> None:
         if not self.__order_rows:
             self.__items_list.controls = [
-                ft.Text(self._translation.get("no_items"), text_align=ft.TextAlign.CENTER),
+                self._get_label(self._translation.get("no_items_to_pick"), text_align=ft.TextAlign.CENTER),
             ]
         else:
             controls: list[ft.Control] = []
             for row in self.__order_rows:
                 controls.append(
                     ft.Card(
+                        bgcolor=MobileCommonViewStyles.LIST_ITEM_BGCOLOR,
                         content=ft.ListTile(
-                            title=ft.Text(row.item_name),
-                            subtitle=ft.Text(
+                            title=self._get_label(row.item_name),
+                            subtitle=self._get_label(
                                 f"{self._translation.get('index')}: {row.item_index} | "
                                 f"{self._translation.get('to_process')}: {row.to_process}"
                             ),
@@ -450,16 +449,17 @@ class OrderPickingView(BaseView):
 
         if not self.__picked_rows:
             self.__picked_items_list.controls = [
-                ft.Text(self._translation.get("no_picked_items"), text_align=ft.TextAlign.CENTER),
+                self._get_label(self._translation.get("no_picked_items"), text_align=ft.TextAlign.CENTER),
             ]
         else:
             picked_controls: list[ft.Control] = []
             for row in self.__picked_rows:
                 picked_controls.append(
                     ft.Card(
+                        bgcolor=MobileCommonViewStyles.LIST_ITEM_BGCOLOR,
                         content=ft.ListTile(
-                            title=ft.Text(row.item_name),
-                            subtitle=ft.Text(
+                            title=self._get_label(row.item_name),
+                            subtitle=self._get_label(
                                 f"{self._translation.get('index')}: {row.item_index} | "
                                 f"{self._translation.get('location')}: {row.bin_location} | "
                                 f"{self._translation.get('quantity')}: {row.quantity}"
@@ -469,7 +469,9 @@ class OrderPickingView(BaseView):
                 )
             self.__picked_items_list.controls = picked_controls
 
+        self.__items_header.value = self._translation.get("items_to_pick")
         self.__picked_items_header.value = self._translation.get("picked_items")
+        self.safe_update(self.__items_header)
         self.safe_update(self.__items_list)
         self.safe_update(self.__picked_items_header)
         self.safe_update(self.__picked_items_list)
@@ -535,48 +537,43 @@ class OrderPickingView(BaseView):
         return str(value)
 
     def __build_detail_columns(self, detail_rows: list[tuple[str, str]]) -> ft.Control:
-        labels_column = ft.Column(
-            controls=[
-                ft.Container(
-                    padding=ft.Padding.symmetric(horizontal=4, vertical=2),
-                    content=ft.Text(f"{label}:", weight=ft.FontWeight.W_600),
-                )
-                for label, _ in detail_rows
-            ],
-            tight=True,
-            spacing=2,
-            width=150,
-        )
-        values_column = ft.Column(
-            controls=[
-                ft.Container(
-                    padding=ft.Padding.symmetric(horizontal=4, vertical=2),
-                    content=ft.Text(value, selectable=True),
-                )
-                for _, value in detail_rows
-            ],
-            tight=True,
-            spacing=2,
-            expand=True,
-        )
+        rows: list[ft.Control] = [
+            ft.ResponsiveRow(
+                controls=[
+                    ft.Container(
+                        col=OrderPickingViewStyles.DETAILS_LABEL_COL,
+                        padding=OrderPickingViewStyles.DETAILS_LABEL_PADDING,
+                        content=self._get_label(f"{label}:", style=TypographyStyles.DETAIL_LABEL),
+                    ),
+                    ft.Container(
+                        col=OrderPickingViewStyles.DETAILS_VALUE_COL,
+                        padding=OrderPickingViewStyles.DETAILS_VALUE_PADDING,
+                        content=self._get_label(value, selectable=True),
+                    ),
+                ],
+                columns=OrderPickingViewStyles.DETAILS_PAIR_COLUMNS,
+                alignment=AlignmentStyles.AXIS_START,
+                vertical_alignment=AlignmentStyles.CROSS_START,
+            )
+            for label, value in detail_rows
+        ]
         return ft.Container(
-            padding=ft.Padding.symmetric(horizontal=2, vertical=2),
-            content=ft.Row(
-                controls=[labels_column, values_column],
-                spacing=10,
-                vertical_alignment=ft.CrossAxisAlignment.START,
-                expand=True,
+            padding=OrderPickingViewStyles.DETAILS_WRAPPER_PADDING,
+            content=ft.Column(
+                controls=rows,
+                spacing=OrderPickingViewStyles.DETAILS_COL_SPACING,
+                tight=True,
             ),
         )
 
     def __build_gallery_section(self, image_urls: list[str]) -> ft.Control:
         return ft.Column(
             controls=[
-                ft.Text(self._translation.get("images"), weight=ft.FontWeight.W_600),
+                self._get_label(self._translation.get("images"), style=TypographyStyles.SECTION_TITLE),
                 self.__build_gallery_control(image_urls),
             ],
             tight=True,
-            spacing=6,
+            spacing=OrderPickingViewStyles.GALLERY_SECTION_SPACING,
         )
 
     def __build_gallery_control(self, image_urls: list[str]) -> ft.Control:
@@ -586,17 +583,21 @@ class OrderPickingView(BaseView):
             self.__gallery_left_button = None
             self.__gallery_right_button = None
             return ft.Container(
-                content=ft.Text(self._translation.get("no_images"), text_align=ft.TextAlign.CENTER),
-                padding=ft.Padding.symmetric(vertical=8),
+                content=self._get_label(self._translation.get("no_images"), text_align=ft.TextAlign.CENTER),
+                padding=OrderPickingViewStyles.GALLERY_EMPTY_PADDING,
             )
         self.__gallery_image_urls = list(image_urls)
-        self.__gallery_thumbnails_row = ft.Row(spacing=8, run_spacing=8, alignment=ft.MainAxisAlignment.CENTER)
-        self.__gallery_left_button = ft.IconButton(
+        self.__gallery_thumbnails_row = ft.Row(
+            spacing=OrderPickingViewStyles.GALLERY_THUMB_ROW_SPACING,
+            run_spacing=OrderPickingViewStyles.GALLERY_THUMB_ROW_RUN_SPACING,
+            alignment=OrderPickingViewStyles.GALLERY_THUMB_ROW_ALIGNMENT,
+        )
+        self.__gallery_left_button = self._get_icon_button(
             icon=ft.Icons.CHEVRON_LEFT,
             on_click=self.__move_gallery_left,
             disabled=True,
         )
-        self.__gallery_right_button = ft.IconButton(
+        self.__gallery_right_button = self._get_icon_button(
             icon=ft.Icons.CHEVRON_RIGHT,
             on_click=self.__move_gallery_right,
             disabled=True,
@@ -608,8 +609,8 @@ class OrderPickingView(BaseView):
                 ft.Container(content=self.__gallery_thumbnails_row, expand=True),
                 self.__gallery_right_button,
             ],
-            spacing=8,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=OrderPickingViewStyles.GALLERY_CONTROL_SPACING,
+            vertical_alignment=AlignmentStyles.CROSS_CENTER,
         )
 
     def __move_gallery_left(self, _: ft.Event[ft.IconButton]) -> None:
@@ -619,7 +620,7 @@ class OrderPickingView(BaseView):
         self.__render_gallery_thumbnails()
 
     def __move_gallery_right(self, _: ft.Event[ft.IconButton]) -> None:
-        if self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE >= len(self.__gallery_image_urls):
+        if self.__gallery_start_index + OrderPickingViewStyles.GALLERY_WINDOW_SIZE >= len(self.__gallery_image_urls):
             return
         self.__gallery_start_index += 1
         self.__render_gallery_thumbnails()
@@ -629,17 +630,17 @@ class OrderPickingView(BaseView):
             return
         self.__gallery_thumbnails_row.controls.clear()
         window = self.__gallery_image_urls[
-            self.__gallery_start_index : self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE
+            self.__gallery_start_index : self.__gallery_start_index + OrderPickingViewStyles.GALLERY_WINDOW_SIZE
         ]
         for url in window:
             self.__gallery_thumbnails_row.controls.append(
                 ft.Container(
-                    width=self.__THUMBNAIL_SIZE,
-                    height=self.__THUMBNAIL_SIZE,
+                    width=OrderPickingViewStyles.GALLERY_THUMB_SIZE,
+                    height=OrderPickingViewStyles.GALLERY_THUMB_SIZE,
                     content=ft.Image(
                         src=url,
-                        width=self.__THUMBNAIL_SIZE,
-                        height=self.__THUMBNAIL_SIZE,
+                        width=OrderPickingViewStyles.GALLERY_THUMB_SIZE,
+                        height=OrderPickingViewStyles.GALLERY_THUMB_SIZE,
                         fit=ft.BoxFit.CONTAIN,
                     ),
                     on_click=lambda _, image_url=url: self.__open_image_dialog(image_url),
@@ -653,7 +654,7 @@ class OrderPickingView(BaseView):
             return
         self.__gallery_left_button.disabled = self.__gallery_start_index <= 0
         self.__gallery_right_button.disabled = (
-            self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE >= len(self.__gallery_image_urls)
+            self.__gallery_start_index + OrderPickingViewStyles.GALLERY_WINDOW_SIZE >= len(self.__gallery_image_urls)
         )
         self.safe_update(self.__gallery_left_button)
         self.safe_update(self.__gallery_right_button)
@@ -663,9 +664,14 @@ class OrderPickingView(BaseView):
             title=None,
             controls=[
                 ft.Container(
-                    width=320,
-                    height=420,
-                    content=ft.Image(src=url, width=320, height=420, fit=ft.BoxFit.CONTAIN),
+                    width=OrderPickingViewStyles.GALLERY_DIALOG_IMAGE_WIDTH,
+                    height=OrderPickingViewStyles.GALLERY_DIALOG_IMAGE_HEIGHT,
+                    content=ft.Image(
+                        src=url,
+                        width=OrderPickingViewStyles.GALLERY_DIALOG_IMAGE_WIDTH,
+                        height=OrderPickingViewStyles.GALLERY_DIALOG_IMAGE_HEIGHT,
+                        fit=ft.BoxFit.CONTAIN,
+                    ),
                 )
             ],
             actions=[ft.TextButton(self._translation.get("close"), on_click=lambda _: self.__close_dialog())],
@@ -692,8 +698,6 @@ class OrderPickingView(BaseView):
 
     def __handle_order_changed(self) -> None:
         self.__selected_order_id = self.__parse_optional_int(self.__order_input.value)
-        self.__render_subtitle()
-        self.safe_update(self.__subtitle)
         self._controller.on_order_selected(self.__selected_order_id)
 
     def __handle_pick_bin_changed(self) -> None:

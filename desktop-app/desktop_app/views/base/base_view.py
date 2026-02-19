@@ -346,10 +346,12 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             height = (lines * ControlStyles.TEXT_FIELD_HEIGHT) + ((lines - 1) * AppDimensions.SPACE_MD)
         else:
             height = ControlStyles.TEXT_FIELD_HEIGHT
+        on_value_changed = lambda event: self._controller.on_value_changed(event, key)
 
         text_field = ft.TextField(
             value="",
-            on_change=lambda event: self._controller.on_value_changed(event, key),
+            on_change=on_value_changed,
+            on_blur=on_value_changed,
             password=password,
             can_reveal_password=password,
             multiline=lines > 1,

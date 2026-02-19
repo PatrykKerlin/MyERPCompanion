@@ -1,95 +1,48 @@
 from collections.abc import Callable
-from typing import cast
 
 import flet as ft
+from styles.styles import AlignmentStyles, AppViewStyles
 from utils.enums import View
 from utils.translation import Translation
 from views.base.base_component import BaseComponent
+from views.components.navigation_drawer_component import NavigationDrawerComponent
+from views.components.top_bar_component import TopBarComponent
 
 
 class AppView:
-    __MOBILE_WIDTH = 360
-    __MOBILE_HEIGHT = 800
-    __MENU_ITEMS: list[tuple[View, str]] = [
-        (View.BINS, "bins"),
-        (View.ITEMS, "items"),
-        (View.BIN_TRANSFER, "bin_transfer"),
-        (View.ORDER_PICKING, "order_picking"),
-        (View.STOCK_RECEIVING, "stock_receiving"),
-    ]
-
     def __init__(self, translation: Translation, theme: str) -> None:
         self.__theme = theme
         self.__translation = translation
-        self.__on_view_selected: Callable[[View], None] | None = None
+        self.__on_refresh: Callable[[], None] | None = None
         self.__on_user_settings: Callable[[], None] | None = None
         self.__on_logout: Callable[[], None] | None = None
-        self.__drawer_views: list[View] = []
-        self.__current_username: str | None = None
-        self.__current_warehouse_name: str | None = None
 
-        self.__title_text = ft.Text(
-            self.__translation.get("my_erp_companion"),
-            size=18,
-            weight=ft.FontWeight.W_600,
+        self.__top_bar = TopBarComponent(
+            translation=self.__translation,
+            on_menu_click=self.__open_navigation_drawer,
+            on_refresh_click=self.__handle_refresh,
+            on_user_settings_click=self.__handle_user_settings,
+            on_logout_click=self.__handle_logout,
         )
-        self.__menu_button = ft.IconButton(
-            icon=ft.Icons.MENU,
-            on_click=self.__open_navigation_drawer,
-        )
-        self.__username_text = ft.Text(
-            self.__translation.get("username"),
-            size=14,
-        )
-        self.__user_settings_button = ft.IconButton(
-            icon=ft.Icons.ACCOUNT_CIRCLE,
-            tooltip=self.__translation.get("current_user"),
-            on_click=self.__handle_user_settings,
-        )
-        self.__logout_button = ft.IconButton(
-            icon=ft.Icons.LOGOUT,
-            tooltip=self.__translation.get("log_out"),
-            on_click=self.__handle_logout,
-        )
-        self.__drawer = ft.NavigationDrawer(controls=[], on_change=self.__on_drawer_change)
-        self.__top_bar = ft.Container(
-            visible=False,
-            padding=ft.Padding.symmetric(horizontal=12, vertical=8),
-            border=ft.Border(bottom=ft.BorderSide(1, ft.Colors.OUTLINE_VARIANT)),
-            content=ft.Row(
-                controls=[
-                    ft.Row(
-                        controls=[self.__menu_button, self.__title_text],
-                        alignment=ft.MainAxisAlignment.START,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=8,
-                    ),
-                    ft.Row(
-                        controls=[self.__username_text, self.__user_settings_button, self.__logout_button],
-                        alignment=ft.MainAxisAlignment.END,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=4,
-                    ),
-                ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
-        )
+        self.__navigation_drawer = NavigationDrawerComponent(translation=self.__translation)
 
-        self.__body_container = ft.Container(expand=True, alignment=ft.Alignment.TOP_LEFT)
+        self.__body_container = ft.Container(
+            expand=True,
+            alignment=AppViewStyles.BODY_ALIGNMENT,
+            padding=AppViewStyles.BODY_PADDING,
+        )
         self.__content = ft.Column(
             controls=[self.__top_bar, self.__body_container],
             expand=True,
-            spacing=0,
+            spacing=AppViewStyles.CONTENT_SPACING,
             visible=False,
         )
-        self.__auth_container = ft.Container(visible=False, expand=True, alignment=ft.Alignment.CENTER)
+        self.__auth_container = ft.Container(visible=False, expand=True, alignment=AppViewStyles.AUTH_ALIGNMENT)
         self.__root = ft.Stack(
             controls=[self.__content, self.__auth_container],
             expand=True,
             fit=ft.StackFit.EXPAND,
         )
-        self.__refresh_drawer_controls()
 
     def build(self) -> ft.Control:
         page = ft.context.page
@@ -98,14 +51,8 @@ class AppView:
 
     def update_translation(self, translation: Translation) -> None:
         self.__translation = translation
-        self.__title_text.value = self.__translation.get("my_erp_companion")
-        self.__user_settings_button.tooltip = self.__translation.get("current_user")
-        self.__logout_button.tooltip = self.__translation.get("log_out")
-        if self.__current_username:
-            self.__username_text.value = self.__current_username
-        else:
-            self.__username_text.value = self.__translation.get("username")
-        self.__refresh_drawer_controls()
+        self.__top_bar.update_translation(self.__translation)
+        self.__navigation_drawer.update_translation(self.__translation)
         content = self.__body_container.content
         target = content
         if isinstance(content, ft.Container):
@@ -116,30 +63,25 @@ class AppView:
                 update_translation(translation)
 
     def set_navigation_handler(self, on_view_selected: Callable[[View], None]) -> None:
-        self.__on_view_selected = on_view_selected
-        self.__refresh_drawer_controls()
+        self.__navigation_drawer.set_navigation_handler(on_view_selected)
 
     def set_user_settings_handler(self, on_user_settings: Callable[[], None]) -> None:
         self.__on_user_settings = on_user_settings
+
+    def set_refresh_handler(self, on_refresh: Callable[[], None]) -> None:
+        self.__on_refresh = on_refresh
 
     def set_logout_handler(self, on_logout: Callable[[], None]) -> None:
         self.__on_logout = on_logout
 
     def set_navigation_visible(self, visible: bool) -> None:
-        self.__top_bar.visible = visible
-        BaseComponent.safe_update(self.__top_bar)
+        self.__top_bar.set_navigation_visible(visible)
 
     def set_username(self, username: str | None) -> None:
-        self.__current_username = username
-        if username:
-            self.__username_text.value = username
-        else:
-            self.__username_text.value = self.__translation.get("username")
-        BaseComponent.safe_update(self.__top_bar)
+        self.__top_bar.set_username(username)
 
     def set_warehouse_name(self, warehouse_name: str | None) -> None:
-        self.__current_warehouse_name = warehouse_name
-        self.__refresh_drawer_controls()
+        self.__navigation_drawer.set_warehouse_name(warehouse_name)
 
     def set_auth_view(self, component: ft.Control | None) -> None:
         if component is None:
@@ -147,7 +89,7 @@ class AppView:
         else:
             self.__auth_container.content = ft.Container(
                 content=component,
-                alignment=ft.Alignment.CENTER,
+                alignment=AlignmentStyles.CENTER,
                 expand=False,
             )
         self.__auth_container.visible = component is not None
@@ -159,7 +101,7 @@ class AppView:
             self.__body_container.content = ft.Container(
                 content=component,
                 expand=True,
-                alignment=ft.Alignment.TOP_LEFT,
+                alignment=AlignmentStyles.TOP_LEFT,
             )
         BaseComponent.safe_update(self.__body_container)
 
@@ -178,20 +120,20 @@ class AppView:
     def __apply_page_settings(self, page: ft.Page) -> None:
         page.title = self.__translation.get("my_erp_companion")
         page.theme_mode = self.__resolve_theme_mode(self.__theme)
-        page.padding = 0
-        page.spacing = 0
-        page.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
-        page.vertical_alignment = ft.MainAxisAlignment.START
-        page.bgcolor = ft.Colors.SURFACE
-        page.drawer = self.__drawer
+        page.padding = AppViewStyles.PAGE_PADDING
+        page.spacing = AppViewStyles.PAGE_SPACING
+        page.horizontal_alignment = AppViewStyles.PAGE_HORIZONTAL_ALIGNMENT
+        page.vertical_alignment = AppViewStyles.PAGE_VERTICAL_ALIGNMENT
+        page.bgcolor = AppViewStyles.PAGE_BGCOLOR
+        self.__navigation_drawer.attach_to_page(page)
 
         if bool(getattr(page, "web", False)):
             return
 
-        page.window.width = self.__MOBILE_WIDTH
-        page.window.height = self.__MOBILE_HEIGHT
-        page.window.min_width = self.__MOBILE_WIDTH
-        page.window.min_height = self.__MOBILE_HEIGHT
+        page.window.width = AppViewStyles.MOBILE_WINDOW_WIDTH
+        page.window.height = AppViewStyles.MOBILE_WINDOW_HEIGHT
+        page.window.min_width = AppViewStyles.MOBILE_WINDOW_WIDTH
+        page.window.min_height = AppViewStyles.MOBILE_WINDOW_HEIGHT
         page.window.resizable = False
 
     def __resolve_theme_mode(self, theme: str) -> ft.ThemeMode:
@@ -201,76 +143,23 @@ class AppView:
             return ft.ThemeMode.LIGHT
         return ft.ThemeMode.SYSTEM
 
-    def __refresh_drawer_controls(self) -> None:
-        self.__drawer_views = []
-        title_controls: list[ft.Control] = [
-            ft.Text(self.__translation.get("my_erp_companion"), weight=ft.FontWeight.W_600)
-        ]
-        if self.__current_warehouse_name:
-            title_controls.append(
-                ft.Text(
-                    self.__current_warehouse_name,
-                    size=13,
-                    color=ft.Colors.ON_SURFACE_VARIANT,
-                )
-            )
-        controls: list[ft.Control] = [
-            ft.Container(
-                padding=ft.Padding.symmetric(horizontal=16, vertical=12),
-                content=ft.Column(controls=title_controls, spacing=2, tight=True),
-            ),
-            ft.Divider(height=1),
-        ]
-
-        for view_key, label_key in self.__MENU_ITEMS:
-            controls.append(
-                ft.NavigationDrawerDestination(
-                    icon=ft.Icons.CHEVRON_RIGHT,
-                    selected_icon=ft.Icons.CHEVRON_RIGHT,
-                    label=self.__translation.get(label_key),
-                )
-            )
-            self.__drawer_views.append(view_key)
-
-        self.__drawer.controls = controls
-        if self.__drawer.selected_index < 0:
-            self.__drawer.selected_index = 0
-        BaseComponent.safe_update(self.__drawer)
-
     def __open_navigation_drawer(self, _: ft.Event[ft.IconButton]) -> None:
-        page = self.__root.page
+        try:
+            page = self.__root.page
+        except RuntimeError:
+            return
         if not page:
             return
-        page.drawer = self.__drawer
-        page_typed = cast(ft.Page, page)
-        page_typed.run_task(self.__show_drawer, page_typed)
+        self.__navigation_drawer.open(page)
 
-    def __on_drawer_change(self, _: ft.Event[ft.NavigationDrawer]) -> None:
-        index = self.__drawer.selected_index
-        if not isinstance(index, int):
-            return
-        if index < 0 or index >= len(self.__drawer_views):
-            return
-        selected_view = self.__drawer_views[index]
-        if self.__on_view_selected:
-            self.__on_view_selected(selected_view)
-        page = self.__root.page
-        if page:
-            page_typed = cast(ft.Page, page)
-            page_typed.run_task(self.__close_drawer, page_typed)
-
-    def __handle_user_settings(self, _: ft.Event[ft.IconButton]) -> None:
+    def __handle_user_settings(self) -> None:
         if self.__on_user_settings:
             self.__on_user_settings()
 
-    def __handle_logout(self, _: ft.Event[ft.IconButton]) -> None:
+    def __handle_refresh(self, _: ft.Event[ft.IconButton]) -> None:
+        if self.__on_refresh:
+            self.__on_refresh()
+
+    def __handle_logout(self) -> None:
         if self.__on_logout:
             self.__on_logout()
-
-    @staticmethod
-    async def __show_drawer(page: ft.Page) -> None:
-        await page.show_drawer()
-
-    @staticmethod
-    async def __close_drawer(page: ft.Page) -> None:
-        await page.close_drawer()

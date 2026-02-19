@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast
 
 import flet as ft
+from styles.styles import BinsViewStyles, ButtonStyles, MobileCommonViewStyles, TypographyStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -35,17 +36,16 @@ class BinsView(BaseView):
         self.__filter_query = ""
         self.__bin_direction_filter = "all"
 
-        self.__title = ft.Text(size=20, weight=ft.FontWeight.BOLD)
-        self.__subtitle = ft.Text(size=14)
-        filter_container, _ = self._get_text_input("filter_query", 8)
+        self.__title = self._get_label("", style=TypographyStyles.HEADER_TITLE)
+        filter_container, _ = self._get_text_input("filter_query", BinsViewStyles.FILTER_TEXT_INPUT_SIZE)
         self.__filter_field = cast(ft.TextField, filter_container.content)
         self.__filter_field.on_change = self.__on_filter_changed
         self.__filter_field.dense = True
         self.__filter_field.prefix_icon = ft.Icons.SEARCH
 
-        direction_container, _ = self._get_dropdown(
+        direction_container, _ = self._get_dropdown_input(
             "bin_direction_filter",
-            4,
+            BinsViewStyles.FILTER_DIRECTION_INPUT_SIZE,
             [
                 ("all", "All"),
                 ("inbound", "Inbound"),
@@ -59,37 +59,45 @@ class BinsView(BaseView):
 
         self.__filters_row = ft.ResponsiveRow(
             controls=[filter_container, direction_container],
-            columns=12,
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            columns=BinsViewStyles.FILTER_ROW_COLUMNS,
+            alignment=BinsViewStyles.FILTER_ROW_ALIGNMENT,
+            vertical_alignment=BinsViewStyles.FILTER_ROW_VERTICAL_ALIGNMENT,
         )
 
         self._add_to_inputs(
             {
-                "filter_query": FieldGroup(input=(filter_container, 8)),
-                "bin_direction_filter": FieldGroup(input=(direction_container, 4)),
+                "filter_query": FieldGroup(input=(filter_container, BinsViewStyles.FILTER_TEXT_INPUT_SIZE)),
+                "bin_direction_filter": FieldGroup(input=(direction_container, BinsViewStyles.FILTER_DIRECTION_INPUT_SIZE)),
             }
         )
-        self.__list = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=8)
-        self.__back_button = ft.Button(on_click=self.__on_back_click, width=220)
-        self.__header_texts = ft.Column(
-            controls=[self.__title, self.__subtitle],
-            spacing=2,
-            expand=True,
+        self.__list = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=MobileCommonViewStyles.LIST_SPACING)
+        self.__back_button = self._get_button(
+            content=self._translation.get("back"),
+            on_click=self.__on_back_click,
+            style=ButtonStyles.primary_regular,
         )
-        self.__header_row = ft.Row(
+        self.__header_texts = ft.Column(
+            controls=[self.__title],
+            spacing=MobileCommonViewStyles.HEADER_TEXTS_SPACING,
+        )
+        self.__header_row = ft.ResponsiveRow(
             controls=[
-                self.__header_texts,
-                ft.Container(content=self.__back_button, alignment=ft.Alignment.CENTER_RIGHT),
+                ft.Container(content=self.__header_texts, col=MobileCommonViewStyles.HEADER_TEXTS_COL),
+                ft.Container(
+                    content=self.__back_button,
+                    col=MobileCommonViewStyles.HEADER_ACTION_COL,
+                    alignment=MobileCommonViewStyles.HEADER_BACK_ALIGNMENT,
+                ),
             ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            columns=MobileCommonViewStyles.HEADER_ROW_COLUMNS,
+            alignment=MobileCommonViewStyles.HEADER_ROW_ALIGNMENT,
+            vertical_alignment=MobileCommonViewStyles.HEADER_ROW_VERTICAL_ALIGNMENT,
         )
 
         self._master_column.controls = [
             self.__header_row,
             self.__filters_row,
-            ft.Divider(height=1),
+            ft.Divider(height=MobileCommonViewStyles.DIVIDER_HEIGHT),
             self.__list,
         ]
         self.__render()
@@ -126,17 +134,11 @@ class BinsView(BaseView):
     def __render(self) -> None:
         if self.__mode == self.__MODE_BINS:
             self.__title.value = self._translation.get("bins")
-            self.__subtitle.value = self._translation.get("select_bin")
             self.__filter_field.label = self._translation.get("bin_filter")
-            self.__back_button.content = self._translation.get("back_to_menu")
         else:
             self.__title.value = self._translation.get("items")
-            if self.__selected_bin:
-                self.__subtitle.value = f"{self._translation.get('location')}: {self.__selected_bin.location}"
-            else:
-                self.__subtitle.value = ""
             self.__filter_field.label = self._translation.get("item_filter")
-            self.__back_button.content = self._translation.get("back_to_bins")
+        self.__back_button.content = self._translation.get("back")
         self.__direction_filter_field.label = self._translation.get("bin_type_filter")
         self.__direction_filter_field.options = self.__build_direction_filter_options()
         self.__direction_filter_field.value = self.__bin_direction_filter
@@ -154,13 +156,14 @@ class BinsView(BaseView):
         if self.__mode == self.__MODE_BINS:
             filtered_bins = self.__get_filtered_bins()
             if not filtered_bins:
-                return [ft.Text(self._translation.get("no_bins"), text_align=ft.TextAlign.CENTER)]
+                return [self._get_label(self._translation.get("no_bins"), text_align=ft.TextAlign.CENTER)]
             controls: list[ft.Control] = []
             for bin_schema in filtered_bins:
                 controls.append(
                     ft.Card(
+                        bgcolor=MobileCommonViewStyles.LIST_ITEM_BGCOLOR,
                         content=ft.ListTile(
-                            title=ft.Text(bin_schema.location),
+                            title=self._get_label(bin_schema.location),
                             trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
                             on_click=self.__build_bin_click_handler(bin_schema.id),
                         )
@@ -170,15 +173,16 @@ class BinsView(BaseView):
 
         filtered_items = self.__get_filtered_items()
         if not filtered_items:
-            return [ft.Text(self._translation.get("no_items"), text_align=ft.TextAlign.CENTER)]
+            return [self._get_label(self._translation.get("no_items"), text_align=ft.TextAlign.CENTER)]
         controls = []
         for item_schema in filtered_items:
             quantity = self.__item_quantities.get(item_schema.id, 0)
             controls.append(
                 ft.Card(
+                    bgcolor=MobileCommonViewStyles.LIST_ITEM_BGCOLOR,
                     content=ft.ListTile(
-                        title=ft.Text(item_schema.name),
-                        subtitle=ft.Text(
+                        title=self._get_label(item_schema.name),
+                        subtitle=self._get_label(
                             f"{self._translation.get('index')}: {item_schema.index} | "
                             f"{self._translation.get('quantity')}: {quantity}",
                         ),

@@ -23,7 +23,7 @@ class WebHeaderComponent(BaseComponent[BaseController], ft.Container):
             on_click=lambda _: self.__handle_browse_orders(),
             padding=AppViewStyles.CLICKABLE_TEXT_PADDING,
         )
-        self.__cart_button = ft.TextButton(
+        self.__cart_button = self._get_text_button(
             content="0",
             icon=ft.Icon(
                 ft.Icons.SHOPPING_CART_OUTLINED,
@@ -33,7 +33,7 @@ class WebHeaderComponent(BaseComponent[BaseController], ft.Container):
             on_click=lambda _: self.__handle_cart(),
             style=ButtonStyles.top_bar_info,
         )
-        self.__username_button = ft.TextButton(
+        self.__username_button = self._get_text_button(
             content=self._translation.get("username"),
             icon=ft.Icon(
                 ft.Icons.PERSON_OUTLINE,
@@ -43,7 +43,7 @@ class WebHeaderComponent(BaseComponent[BaseController], ft.Container):
             on_click=lambda _: self.__handle_user_settings(),
             style=ButtonStyles.top_bar_info,
         )
-        self.__logout_button = ft.IconButton(
+        self.__logout_button = self._get_icon_button(
             icon=ft.Icons.LOGOUT,
             tooltip=self._translation.get("log_out"),
             on_click=lambda _: self.__handle_logout(),

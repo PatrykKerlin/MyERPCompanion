@@ -15,5 +15,5 @@ class MessageDialogComponent(BaseDialog):
     ) -> None:
         super().__init__(
             controls=[self._get_label(translation.get(message_key))],
-            actions=[ft.Button(content=translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_regular)],
+            actions=[self._get_button(content=translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_regular)],
         )

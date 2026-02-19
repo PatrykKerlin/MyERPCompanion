@@ -27,8 +27,6 @@ class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDial
 
     def on_login_click(self, username: str, password: str) -> None:
         if self._settings.CLIENT == "desktop":
-            self._page.run_task(self.__handle_login, "employee001", "test1234")
-        else:
             self._page.run_task(self.__handle_login, username, password)
 
     async def _component_requested_handler(self, _: AuthDialogRequested) -> None:

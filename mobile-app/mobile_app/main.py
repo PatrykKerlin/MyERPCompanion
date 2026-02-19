@@ -104,17 +104,14 @@ class App:
         await self.__event_bus.stop()
 
 
-def start() -> None:
-    async def main(page: ft.Page) -> None:
-        app = App()
-        await app.run(page)
-
+def main() -> None:
+    app = App()
     os.environ.setdefault("FLET_FORCE_WEB_SERVER", "1")
     host = os.getenv("FLET_SERVER_HOST", "0.0.0.0")
     port = int(os.getenv("FLET_SERVER_PORT", "8551"))
     view = getattr(ft.AppView, "WEB_SERVER", ft.AppView.WEB_BROWSER)
-    ft.run(main, view=view, host=host, port=port)
+    ft.run(app.run, view=view, host=host, port=port)
 
 
 if __name__ == "__main__":
-    start()
+    main()

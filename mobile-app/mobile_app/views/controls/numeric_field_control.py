@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from typing import Callable, cast
 
 import flet as ft
+from styles.styles import ControlStyles, NumericFieldStyles
 
 
 class NumericField(ft.Row):
@@ -19,10 +20,10 @@ class NumericField(ft.Row):
         on_change: Callable[[ft.ControlEvent], None] | None = None,
     ) -> None:
         super().__init__(
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            alignment=NumericFieldStyles.ALIGNMENT,
+            vertical_alignment=NumericFieldStyles.VERTICAL_ALIGNMENT,
             expand=expand,
-            spacing=4,
+            spacing=NumericFieldStyles.SPACING,
         )
         self.__precision = precision
         self.__on_change = on_change
@@ -42,23 +43,31 @@ class NumericField(ft.Row):
 
         self.__text_field = ft.TextField(
             value=self.__format_value(self.__value),
-            text_align=ft.TextAlign.CENTER,
+            text_align=NumericFieldStyles.TEXT_ALIGN,
             expand=True,
+            border_color=ControlStyles.FIELD_BORDER_COLOR,
+            focused_border_color=ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
             on_change=self.__handle_text_change,
             read_only=self.__read_only,
         )
 
         self.__decrement_button = ft.IconButton(
-            icon=ft.Icons.REMOVE, on_click=self.__decrement, disabled=self.__read_only, width=48
+            icon=ft.Icons.REMOVE,
+            on_click=self.__decrement,
+            disabled=self.__read_only,
+            width=NumericFieldStyles.ICON_BUTTON_WIDTH,
         )
         self.__increment_button = ft.IconButton(
-            icon=ft.Icons.ADD, on_click=self.__increment, disabled=self.__read_only, width=48
+            icon=ft.Icons.ADD,
+            on_click=self.__increment,
+            disabled=self.__read_only,
+            width=NumericFieldStyles.ICON_BUTTON_WIDTH,
         )
 
         self.controls = [
-            ft.Container(content=self.__decrement_button, alignment=ft.Alignment.TOP_CENTER),
+            ft.Container(content=self.__decrement_button, alignment=NumericFieldStyles.BUTTON_ALIGNMENT),
             self.__text_field,
-            ft.Container(content=self.__increment_button, alignment=ft.Alignment.TOP_CENTER),
+            ft.Container(content=self.__increment_button, alignment=NumericFieldStyles.BUTTON_ALIGNMENT),
         ]
 
     @property

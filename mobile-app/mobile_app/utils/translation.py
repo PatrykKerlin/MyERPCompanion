@@ -10,6 +10,7 @@ class Translation:
             "ok": "OK",
             "username": "User",
             "current_user": "Current user",
+            "settings": "Settings",
             "log_out": "Log out",
             "items": "Items",
             "bins": "Bins",

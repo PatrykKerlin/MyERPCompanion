@@ -17,7 +17,7 @@ class OrderConfirmationDialogComponent(BaseDialog):
             title=translation.get("checkout"),
             controls=[self._get_label(translation.get("order_created").format(order_number=order_number))],
             actions=[
-                ft.Button(
+                self._get_button(
                     content=translation.get("ok"),
                     on_click=on_ok_clicked,
                     style=ButtonStyles.primary_regular,

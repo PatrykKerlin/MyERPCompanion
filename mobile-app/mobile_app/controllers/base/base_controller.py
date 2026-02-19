@@ -32,13 +32,14 @@ class BaseController:
         self._tokens_accessor = TokensAccessor(self._state_store)
         self._loading_dialog: LoadingDialogComponent | None = None
         self._loading_min_visible_seconds = 0.25
+        self._loading_open_retry_timeout_seconds = 0.2
         self.__loading_lock_acquired = False
         self.__loading_opened_at: float | None = None
         self.__loading_close_task: asyncio.Task[None] | None = None
         self.__unsubscribers: list[Callable[[], None]] = []
         self.__disposed: bool = False
 
-    async def dispose(self) -> None:
+    async def dispose(self) -> None:  # NOSONAR
         if self.__disposed:
             return
         self.__disposed = True
@@ -58,12 +59,12 @@ class BaseController:
 
     @classmethod
     def handle_api_action(
-        cls, message_key: ApiActionError
+        cls, message_key: ApiActionError, show_loading: bool = True
     ) -> Callable[[Callable[..., Awaitable[TReturn]]], Callable[..., Awaitable[TReturn]]]:
         def decorator(func: Callable[..., Awaitable[TReturn]]) -> Callable[..., Awaitable[TReturn]]:
             @wraps(func)
             async def wrapper(self: BaseController, *args: Any, **kwargs: Any) -> TReturn:
-                opened_loading = self._loading_dialog is None
+                opened_loading = show_loading and self._loading_dialog is None
                 if opened_loading:
                     await self._open_loading_dialog()
                 try:
@@ -72,7 +73,8 @@ class BaseController:
                         self._close_loading_dialog()
                     return result
                 except HTTPStatusError as http_error:
-                    self._close_loading_dialog()
+                    if opened_loading:
+                        self._close_loading_dialog()
                     self._logger.exception(f"HTTPStatusError in {func.__qualname__}")
                     if http_error.response.status_code == 403:
                         self._open_error_dialog(message_key="no_permissions")
@@ -80,13 +82,15 @@ class BaseController:
                         self._open_error_dialog(message_key=message_key)
                     return cast(TReturn, None)
                 except PermissionError:
-                    self._close_loading_dialog()
+                    if opened_loading:
+                        self._close_loading_dialog()
                     self._logger.info(f"Authentication failure in {func.__qualname__}", exc_info=True)
                     self._state_store.update(tokens={"access": None, "refresh": None})
                     self._page.run_task(self._event_bus.publish, LogoutRequested())
                     return cast(TReturn, None)
                 except Exception:
-                    self._close_loading_dialog()
+                    if opened_loading:
+                        self._close_loading_dialog()
                     self._logger.exception(
                         f"Unhandled exception in {func.__qualname__}",
                     )
@@ -116,6 +120,9 @@ class BaseController:
 
     async def _open_loading_dialog(self) -> None:
         acquired = await self._try_acquire_dialog_slot()
+        if not acquired:
+            await self.__wait_for_loading_slot()
+            acquired = await self._try_acquire_dialog_slot()
         if not acquired:
             return
         self.__loading_lock_acquired = True
@@ -243,6 +250,15 @@ class BaseController:
             if not getattr(dialog, "open", True):
                 return
             await asyncio.sleep(0.05)
+
+    async def __wait_for_loading_slot(self) -> None:
+        deadline = time.monotonic() + max(self._loading_open_retry_timeout_seconds, 0)
+        while time.monotonic() < deadline:
+            if not BaseController._dialog_lock.locked():
+                dialog = getattr(self._page, "dialog", None)
+                if dialog is None or not getattr(dialog, "open", True):
+                    return
+            await asyncio.sleep(0.02)
 
     async def _show_dialog_serialized(
         self,

@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from typing import Callable, cast
 
 import flet as ft
-from views.base.base_component import BaseComponent
+from styles.styles import ControlStyles, DateFieldStyles
 
 
 class DateField(ft.Row):
@@ -19,11 +19,11 @@ class DateField(ft.Row):
         on_change: Callable[[ft.ControlEvent], None] | None = None,
     ) -> None:
         super().__init__(
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            alignment=DateFieldStyles.ALIGNMENT,
+            vertical_alignment=DateFieldStyles.VERTICAL_ALIGNMENT,
             width=width,
             expand=expand,
-            spacing=6,
+            spacing=DateFieldStyles.SPACING,
         )
         self.__on_change = on_change
         self.__format = date_format
@@ -36,7 +36,9 @@ class DateField(ft.Row):
             value=self.__format_value(self.__value),
             read_only=True,
             expand=True,
-            text_align=ft.TextAlign.CENTER,
+            text_align=DateFieldStyles.TEXT_ALIGN,
+            border_color=ControlStyles.FIELD_BORDER_COLOR,
+            focused_border_color=ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
         )
 
         self.__picker = ft.DatePicker(on_change=self.__handle_picker_change)
@@ -48,20 +50,23 @@ class DateField(ft.Row):
             self.__picker.value = self.__value
 
         self.__open_button = ft.IconButton(
-            icon=ft.Icons.CALENDAR_MONTH, on_click=self.__open_picker, disabled=self.__read_only, width=48
+            icon=ft.Icons.CALENDAR_MONTH,
+            on_click=self.__open_picker,
+            disabled=self.__read_only,
+            width=DateFieldStyles.ICON_BUTTON_WIDTH,
         )
         self.__clear_button = ft.IconButton(
             icon=ft.Icons.CLEAR,
             on_click=self.__clear_date,
             disabled=self.__read_only or self.__value is None,
-            width=48,
+            width=DateFieldStyles.ICON_BUTTON_WIDTH,
         )
 
         self.controls = [
             self.__picker,
-            ft.Container(content=self.__open_button, alignment=ft.Alignment.TOP_CENTER),
+            ft.Container(content=self.__open_button, alignment=DateFieldStyles.BUTTON_ALIGNMENT),
             self.__text_field,
-            ft.Container(content=self.__clear_button, alignment=ft.Alignment.TOP_CENTER),
+            ft.Container(content=self.__clear_button, alignment=DateFieldStyles.BUTTON_ALIGNMENT),
         ]
 
     @property
@@ -80,7 +85,7 @@ class DateField(ft.Row):
     @error.setter
     def error(self, message: str | None) -> None:
         self.__text_field.error = message
-        BaseComponent.safe_update(self.__text_field)
+        self.__safe_update(self.__text_field)
 
     @property
     def read_only(self) -> bool:
@@ -91,8 +96,8 @@ class DateField(ft.Row):
         self.__read_only = new_value
         self.__open_button.disabled = self.__read_only
         self.__clear_button.disabled = self.__read_only or self.__value is None
-        BaseComponent.safe_update(self.__open_button)
-        BaseComponent.safe_update(self.__clear_button)
+        self.__safe_update(self.__open_button)
+        self.__safe_update(self.__clear_button)
 
     def __emit_value(self) -> None:
         if not self.__on_change:
@@ -123,11 +128,11 @@ class DateField(ft.Row):
     def __set_value(self, new_value: date | None) -> None:
         self.__value = new_value
         self.__text_field.value = self.__format_value(self.__value)
-        BaseComponent.safe_update(self.__text_field)
+        self.__safe_update(self.__text_field)
         if self.__picker.value != self.__value:
             self.__picker.value = self.__value
         self.__clear_button.disabled = self.__read_only or self.__value is None
-        BaseComponent.safe_update(self.__clear_button)
+        self.__safe_update(self.__clear_button)
 
     def __open_picker(self, _: ft.Event[ft.IconButton]) -> None:
         try:
@@ -137,7 +142,20 @@ class DateField(ft.Row):
         if not page:
             return
         self.__picker.open = True
-        BaseComponent.safe_update(self.__picker)
+        self.__safe_update(self.__picker)
+
+    @staticmethod
+    def __safe_update(control: ft.Control | None) -> None:
+        if control is None:
+            return
+        try:
+            _ = control.page
+        except RuntimeError:
+            return
+        try:
+            control.update()
+        except RuntimeError:
+            return
 
     def __handle_picker_change(self, event: ft.Event[ft.DatePicker]) -> None:
         picked_raw_from_picker = getattr(self.__picker, "value", None)

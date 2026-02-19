@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast
 
 import flet as ft
+from styles.styles import ButtonStyles, MobileCommonViewStyles, StockReceivingViewStyles, TypographyStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -28,130 +29,158 @@ class StockReceivingView(BaseView):
         self.__source_rows: list[tuple[int, str, str, int]] = []
         self.__moved_source_ids: set[int] = set()
         self.__pending_rows: dict[int, tuple[int, str, str, int]] = {}
+        self.__saved_rows: list[tuple[int, str, str, int]] = []
         self.__next_temp_target_id = -1
 
         self.__source_enabled = False
         self.__target_enabled = False
         self.__last_quantity_item_id: int | None = None
 
-        self.__title = ft.Text(size=20, weight=ft.FontWeight.BOLD)
-        self.__subtitle = ft.Text(size=14)
-        self.__back_button = ft.Button(on_click=self.__on_back_click, width=220)
-        self.__header_texts = ft.Column(
-            controls=[self.__title, self.__subtitle],
-            spacing=2,
-            expand=True,
+        self.__title = self._get_label("", style=TypographyStyles.HEADER_TITLE)
+        self.__back_button = self._get_button(
+            content=self._translation.get("back"),
+            on_click=self.__on_back_click,
+            style=ButtonStyles.primary_regular,
         )
-        self.__header_row = ft.Row(
+        self.__header_texts = ft.Column(
+            controls=[self.__title],
+            spacing=MobileCommonViewStyles.HEADER_TEXTS_SPACING,
+        )
+        self.__header_row = ft.ResponsiveRow(
             controls=[
-                self.__header_texts,
-                ft.Container(content=self.__back_button, alignment=ft.Alignment.CENTER_RIGHT),
+                ft.Container(content=self.__header_texts, col=MobileCommonViewStyles.HEADER_TEXTS_COL),
+                ft.Container(
+                    content=self.__back_button,
+                    col=MobileCommonViewStyles.HEADER_ACTION_COL,
+                    alignment=MobileCommonViewStyles.HEADER_BACK_ALIGNMENT,
+                ),
             ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            columns=MobileCommonViewStyles.HEADER_ROW_COLUMNS,
+            alignment=MobileCommonViewStyles.HEADER_ROW_ALIGNMENT,
+            vertical_alignment=MobileCommonViewStyles.HEADER_ROW_VERTICAL_ALIGNMENT,
         )
 
-        order_container, _ = self._get_dropdown("order_id", 6, orders, callbacks=[self.__on_order_changed])
-        order_container.col = {"xs": 12.0, "sm": 6.0}
+        order_container, _ = self._get_dropdown_input(
+            "order_id", StockReceivingViewStyles.ORDER_INPUT_SIZE, orders, callbacks=[self.__on_order_changed]
+        )
+        order_container.col = StockReceivingViewStyles.ORDER_COL
         self.__order_input = cast(ft.Dropdown, order_container.content)
         self.__order_input.value = "0"
 
-        target_container, _ = self._get_text_input("target_bin", 6)
-        target_container.col = {"xs": 12.0, "sm": 6.0}
+        target_container, _ = self._get_text_input(
+            "target_bin",
+            StockReceivingViewStyles.TARGET_BIN_INPUT_SIZE,
+            callbacks=[self.__on_target_submit],
+        )
+        target_container.col = StockReceivingViewStyles.TARGET_BIN_COL
         self.__target_input = cast(ft.TextField, target_container.content)
-        self.__target_input.on_submit = self.__on_target_submit
 
-        item_container, _ = self._get_dropdown("item_id", 7, [], callbacks=[self.__on_item_changed])
-        item_container.col = {"xs": 12.0, "sm": 7.0}
+        item_container, _ = self._get_dropdown_input(
+            "item_id", StockReceivingViewStyles.ITEM_INPUT_SIZE, [], callbacks=[self.__on_item_changed]
+        )
+        item_container.col = StockReceivingViewStyles.ITEM_COL
         self.__item_input = cast(ft.Dropdown, item_container.content)
         self.__item_input.value = "0"
         self.__item_input.disabled = True
 
         quantity_container, _ = self._get_numeric_input(
             "quantity",
-            3,
+            StockReceivingViewStyles.QUANTITY_INPUT_SIZE,
             value=0,
             step=1,
             precision=0,
             min_value=0,
             is_float=False,
         )
-        quantity_container.col = {"xs": 8.0, "sm": 3.0}
+        quantity_container.col = StockReceivingViewStyles.QUANTITY_INFO_COL
         self.__quantity_input = cast(NumericField, quantity_container.content)
 
-        self.__available_text = ft.Text(size=12, text_align=ft.TextAlign.CENTER)
+        self.__available_text = self._get_label(
+            "",
+            size=StockReceivingViewStyles.AVAILABLE_TEXT_SIZE,
+            text_align=StockReceivingViewStyles.QUANTITY_INFO_TEXT_ALIGN,
+        )
         quantity_info_container = ft.Container(
-            col={"xs": 8.0, "sm": 3.0},
-            alignment=ft.Alignment.TOP_LEFT,
+            col=StockReceivingViewStyles.QUANTITY_INFO_COL,
+            alignment=StockReceivingViewStyles.QUANTITY_INFO_ALIGNMENT,
             content=ft.Column(
                 controls=[
                     self.__quantity_input,
                     ft.Container(
                         content=self.__available_text,
-                        alignment=ft.Alignment.CENTER,
+                        alignment=StockReceivingViewStyles.QUANTITY_INFO_TEXT_CONTAINER_ALIGNMENT,
                         expand=True,
                     ),
                 ],
-                spacing=4,
+                spacing=StockReceivingViewStyles.QUANTITY_INFO_COLUMN_SPACING,
                 tight=True,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                horizontal_alignment=StockReceivingViewStyles.QUANTITY_INFO_COLUMN_HORIZONTAL_ALIGNMENT,
             ),
         )
 
-        self.__add_button = ft.Button(on_click=self.__on_add_clicked, disabled=True)
+        self.__add_button = self._get_button(on_click=self.__on_add_clicked, disabled=True)
         add_button_container = ft.Container(
-            col={"xs": 4.0, "sm": 2.0},
-            alignment=ft.Alignment.TOP_LEFT,
+            col=StockReceivingViewStyles.ADD_BUTTON_COL,
+            alignment=StockReceivingViewStyles.QUANTITY_INFO_ALIGNMENT,
             content=self.__add_button,
         )
 
-        self.__save_button = ft.Button(on_click=self.__on_save_clicked, disabled=True)
-        self.__pending_title = ft.Text(size=15, weight=ft.FontWeight.W_600)
+        self.__save_button = self._get_button(on_click=self.__on_save_clicked, disabled=True)
+        self.__pending_title = self._get_label("", style=TypographyStyles.PENDING_TITLE)
         self.__pending_header_row = ft.Row(
             controls=[self.__pending_title, self.__save_button],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=StockReceivingViewStyles.PENDING_HEADER_ALIGNMENT,
+            vertical_alignment=StockReceivingViewStyles.PENDING_HEADER_VERTICAL_ALIGNMENT,
         )
-        self.__pending_list = ft.Column(spacing=8)
+        self.__pending_list = ft.Column(spacing=StockReceivingViewStyles.PENDING_ROW_SPACING)
         self.__pending_section = ft.Column(
             controls=[self.__pending_header_row, self.__pending_list],
-            spacing=8,
-            expand=True,
+            spacing=StockReceivingViewStyles.PENDING_SECTION_SPACING,
+            scroll=ft.ScrollMode.AUTO,
+        )
+        self.__saved_title = self._get_label("", style=TypographyStyles.PENDING_TITLE)
+        self.__saved_list = ft.Column(spacing=StockReceivingViewStyles.PENDING_ROW_SPACING)
+        self.__saved_section = ft.Column(
+            controls=[self.__saved_title, self.__saved_list],
+            spacing=StockReceivingViewStyles.PENDING_SECTION_SPACING,
             scroll=ft.ScrollMode.AUTO,
         )
 
         self._add_to_inputs(
             {
-                "order_id": FieldGroup(input=(order_container, 6)),
-                "target_bin": FieldGroup(input=(target_container, 6)),
-                "item_id": FieldGroup(input=(item_container, 7)),
-                "quantity": FieldGroup(input=(quantity_info_container, 3)),
+                "order_id": FieldGroup(input=(order_container, StockReceivingViewStyles.ORDER_INPUT_SIZE)),
+                "target_bin": FieldGroup(input=(target_container, StockReceivingViewStyles.TARGET_BIN_INPUT_SIZE)),
+                "item_id": FieldGroup(input=(item_container, StockReceivingViewStyles.ITEM_INPUT_SIZE)),
+                "quantity": FieldGroup(input=(quantity_info_container, StockReceivingViewStyles.QUANTITY_INPUT_SIZE)),
             }
         )
 
         self.__top_form_row = ft.ResponsiveRow(
             controls=[order_container, target_container],
-            columns=12,
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            columns=StockReceivingViewStyles.TOP_FORM_ROW_COLUMNS,
+            alignment=StockReceivingViewStyles.TOP_FORM_ROW_ALIGNMENT,
+            vertical_alignment=StockReceivingViewStyles.TOP_FORM_ROW_VERTICAL_ALIGNMENT,
         )
         self.__pick_form_row = ft.ResponsiveRow(
             controls=[item_container, quantity_info_container, add_button_container],
-            columns=12,
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            columns=StockReceivingViewStyles.PICK_FORM_ROW_COLUMNS,
+            alignment=StockReceivingViewStyles.PICK_FORM_ROW_ALIGNMENT,
+            vertical_alignment=StockReceivingViewStyles.PICK_FORM_ROW_VERTICAL_ALIGNMENT,
         )
 
         self._master_column.controls = [
             self.__header_row,
             self.__top_form_row,
             self.__pick_form_row,
-            ft.Divider(height=1),
+            ft.Divider(height=MobileCommonViewStyles.DIVIDER_HEIGHT),
             self.__pending_section,
+            ft.Divider(height=MobileCommonViewStyles.DIVIDER_HEIGHT),
+            self.__saved_section,
         ]
         self.__render_static_texts()
         self.__render_source_options()
         self.__render_pending_rows()
+        self.__render_saved_rows()
         self.__update_available_text()
 
     def did_mount(self) -> None:
@@ -166,6 +195,7 @@ class StockReceivingView(BaseView):
         self.__render_static_texts()
         self.__render_source_options()
         self.__render_pending_rows()
+        self.__render_saved_rows()
         self.__update_available_text()
         self.safe_update(self)
 
@@ -193,6 +223,7 @@ class StockReceivingView(BaseView):
             quantity = self.__parse_int(quantity_raw, default_value=0)
             parsed_rows.append((item_id, item_index, item_name, max(0, quantity)))
         self.__source_rows = parsed_rows
+        self.__moved_source_ids = set()
         self.__render_source_options()
         self.__sync_quantity_limit_to_selected_item()
         self.__update_available_text()
@@ -203,6 +234,18 @@ class StockReceivingView(BaseView):
 
     def set_target_rows(self, _: list[tuple[int, list[str]]]) -> None:
         self.safe_update(self.__pending_section)
+
+    def set_saved_rows(self, rows: list[tuple[int, list[str]]]) -> None:
+        saved_rows: list[tuple[int, str, str, int]] = []
+        for item_id, values in rows:
+            item_index = values[0] if len(values) > 0 else str(item_id)
+            item_name = values[1] if len(values) > 1 else ""
+            quantity_raw = values[2] if len(values) > 2 else "0"
+            quantity = self.__parse_int(quantity_raw, default_value=0)
+            saved_rows.append((item_id, item_index, item_name, max(0, quantity)))
+        self.__saved_rows = saved_rows
+        self.__render_saved_rows()
+        self.safe_update(self.__saved_section)
 
     def mark_source_items_as_moved(self, ids: list[int]) -> None:
         self.__moved_source_ids = set(ids)
@@ -242,6 +285,13 @@ class StockReceivingView(BaseView):
         self.safe_update(self.__pending_section)
         self.safe_update(self.__save_button)
 
+    def remove_target_row(self, target_id: int) -> None:
+        self.__pending_rows.pop(target_id, None)
+        self.__render_pending_rows()
+        self.__update_save_button_state()
+        self.safe_update(self.__pending_section)
+        self.safe_update(self.__save_button)
+
     def set_source_enabled(self, enabled: bool) -> None:
         self.__source_enabled = enabled
         self.__item_input.disabled = not enabled
@@ -266,14 +316,14 @@ class StockReceivingView(BaseView):
 
     def __render_static_texts(self) -> None:
         self.__title.value = self._translation.get("stock_receiving")
-        self.__subtitle.value = self._translation.get("mob_stock_receiving_hint")
         self.__order_input.label = self._translation.get("tracking_number")
         self.__target_input.label = self._translation.get("target_bin")
         self.__item_input.label = self._translation.get("item")
         self.__add_button.content = self._translation.get("add")
         self.__save_button.content = self._translation.get("save")
-        self.__back_button.content = self._translation.get("back_to_menu")
+        self.__back_button.content = self._translation.get("back")
         self.__pending_title.value = self._translation.get("pending_transfers")
+        self.__saved_title.value = self._translation.get("received_items")
 
     def __render_source_options(self) -> None:
         selectable_rows = [row for row in self.__source_rows if row[0] not in self.__moved_source_ids]
@@ -288,26 +338,51 @@ class StockReceivingView(BaseView):
     def __render_pending_rows(self) -> None:
         if not self.__pending_rows:
             self.__pending_list.controls = [
-                ft.Text(self._translation.get("no_pending_transfers"), text_align=ft.TextAlign.CENTER),
+                self._get_label(self._translation.get("no_pending_transfers"), text_align=ft.TextAlign.CENTER),
             ]
             return
 
         controls: list[ft.Control] = []
         for target_id, (_item_id, item_index, item_name, quantity) in self.__pending_rows.items():
             subtitle = item_name if item_name else "-"
+            trailing_control: ft.Control | None = None
+            if target_id < 0:
+                trailing_control = self._get_icon_button(
+                    icon=ft.Icons.CLOSE,
+                    on_click=self.__build_pending_remove_handler(target_id),
+                )
             controls.append(
                 ft.Card(
+                    bgcolor=MobileCommonViewStyles.LIST_ITEM_BGCOLOR,
                     content=ft.ListTile(
-                        title=ft.Text(item_index),
-                        subtitle=ft.Text(f"{subtitle} | {self._translation.get('quantity')}: {quantity}"),
-                        trailing=ft.IconButton(
-                            icon=ft.Icons.CLOSE,
-                            on_click=self.__build_pending_remove_handler(target_id),
-                        ),
+                        title=self._get_label(item_index),
+                        subtitle=self._get_label(f"{subtitle} | {self._translation.get('quantity')}: {quantity}"),
+                        trailing=trailing_control,
                     )
                 )
             )
         self.__pending_list.controls = controls
+
+    def __render_saved_rows(self) -> None:
+        if not self.__saved_rows:
+            self.__saved_list.controls = [
+                self._get_label(self._translation.get("no_received_items"), text_align=ft.TextAlign.CENTER),
+            ]
+            return
+
+        controls: list[ft.Control] = []
+        for _item_id, item_index, item_name, quantity in self.__saved_rows:
+            subtitle = item_name if item_name else "-"
+            controls.append(
+                ft.Card(
+                    bgcolor=MobileCommonViewStyles.LIST_ITEM_BGCOLOR,
+                    content=ft.ListTile(
+                        title=self._get_label(item_index),
+                        subtitle=self._get_label(f"{subtitle} | {self._translation.get('quantity')}: {quantity}"),
+                    ),
+                )
+            )
+        self.__saved_list.controls = controls
 
     def __update_available_text(self) -> None:
         selected_item_id = self.__parse_optional_int(self.__item_input.value)
@@ -356,7 +431,7 @@ class StockReceivingView(BaseView):
     def __on_order_changed(self) -> None:
         self._controller.on_order_changed(self.__order_input.value)
 
-    def __on_target_submit(self, _: ft.Event[ft.TextField]) -> None:
+    def __on_target_submit(self) -> None:
         self._controller.on_target_bin_submit(self.__target_input.value or "")
 
     def __on_item_changed(self) -> None:

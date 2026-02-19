@@ -1,6 +1,7 @@
 import asyncio
 
 import flet as ft
+from styles.colors import AppColors
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 
@@ -21,7 +22,7 @@ class ConfirmDialogComponent(BaseDialog):
             actions=[cancel_button, confirm_button],
             title=ft.Row(
                 controls=[
-                    ft.Icon(icon=ft.Icons.WARNING, color=ft.Colors.ORANGE),
+                    ft.Icon(icon=ft.Icons.WARNING, color=AppColors.WARNING),
                     ft.Text(value=translation.get("are_you_sure")),
                 ]
             ),

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, TypeVar, cas
 import flet as ft
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from services.base.base_service import BaseService
+from styles.styles import BaseViewStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -40,18 +41,26 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         self._mode = mode
         self._view_key = view_key
         self._data_row = data_row
-        self._base_alignment = ft.Alignment.CENTER_LEFT
+        self._base_alignment = BaseViewStyles.INPUT_ALIGNMENT
         self._inputs: dict[str, FieldGroup] = {}
         self._search_disabled_fields: set[str] = set()
         self._master_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
-        self._spacing_column = ft.Column(width=25)
-        self._spacing_row = ft.Row(height=25)
+        self._spacing_column = ft.Column()
+        self._spacing_row = ft.Row()
         self._spacing_responsive_row = [
-            ft.ResponsiveRow(controls=[ft.Container(content=ft.TextField(disabled=True), opacity=0.0, col={"sm": 1})])
+            ft.ResponsiveRow(
+                controls=[
+                    ft.Container(
+                        content=ft.TextField(disabled=True),
+                        opacity=0.0,
+                        col=BaseViewStyles.SPACING_RESPONSIVE_COL,
+                    )
+                ]
+            )
         ]
         self._columns_row = ft.Row(
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            alignment=BaseViewStyles.COLUMNS_ROW_ALIGNMENT,
+            vertical_alignment=BaseViewStyles.COLUMNS_ROW_VERTICAL_ALIGNMENT,
         )
         self._caller_view_key = caller_view_key
         self.__scrollable_wrapper = ft.Column(
@@ -201,31 +210,46 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         for field in fields:
             self._inputs.update(field)
 
-    def _get_label(self, key: str, size: int, colon: bool = True) -> tuple[ft.Container, int]:
+    @staticmethod
+    def __responsive_col(size: int) -> ft.ResponsiveNumber:
+        return cast(ft.ResponsiveNumber, {BaseViewStyles.RESPONSIVE_BREAKPOINT: float(size)})
+
+    def __get_field_label(self, key: str, size: int, colon: bool = True) -> tuple[ft.Container, int]:
         text_value = self._translation.get(key)
         if colon and not text_value.endswith(":"):
             text_value = f"{text_value}:"
         return (
             ft.Container(
-                content=ft.Text(value=text_value),
-                col={"sm": float(size)},
+                content=self._get_label(text_value),
+                col=self.__responsive_col(size),
                 alignment=self._base_alignment,
                 expand=True,
             ),
             size,
         )
 
-    def _get_text_input(self, key: str, size: int, lines: int = 1) -> tuple[ft.Container, int]:
+    def _get_text_input(
+        self,
+        key: str,
+        size: int,
+        lines: int = 1,
+        callbacks: list[Callable[..., None]] | None = None,
+    ) -> tuple[ft.Container, int]:
         return (
             ft.Container(
-                content=ft.TextField(
+                content=self._get_text_field(
                     value="",
                     on_change=lambda event: self._controller.on_value_changed(event, key),
+                    on_submit=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
+                    on_focus=lambda event: self._controller.on_value_changed(event, key, *(callbacks or []))
+                    if str(getattr(event, "data", "")).lower() == "false"
+                    else None,
+                    on_tap_outside=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
                     min_lines=lines,
                     max_lines=lines,
                     expand=True,
                 ),
-                col={"sm": float(size)},
+                col=self.__responsive_col(size),
                 alignment=self._base_alignment,
             ),
             size,
@@ -245,7 +269,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     ) -> tuple[ft.Container, int]:
         return (
             ft.Container(
-                content=NumericField(
+                content=self._get_numeric_field(
                     value=value,
                     step=step,
                     min_value=min_value,
@@ -255,13 +279,13 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                     on_change=lambda event: self._controller.on_value_changed(event, key),
                     expand=expand,
                 ),
-                col={"sm": float(size)},
+                col=self.__responsive_col(size),
                 alignment=self._base_alignment,
             ),
             size,
         )
 
-    def _get_dropdown(
+    def _get_dropdown_input(
         self,
         key: str,
         size: int,
@@ -270,21 +294,17 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     ) -> tuple[ft.Container, int]:
         return (
             ft.Container(
-                content=ft.Dropdown(
-                    options=(
-                        [ft.dropdown.Option(key="0", text="")]
-                        + [ft.dropdown.Option(key=str(option[0]), text=option[1]) for option in options]
-                        if options
-                        else []
-                    ),
+                content=self._get_dropdown(
+                    options=options,
+                    include_empty_option=True,
                     on_select=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
+                    value=BaseViewStyles.DROPDOWN_DEFAULT_KEY,
+                    editable=BaseViewStyles.DROPDOWN_EDITABLE,
+                    enable_search=BaseViewStyles.DROPDOWN_ENABLE_SEARCH,
+                    enable_filter=BaseViewStyles.DROPDOWN_ENABLE_FILTER,
                     expand=True,
-                    value="0",
-                    editable=True,
-                    enable_search=True,
-                    enable_filter=True,
                 ),
-                col={"sm": float(size)},
+                col=self.__responsive_col(size),
                 alignment=self._base_alignment,
             ),
             size,
@@ -302,7 +322,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     ) -> tuple[ft.Container, int]:
         return (
             ft.Container(
-                content=DateField(
+                content=self._get_date_field(
                     value=value,
                     min_date=min_date,
                     max_date=max_date,
@@ -310,7 +330,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                     on_change=lambda event: self._controller.on_value_changed(event, key, *(callbacks or [])),
                     expand=True,
                 ),
-                col={"sm": float(size)},
+                col=self.__responsive_col(size),
                 alignment=self._base_alignment,
             ),
             size,
@@ -321,11 +341,11 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
             ft.Container(
                 content=ft.Checkbox(
                     on_change=lambda event, key=key: self._controller.on_marker_clicked(event, key),
-                    tooltip=self._translation.get("check_to_search"),
-                    animate_size=300,
+                    tooltip=self._translation.get(BaseViewStyles.MARKER_TOOLTIP_KEY),
+                    animate_size=BaseViewStyles.MARKER_ANIMATE_SIZE,
                     value=False,
                 ),
-                col={"sm": float(size)},
+                col=self.__responsive_col(size),
                 alignment=self._base_alignment,
             ),
             size,
@@ -344,16 +364,16 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                 ft.ResponsiveRow(
                     columns=total_columns,
                     controls=cast(list[ft.Control], inline_controls),
-                    alignment=ft.MainAxisAlignment.START,
-                    vertical_alignment=ft.CrossAxisAlignment.START,
+                    alignment=BaseViewStyles.GRID_ROW_ALIGNMENT,
+                    vertical_alignment=BaseViewStyles.GRID_ROW_VERTICAL_ALIGNMENT,
                 )
             ]
         return [
             ft.ResponsiveRow(
                 columns=group.columns,
                 controls=[part for part in group],
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.START,
+                alignment=BaseViewStyles.GRID_ROW_ALIGNMENT,
+                vertical_alignment=BaseViewStyles.GRID_ROW_VERTICAL_ALIGNMENT,
             )
             for group in fields.values()
         ]
@@ -364,27 +384,27 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         text_marker_size = free_columns - text_size
         meta_fields = {
             "id": FieldGroup(
-                label=self._get_label("id", label_size),
+                label=self.__get_field_label("id", label_size),
                 input=self._get_text_input("id", id_size),
                 marker=self._get_marker("id", id_marker_size),
             ),
             "created_by_username": FieldGroup(
-                label=self._get_label("created_by_username", label_size),
+                label=self.__get_field_label("created_by_username", label_size),
                 input=self._get_text_input("created_by_username", text_size),
                 marker=self._get_marker("created_by_username", text_marker_size),
             ),
             "created_at": FieldGroup(
-                label=self._get_label("created_at", label_size),
+                label=self.__get_field_label("created_at", label_size),
                 input=self._get_text_input("created_at", text_size),
                 marker=self._get_marker("created_at", text_marker_size),
             ),
             "modified_by_username": FieldGroup(
-                label=self._get_label("modified_by_username", label_size),
+                label=self.__get_field_label("modified_by_username", label_size),
                 input=self._get_text_input("modified_by_username", text_size),
                 marker=self._get_marker("modified_by_username", text_marker_size),
             ),
             "modified_at": FieldGroup(
-                label=self._get_label("modified_at", label_size),
+                label=self.__get_field_label("modified_at", label_size),
                 input=self._get_text_input("modified_at", text_size),
                 marker=self._get_marker("modified_at", text_marker_size),
             ),
@@ -396,14 +416,14 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     def __get_password_input(self, key: str, size: int) -> tuple[ft.Container, int]:
         return (
             ft.Container(
-                content=ft.TextField(
+                content=self._get_text_field(
                     value="",
                     password=True,
                     can_reveal_password=True,
                     on_change=lambda event: self._controller.on_value_changed(event, key),
                     expand=True,
                 ),
-                col={"sm": float(size)},
+                col=self.__responsive_col(size),
                 alignment=self._base_alignment,
             ),
             size,
@@ -421,15 +441,15 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
                 content=ft.RadioGroup(
                     content=ft.Row(
                         controls=[ft.Radio(value=value, label=label) for value, label in options],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        alignment=BaseViewStyles.RADIO_ROW_ALIGNMENT,
+                        vertical_alignment=BaseViewStyles.RADIO_ROW_VERTICAL_ALIGNMENT,
                         expand=True,
-                        spacing=0,
+                        spacing=BaseViewStyles.RADIO_ROW_SPACING,
                     ),
                     value=default,
                     on_change=lambda event, key=key: self._controller.on_value_changed(event, key),
                 ),
-                col={"sm": float(size)},
+                col=self.__responsive_col(size),
                 alignment=self._base_alignment,
                 expand=True,
             ),
@@ -441,11 +461,11 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
             ft.Container(
                 content=ft.Checkbox(
                     on_change=lambda event, key=key: self._controller.on_value_changed(event, key),
-                    animate_size=300,
+                    animate_size=BaseViewStyles.MARKER_ANIMATE_SIZE,
                     value=value,
-                    shape=ft.CircleBorder(),
+                    shape=BaseViewStyles.CHECKBOX_SHAPE,
                 ),
-                col={"sm": float(size)},
+                col=self.__responsive_col(size),
                 alignment=self._base_alignment,
             ),
             size,
@@ -473,7 +493,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
             )
 
         return FieldGroup(
-            label=self._get_label(key=label if label is not None else key, size=label_size, colon=colon),
+            label=self.__get_field_label(key=label if label is not None else key, size=label_size, colon=colon),
             input=input(key, size=input_size, **kwargs),
             marker=self._get_marker(key, size=marker_size),
         )

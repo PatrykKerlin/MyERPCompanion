@@ -54,20 +54,20 @@ class OrdersView(BaseView["OrdersController"]):
             content=ft.ProgressRing(),
             padding=OrdersViewStyles.STATUS_LOADING_PADDING,
         )
-        self.__download_invoice_button = ft.IconButton(
+        self.__download_invoice_button = self._get_icon_button(
             icon=ft.Icons.DOWNLOAD,
             tooltip=self._translation.get("download_invoice_pdf"),
             on_click=lambda _: self.__handle_download_invoice_clicked(),
             style=ButtonStyles.icon,
         )
-        self.__download_invoice_placeholder = ft.IconButton(
+        self.__download_invoice_placeholder = self._get_icon_button(
             icon=ft.Icons.DOWNLOAD,
             disabled=True,
-            opacity=0.0,
             style=ButtonStyles.icon,
+            opacity=0.0,
         )
 
-        new_order_button = ft.Button(
+        new_order_button = self._get_button(
             content=self._translation.get("create_order"),
             on_click=lambda _: self._controller.on_new_order_clicked(),
             style=ButtonStyles.primary_regular,

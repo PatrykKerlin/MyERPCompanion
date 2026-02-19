@@ -88,10 +88,14 @@ class StockReceivingController(
         self._page.run_task(self.__handle_add_with_quantity, item_id, quantity)
 
     def on_pending_item_removed(self, target_id: int) -> None:
+        if target_id >= 0:
+            return
         quantity = self.__pending_move_quantities.pop(target_id, 0)
         item_id = self.__pending_move_item_ids.pop(target_id, None)
         if item_id is not None and quantity:
             self.__order_item_quantities[item_id] = self.__order_item_quantities.get(item_id, 0) + quantity
+        if isinstance(self._view, StockReceivingView):
+            self._view.remove_target_row(target_id)
         self.__refresh_source_rows()
 
     def on_save_clicked(self) -> None:
@@ -258,6 +262,7 @@ class StockReceivingController(
             self.__order_item_labels = {}
             self.__items_by_id = {}
             self._view.set_source_rows([])
+            self._view.set_saved_rows([])
             self._view.set_source_enabled(False)
             return
         self.__order_items = {item.item_id: item for item in order_items}
@@ -269,17 +274,21 @@ class StockReceivingController(
         self.__items_by_id = item_map
         self.__order_item_labels = {}
         source_rows: list[tuple[int, list[str]]] = []
+        saved_rows: list[tuple[int, list[str]]] = []
         for item in order_items:
-            if item.to_process <= 0:
-                continue
             item_schema = item_map.get(item.item_id)
-            if item_schema:
-                self.__order_item_labels[item.item_id] = (item_schema.index, item_schema.name)
-                source_rows.append((item.item_id, [item_schema.index, item_schema.name, str(item.to_process)]))
-            else:
-                self.__order_item_labels[item.item_id] = (str(item.item_id), "")
-                source_rows.append((item.item_id, [str(item.item_id), "", str(item.to_process)]))
+            item_index = item_schema.index if item_schema else str(item.item_id)
+            item_name = item_schema.name if item_schema else ""
+            self.__order_item_labels[item.item_id] = (item_index, item_name)
+            if item.to_process > 0:
+                source_rows.append((item.item_id, [item_index, item_name, str(item.to_process)]))
+            saved_quantity = max(0, item.quantity - item.to_process)
+            if saved_quantity > 0:
+                saved_rows.append((item.item_id, [item_index, item_name, str(saved_quantity)]))
+        source_rows.sort(key=lambda row: (row[1][0].lower(), row[1][1].lower()))
+        saved_rows.sort(key=lambda row: (row[1][0].lower(), row[1][1].lower()))
         self._view.set_source_rows(source_rows)
+        self._view.set_saved_rows(saved_rows)
         self._view.set_source_enabled(bool(source_rows))
         if self.__target_rows:
             self._view.set_target_rows(self.__target_rows)
@@ -459,8 +468,7 @@ class StockReceivingController(
             else:
                 source_rows.append((item_id, [str(item_id), "", str(display_quantity)]))
         self._view.set_source_rows(source_rows)
-        if pending_item_ids:
-            self._view.mark_source_items_as_moved(list(pending_item_ids))
+        self._view.mark_source_items_as_moved(list(pending_item_ids))
         self._view.set_source_enabled(bool(source_rows))
         self.__sync_transfer_state()
 

@@ -4,6 +4,7 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING, Any, cast
 
 import flet as ft
+from styles.styles import AlignmentStyles, ButtonStyles, ItemsViewStyles, MobileCommonViewStyles, TypographyStyles
 from schemas.business.logistic.item_schema import ItemPlainSchema
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
@@ -67,9 +68,6 @@ class ItemsView(BaseView):
         "weight",
         "expiration_date",
     ]
-    __GALLERY_WINDOW_SIZE = 3
-    __THUMBNAIL_SIZE = 88
-
     def __init__(
         self,
         controller: ItemsController,
@@ -99,26 +97,33 @@ class ItemsView(BaseView):
         self.__gallery_left_button: ft.IconButton | None = None
         self.__gallery_right_button: ft.IconButton | None = None
 
-        self.__title = ft.Text(size=20, weight=ft.FontWeight.BOLD)
-        self.__subtitle = ft.Text(size=14)
-        self.__back_button = ft.Button(on_click=self.__on_back_clicked, width=220)
-        self.__header_texts = ft.Column(
-            controls=[self.__title, self.__subtitle],
-            spacing=2,
-            expand=True,
+        self.__title = self._get_label("", style=TypographyStyles.HEADER_TITLE)
+        self.__back_button = self._get_button(
+            content=self._translation.get("back"),
+            on_click=self.__on_back_clicked,
+            style=ButtonStyles.primary_regular,
         )
-        self.__header_row = ft.Row(
+        self.__header_texts = ft.Column(
+            controls=[self.__title],
+            spacing=MobileCommonViewStyles.HEADER_TEXTS_SPACING,
+        )
+        self.__header_row = ft.ResponsiveRow(
             controls=[
-                self.__header_texts,
-                ft.Container(content=self.__back_button, alignment=ft.Alignment.CENTER_RIGHT),
+                ft.Container(content=self.__header_texts, col=MobileCommonViewStyles.HEADER_TEXTS_COL),
+                ft.Container(
+                    content=self.__back_button,
+                    col=MobileCommonViewStyles.HEADER_ACTION_COL,
+                    alignment=MobileCommonViewStyles.HEADER_BACK_ALIGNMENT,
+                ),
             ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            columns=MobileCommonViewStyles.HEADER_ROW_COLUMNS,
+            alignment=MobileCommonViewStyles.HEADER_ROW_ALIGNMENT,
+            vertical_alignment=MobileCommonViewStyles.HEADER_ROW_VERTICAL_ALIGNMENT,
         )
 
-        category_filter_container, _ = self._get_dropdown(
+        category_filter_container, _ = self._get_dropdown_input(
             "category_filter",
-            5,
+            ItemsViewStyles.CATEGORY_FILTER_INPUT_SIZE,
             self.__categories,
             callbacks=[self.__on_category_filter_changed],
         )
@@ -129,7 +134,7 @@ class ItemsView(BaseView):
         ]
         self.__category_filter_input.value = str(self.__selected_category_id) if self.__selected_category_id else "0"
 
-        index_filter_container, _ = self._get_text_input("index_filter", 7)
+        index_filter_container, _ = self._get_text_input("index_filter", ItemsViewStyles.INDEX_FILTER_INPUT_SIZE)
         self.__index_filter_input = cast(ft.TextField, index_filter_container.content)
         self.__index_filter_input.value = self.__index_filter
         self.__index_filter_input.on_change = self.__on_index_filter_changed
@@ -138,34 +143,34 @@ class ItemsView(BaseView):
 
         self._add_to_inputs(
             {
-                "category_filter": FieldGroup(input=(category_filter_container, 5)),
-                "index_filter": FieldGroup(input=(index_filter_container, 7)),
+                "category_filter": FieldGroup(input=(category_filter_container, ItemsViewStyles.CATEGORY_FILTER_INPUT_SIZE)),
+                "index_filter": FieldGroup(input=(index_filter_container, ItemsViewStyles.INDEX_FILTER_INPUT_SIZE)),
             }
         )
 
         self.__filters_row = ft.ResponsiveRow(
             controls=[category_filter_container, index_filter_container],
-            columns=12,
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            columns=ItemsViewStyles.FILTER_ROW_COLUMNS,
+            alignment=ItemsViewStyles.FILTER_ROW_ALIGNMENT,
+            vertical_alignment=ItemsViewStyles.FILTER_ROW_VERTICAL_ALIGNMENT,
         )
-        self.__items_list = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=8)
+        self.__items_list = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=MobileCommonViewStyles.LIST_SPACING)
         self.__list_section = ft.Column(
-            controls=[self.__filters_row, ft.Divider(height=1), self.__items_list],
-            spacing=8,
+            controls=[self.__filters_row, ft.Divider(height=ItemsViewStyles.DETAILS_DIVIDER_HEIGHT), self.__items_list],
+            spacing=MobileCommonViewStyles.SECTION_SPACING,
             expand=True,
         )
 
-        self.__details = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=8)
+        self.__details = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=MobileCommonViewStyles.SECTION_SPACING)
         self.__details_section = ft.Column(
             controls=[self.__details],
-            spacing=0,
+            spacing=ItemsViewStyles.DETAILS_SECTION_SPACING,
             expand=True,
         )
 
         self._master_column.controls = [
             self.__header_row,
-            ft.Divider(height=1),
+            ft.Divider(height=ItemsViewStyles.DETAILS_DIVIDER_HEIGHT),
             self.__list_section,
             self.__details_section,
         ]
@@ -184,8 +189,7 @@ class ItemsView(BaseView):
 
     def __render_list_mode(self) -> None:
         self.__title.value = self._translation.get("items")
-        self.__subtitle.value = self._translation.get("select_item")
-        self.__back_button.content = self._translation.get("back_to_menu")
+        self.__back_button.content = self._translation.get("back")
         self.__category_filter_input.label = self._translation.get("category")
         self.__category_filter_input.options = [
             ft.dropdown.Option(key="0", text=self._translation.get("all_categories")),
@@ -199,41 +203,37 @@ class ItemsView(BaseView):
 
     def __render_details_mode(self) -> None:
         self.__title.value = self._translation.get("item_details")
-        if self.caller_view_key == View.BINS:
-            self.__back_button.content = self._translation.get("back_to_bins")
-        else:
-            self.__back_button.content = self._translation.get("back_to_items")
+        self.__back_button.content = self._translation.get("back")
         self.__list_section.visible = False
         self.__details_section.visible = True
 
         if not self.__item:
-            self.__subtitle.value = self._translation.get("no_items")
-            self.__details.controls = [ft.Text(self._translation.get("no_items"), text_align=ft.TextAlign.CENTER)]
+            self.__details.controls = [self._get_label(self._translation.get("no_items"), text_align=ft.TextAlign.CENTER)]
             return
 
-        self.__subtitle.value = self.__item.name
         image_urls = self.__image_urls()
-        max_start_index = max(0, len(image_urls) - self.__GALLERY_WINDOW_SIZE)
+        max_start_index = max(0, len(image_urls) - ItemsViewStyles.GALLERY_WINDOW_SIZE)
         self.__gallery_start_index = min(self.__gallery_start_index, max_start_index)
         detail_rows = self.__build_detail_rows()
         self.__details.controls = [
             self.__build_gallery_section(image_urls),
-            ft.Divider(height=1),
+            ft.Divider(height=ItemsViewStyles.DETAILS_DIVIDER_HEIGHT),
             self.__build_detail_columns(detail_rows),
         ]
 
     def __build_list_controls(self) -> list[ft.Control]:
         filtered_items = self.__get_filtered_items()
         if not filtered_items:
-            return [ft.Text(self._translation.get("no_items"), text_align=ft.TextAlign.CENTER)]
+            return [self._get_label(self._translation.get("no_items"), text_align=ft.TextAlign.CENTER)]
 
         controls: list[ft.Control] = []
         for item_schema in filtered_items:
             controls.append(
                 ft.Card(
+                    bgcolor=MobileCommonViewStyles.LIST_ITEM_BGCOLOR,
                     content=ft.ListTile(
-                        title=ft.Text(item_schema.name),
-                        subtitle=ft.Text(
+                        title=self._get_label(item_schema.name),
+                        subtitle=self._get_label(
                             f"{self._translation.get('index')}: {item_schema.index} | "
                             f"{self._translation.get('category')}: {item_schema.category_name}"
                         ),
@@ -280,11 +280,11 @@ class ItemsView(BaseView):
     def __build_gallery_section(self, image_urls: list[str]) -> ft.Control:
         return ft.Column(
             controls=[
-                ft.Text(self._translation.get("images"), weight=ft.FontWeight.W_600),
+                self._get_label(self._translation.get("images"), style=TypographyStyles.SECTION_TITLE),
                 self.__build_gallery_control(image_urls),
             ],
             tight=True,
-            spacing=6,
+            spacing=ItemsViewStyles.GALLERY_SECTION_SPACING,
         )
 
     def __build_gallery_control(self, image_urls: list[str]) -> ft.Control:
@@ -294,17 +294,21 @@ class ItemsView(BaseView):
             self.__gallery_left_button = None
             self.__gallery_right_button = None
             return ft.Container(
-                content=ft.Text(self._translation.get("no_images"), text_align=ft.TextAlign.CENTER),
-                padding=ft.Padding.symmetric(vertical=8),
+                content=self._get_label(self._translation.get("no_images"), text_align=ft.TextAlign.CENTER),
+                padding=ItemsViewStyles.GALLERY_EMPTY_PADDING,
             )
         self.__gallery_image_urls = list(image_urls)
-        self.__gallery_thumbnails_row = ft.Row(spacing=8, run_spacing=8, alignment=ft.MainAxisAlignment.CENTER)
-        self.__gallery_left_button = ft.IconButton(
+        self.__gallery_thumbnails_row = ft.Row(
+            spacing=ItemsViewStyles.GALLERY_THUMB_ROW_SPACING,
+            run_spacing=ItemsViewStyles.GALLERY_THUMB_ROW_RUN_SPACING,
+            alignment=ItemsViewStyles.GALLERY_THUMB_ROW_ALIGNMENT,
+        )
+        self.__gallery_left_button = self._get_icon_button(
             icon=ft.Icons.CHEVRON_LEFT,
             on_click=self.__move_gallery_left,
             disabled=True,
         )
-        self.__gallery_right_button = ft.IconButton(
+        self.__gallery_right_button = self._get_icon_button(
             icon=ft.Icons.CHEVRON_RIGHT,
             on_click=self.__move_gallery_right,
             disabled=True,
@@ -316,8 +320,8 @@ class ItemsView(BaseView):
                 ft.Container(content=self.__gallery_thumbnails_row, expand=True),
                 self.__gallery_right_button,
             ],
-            spacing=8,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=ItemsViewStyles.GALLERY_CONTROL_SPACING,
+            vertical_alignment=ItemsViewStyles.GALLERY_ROW_VERTICAL_ALIGNMENT,
         )
 
     def __move_gallery_left(self, _: ft.Event[ft.IconButton]) -> None:
@@ -327,7 +331,7 @@ class ItemsView(BaseView):
         self.__render_gallery_thumbnails()
 
     def __move_gallery_right(self, _: ft.Event[ft.IconButton]) -> None:
-        if self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE >= len(self.__gallery_image_urls):
+        if self.__gallery_start_index + ItemsViewStyles.GALLERY_WINDOW_SIZE >= len(self.__gallery_image_urls):
             return
         self.__gallery_start_index += 1
         self.__render_gallery_thumbnails()
@@ -337,22 +341,25 @@ class ItemsView(BaseView):
             return
         self.__gallery_thumbnails_row.controls.clear()
         window = self.__gallery_image_urls[
-            self.__gallery_start_index : self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE
+            self.__gallery_start_index : self.__gallery_start_index + ItemsViewStyles.GALLERY_WINDOW_SIZE
         ]
         for url in window:
             self.__gallery_thumbnails_row.controls.append(
                 ft.Container(
-                    width=self.__THUMBNAIL_SIZE,
-                    height=self.__THUMBNAIL_SIZE,
+                    expand=1,
+                    alignment=AlignmentStyles.CENTER,
                     content=ft.Image(
                         src=url,
-                        width=self.__THUMBNAIL_SIZE,
-                        height=self.__THUMBNAIL_SIZE,
+                        expand=True,
                         fit=ft.BoxFit.CONTAIN,
+                        aspect_ratio=ItemsViewStyles.GALLERY_THUMB_ASPECT_RATIO,
                     ),
                     on_click=lambda _, image_url=url: self.__open_image_dialog(image_url),
                 )
             )
+        missing_slots = max(0, ItemsViewStyles.GALLERY_WINDOW_SIZE - len(window))
+        for _ in range(missing_slots):
+            self.__gallery_thumbnails_row.controls.append(ft.Container(expand=1))
         self.safe_update(self.__gallery_thumbnails_row)
         self.__update_gallery_buttons()
 
@@ -361,7 +368,7 @@ class ItemsView(BaseView):
             return
         self.__gallery_left_button.disabled = self.__gallery_start_index <= 0
         self.__gallery_right_button.disabled = (
-            self.__gallery_start_index + self.__GALLERY_WINDOW_SIZE >= len(self.__gallery_image_urls)
+            self.__gallery_start_index + ItemsViewStyles.GALLERY_WINDOW_SIZE >= len(self.__gallery_image_urls)
         )
         self.safe_update(self.__gallery_left_button)
         self.safe_update(self.__gallery_right_button)
@@ -371,9 +378,14 @@ class ItemsView(BaseView):
             title=None,
             controls=[
                 ft.Container(
-                    width=320,
-                    height=420,
-                    content=ft.Image(src=url, width=320, height=420, fit=ft.BoxFit.CONTAIN),
+                    width=ItemsViewStyles.GALLERY_DIALOG_IMAGE_WIDTH,
+                    height=ItemsViewStyles.GALLERY_DIALOG_IMAGE_HEIGHT,
+                    content=ft.Image(
+                        src=url,
+                        width=ItemsViewStyles.GALLERY_DIALOG_IMAGE_WIDTH,
+                        height=ItemsViewStyles.GALLERY_DIALOG_IMAGE_HEIGHT,
+                        fit=ft.BoxFit.CONTAIN,
+                    ),
                 )
             ],
             actions=[ft.TextButton(self._translation.get("close"), on_click=lambda _: self.__close_dialog())],
@@ -437,37 +449,35 @@ class ItemsView(BaseView):
         return str(value)
 
     def __build_detail_columns(self, detail_rows: list[tuple[str, str]]) -> ft.Control:
-        labels_column = ft.Column(
-            controls=[
-                ft.Container(
-                    padding=ft.Padding.symmetric(horizontal=4, vertical=2),
-                    content=ft.Text(f"{label}:", weight=ft.FontWeight.W_600),
-                )
-                for label, _ in detail_rows
-            ],
-            tight=True,
-            spacing=2,
-            width=140,
-        )
-        values_column = ft.Column(
-            controls=[
-                ft.Container(
-                    padding=ft.Padding.symmetric(horizontal=4, vertical=2),
-                    content=ft.Text(value, selectable=True),
-                )
-                for _, value in detail_rows
-            ],
-            tight=True,
-            spacing=2,
-            expand=True,
-        )
+        rows: list[ft.Control] = [
+            ft.ResponsiveRow(
+                controls=[
+                    ft.Container(
+                        col=ItemsViewStyles.DETAILS_LABEL_COL,
+                        padding=ItemsViewStyles.DETAILS_LABEL_PADDING,
+                        content=self._get_label(
+                            f"{self._translation.get(label)}:",
+                            style=TypographyStyles.DETAIL_LABEL,
+                        ),
+                    ),
+                    ft.Container(
+                        col=ItemsViewStyles.DETAILS_VALUE_COL,
+                        padding=ItemsViewStyles.DETAILS_VALUE_PADDING,
+                        content=self._get_label(value, selectable=True),
+                    ),
+                ],
+                columns=ItemsViewStyles.DETAILS_PAIR_COLUMNS,
+                alignment=AlignmentStyles.AXIS_START,
+                vertical_alignment=ItemsViewStyles.DETAIL_ROW_VERTICAL_ALIGNMENT,
+            )
+            for label, value in detail_rows
+        ]
         return ft.Container(
-            padding=ft.Padding.symmetric(horizontal=2, vertical=2),
-            content=ft.Row(
-                controls=[labels_column, values_column],
-                spacing=10,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                expand=True,
+            padding=ItemsViewStyles.DETAILS_WRAPPER_PADDING,
+            content=ft.Column(
+                controls=rows,
+                spacing=ItemsViewStyles.DETAILS_COL_SPACING,
+                tight=True,
             ),
         )
 

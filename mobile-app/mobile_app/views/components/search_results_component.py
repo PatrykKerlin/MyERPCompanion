@@ -4,6 +4,7 @@ from math import ceil
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
+from styles.styles import ButtonStyles, ControlStyles, SearchResultsStyles
 from utils.translation import Translation
 from views.base.base_component import BaseComponent
 
@@ -26,7 +27,7 @@ class SearchResultsComponent(BaseComponent, ft.Column):
         buttons_row = self.__build_buttons()
         table_row = self.__build_table_row()
 
-        ft.Column.__init__(self, controls=[buttons_row, table_row], expand=True)
+        ft.Column.__init__(self, controls=[buttons_row, table_row], expand=SearchResultsStyles.ROOT_EXPAND)
 
     def __build_table_row(self) -> ft.Row:
         data_table = ft.DataTable(
@@ -47,14 +48,15 @@ class SearchResultsComponent(BaseComponent, ft.Column):
                 )
                 for row in self.__data
             ],
+            data_row_color=SearchResultsStyles.DATA_TABLE_ROW_COLOR,
             sort_column_index=self.__get_sort_column_index(),
             sort_ascending=self._controller.search_params.order == "asc",
         )
 
         return ft.Row(
             controls=[data_table],
-            scroll=ft.ScrollMode.AUTO,
-            expand=True,
+            scroll=SearchResultsStyles.TABLE_ROW_SCROLL,
+            expand=SearchResultsStyles.TABLE_ROW_EXPAND,
         )
 
     def __get_sort_column_index(self) -> int | None:
@@ -97,10 +99,13 @@ class SearchResultsComponent(BaseComponent, ft.Column):
             editable=True,
             enable_search=True,
             enable_filter=True,
+            border_color=ControlStyles.FIELD_BORDER_COLOR,
+            focused_border_color=ControlStyles.FIELD_FOCUSED_BORDER_COLOR,
         )
 
         back_button = ft.Button(
             content=self._translation.get("back"),
+            style=ButtonStyles.primary_regular,
             on_click=lambda _: self._controller.on_back_clicked(),
         )
 

@@ -22,7 +22,7 @@ class AuthView(InputControlsMixin, ft.Container):
             on_submit=lambda _: self.__on_login(),
         )
 
-        login_button = ft.Button(
+        login_button = self._get_button(
             content=translation.get("log_in"),
             on_click=self.__on_login,
             style=ButtonStyles.primary_regular,

@@ -1,43 +1,36 @@
 import flet as ft
+from styles.styles import MainMenuViewStyles, TypographyStyles
 from utils.translation import Translation
 from views.base.base_component import BaseComponent
+from views.mixins.input_controls_mixin import InputControlsMixin
 
 
-class MainMenuView(ft.Container):
-    __SUMMARY_WIDTH = 320
-
+class MainMenuView(InputControlsMixin, ft.Container):
     def __init__(self, translation: Translation) -> None:
         self.__translation = translation
-        self.__title = ft.Text(
+        self.__title = self._get_label(
             self.__translation.get("my_erp_companion"),
-            size=20,
-            weight=ft.FontWeight.BOLD,
-            text_align=ft.TextAlign.CENTER,
-        )
-        self.__hint = ft.Text(
-            self.__translation.get("mobile_main_menu_hint"),
-            text_align=ft.TextAlign.CENTER,
+            style=MainMenuViewStyles.TITLE_STYLE,
+            text_align=MainMenuViewStyles.HINT_ALIGN,
         )
 
-        self.__summary_title = ft.Text(
+        self.__summary_title = self._get_label(
             self.__translation.get("order_picking"),
-            size=16,
-            weight=ft.FontWeight.W_600,
+            style=MainMenuViewStyles.SUMMARY_TITLE_STYLE,
             text_align=ft.TextAlign.LEFT,
         )
-        self.__orders_label = ft.Text(self.__translation.get("orders_to_pick"))
-        self.__items_label = ft.Text(self.__translation.get("distinct_items_to_pick"))
-        self.__pieces_label = ft.Text(self.__translation.get("total_pieces_to_pick"))
+        self.__orders_label = self._get_label(self.__translation.get("orders_to_pick"))
+        self.__items_label = self._get_label(self.__translation.get("distinct_items_to_pick"))
+        self.__pieces_label = self._get_label(self.__translation.get("total_pieces_to_pick"))
 
-        self.__orders_value = ft.Text("0", weight=ft.FontWeight.BOLD)
-        self.__items_value = ft.Text("0", weight=ft.FontWeight.BOLD)
-        self.__pieces_value = ft.Text("0", weight=ft.FontWeight.BOLD)
+        self.__orders_value = self._get_label("0", style=TypographyStyles.VALUE_BOLD)
+        self.__items_value = self._get_label("0", style=TypographyStyles.VALUE_BOLD)
+        self.__pieces_value = self._get_label("0", style=TypographyStyles.VALUE_BOLD)
 
         self.__summary_section = ft.Container(
-            width=self.__SUMMARY_WIDTH,
-            padding=ft.Padding.all(12),
-            border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
-            border_radius=10,
+            padding=MainMenuViewStyles.SUMMARY_PADDING,
+            border=MainMenuViewStyles.SUMMARY_BORDER,
+            border_radius=MainMenuViewStyles.SUMMARY_BORDER_RADIUS,
             content=ft.Column(
                 controls=[
                     self.__summary_title,
@@ -46,19 +39,26 @@ class MainMenuView(ft.Container):
                     self.__build_summary_row(self.__pieces_label, self.__pieces_value),
                 ],
                 tight=True,
-                spacing=8,
+                spacing=MainMenuViewStyles.SUMMARY_SPACING,
             ),
+        )
+        self.__summary_row = ft.ResponsiveRow(
+            controls=[ft.Container(content=self.__summary_section, col=MainMenuViewStyles.SUMMARY_COL)],
+            columns=MainMenuViewStyles.SUMMARY_ROW_COLUMNS,
+            alignment=MainMenuViewStyles.SUMMARY_CONTAINER_ROW_ALIGNMENT,
+            vertical_alignment=MainMenuViewStyles.SUMMARY_CONTAINER_ROW_VERTICAL_ALIGNMENT,
         )
 
         ft.Container.__init__(
             self,
             expand=True,
-            alignment=ft.Alignment.CENTER,
+            alignment=MainMenuViewStyles.ROOT_ALIGNMENT,
+            padding=MainMenuViewStyles.ROOT_PADDING,
             content=ft.Column(
-                controls=[self.__title, self.__hint, self.__summary_section],
+                controls=[self.__title, self.__summary_row],
                 tight=True,
-                spacing=14,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=MainMenuViewStyles.ROOT_SPACING,
+                horizontal_alignment=MainMenuViewStyles.ROOT_HORIZONTAL_ALIGNMENT,
             ),
         )
 
@@ -71,7 +71,6 @@ class MainMenuView(ft.Container):
     def update_translation(self, translation: Translation) -> None:
         self.__translation = translation
         self.__title.value = self.__translation.get("my_erp_companion")
-        self.__hint.value = self.__translation.get("mobile_main_menu_hint")
         self.__summary_title.value = self.__translation.get("order_picking")
         self.__orders_label.value = self.__translation.get("orders_to_pick")
         self.__items_label.value = self.__translation.get("distinct_items_to_pick")
@@ -82,6 +81,6 @@ class MainMenuView(ft.Container):
     def __build_summary_row(label: ft.Text, value: ft.Text) -> ft.Control:
         return ft.Row(
             controls=[label, value],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=MainMenuViewStyles.SUMMARY_ROW_ALIGNMENT,
+            vertical_alignment=MainMenuViewStyles.SUMMARY_ROW_VERTICAL_ALIGNMENT,
         )

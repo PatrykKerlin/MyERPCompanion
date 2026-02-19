@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast
 
 import flet as ft
+from styles.styles import BinTransferViewStyles, ButtonStyles, MobileCommonViewStyles, TypographyStyles
 from utils.enums import View, ViewMode
 from utils.field_group import FieldGroup
 from utils.translation import Translation
@@ -29,118 +30,131 @@ class BinTransferView(BaseView):
         self.__last_quantity_item_id: int | None = None
         self.__form_enabled = False
 
-        self.__title = ft.Text(size=20, weight=ft.FontWeight.BOLD)
-        self.__subtitle = ft.Text(size=14)
-        self.__back_button = ft.Button(on_click=self.__on_back_click, width=220)
+        self.__title = self._get_label("", style=TypographyStyles.HEADER_TITLE)
+        self.__back_button = self._get_button(
+            content=self._translation.get("back"),
+            on_click=self.__on_back_click,
+            style=ButtonStyles.primary_regular,
+        )
         self.__header_texts = ft.Column(
-            controls=[self.__title, self.__subtitle],
-            spacing=2,
-            expand=True,
+            controls=[self.__title],
+            spacing=MobileCommonViewStyles.HEADER_TEXTS_SPACING,
         )
-        self.__header_row = ft.Row(
+        self.__header_row = ft.ResponsiveRow(
             controls=[
-                self.__header_texts,
-                ft.Container(content=self.__back_button, alignment=ft.Alignment.CENTER_RIGHT),
+                ft.Container(content=self.__header_texts, col=MobileCommonViewStyles.HEADER_TEXTS_COL),
+                ft.Container(
+                    content=self.__back_button,
+                    col=MobileCommonViewStyles.HEADER_ACTION_COL,
+                    alignment=MobileCommonViewStyles.HEADER_BACK_ALIGNMENT,
+                ),
             ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            columns=MobileCommonViewStyles.HEADER_ROW_COLUMNS,
+            alignment=MobileCommonViewStyles.HEADER_ROW_ALIGNMENT,
+            vertical_alignment=MobileCommonViewStyles.HEADER_ROW_VERTICAL_ALIGNMENT,
         )
 
-        source_container, _ = self._get_text_input("source_bin", 6)
-        source_container.col = {"xs": 12.0, "sm": 6.0}
+        source_container, _ = self._get_text_input(
+            "source_bin",
+            BinTransferViewStyles.SOURCE_BIN_INPUT_SIZE,
+            callbacks=[self.__on_source_submit],
+        )
+        source_container.col = BinTransferViewStyles.SOURCE_BIN_COL
         self.__source_input = cast(ft.TextField, source_container.content)
-        self.__source_input.on_submit = self.__on_source_submit
 
-        target_container, _ = self._get_text_input("target_bin", 6)
-        target_container.col = {"xs": 12.0, "sm": 6.0}
+        target_container, _ = self._get_text_input(
+            "target_bin",
+            BinTransferViewStyles.TARGET_BIN_INPUT_SIZE,
+            callbacks=[self.__on_target_submit],
+        )
+        target_container.col = BinTransferViewStyles.TARGET_BIN_COL
         self.__target_input = cast(ft.TextField, target_container.content)
-        self.__target_input.on_submit = self.__on_target_submit
 
-        item_container, _ = self._get_dropdown("item_id", 7, [], callbacks=[self.__on_item_changed])
-        item_container.col = {"xs": 12.0, "sm": 7.0}
+        item_container, _ = self._get_dropdown_input("item_id", BinTransferViewStyles.ITEM_INPUT_SIZE, [], callbacks=[self.__on_item_changed])
+        item_container.col = BinTransferViewStyles.ITEM_COL
         self.__item_input = cast(ft.Dropdown, item_container.content)
         self.__item_input.disabled = True
         self.__item_input.value = "0"
 
         quantity_container, _ = self._get_numeric_input(
             "quantity",
-            3,
+            BinTransferViewStyles.QUANTITY_INPUT_SIZE,
             value=1,
             step=1,
             precision=0,
             min_value=1,
             is_float=False,
         )
-        quantity_container.col = {"xs": 8.0, "sm": 3.0}
+        quantity_container.col = BinTransferViewStyles.QUANTITY_INFO_COL
         self.__quantity_input = cast(NumericField, quantity_container.content)
-        self.__available_text = ft.Text(size=12)
+        self.__available_text = self._get_label("", size=BinTransferViewStyles.AVAILABLE_TEXT_SIZE)
         quantity_info_container = ft.Container(
-            col={"xs": 8.0, "sm": 3.0},
-            alignment=ft.Alignment.TOP_LEFT,
+            col=BinTransferViewStyles.QUANTITY_INFO_COL,
+            alignment=BinTransferViewStyles.QUANTITY_INFO_ALIGNMENT,
             content=ft.Column(
                 controls=[
                     self.__quantity_input,
                     ft.Container(
                         content=self.__available_text,
-                        alignment=ft.Alignment.CENTER,
+                        alignment=BinTransferViewStyles.QUANTITY_INFO_TEXT_CONTAINER_ALIGNMENT,
                         expand=True,
                     ),
                 ],
-                spacing=4,
+                spacing=BinTransferViewStyles.QUANTITY_INFO_COLUMN_SPACING,
                 tight=True,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                horizontal_alignment=BinTransferViewStyles.QUANTITY_INFO_COLUMN_HORIZONTAL_ALIGNMENT,
             ),
         )
 
-        self.__add_button = ft.Button(on_click=self.__on_add_click, disabled=True)
-        self.__save_button = ft.Button(on_click=self.__on_save_click, disabled=True)
+        self.__add_button = self._get_button(on_click=self.__on_add_click, disabled=True)
+        self.__save_button = self._get_button(on_click=self.__on_save_click, disabled=True)
         add_button_container = ft.Container(
-            col={"xs": 4.0, "sm": 2.0},
-            alignment=ft.Alignment.TOP_LEFT,
+            col=BinTransferViewStyles.ADD_BUTTON_COL,
+            alignment=BinTransferViewStyles.QUANTITY_INFO_ALIGNMENT,
             content=self.__add_button,
         )
 
-        self.__pending_title = ft.Text(size=15, weight=ft.FontWeight.W_600)
+        self.__pending_title = self._get_label("", style=TypographyStyles.PENDING_TITLE)
         self.__pending_header_row = ft.Row(
             controls=[self.__pending_title, self.__save_button],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=BinTransferViewStyles.PENDING_HEADER_ALIGNMENT,
+            vertical_alignment=BinTransferViewStyles.PENDING_HEADER_VERTICAL_ALIGNMENT,
         )
-        self.__pending_list = ft.Column(spacing=8)
+        self.__pending_list = ft.Column(spacing=BinTransferViewStyles.PENDING_ROW_SPACING)
         self.__pending_section = ft.Column(
             controls=[self.__pending_header_row, self.__pending_list],
-            spacing=8,
+            spacing=BinTransferViewStyles.PENDING_ROW_SPACING,
             expand=True,
             scroll=ft.ScrollMode.AUTO,
         )
 
         self._add_to_inputs(
             {
-                "source_bin": FieldGroup(input=(source_container, 6)),
-                "target_bin": FieldGroup(input=(target_container, 6)),
-                "item_id": FieldGroup(input=(item_container, 7)),
-                "quantity": FieldGroup(input=(quantity_info_container, 3)),
+                "source_bin": FieldGroup(input=(source_container, BinTransferViewStyles.SOURCE_BIN_INPUT_SIZE)),
+                "target_bin": FieldGroup(input=(target_container, BinTransferViewStyles.TARGET_BIN_INPUT_SIZE)),
+                "item_id": FieldGroup(input=(item_container, BinTransferViewStyles.ITEM_INPUT_SIZE)),
+                "quantity": FieldGroup(input=(quantity_info_container, BinTransferViewStyles.QUANTITY_INPUT_SIZE)),
             }
         )
 
         self.__bins_row = ft.ResponsiveRow(
             controls=[source_container, target_container],
-            columns=12,
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            columns=BinTransferViewStyles.BINS_ROW_COLUMNS,
+            alignment=BinTransferViewStyles.BINS_ROW_ALIGNMENT,
+            vertical_alignment=BinTransferViewStyles.BINS_ROW_VERTICAL_ALIGNMENT,
         )
         self.__form_row = ft.ResponsiveRow(
             controls=[item_container, quantity_info_container, add_button_container],
-            columns=12,
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            columns=BinTransferViewStyles.FORM_ROW_COLUMNS,
+            alignment=BinTransferViewStyles.FORM_ROW_ALIGNMENT,
+            vertical_alignment=BinTransferViewStyles.FORM_ROW_VERTICAL_ALIGNMENT,
         )
 
         self._master_column.controls = [
             self.__header_row,
             self.__bins_row,
             self.__form_row,
-            ft.Divider(height=1),
+            ft.Divider(height=MobileCommonViewStyles.DIVIDER_HEIGHT),
             self.__pending_section,
         ]
         self.__render_static_texts()
@@ -198,13 +212,12 @@ class BinTransferView(BaseView):
 
     def __render_static_texts(self) -> None:
         self.__title.value = self._translation.get("bin_transfer")
-        self.__subtitle.value = self._translation.get("mobile_bin_transfer_hint")
         self.__source_input.label = self._translation.get("source_bin")
         self.__target_input.label = self._translation.get("target_bin")
         self.__item_input.label = self._translation.get("item")
         self.__add_button.content = self._translation.get("add")
         self.__save_button.content = self._translation.get("save")
-        self.__back_button.content = self._translation.get("back_to_menu")
+        self.__back_button.content = self._translation.get("back")
         self.__pending_title.value = self._translation.get("pending_transfers")
         self.__sync_quantity_limit_to_selected_item()
         self.__update_available_text()
@@ -220,17 +233,18 @@ class BinTransferView(BaseView):
     def __render_pending_list(self) -> None:
         if not self.__pending_items:
             self.__pending_list.controls = [
-                ft.Text(self._translation.get("no_pending_transfers"), text_align=ft.TextAlign.CENTER)
+                self._get_label(self._translation.get("no_pending_transfers"), text_align=ft.TextAlign.CENTER)
             ]
             return
         rows: list[ft.Control] = []
         for item_id, item_index, quantity in self.__pending_items:
             rows.append(
                 ft.Card(
+                    bgcolor=MobileCommonViewStyles.LIST_ITEM_BGCOLOR,
                     content=ft.ListTile(
-                        title=ft.Text(item_index),
-                        subtitle=ft.Text(f"{self._translation.get('quantity')}: {quantity}"),
-                        trailing=ft.IconButton(
+                        title=self._get_label(item_index),
+                        subtitle=self._get_label(f"{self._translation.get('quantity')}: {quantity}"),
+                        trailing=self._get_icon_button(
                             icon=ft.Icons.CLOSE,
                             on_click=self.__build_remove_handler(item_id),
                         ),
@@ -242,10 +256,10 @@ class BinTransferView(BaseView):
     def __build_item_option_label(self, item_index: str) -> str:
         return item_index
 
-    def __on_source_submit(self, _: ft.Event[ft.TextField]) -> None:
+    def __on_source_submit(self) -> None:
         self._controller.on_source_bin_submit(self.__source_input.value or "")
 
-    def __on_target_submit(self, _: ft.Event[ft.TextField]) -> None:
+    def __on_target_submit(self) -> None:
         self._controller.on_target_bin_submit(self.__target_input.value or "")
 
     def __on_add_click(self, _: ft.Event[ft.Button]) -> None:
@@ -296,19 +310,19 @@ class BinTransferView(BaseView):
             self.__available_text.value = f"{self._translation.get('available')}: -"
             return
         available_quantity = 0
-        for item_id, _item_index, quantity in self.__source_items:
+        for item_id, _, quantity in self.__source_items:
             if item_id == selected_item_id:
                 available_quantity = quantity
                 break
         self.__available_text.value = f"{self._translation.get('available')}: {available_quantity}"
-        self.__available_text.text_align = ft.TextAlign.CENTER
+        self.__available_text.text_align = BinTransferViewStyles.QUANTITY_INFO_TEXT_ALIGN
 
     def __sync_quantity_limit_to_selected_item(self) -> None:
         selected_item_id = self.__parse_optional_int(self.__item_input.value)
         previous_item_id = self.__last_quantity_item_id
         max_quantity = 0
         if selected_item_id is not None:
-            for item_id, _item_index, quantity in self.__source_items:
+            for item_id, _, quantity in self.__source_items:
                 if item_id == selected_item_id:
                     max_quantity = max(1, quantity)
                     break

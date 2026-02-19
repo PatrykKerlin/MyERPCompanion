@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from typing import Any, cast
 
 import flet as ft
 from styles.styles import ControlStyles
@@ -44,10 +45,12 @@ class InputControlsMixin:
         lines: int = 1,
         on_change: Callable[[ft.Event[ft.TextField]], object] | None = None,
         on_submit: Callable[[ft.Event[ft.TextField]], object] | None = None,
+        on_blur: Callable[[ft.Event[ft.TextField]], object] | None = None,
         expand: bool = True,
         autofocus: bool = False,
     ) -> ft.TextField:
         resolved_lines = max(lines, 1)
+        resolved_on_blur = on_blur or on_change
         return ft.TextField(
             key=key,
             value=value,
@@ -59,6 +62,7 @@ class InputControlsMixin:
             max_lines=resolved_lines if resolved_lines > 1 else None,
             on_change=on_change,
             on_submit=on_submit,
+            on_blur=resolved_on_blur,
             expand=expand,
             autofocus=autofocus,
             height=ControlStyles.TEXT_FIELD_HEIGHT * resolved_lines,
@@ -130,3 +134,67 @@ class InputControlsMixin:
             on_change=on_change,
             expand=expand,
         )
+
+    @staticmethod
+    def _get_button(
+        content: str | None = None,
+        on_click: ft.ControlEventHandler[ft.Button] | None = None,
+        disabled: bool = False,
+        style: ft.ButtonStyle | None = None,
+        expand: bool | None = None,
+        width: float | int | None = None,
+    ) -> ft.Button:
+        return ft.Button(
+            content=content,
+            on_click=on_click,
+            disabled=disabled,
+            style=style,
+            expand=expand,
+            width=width,
+        )
+
+    @staticmethod
+    def _get_text_button(
+        content: str | None = None,
+        icon: object | None = None,
+        on_click: ft.ControlEventHandler[ft.TextButton] | None = None,
+        disabled: bool = False,
+        tooltip: str | None = None,
+        style: ft.ButtonStyle | None = None,
+        expand: bool | None = None,
+        width: float | int | None = None,
+    ) -> ft.TextButton:
+        return ft.TextButton(
+            content=content,
+            icon=cast(Any, icon),
+            on_click=on_click,
+            disabled=disabled,
+            tooltip=tooltip,
+            style=style,
+            expand=expand,
+            width=width,
+        )
+
+    @staticmethod
+    def _get_icon_button(
+        icon: object,
+        on_click: ft.ControlEventHandler[ft.IconButton] | None = None,
+        disabled: bool = False,
+        tooltip: str | None = None,
+        style: ft.ButtonStyle | None = None,
+        expand: bool | None = None,
+        width: float | int | None = None,
+        opacity: float | None = None,
+    ) -> ft.IconButton:
+        button = ft.IconButton(
+            icon=cast(Any, icon),
+            on_click=on_click,
+            disabled=disabled,
+            tooltip=tooltip,
+            style=style,
+            expand=expand,
+            width=width,
+        )
+        if opacity is not None:
+            button.opacity = opacity
+        return button
