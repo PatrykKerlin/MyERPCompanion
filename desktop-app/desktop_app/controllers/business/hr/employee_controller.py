@@ -39,17 +39,18 @@ class EmployeeController(
     def on_department_changed(self) -> None:
         if not self._view:
             return
-        department_id = self._request_data.input_values.get("department_id")
+        department_id = self.__normalize_selected_id(self._request_data.input_values.get("department_id"))
         positions = self.__filter_positions_by_department(department_id)
         self._view.set_dropdown_options("position_id", [(position.id, position.name) for position in positions])
-        if self._request_data.input_values.get("position_id") not in {position.id for position in positions}:
+        current_position_id = self.__normalize_selected_id(self._request_data.input_values.get("position_id"))
+        if current_position_id not in {position.id for position in positions}:
             self._request_data.input_values["position_id"] = None
             self.on_position_changed()
 
     def on_position_changed(self) -> None:
         if not self._view:
             return
-        position_id = self._request_data.input_values.get("position_id")
+        position_id = self.__normalize_selected_id(self._request_data.input_values.get("position_id"))
         managers = self.__filter_managers_by_position(position_id)
         self._view.set_dropdown_options(
             "manager_id", [(manager.id, f"{manager.first_name} {manager.last_name}") for manager in managers]
@@ -95,8 +96,8 @@ class EmployeeController(
         )
         self.__positions_by_id = {position.id: position for position in self.__all_positions}
 
-        selected_department_id = self._request_data.input_values.get("department_id")
-        selected_position_id = self._request_data.input_values.get("position_id")
+        selected_department_id = self.__normalize_selected_id(self._request_data.input_values.get("department_id"))
+        selected_position_id = self.__normalize_selected_id(self._request_data.input_values.get("position_id"))
         data_row = dict(event.data) if event.data else None
         if mode == ViewMode.SEARCH:
             user_options = self._get_user_link_options(mode, event, users, self.__all_employees, [])
@@ -160,12 +161,23 @@ class EmployeeController(
     async def __perform_get_all_departments(self) -> list[DepartmentPlainSchema]:
         return await self.__department_service.get_all(Endpoint.DEPARTMENTS, None, None, None, self._module_id)
 
-    def __filter_positions_by_department(self, department_id: int | str | None) -> list[PositionPlainSchema]:
+    @staticmethod
+    def __normalize_selected_id(value: int | str | None) -> int | None:
+        if value is None:
+            return None
+        if isinstance(value, int):
+            return value
+        normalized = value.strip()
+        if not normalized or normalized == "0":
+            return None
+        return int(normalized) if normalized.isdigit() else None
+
+    def __filter_positions_by_department(self, department_id: int | None) -> list[PositionPlainSchema]:
         if department_id is None:
             return self.__all_positions
         return [position for position in self.__all_positions if position.department_id == department_id]
 
-    def __filter_managers_by_position(self, position_id: int | str | None) -> list[EmployeePlainSchema]:
+    def __filter_managers_by_position(self, position_id: int | None) -> list[EmployeePlainSchema]:
         if position_id is None or position_id not in self.__positions_by_id:
             return self.__all_employees
         base_level = self.__positions_by_id[position_id].level
