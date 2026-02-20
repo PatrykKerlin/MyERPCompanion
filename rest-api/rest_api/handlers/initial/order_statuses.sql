@@ -1,5 +1,5 @@
 WITH sales_status_flow AS (
-    SELECT id, "order"
+    SELECT id, key, "order"
     FROM statuses
     WHERE key IN ('new', 'approved', 'in_progress', 'packed', 'invoiced')
 ),
@@ -17,6 +17,7 @@ SELECT
     CAST(:superuser_id AS INTEGER)
 FROM orders o
 JOIN sales_status_flow sf ON o.is_sales IS TRUE
+WHERE sf.key <> 'invoiced' OR o.invoice_id IS NOT NULL
 UNION ALL
 SELECT
     o.id,

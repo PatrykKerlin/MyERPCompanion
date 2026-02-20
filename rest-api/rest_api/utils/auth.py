@@ -7,11 +7,12 @@ from config.context import Context
 from fastapi import HTTPException, Request, status
 from jose import JWTError, jwt
 from models.core.assoc_module_group import AssocModuleGroup
+from models.core.module import Module
 from passlib.context import CryptContext
 from schemas.core.user_schema import UserPlainSchema
 from services.business.logistic import WarehouseService
 from services.core import ModuleService, UserService
-from sqlalchemy import exists, select
+from sqlalchemy import exists, or_, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils.enums import Permission
@@ -41,7 +42,9 @@ class Auth:
         has_employee = user_schema.employee_id is not None
         has_customer = user_schema.customer_id is not None
         effective_warehouse_id: int | None = None
-        if client in {"desktop", "mobile"}:
+        if client == "desktop":
+            allowed = is_superuser or has_employee
+        elif client == "mobile":
             allowed = is_superuser or has_employee
         elif client == "web":
             allowed = is_superuser or has_customer
@@ -50,6 +53,8 @@ class Auth:
         if not allowed:
             return None, "user_not_allowed"
         if client == "mobile":
+            if not is_superuser and not await self.__has_mobile_module_access(session, user_schema):
+                return None, "user_not_allowed"
             if user_schema.warehouse_id is not None:
                 effective_warehouse_id = user_schema.warehouse_id
             elif warehouse_id is None:
@@ -60,6 +65,9 @@ class Auth:
                 except NoResultFound:
                     return None, "invalid_warehouse"
                 effective_warehouse_id = selected_warehouse.id
+        if client == "web":
+            if not is_superuser and not await self.__has_web_module_access(session, user_schema):
+                return None, "user_not_allowed"
         access_token = self.create_access_token(
             user_schema.id,
             client=client,
@@ -207,3 +215,33 @@ class Auth:
             token_data["warehouse_id"] = warehouse_id
         encoded_jwt = jwt.encode(token_data, self.__settings.SECRET_KEY, algorithm=self.__settings.ALGORITHM)
         return encoded_jwt
+
+    async def __has_mobile_module_access(self, session: AsyncSession, user_schema: UserPlainSchema) -> bool:
+        return await self.__has_module_access(session, user_schema, "mobile")
+
+    async def __has_web_module_access(self, session: AsyncSession, user_schema: UserPlainSchema) -> bool:
+        return await self.__has_module_access(session, user_schema, "web")
+
+    async def __has_module_access(
+        self,
+        session: AsyncSession,
+        user_schema: UserPlainSchema,
+        module_key: str,
+    ) -> bool:
+        group_ids = [group.id for group in user_schema.groups]
+        if not group_ids:
+            return False
+
+        has_access = await session.scalar(
+            select(
+                exists().where(
+                    AssocModuleGroup.is_active.is_(True),
+                    AssocModuleGroup.group_id.in_(group_ids),
+                    AssocModuleGroup.module_id == Module.id,
+                    Module.is_active.is_(True),
+                    Module.key == module_key,
+                    or_(AssocModuleGroup.can_read.is_(True), AssocModuleGroup.can_modify.is_(True)),
+                )
+            )
+        )
+        return bool(has_access)

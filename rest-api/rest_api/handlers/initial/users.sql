@@ -1,10 +1,11 @@
 INSERT INTO users (username, password, theme, employee_id, customer_id, language_id, is_superuser, is_active, created_at, created_by)
 VALUES
-('madminowski', :password, 'dark', 1, NULL, 2, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('madminowski', :password, 'dark', 1, NULL, 1, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('akadrowa', :password, 'light', 2, NULL, 2, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('phandlowski', :password, 'dark', 3, NULL, 2, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('phandlowski', :password, 'dark', 3, NULL, 1, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('lzakupski', :password, 'system', 4, NULL, 2, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
-('kksiegowa', :password, 'dark', 5, NULL, 2, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id);
+('plogistyczny', :password, 'system', 5, NULL, 2, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('kksiegowa', :password, 'dark', 6, NULL, 1, FALSE, TRUE, CURRENT_TIMESTAMP, :superuser_id);
 
 INSERT INTO users (username, password, theme, employee_id, customer_id, language_id, is_superuser, is_active, created_at, created_by)
 SELECT
