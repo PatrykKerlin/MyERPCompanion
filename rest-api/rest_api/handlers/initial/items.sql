@@ -55,7 +55,7 @@ SELECT
     (5 + (i % 10)) AS moq,
     ((i - 1) % 12) + 1 AS category_id,
     ((i - 1) % 3) + 1 AS unit_id,
-    ((i - 1) % 3) + 1 AS supplier_id,
+    ((i - 1) % 10) + 1 AS supplier_id,
     TRUE,
     CURRENT_TIMESTAMP,
     :superuser_id

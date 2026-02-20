@@ -56,7 +56,7 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
         user = await self.__perform_get_current_user()
         if not user:
             return
-        if user.employee_id is None:
+        if not user.is_superuser and user.employee_id is None:
             self._state_store.update(tokens={"access": None, "refresh": None})
             self._open_error_dialog(message_key="employee_login_required")
             return

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Annotated
 
 from pydantic import Field
-from schemas.base.base_schema import BasePlainSchema
+from schemas.base.base_schema import BasePlainSchema, BaseSchema
 
 
 class WarehouseLoginOptionSchema(BasePlainSchema):
@@ -15,3 +15,8 @@ class WarehouseLoginOptionSchema(BasePlainSchema):
     modified_by: Annotated[int | None, Field(exclude=True)] = None
     created_by_username: Annotated[str | None, Field(exclude=True)] = None
     modified_by_username: Annotated[str | None, Field(exclude=True)] = None
+
+
+class WarehouseLoginOptionFetchSchema(BaseSchema):
+    id: int
+    name: str

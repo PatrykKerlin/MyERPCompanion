@@ -101,7 +101,7 @@ class PopulateDatabase:
             queries = [query.strip() for query in content.split(";") if query.strip()]
             params: dict[str, int | str] = {"superuser_id": self.__superuser.id}
             if file_name == "users":
-                params["password"] = await self.__auth.get_password_hash("test1234")
+                params["password"] = await self.__auth.get_password_hash("haslo123")
             for query in queries:
                 await session.execute(text(query), params)
             await session.commit()

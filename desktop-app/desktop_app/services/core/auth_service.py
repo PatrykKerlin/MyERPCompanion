@@ -64,4 +64,4 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
         module_id: int | None = None,
     ) -> UserPlainSchema:
         response = await self._get(endpoint=endpoint, tokens=tokens, module_id=module_id)
-        return UserPlainSchema(**response.json(), is_superuser=False, password="")
+        return UserPlainSchema(**response.json(), password="")

@@ -1,7 +1,7 @@
 from typing import Any
 
-from schemas.base.base_schema import BasePlainSchema, BaseSchema, BaseStrictSchema
-from schemas.business.logistic.warehouse_schema import WarehouseLoginOptionSchema
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.business.logistic.warehouse_schema import WarehouseLoginOptionFetchSchema, WarehouseLoginOptionSchema
 from schemas.core.auth_schema import AuthStrictSchema
 from schemas.core.param_schema import IdsPayloadSchema
 from schemas.core.token_schema import TokenPlainSchema
@@ -36,7 +36,7 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
         if username:
             params["username"] = username
 
-        rows: list[_WarehouseLoginOptionFetchSchema] = []
+        rows: list[WarehouseLoginOptionFetchSchema] = []
         while True:
             response = await self._get(
                 endpoint=Endpoint.WAREHOUSES_BY_USERNAME,
@@ -45,7 +45,7 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
                 module_id=None,
             )
             data = response.json()
-            rows.extend(_WarehouseLoginOptionFetchSchema(**row) for row in data.get("items", []))
+            rows.extend(WarehouseLoginOptionFetchSchema(**row) for row in data.get("items", []))
             if not data.get("has_next", False):
                 break
             params["page"] += 1
@@ -63,9 +63,4 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
         module_id: int | None = None,
     ) -> UserPlainSchema:
         response = await self._get(endpoint=endpoint, tokens=tokens, module_id=module_id)
-        return UserPlainSchema(**response.json(), is_superuser=False, password="")
-
-
-class _WarehouseLoginOptionFetchSchema(BaseSchema):
-    id: int
-    name: str
+        return UserPlainSchema(**response.json(), password="")

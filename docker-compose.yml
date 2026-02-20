@@ -37,7 +37,7 @@ services:
       - MEDIA_URL=http://rest-api:8000/media
       - CORS_ORIGINS=http://localhost:8550,http://127.0.0.1:8550,http://localhost:8551,http://127.0.0.1:8551
       - SUPERUSER_USERNAME=admin
-      - SUPERUSER_PASSWORD=admin123
+      - SUPERUSER_PASSWORD=haslo123
       - ISSUER_NAME=Northwind Distribution Sp. z o.o.
       - ISSUER_TAX_ID=PL5273012345
       - ISSUER_STREET=Prosta

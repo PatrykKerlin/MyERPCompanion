@@ -46,7 +46,7 @@ class UserPlainSchema(BasePlainSchema):
     theme: str
     language: LanguagePlainSchema
     groups: list[GroupPlainSchema]
-    is_superuser: Annotated[bool | None, Field(default=None, exclude=True)]
+    is_superuser: bool
     password: Annotated[str | None, Field(default=None, exclude=True)]
     employee_id: int | None
     customer_id: int | None
