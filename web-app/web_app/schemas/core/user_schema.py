@@ -2,31 +2,20 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.core.group_schema import GroupPlainSchema
 from schemas.core.language_schema import LanguagePlainSchema
 from schemas.validation.constraints import Constraints
 
 
-class UserStrictBaseSchema(BaseModel):
+class UserStrictUpdateAppSchema(BaseStrictSchema):
     username: Constraints.Username
     theme: Constraints.Theme
     language_id: Constraints.PositiveInteger
     employee_id: Constraints.PositiveIntegerOptional
     customer_id: Constraints.PositiveIntegerOptional
-
-    @model_validator(mode="after")
-    def _validate_exactly_one_of_employee_or_customer(self) -> UserStrictBaseSchema:
-        has_employee = self.employee_id is not None
-        has_customer = self.customer_id is not None
-
-        if has_employee == has_customer:
-            raise ValueError("Exactly one of 'employee_id' or 'customer_id' must be provided.")
-        return self
-
-
-class UserStrictUpdateAppSchema(BaseStrictSchema, UserStrictBaseSchema):
+    warehouse_id: Constraints.PositiveIntegerOptional
     password: Constraints.PasswordOptional
     password_repeat: Annotated[Constraints.PasswordOptional, Field(exclude=True)]
 
@@ -50,3 +39,4 @@ class UserPlainSchema(BasePlainSchema):
     password: Annotated[str | None, Field(default=None, exclude=True)]
     employee_id: int | None
     customer_id: int | None
+    warehouse_id: int | None

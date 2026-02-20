@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from schemas.core.group_schema import GroupPlainSchema
 from schemas.core.language_schema import LanguagePlainSchema
 from schemas.validation.constraints import Constraints
 
 
-class UserStrictBaseSchema(BaseModel):
+class UserStrictBaseSchema(BaseStrictSchema):
     username: Constraints.Username
     theme: Constraints.Theme
     language_id: Constraints.PositiveInteger
@@ -19,6 +19,9 @@ class UserStrictBaseSchema(BaseModel):
 
     @model_validator(mode="after")
     def _validate_exactly_one_of_employee_or_customer(self) -> UserStrictBaseSchema:
+        if not self.id or self.id <= 1:
+            return self
+
         has_employee = self.employee_id is not None
         has_customer = self.customer_id is not None
 
@@ -27,31 +30,31 @@ class UserStrictBaseSchema(BaseModel):
         return self
 
 
-class UserStrictCreateApiSchema(BaseStrictSchema, UserStrictBaseSchema):
+class UserStrictCreateApiSchema(UserStrictBaseSchema):
     password: Constraints.Password
 
 
-class UserStrictCreateAppSchema(BaseStrictSchema, UserStrictBaseSchema):
+class UserStrictCreateAppSchema(UserStrictBaseSchema):
     password: Constraints.Password
     password_repeat: Annotated[Constraints.Password, Field(exclude=True)]
 
     @model_validator(mode="after")
-    def _validate_passwords(self):
+    def _validate_passwords(self) -> UserStrictCreateAppSchema:
         if self.password != self.password_repeat:
             raise ValueError("passwords_do_not_match")
         return self
 
 
-class UserStrictUpdateApiSchema(BaseStrictSchema, UserStrictBaseSchema):
+class UserStrictUpdateApiSchema(UserStrictBaseSchema):
     password: Constraints.PasswordOptional
 
 
-class UserStrictUpdateAppSchema(BaseStrictSchema, UserStrictBaseSchema):
+class UserStrictUpdateAppSchema(UserStrictBaseSchema):
     password: Constraints.PasswordOptional
     password_repeat: Annotated[Constraints.PasswordOptional, Field(exclude=True)]
 
     @model_validator(mode="after")
-    def _validate_passwords(self):
+    def _validate_passwords(self) -> UserStrictUpdateAppSchema:
         if self.password is None and self.password_repeat is None:
             return self
         if self.password is None or self.password_repeat is None:

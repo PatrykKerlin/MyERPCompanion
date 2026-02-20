@@ -50,16 +50,6 @@ class OrderStrictSchema(OrderStrictBaseSchema):
         return self
 
 
-class PurchaseOrderStrictSchema(OrderStrictBaseSchema):
-    customer_id: Constraints.PositiveIntegerOptional
-    supplier_id: Constraints.PositiveInteger
-
-
-class SalesOrderStrictSchema(OrderStrictBaseSchema):
-    customer_id: Constraints.PositiveInteger
-    supplier_id: Constraints.PositiveIntegerOptional
-
-
 class OrderPlainSchema(BasePlainSchema):
     number: str
     invoice_number: str | None = None

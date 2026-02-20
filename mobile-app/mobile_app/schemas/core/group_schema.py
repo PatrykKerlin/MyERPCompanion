@@ -1,10 +1,4 @@
-from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
-from schemas.validation.constraints import Constraints
-
-
-class GroupStrictSchema(BaseStrictSchema):
-    key: Constraints.Key
-    description: Constraints.StringOptional_1000
+from schemas.base.base_schema import BasePlainSchema
 
 
 class GroupPlainSchema(BasePlainSchema):

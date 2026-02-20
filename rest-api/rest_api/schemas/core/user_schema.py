@@ -17,15 +17,6 @@ class UserStrictBaseSchema(BaseModel):
     customer_id: Constraints.PositiveIntegerOptional
     warehouse_id: Constraints.PositiveIntegerOptional
 
-    @model_validator(mode="after")
-    def _validate_exactly_one_of_employee_or_customer(self) -> UserStrictBaseSchema:
-        has_employee = self.employee_id is not None
-        has_customer = self.customer_id is not None
-
-        if has_employee == has_customer:
-            raise ValueError("Exactly one of 'employee_id' or 'customer_id' must be provided.")
-        return self
-
 
 class UserStrictCreateApiSchema(BaseStrictSchema, UserStrictBaseSchema):
     password: Constraints.Password

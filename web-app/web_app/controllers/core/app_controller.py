@@ -232,6 +232,7 @@ class AppController(BaseController):
                 theme=selected_theme,
                 employee_id=current_user.employee_id,
                 customer_id=current_user.customer_id,
+                warehouse_id=current_user.warehouse_id,
             )
         except ValidationError as validation_error:
             translation = self._state_store.app_state.translation.items
