@@ -26,7 +26,11 @@ class ErrorDialogComponent(BaseDialog):
             controls=[self._get_label(final_message)],
             actions=cast(
                 list[ft.Control],
-                [self._get_button(content=translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_regular)],
+                [
+                    self._get_button(
+                        content=translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_regular
+                    )
+                ],
             ),
             title=ft.Row(
                 controls=[

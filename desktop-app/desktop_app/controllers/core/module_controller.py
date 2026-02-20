@@ -118,7 +118,11 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
         if not create_payloads:
             return
         created_views = await self.__perform_create_views(create_payloads)
-        await self.__perform_create_view_controllers(created_views, create_sources)
+        if not created_views:
+            return
+        controllers_created = await self.__perform_create_view_controllers(created_views, create_sources)
+        if not controllers_created:
+            return
         await self.__refresh_view_rows(module_id)
 
     async def __handle_views_delete(self, view_ids: list[int]) -> None:
@@ -138,7 +142,9 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
                 blocked_keys.add(view_key)
 
         if deletable_ids:
-            await self.__perform_delete_views(deletable_ids)
+            deleted = await self.__perform_delete_views(deletable_ids)
+            if not deleted:
+                return
 
         if blocked_keys:
             blocked_list = ", ".join(sorted(blocked_keys))
@@ -160,7 +166,9 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
         ]
         if not updates:
             return
-        await self.__perform_create_module_groups(updates)
+        created = await self.__perform_create_module_groups(updates)
+        if not created:
+            return
         await self.__refresh_group_rows(module_id)
 
     async def __handle_groups_delete(self, module_id: int, group_ids: list[int]) -> None:
@@ -170,7 +178,9 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
         assoc_by_group = {item.group_id: item.id for item in assoc_rows}
         delete_ids = [assoc_by_group[group_id] for group_id in group_ids if group_id in assoc_by_group]
         if delete_ids:
-            await self.__perform_delete_module_groups(delete_ids)
+            deleted = await self.__perform_delete_module_groups(delete_ids)
+            if not deleted:
+                return
         await self.__refresh_group_rows(module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
@@ -190,24 +200,26 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
     @BaseController.handle_api_action(ApiActionError.SAVE)
     async def __perform_create_view_controllers(
         self, created_views: list[ViewPlainSchema], source_views: list[ViewPlainSchema]
-    ) -> None:
+    ) -> bool:
         if not created_views or not source_views:
-            return
+            return True
         payload: list[AssocViewControllerStrictSchema] = []
         for created_view, source_view in zip(created_views, source_views):
             for controller_id in source_view.controller_ids:
                 payload.append(AssocViewControllerStrictSchema(view_id=created_view.id, controller_id=controller_id))
         if not payload:
-            return
+            return True
         await self.__assoc_view_controller_service.create_bulk(
             Endpoint.VIEW_CONTROLLERS_CREATE_BULK, None, None, payload, self._module_id
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
-    async def __perform_delete_views(self, view_ids: list[int]) -> None:
+    async def __perform_delete_views(self, view_ids: list[int]) -> bool:
         await self.__view_service.delete_bulk(
             Endpoint.VIEWS_DELETE_BULK, None, None, IdsPayloadSchema(ids=view_ids), self._module_id
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_all_groups(self) -> list[GroupPlainSchema]:
@@ -220,13 +232,14 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
         )
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_create_module_groups(self, payload: list[AssocModuleGroupStrictSchema]) -> None:
+    async def __perform_create_module_groups(self, payload: list[AssocModuleGroupStrictSchema]) -> bool:
         await self.__assoc_module_group_service.create_bulk(
             Endpoint.MODULE_GROUPS_CREATE_BULK, None, None, payload, self._module_id
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
-    async def __perform_delete_module_groups(self, assoc_ids: list[int]) -> None:
+    async def __perform_delete_module_groups(self, assoc_ids: list[int]) -> bool:
         await self.__assoc_module_group_service.delete_bulk(
             Endpoint.MODULE_GROUPS_DELETE_BULK,
             None,
@@ -234,6 +247,7 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
             IdsPayloadSchema(ids=assoc_ids),
             self._module_id,
         )
+        return True
 
     def __build_view_rows(
         self,

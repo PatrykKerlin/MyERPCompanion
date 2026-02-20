@@ -142,7 +142,7 @@ class SalesForecastReportRepository:
                 case(
                     (
                         SalesForecast.aggregation == SalesForecastReportRepository._aggregation_net,
-                        SalesForecast.predicted_quantity,
+                        SalesForecast.predicted_value,
                     ),
                     else_=0,
                 )
@@ -158,7 +158,7 @@ class SalesForecastReportRepository:
                                 SalesForecastReportRepository._aggregation_quantity,
                             ]
                         ),
-                        SalesForecast.predicted_quantity,
+                        SalesForecast.predicted_value,
                     ),
                     else_=0,
                 )
@@ -238,13 +238,13 @@ class SalesForecastReportRepository:
                 .filter(SalesForecast.aggregation == SalesForecastReportRepository._aggregation_net)
                 .label("periods_count"),
                 func.coalesce(
-                    func.sum(SalesForecast.predicted_quantity).filter(
+                    func.sum(SalesForecast.predicted_value).filter(
                         SalesForecast.aggregation == SalesForecastReportRepository._aggregation_net
                     ),
                     0,
                 ).label("total_predicted_net"),
                 func.coalesce(
-                    func.sum(SalesForecast.predicted_quantity).filter(
+                    func.sum(SalesForecast.predicted_value).filter(
                         SalesForecast.aggregation.in_(
                             [
                                 SalesForecastReportRepository._aggregation_quantity,
@@ -283,7 +283,7 @@ class SalesForecastReportRepository:
                 ]
             ),
             SalesForecast.currency_id.is_not(None),
-            SalesForecast.predicted_quantity.is_not(None),
+            SalesForecast.predicted_value.is_not(None),
             SalesForecast.horizon_months.is_not(None),
             SalesForecast.discount_rate_assumption.is_not(None),
             Item.is_active.is_(True),

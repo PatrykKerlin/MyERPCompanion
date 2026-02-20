@@ -54,11 +54,12 @@ class BinTransferView(BaseView):
             value="",
             on_change=lambda event: self._controller.on_value_changed("source_bin"),
             on_submit=lambda event: self._controller.on_value_changed("source_bin", self.__on_source_submit),
-            on_focus=lambda event: self._controller.on_value_changed("source_bin", self.__on_source_submit)
-            if str(getattr(event, "data", "")).lower() == "false"
-            else None,
-            on_tap_outside=lambda event: self._controller.on_value_changed("source_bin", self.__on_source_submit
+            on_focus=lambda event: (
+                self._controller.on_value_changed("source_bin", self.__on_source_submit)
+                if str(getattr(event, "data", "")).lower() == "false"
+                else None
             ),
+            on_tap_outside=lambda event: self._controller.on_value_changed("source_bin", self.__on_source_submit),
             expand=True,
         )
         self.__source_input.col = BinTransferViewStyles.SOURCE_BIN_COL
@@ -67,11 +68,12 @@ class BinTransferView(BaseView):
             value="",
             on_change=lambda event: self._controller.on_value_changed("target_bin"),
             on_submit=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit),
-            on_focus=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit)
-            if str(getattr(event, "data", "")).lower() == "false"
-            else None,
-            on_tap_outside=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit
+            on_focus=lambda event: (
+                self._controller.on_value_changed("target_bin", self.__on_target_submit)
+                if str(getattr(event, "data", "")).lower() == "false"
+                else None
             ),
+            on_tap_outside=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit),
             expand=True,
         )
         self.__target_input.col = BinTransferViewStyles.TARGET_BIN_COL
@@ -260,7 +262,7 @@ class BinTransferView(BaseView):
                             icon=ft.Icons.CLOSE,
                             on_click=self.__build_remove_handler(item_id),
                         ),
-                    )
+                    ),
                 )
             )
         self.__pending_list.controls = rows

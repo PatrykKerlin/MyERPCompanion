@@ -35,7 +35,7 @@ class DiscountStrictSchema(BaseStrictSchema):
         has_currency_id = self.currency_id is not None
         if has_min_value != has_currency_id:
             raise ValueError("'Min_value' and 'currency_id' must be provided together or both be empty.")
-        
+
         selected_scopes_count = sum(
             (
                 1 if self.for_categories else 0,

@@ -457,7 +457,9 @@ class BaseViewController(
         confirm = await self._show_confirm_dialog("confirm_delete_record")
         if not confirm:
             return
-        await self._perform_delete(event.id, self._service, self._endpoint)
+        deleted = await self._perform_delete(event.id, self._service, self._endpoint)
+        if not deleted:
+            return
         tab_title = self._get_tab_title(event.view_key, event.id)
         await self._event_bus.publish(TabCloseRequested(tab_title))
         if self._view and self._view.mode in {ViewMode.SEARCH, ViewMode.LIST}:
@@ -627,8 +629,9 @@ class BaseViewController(
             if self._view.mode == ViewMode.CREATE:
                 payload = self._strict_schema_cls(**self._request_data.input_values)
                 response = await self._perform_create(self._service, self._endpoint, payload)
-                self._view.clear_inputs()
-                self._state_store.update(view={"mode": ViewMode.SEARCH})
+                if response:
+                    self._view.clear_inputs()
+                    self._state_store.update(view={"mode": ViewMode.SEARCH})
             elif self._view.mode == ViewMode.EDIT:
                 payload = self._strict_schema_cls(**self._request_data.input_values)
                 response = await self._perform_update(

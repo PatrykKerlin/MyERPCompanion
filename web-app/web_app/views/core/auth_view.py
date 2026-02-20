@@ -86,6 +86,6 @@ class AuthView(InputControlsMixin, ft.Container):
             content=root_row,
             alignment=AlignmentStyles.CENTER,
         )
-    
+
     def __on_login(self) -> None:
         self.__controller.on_login_click(self.__login_field.value or "", self.__password_field.value or "")

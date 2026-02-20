@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 import flet as ft
-from styles.styles import ButtonStyles, MobileCommonViewStyles, TypographyStyles, UserViewStyles
 from schemas.validation.constraints import Constraints
+from styles.styles import ButtonStyles, MobileCommonViewStyles, TypographyStyles, UserViewStyles
 from utils.enums import View
 from utils.translation import Translation
 from views.base.base_view import BaseView

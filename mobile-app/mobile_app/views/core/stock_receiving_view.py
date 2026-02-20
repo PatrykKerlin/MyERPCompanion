@@ -73,11 +73,12 @@ class StockReceivingView(BaseView):
             value="",
             on_change=lambda event: self._controller.on_value_changed("target_bin"),
             on_submit=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit),
-            on_focus=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit)
-            if str(getattr(event, "data", "")).lower() == "false"
-            else None,
-            on_tap_outside=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit
+            on_focus=lambda event: (
+                self._controller.on_value_changed("target_bin", self.__on_target_submit)
+                if str(getattr(event, "data", "")).lower() == "false"
+                else None
             ),
+            on_tap_outside=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit),
             expand=True,
         )
         self.__target_input.col = StockReceivingViewStyles.TARGET_BIN_COL
@@ -369,7 +370,7 @@ class StockReceivingView(BaseView):
                         title=self._get_label(item_index),
                         subtitle=self._get_label(f"{subtitle} | {self._translation.get('quantity')}: {quantity}"),
                         trailing=trailing_control,
-                    )
+                    ),
                 )
             )
         self.__pending_list.controls = controls

@@ -2,7 +2,7 @@ import math
 import random
 import string
 from datetime import date
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 import flet as ft
 from config.context import Context
@@ -317,11 +317,17 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
     ) -> OrderPlainSchema:
         payload = payload.model_copy(update={"is_sales": True})
         response = await super()._perform_create(service, endpoint, payload)
-        status_id = self._request_data.input_values.get("status_id", self.__default_status_id)
+        if not response:
+            return cast(OrderPlainSchema, None)
+        status_id = self.__normalize_status_id(self._request_data.input_values.get("status_id"))
+        if status_id is None:
+            status_id = self.__default_status_id
         if status_id is not None:
-            await self.__perform_create_order_status(
+            status_saved = await self.__perform_create_order_status(
                 AssocOrderStatusStrictSchema(order_id=response.id, status_id=status_id)
             )
+            if not status_saved:
+                return cast(OrderPlainSchema, None)
         return response
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
@@ -334,9 +340,16 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
     ) -> OrderPlainSchema:
         payload = payload.model_copy(update={"is_sales": True})
         response = await super()._perform_update(id, service, endpoint, payload)
-        status_id = self._request_data.input_values.get("status_id")
-        if status_id is not None and status_id != self.__current_status_id:
-            await self.__perform_create_order_status(AssocOrderStatusStrictSchema(order_id=id, status_id=status_id))
+        if not response:
+            return cast(OrderPlainSchema, None)
+        status_id = self.__normalize_status_id(self._request_data.input_values.get("status_id"))
+        current_status_id = self.__normalize_status_id(self.__current_status_id)
+        if status_id is not None and status_id != current_status_id:
+            status_saved = await self.__perform_create_order_status(
+                AssocOrderStatusStrictSchema(order_id=id, status_id=status_id)
+            )
+            if not status_saved:
+                return cast(OrderPlainSchema, None)
             self.__current_status_id = status_id
         return response
 
@@ -349,7 +362,9 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         except MissingExchangeRateError:
             return
         if updates:
-            await self.__perform_update_order_items(updates)
+            updated = await self.__perform_update_order_items(updates)
+            if not updated:
+                return
             await self.__update_order(order_id)
 
     def __build_order_item_schema(
@@ -394,27 +409,31 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         )
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_create_order_items(self, items: list[AssocOrderItemStrictSchema]) -> None:
+    async def __perform_create_order_items(self, items: list[AssocOrderItemStrictSchema]) -> bool:
         await self.__order_item_service.create_bulk(
             Endpoint.ORDER_ITEMS_CREATE_BULK, None, None, items, self._module_id
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_update_order_items(self, items: list[AssocOrderItemStrictSchema]) -> None:
+    async def __perform_update_order_items(self, items: list[AssocOrderItemStrictSchema]) -> bool:
         await self.__order_item_service.update_bulk(
             Endpoint.ORDER_ITEMS_UPDATE_BULK, None, None, items, self._module_id
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
-    async def __perform_delete_order_items(self, assoc_ids: list[int]) -> None:
+    async def __perform_delete_order_items(self, assoc_ids: list[int]) -> bool:
         body_params = IdsPayloadSchema(ids=assoc_ids)
         await self.__order_item_service.delete_bulk(
             Endpoint.ORDER_ITEMS_DELETE_BULK, None, None, body_params, self._module_id
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_create_order_status(self, payload: AssocOrderStatusStrictSchema) -> None:
+    async def __perform_create_order_status(self, payload: AssocOrderStatusStrictSchema) -> bool:
         await self.__order_status_service.create(Endpoint.ORDER_STATUSES, None, None, payload, self._module_id)
+        return True
 
     def __is_bulk_transfer_enabled(self, status_id: int | None, status_steps: dict[int, int | None]) -> bool:
         if status_id is None or not status_steps:
@@ -992,10 +1011,16 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         if not payload and not updates:
             return
         if payload:
-            await self.__perform_create_order_items(payload)
+            created = await self.__perform_create_order_items(payload)
+            if not created:
+                return
         if updates:
-            await self.__perform_update_order_items(updates)
-        await self.__refresh_order_item_lists(order_id)
+            updated = await self.__perform_update_order_items(updates)
+            if not updated:
+                return
+        refreshed = await self.__refresh_order_item_lists(order_id)
+        if not refreshed:
+            return
         self.__pending_move_quantities.clear()
         self.__pending_category_discount_item_ids.clear()
         self.__recalculate_order_totals()
@@ -1008,14 +1033,20 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         assoc_ids = [item_id for item_id in item_ids if item_id in self.__order_items]
         if not assoc_ids:
             return
-        await self.__perform_delete_order_items(assoc_ids)
-        await self.__refresh_order_item_lists(order_id)
+        deleted = await self.__perform_delete_order_items(assoc_ids)
+        if not deleted:
+            return
+        refreshed = await self.__refresh_order_item_lists(order_id)
+        if not refreshed:
+            return
         await self.__update_order(order_id, require_shipping_cost=True)
 
-    async def __refresh_order_item_lists(self, order_id: int) -> None:
+    async def __refresh_order_item_lists(self, order_id: int) -> bool:
         if not self._view:
-            return
+            return False
         view_data = await self.__perform_get_sales_view(order_id)
+        if not view_data:
+            return False
         self.__delivery_method_map = {
             item.id: (
                 item.price_per_unit,
@@ -1068,17 +1099,19 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         customer_discount_id = self.__resolve_target_customer_discount_selection()
         self._view.set_selected_customer_discount_id(customer_discount_id)
         self.__recalculate_order_totals()
+        return True
 
-    async def __update_order(self, order_id: int, *, require_shipping_cost: bool = False) -> None:
+    async def __update_order(self, order_id: int, *, require_shipping_cost: bool = False) -> bool:
         input_values = dict(self._request_data.input_values)
         input_values["is_sales"] = True
         if require_shipping_cost and input_values.get("shipping_cost") is None:
-            return
+            return False
         try:
             payload = SalesOrderStrictSchema(**input_values)
         except ValidationError:
-            return
-        await self._perform_update(order_id, self._service, self._endpoint, payload)
+            return False
+        updated_order = await self._perform_update(order_id, self._service, self._endpoint, payload)
+        return bool(updated_order)
 
     def __build_create_defaults(self) -> dict[str, Any]:
         today = date.today()
@@ -1145,3 +1178,13 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             return None
         latest_status = max(order_statuses, key=lambda status: status.created_at)
         return latest_status.status_id
+
+    @staticmethod
+    def __normalize_status_id(value: Any) -> int | None:
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip()
+            if normalized.isdigit():
+                return int(normalized)
+        return None

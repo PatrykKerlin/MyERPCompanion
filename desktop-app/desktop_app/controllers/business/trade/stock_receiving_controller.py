@@ -170,26 +170,31 @@ class StockReceivingController(
         )
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_create_bin_items(self, items: list[AssocBinItemStrictSchema]) -> None:
+    async def __perform_create_bin_items(self, items: list[AssocBinItemStrictSchema]) -> bool:
         await self.__bin_item_service.create_bulk(Endpoint.BIN_ITEMS_CREATE_BULK, None, None, items, self._module_id)
+        return True
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_update_bin_items(self, items: list[AssocBinItemStrictSchema]) -> None:
+    async def __perform_update_bin_items(self, items: list[AssocBinItemStrictSchema]) -> bool:
         await self.__bin_item_service.update_bulk(Endpoint.BIN_ITEMS_UPDATE_BULK, None, None, items, self._module_id)
+        return True
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_update_order_items(self, items: list[AssocOrderItemStrictSchema]) -> None:
+    async def __perform_update_order_items(self, items: list[AssocOrderItemStrictSchema]) -> bool:
         await self.__order_item_service.update_bulk(
             Endpoint.ORDER_ITEMS_UPDATE_BULK, None, None, items, self._module_id
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_update_item(self, item_id: int, payload: ItemStrictSchema) -> None:
+    async def __perform_update_item(self, item_id: int, payload: ItemStrictSchema) -> bool:
         await self.__item_service.update(Endpoint.ITEMS, item_id, None, payload, self._module_id)
+        return True
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_create_order_status(self, payload: AssocOrderStatusStrictSchema) -> None:
+    async def __perform_create_order_status(self, payload: AssocOrderStatusStrictSchema) -> bool:
         await self.__order_status_service.create(Endpoint.ORDER_STATUSES, None, None, payload, self._module_id)
+        return True
 
     async def __load_eligible_orders(self) -> list[OrderPlainSchema]:
         statuses = await self.__perform_get_all_statuses()
@@ -421,11 +426,17 @@ class StockReceivingController(
                 )
             )
         if creates:
-            await self.__perform_create_bin_items(creates)
+            created_bins = await self.__perform_create_bin_items(creates)
+            if not created_bins:
+                return
         if updates:
-            await self.__perform_update_bin_items(updates)
+            updated_bins = await self.__perform_update_bin_items(updates)
+            if not updated_bins:
+                return
         if order_item_updates:
-            await self.__perform_update_order_items(order_item_updates)
+            updated_order_items = await self.__perform_update_order_items(order_item_updates)
+            if not updated_order_items:
+                return
         if moved_by_item:
             missing_item_ids = [item_id for item_id in moved_by_item if item_id not in self.__items_by_id]
             if missing_item_ids:
@@ -442,7 +453,9 @@ class StockReceivingController(
                     self.__perform_update_item(item_id, self.__build_item_update(item_schema, new_stock))
                 )
             if update_tasks:
-                await asyncio.gather(*update_tasks)
+                update_results = await asyncio.gather(*update_tasks)
+                if not all(update_results):
+                    return
         await self.__load_target_bin(self.__target_bin.location)
         self.__pending_move_quantities.clear()
         self.__pending_move_item_ids.clear()
@@ -488,9 +501,11 @@ class StockReceivingController(
             latest_status = max(order_statuses, key=lambda status: status.created_at)
             if latest_status.status_id == target_status.id:
                 return
-        await self.__perform_create_order_status(
+        status_created = await self.__perform_create_order_status(
             AssocOrderStatusStrictSchema(order_id=order_id, status_id=target_status.id)
         )
+        if not status_created:
+            return
 
     async def __ensure_item_label(self, item_id: int) -> None:
         label = self.__order_item_labels.get(item_id)

@@ -196,9 +196,7 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
         if selected_title:
             target_view = self.__active_tabs.get(selected_title)
             if target_view:
-                self._state_store.update(
-                    view={"title": selected_title, "mode": target_view.mode, "view": target_view}
-                )
+                self._state_store.update(view={"title": selected_title, "mode": target_view.mode, "view": target_view})
         self.__close_tab_search_dialog()
 
     async def __close_all_tabs(self) -> None:

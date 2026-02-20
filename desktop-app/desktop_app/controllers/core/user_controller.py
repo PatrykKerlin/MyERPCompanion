@@ -207,7 +207,9 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         updates = [AssocUserGroupStrictSchema(user_id=user_id, group_id=group_id) for _, group_id in pending]
         if not updates:
             return
-        await self.__perform_create_user_groups(updates)
+        created = await self.__perform_create_user_groups(updates)
+        if not created:
+            return
         await self.__refresh_group_rows(user_id)
 
     async def __handle_groups_delete(self, user_id: int, group_ids: list[int]) -> None:
@@ -217,7 +219,9 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         assoc_by_group = {item.group_id: item.id for item in assoc_rows}
         delete_ids = [assoc_by_group[group_id] for group_id in group_ids if group_id in assoc_by_group]
         if delete_ids:
-            await self.__perform_delete_user_groups(delete_ids)
+            deleted = await self.__perform_delete_user_groups(delete_ids)
+            if not deleted:
+                return
         await self.__refresh_group_rows(user_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
@@ -245,10 +249,11 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         return await self.__group_service.get_all(Endpoint.GROUPS, None, None, None, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_create_user_groups(self, payload: list[AssocUserGroupStrictSchema]) -> None:
+    async def __perform_create_user_groups(self, payload: list[AssocUserGroupStrictSchema]) -> bool:
         await self.__assoc_user_group_service.create_bulk(
             Endpoint.USER_GROUPS_CREATE_BULK, None, None, payload, self._module_id
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_user_group_assocs(self, user_id: int) -> list[AssocUserGroupPlainSchema]:
@@ -257,7 +262,7 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         )
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
-    async def __perform_delete_user_groups(self, assoc_ids: list[int]) -> None:
+    async def __perform_delete_user_groups(self, assoc_ids: list[int]) -> bool:
         await self.__assoc_user_group_service.delete_bulk(
             Endpoint.USER_GROUPS_DELETE_BULK,
             None,
@@ -265,6 +270,7 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
             IdsPayloadSchema(ids=assoc_ids),
             self._module_id,
         )
+        return True
 
     def __build_group_rows(
         self, groups: list[GroupPlainSchema], data_row: dict[str, Any] | None

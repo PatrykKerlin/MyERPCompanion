@@ -1,10 +1,13 @@
 import asyncio
+import logging
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger("api")
 
 
 class CheckDatabaseState:
@@ -22,10 +25,10 @@ class CheckDatabaseState:
             try:
                 async with self.__get_db() as db:
                     await db.execute(text("SELECT 1"))
-                    print("Database is ready.")
+                    logger.info("Database is ready.")
                 return
             except OperationalError as err:
                 last_error = err
-                print(f"Database not ready, attempt {attempt}/{self.__retries}.")
+                logger.warning(f"Database not ready, attempt {attempt}/{self.__retries}.")
                 await asyncio.sleep(self.__delay)
         raise RuntimeError(f"Database is not ready: {last_error}") from last_error

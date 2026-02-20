@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 from os import getenv
@@ -8,6 +9,8 @@ from models import core as mc
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils.auth import Auth
+
+logger = logging.getLogger("api")
 
 
 class PopulateDatabase:
@@ -40,7 +43,7 @@ class PopulateDatabase:
         if isinstance(username, str) and isinstance(password, str):
             existing_user = await session.scalar(select(mc.User).where(mc.User.username == username))
             if existing_user:
-                print("Superuser already exists.")
+                logger.info("Superuser already exists.")
                 return
             hashed_password = await self.__auth.get_password_hash(password)
             superuser = mc.User(username=username, password=hashed_password, theme="system", is_superuser=True)
@@ -49,7 +52,7 @@ class PopulateDatabase:
             superuser.created_by = superuser.id
             await session.commit()
             self.__superuser = superuser
-            print("Superuser created successfully.")
+            logger.info("Superuser created successfully.")
 
     async def __populate_from_sql(self, session: AsyncSession) -> None:
         if not self.__superuser:

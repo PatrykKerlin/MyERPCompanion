@@ -159,7 +159,7 @@ class NumericField(ft.Row):
         try:
             parsed = float(value) if self.__is_float else int(value)
             return parsed
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return None
 
     def __set_value(self, new_value: int | float | str) -> None:

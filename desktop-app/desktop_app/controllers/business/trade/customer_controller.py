@@ -117,14 +117,18 @@ class CustomerController(
             AssocCustomerDiscountStrictSchema(customer_id=customer_id, discount_id=discount_id)
             for discount_id in pending_ids
         ]
-        await self.__perform_create_customer_discounts(payload)
+        created = await self.__perform_create_customer_discounts(payload)
+        if not created:
+            return
         await self.__refresh_customer_discount_lists(customer_id)
 
     async def __handle_discount_delete(self, discount_ids: list[int]) -> None:
         if not self._view or not self._view.data_row:
             return
         customer_id = self._view.data_row["id"]
-        await self.__perform_delete_customer_discounts(customer_id, discount_ids)
+        deleted = await self.__perform_delete_customer_discounts(customer_id, discount_ids)
+        if not deleted:
+            return
         await self.__refresh_customer_discount_lists(customer_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
@@ -133,23 +137,25 @@ class CustomerController(
         return [discount for discount in discounts if discount.for_customers]
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_create_customer_discounts(self, payload: list[AssocCustomerDiscountStrictSchema]) -> None:
+    async def __perform_create_customer_discounts(self, payload: list[AssocCustomerDiscountStrictSchema]) -> bool:
         await self._perform_create_bulk(
             self.__assoc_customer_discount_service, Endpoint.CUSTOMER_DISCOUNTS_CREATE_BULK, payload
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
-    async def __perform_delete_customer_discounts(self, customer_id: int, discount_ids: list[int]) -> None:
+    async def __perform_delete_customer_discounts(self, customer_id: int, discount_ids: list[int]) -> bool:
         assoc_rows: list[AssocCustomerDiscountPlainSchema] = await self.__assoc_customer_discount_service.get_all(
             Endpoint.CUSTOMER_DISCOUNTS, None, {"customer_id": customer_id}, None, self._module_id
         )
         assoc_ids = [row.id for row in assoc_rows if row.discount_id in discount_ids]
         if not assoc_ids:
-            return
+            return True
         body_params = IdsPayloadSchema(ids=assoc_ids)
         await self.__assoc_customer_discount_service.delete_bulk(
             Endpoint.CUSTOMER_DISCOUNTS_DELETE_BULK, None, None, body_params, self._module_id
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_customer(self, customer_id: int) -> CustomerPlainSchema | None:

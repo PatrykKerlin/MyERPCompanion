@@ -208,9 +208,8 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         self.__cart_container.width = self.__resolve_cart_dialog_width(viewport_width)
 
         if self.__cart_has_items:
-            estimated_height = (
-                CreateOrderViewStyles.CART_DIALOG_HEADER_ESTIMATED_HEIGHT
-                + (items_count * CreateOrderViewStyles.CART_DIALOG_ROW_ESTIMATED_HEIGHT)
+            estimated_height = CreateOrderViewStyles.CART_DIALOG_HEADER_ESTIMATED_HEIGHT + (
+                items_count * CreateOrderViewStyles.CART_DIALOG_ROW_ESTIMATED_HEIGHT
             )
             if viewport_height:
                 max_height = int(viewport_height * CreateOrderViewStyles.CART_DIALOG_HEIGHT_RATIO)
@@ -298,7 +297,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                             style=TypographyStyles.SECTION_TITLE,
                         ),
                     ),
-                ]
+                ],
             ),
         )
 
@@ -519,7 +518,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
                         content=self.__checkout_delivery_method_dropdown,
                         expand=True,
                     ),
-                ]
+                ],
             ),
             ft.Container(
                 content=self.__checkout_missing_rate_text, padding=CreateOrderViewStyles.CHECKOUT_MISSING_RATE_PADDING
@@ -1012,7 +1011,7 @@ class CreateOrderView(BaseView["CreateOrderController"]):
             try:
                 key = int(raw_key)
                 value = int(raw_value)
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 continue
             normalized[key] = value
         return normalized

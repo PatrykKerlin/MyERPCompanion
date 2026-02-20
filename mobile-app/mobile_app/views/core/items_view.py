@@ -4,8 +4,8 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
-from styles.styles import AlignmentStyles, ButtonStyles, ItemsViewStyles, MobileCommonViewStyles, TypographyStyles
 from schemas.business.logistic.item_schema import ItemPlainSchema
+from styles.styles import AlignmentStyles, ButtonStyles, ItemsViewStyles, MobileCommonViewStyles, TypographyStyles
 from utils.enums import View
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
@@ -64,6 +64,7 @@ class ItemsView(BaseView):
         "weight",
         "expiration_date",
     ]
+
     def __init__(
         self,
         controller: ItemsController,
@@ -117,7 +118,8 @@ class ItemsView(BaseView):
         self.__category_filter_input = self._get_dropdown(
             options=self.__categories,
             include_empty_option=True,
-            on_select=lambda event: self._controller.on_value_changed("category_filter", self.__on_category_filter_changed
+            on_select=lambda event: self._controller.on_value_changed(
+                "category_filter", self.__on_category_filter_changed
             ),
             value="0",
             editable=True,
@@ -136,9 +138,11 @@ class ItemsView(BaseView):
             value="",
             on_change=lambda event: self._controller.on_value_changed("index_filter"),
             on_submit=lambda event: self._controller.on_value_changed("index_filter"),
-            on_focus=lambda event: self._controller.on_value_changed("index_filter")
-            if str(getattr(event, "data", "")).lower() == "false"
-            else None,
+            on_focus=lambda event: (
+                self._controller.on_value_changed("index_filter")
+                if str(getattr(event, "data", "")).lower() == "false"
+                else None
+            ),
             on_tap_outside=lambda event: self._controller.on_value_changed("index_filter"),
             expand=True,
         )
@@ -161,14 +165,18 @@ class ItemsView(BaseView):
             alignment=ItemsViewStyles.FILTER_ROW_ALIGNMENT,
             vertical_alignment=ItemsViewStyles.FILTER_ROW_VERTICAL_ALIGNMENT,
         )
-        self.__items_list = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=MobileCommonViewStyles.LIST_SPACING)
+        self.__items_list = ft.Column(
+            expand=True, scroll=ft.ScrollMode.AUTO, spacing=MobileCommonViewStyles.LIST_SPACING
+        )
         self.__list_section = ft.Column(
             controls=[self.__filters_row, ft.Divider(height=ItemsViewStyles.DETAILS_DIVIDER_HEIGHT), self.__items_list],
             spacing=MobileCommonViewStyles.SECTION_SPACING,
             expand=True,
         )
 
-        self.__details = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=MobileCommonViewStyles.SECTION_SPACING)
+        self.__details = ft.Column(
+            expand=True, scroll=ft.ScrollMode.AUTO, spacing=MobileCommonViewStyles.SECTION_SPACING
+        )
         self.__details_section = ft.Column(
             controls=[self.__details],
             spacing=ItemsViewStyles.DETAILS_SECTION_SPACING,
@@ -215,7 +223,9 @@ class ItemsView(BaseView):
         self.__details_section.visible = True
 
         if not self.__item:
-            self.__details.controls = [self._get_label(self._translation.get("no_items"), text_align=ft.TextAlign.CENTER)]
+            self.__details.controls = [
+                self._get_label(self._translation.get("no_items"), text_align=ft.TextAlign.CENTER)
+            ]
             return
 
         image_urls = self.__image_urls()
@@ -246,7 +256,7 @@ class ItemsView(BaseView):
                         ),
                         trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
                         on_click=self.__build_item_click_handler(item_schema.id, item_schema.stock_quantity),
-                    )
+                    ),
                 )
             )
         return controls
@@ -374,8 +384,8 @@ class ItemsView(BaseView):
         if self.__gallery_left_button is None or self.__gallery_right_button is None:
             return
         self.__gallery_left_button.disabled = self.__gallery_start_index <= 0
-        self.__gallery_right_button.disabled = (
-            self.__gallery_start_index + ItemsViewStyles.GALLERY_WINDOW_SIZE >= len(self.__gallery_image_urls)
+        self.__gallery_right_button.disabled = self.__gallery_start_index + ItemsViewStyles.GALLERY_WINDOW_SIZE >= len(
+            self.__gallery_image_urls
         )
         self.safe_update(self.__gallery_left_button)
         self.safe_update(self.__gallery_right_button)

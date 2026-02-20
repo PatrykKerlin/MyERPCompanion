@@ -31,7 +31,7 @@ class SalesForecastResultRepository:
                             "category_id": row["category_id"],
                             "currency_id": row["currency_id"],
                             "predicted_at": row["predicted_at"],
-                            "predicted_quantity": row["predicted_quantity"],
+                            "predicted_value": row["predicted_value"],
                             "samples": row["samples"],
                             "aggregation": row["aggregation"],
                             "horizon_months": row["horizon_months"],

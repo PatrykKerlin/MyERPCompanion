@@ -185,21 +185,23 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         return rows
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_create_item_discounts(self, payload: list[AssocItemDiscountStrictSchema]) -> None:
+    async def __perform_create_item_discounts(self, payload: list[AssocItemDiscountStrictSchema]) -> bool:
         await self._perform_create_bulk(
             self.__assoc_item_discount_service, Endpoint.ITEM_DISCOUNTS_CREATE_BULK, payload
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
-    async def __perform_delete_item_discounts(self, item_id: int, discount_ids: list[int]) -> None:
+    async def __perform_delete_item_discounts(self, item_id: int, discount_ids: list[int]) -> bool:
         assoc_rows = await self.__perform_get_item_discounts(item_id)
         assoc_ids = [row.id for row in assoc_rows if row.discount_id in discount_ids]
         if not assoc_ids:
-            return
+            return True
         body_params = IdsPayloadSchema(ids=assoc_ids)
         await self.__assoc_item_discount_service.delete_bulk(
             Endpoint.ITEM_DISCOUNTS_DELETE_BULK, None, None, body_params, self._module_id
         )
+        return True
 
     async def __handle_discount_save(self) -> None:
         if not self._view or not self._view.data_row:
@@ -211,14 +213,18 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         payload = [
             AssocItemDiscountStrictSchema(item_id=item_id, discount_id=discount_id) for discount_id in pending_ids
         ]
-        await self.__perform_create_item_discounts(payload)
+        created = await self.__perform_create_item_discounts(payload)
+        if not created:
+            return
         await self.__refresh_item_discount_lists(item_id)
 
     async def __handle_discount_delete(self, discount_ids: list[int]) -> None:
         if not self._view or not self._view.data_row:
             return
         item_id = self._view.data_row["id"]
-        await self.__perform_delete_item_discounts(item_id, discount_ids)
+        deleted = await self.__perform_delete_item_discounts(item_id, discount_ids)
+        if not deleted:
+            return
         await self.__refresh_item_discount_lists(item_id)
 
     async def __extract_item_discounts(self, data: dict[str, Any] | None) -> list[DiscountTransferItem]:
@@ -252,9 +258,9 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         self._view.set_discount_source_items(source_items)
 
     @BaseController.handle_api_action(ApiActionError.IMAGE_UPLOAD)
-    async def __perform_image_upload(self, file_path: str) -> None:
+    async def __perform_image_upload(self, file_path: str) -> bool:
         if not self._view or not self._view.data_row:
-            return
+            return False
         item_id = self._view.data_row["id"]
         images = self._view.data_row["images"]
         is_primary = not self.__has_primary_image(images)
@@ -279,13 +285,14 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         images.append(response.model_dump())
         self._view.data_row["images"] = images
         self._view.set_images(images)
+        return True
 
     @BaseController.handle_api_action(ApiActionError.IMAGE_UPDATE)
     async def __perform_images_bulk_update(
         self, updates: list[ImageStrictUpdateSchema], primary_target_id: int | None
-    ) -> None:
+    ) -> bool:
         if not self._view or not self._view.data_row:
-            return
+            return False
         if primary_target_id is not None:
             cleared = [
                 ImageStrictUpdateSchema(id=update.id, order=update.order, is_primary=False) for update in updates
@@ -305,16 +312,20 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         updated_images = [item.model_dump() for item in response]
         self._view.data_row["images"] = updated_images
         self._view.set_images(updated_images)
+        return True
 
     @BaseController.handle_api_action(ApiActionError.IMAGE_DELETE)
-    async def __perform_delete_image(self, image_id: int) -> None:
+    async def __perform_delete_image(self, image_id: int) -> bool:
         await self.__image_service.delete(Endpoint.IMAGES, image_id, None, None, self._module_id)
+        return True
 
     async def __execute_pick_and_upload(self) -> None:
         file_path = await self.__pick_file_path()
         if not file_path:
             return
-        await self.__perform_image_upload(file_path)
+        uploaded = await self.__perform_image_upload(file_path)
+        if not uploaded:
+            return
 
     async def __pick_file_path(self) -> str | None:
         translation = self._state_store.app_state.translation.items
@@ -378,7 +389,9 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
                     is_primary=updated_primary,
                 )
             )
-        await self.__perform_images_bulk_update(updates, primary_target_id=image_id if is_primary else None)
+        updated = await self.__perform_images_bulk_update(updates, primary_target_id=image_id if is_primary else None)
+        if not updated:
+            return
 
     async def __execute_image_delete(self, image_id: int) -> None:
         if not self._view or not self._view.data_row:
@@ -388,7 +401,9 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
             return
         images_before = self._view.data_row["images"]
         deleted_image = next((image for image in images_before if image["id"] == image_id), None)
-        await self.__perform_delete_image(image_id)
+        deleted = await self.__perform_delete_image(image_id)
+        if not deleted:
+            return
         images = [image for image in images_before if image["id"] != image_id]
         if images:
             ordered = sorted(images, key=lambda image: image["order"])
@@ -404,10 +419,12 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
                         is_primary=is_primary,
                     )
                 )
-            await self.__perform_images_bulk_update(
+            updated = await self.__perform_images_bulk_update(
                 updates,
                 primary_target_id=updates[0].id if deleted_image and deleted_image["is_primary"] else None,
             )
+            if not updated:
+                return
             images = self._view.data_row["images"]
         self._view.data_row["images"] = images
         self._view.set_images(images)

@@ -62,7 +62,7 @@ class AuthController:
                 warehouse_id=token_warehouse_id,
             )
             return JSONResponse(content={"access": new_access_token})
-        except (JWTError, KeyError, NoResultFound):
+        except JWTError, KeyError, NoResultFound:
             self.__logger.exception(f"AuthError in {self.__class__.__name__}.{self.refresh.__qualname__}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
         except SQLAlchemyError:

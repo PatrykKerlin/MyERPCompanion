@@ -46,7 +46,16 @@ class OrdersView(BaseView["OrdersController"]):
         self.__orders_list = ft.ListView(spacing=AppDimensions.SPACE_SM, expand=True)
         self.__status_list = ft.ListView(spacing=AppDimensions.SPACE_SM, expand=True)
         self.__items_list = ft.ListView(spacing=AppDimensions.SPACE_XS, expand=True)
-        self.__order_meta_column = ft.Column(spacing=AppDimensions.SPACE_2XS, tight=True)
+        self.__order_meta_column = ft.Column(
+            spacing=AppDimensions.SPACE_2XS,
+            scroll=ft.ScrollMode.AUTO,
+            expand=True,
+        )
+        self.__external_notes_column = ft.Column(
+            spacing=AppDimensions.SPACE_2XS,
+            scroll=ft.ScrollMode.AUTO,
+            expand=True,
+        )
         self.__status_loading = ft.Container(
             visible=False,
             alignment=ft.Alignment.CENTER,
@@ -87,7 +96,9 @@ class OrdersView(BaseView["OrdersController"]):
                 spacing=AppDimensions.SPACE_2XS,
                 tight=True,
                 controls=[
-                    self._get_label(self._translation.get("payment_status_legend"), style=TypographyStyles.LEGEND_TITLE),
+                    self._get_label(
+                        self._translation.get("payment_status_legend"), style=TypographyStyles.LEGEND_TITLE
+                    ),
                     ft.Row(
                         spacing=AppDimensions.SPACE_XS,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -149,43 +160,86 @@ class OrdersView(BaseView["OrdersController"]):
             content=ft.Column(
                 expand=True,
                 controls=[
-                    self._get_label(self._translation.get("order_details"), style=TypographyStyles.SECTION_TITLE),
-                    self.__order_meta_column,
+                    ft.Container(
+                        expand=OrdersViewStyles.META_AND_NOTES_SECTION_EXPAND,
+                        content=ft.ResponsiveRow(
+                            columns=OrdersViewStyles.META_AND_NOTES_ROW_COLUMNS,
+                            spacing=OrdersViewStyles.META_AND_NOTES_ROW_SPACING,
+                            vertical_alignment=OrdersViewStyles.META_AND_NOTES_ROW_VERTICAL_ALIGNMENT,
+                            controls=[
+                                ft.Container(
+                                    col=OrdersViewStyles.META_CONTAINER_COL,
+                                    expand=True,
+                                    content=ft.Column(
+                                        expand=True,
+                                        controls=[
+                                            self._get_label(
+                                                self._translation.get("order_details"),
+                                                style=TypographyStyles.SECTION_TITLE,
+                                            ),
+                                            self.__order_meta_column,
+                                        ],
+                                    ),
+                                ),
+                                ft.Container(
+                                    col=OrdersViewStyles.NOTES_CONTAINER_COL,
+                                    expand=True,
+                                    border=OrdersViewStyles.STATUS_COLUMN_BORDER,
+                                    padding=OrdersViewStyles.NOTES_CONTAINER_PADDING,
+                                    content=ft.Column(
+                                        expand=True,
+                                        controls=[
+                                            self._get_label(
+                                                self._translation.get("notes"),
+                                                style=TypographyStyles.SECTION_TITLE,
+                                            ),
+                                            self.__external_notes_column,
+                                        ],
+                                    ),
+                                ),
+                            ],
+                        ),
+                    ),
                     ft.Divider(),
-                    ft.ResponsiveRow(
-                        columns=OrdersViewStyles.DETAILS_ROW_COLUMNS,
-                        expand=True,
-                        vertical_alignment=OrdersViewStyles.DETAILS_ROW_VERTICAL_ALIGNMENT,
-                        controls=[
-                            ft.Container(
-                                col=OrdersViewStyles.DETAILS_ITEMS_COL,
-                                expand=True,
-                                content=ft.Column(
+                    ft.Container(
+                        expand=OrdersViewStyles.DETAILS_SECTION_EXPAND,
+                        content=ft.ResponsiveRow(
+                            columns=OrdersViewStyles.DETAILS_ROW_COLUMNS,
+                            expand=True,
+                            vertical_alignment=OrdersViewStyles.DETAILS_ROW_VERTICAL_ALIGNMENT,
+                            controls=[
+                                ft.Container(
+                                    col=OrdersViewStyles.DETAILS_ITEMS_COL,
                                     expand=True,
-                                    controls=[
-                                        self._get_label(self._translation.get("items"), style=TypographyStyles.SECTION_TITLE),
-                                        self.__items_list,
-                                    ],
+                                    content=ft.Column(
+                                        expand=True,
+                                        controls=[
+                                            self._get_label(
+                                                self._translation.get("items"), style=TypographyStyles.SECTION_TITLE
+                                            ),
+                                            self.__items_list,
+                                        ],
+                                    ),
                                 ),
-                            ),
-                            ft.Container(
-                                col=OrdersViewStyles.DETAILS_STATUS_COL,
-                                expand=True,
-                                border=OrdersViewStyles.STATUS_COLUMN_BORDER,
-                                padding=OrdersViewStyles.STATUS_COLUMN_PADDING,
-                                content=ft.Column(
+                                ft.Container(
+                                    col=OrdersViewStyles.DETAILS_STATUS_COL,
                                     expand=True,
-                                    controls=[
-                                        self._get_label(
-                                            self._translation.get("status_history"),
-                                            style=TypographyStyles.SECTION_TITLE,
-                                        ),
-                                        self.__status_loading,
-                                        self.__status_list,
-                                    ],
+                                    border=OrdersViewStyles.STATUS_COLUMN_BORDER,
+                                    padding=OrdersViewStyles.STATUS_COLUMN_PADDING,
+                                    content=ft.Column(
+                                        expand=True,
+                                        controls=[
+                                            self._get_label(
+                                                self._translation.get("status_history"),
+                                                style=TypographyStyles.SECTION_TITLE,
+                                            ),
+                                            self.__status_loading,
+                                            self.__status_list,
+                                        ],
+                                    ),
                                 ),
-                            ),
-                        ],
+                            ],
+                        ),
                     ),
                 ],
             ),
@@ -397,8 +451,10 @@ class OrdersView(BaseView["OrdersController"]):
         self.__status_loading.visible = self.__is_status_loading
         self._safe_update(self.__status_loading)
         self.__order_meta_column.controls.clear()
+        self.__external_notes_column.controls.clear()
         if self.__selected_order_id is None:
             self.__order_meta_column.controls.append(self._get_label(self._translation.get("select_order")))
+            self.__external_notes_column.controls.append(self._get_label(self._translation.get("select_order")))
         elif self.__order_meta:
             has_invoice = isinstance(self.__selected_invoice_id, int)
             detail_rows: list[tuple[str, str]] = [
@@ -431,7 +487,12 @@ class OrdersView(BaseView["OrdersController"]):
                     trailing_control=invoice_trailing_control,
                 )
             )
+            external_notes = str(self.__order_meta.get("external_notes") or "-")
+            self.__external_notes_column.controls.append(self._get_label(external_notes, no_wrap=False))
+        else:
+            self.__external_notes_column.controls.append(self._get_label("-"))
         self._safe_update(self.__order_meta_column)
+        self._safe_update(self.__external_notes_column)
 
         self.__items_list.controls.clear()
         if self.__selected_order_id is None:
@@ -508,7 +569,9 @@ class OrdersView(BaseView["OrdersController"]):
                             controls=[
                                 ft.Container(
                                     col=OrdersViewStyles.ORDER_ITEM_INDEX_COL,
-                                    content=self._get_label(item_index, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                                    content=self._get_label(
+                                        item_index, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS
+                                    ),
                                 ),
                                 ft.Container(
                                     col=OrdersViewStyles.ORDER_ITEM_NAME_COL,

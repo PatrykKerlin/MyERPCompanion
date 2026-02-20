@@ -26,5 +26,9 @@ class ImagePreviewDialogComponent(BaseDialog):
                     ),
                 )
             ],
-            actions=[self._get_button(content=translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_regular)],
+            actions=[
+                self._get_button(
+                    content=translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_regular
+                )
+            ],
         )

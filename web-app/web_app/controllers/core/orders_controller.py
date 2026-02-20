@@ -10,7 +10,6 @@ from controllers.base.base_view_controller import BaseViewController
 from events.events import ViewRequested
 from schemas.business.trade.order_schema import OrderPlainSchema, OrderStrictSchema
 from schemas.business.trade.order_view_schema import (
-    OrderViewDiscountSchema,
     OrderViewResponseSchema,
     OrderViewSourceItemSchema,
     OrderViewStatusHistorySchema,
@@ -194,6 +193,7 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
                 customer_discount_labels.append(label)
         customer_discount = ", ".join(customer_discount_labels) if customer_discount_labels else "-"
         total_with_shipping = order.total_gross + order.shipping_cost
+        external_notes = order.external_notes.strip() if order.external_notes else ""
         meta = {
             "number": order.number,
             "order_date": self.__format_date(order.order_date),
@@ -206,6 +206,7 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
             "total_discount": f"{order.total_discount:.2f}",
             "shipping_cost": f"{order.shipping_cost:.2f}",
             "total_with_shipping": f"{total_with_shipping:.2f}",
+            "external_notes": external_notes,
         }
         if invoice_number:
             meta["invoice_number"] = invoice_number

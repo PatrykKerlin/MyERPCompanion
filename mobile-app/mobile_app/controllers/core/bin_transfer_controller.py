@@ -120,7 +120,7 @@ class BinTransferController(
         )
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_create_bin_items(self, items: list[AssocBinItemStrictSchema]) -> None:
+    async def __perform_create_bin_items(self, items: list[AssocBinItemStrictSchema]) -> bool:
         await self.__bin_item_service.create_bulk(
             Endpoint.BIN_ITEMS_CREATE_BULK,
             None,
@@ -128,9 +128,10 @@ class BinTransferController(
             items,
             self._module_id,
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_update_bin_items(self, items: list[AssocBinItemStrictSchema]) -> None:
+    async def __perform_update_bin_items(self, items: list[AssocBinItemStrictSchema]) -> bool:
         await self.__bin_item_service.update_bulk(
             Endpoint.BIN_ITEMS_UPDATE_BULK,
             None,
@@ -138,9 +139,10 @@ class BinTransferController(
             items,
             self._module_id,
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
-    async def __perform_delete_source_items(self, ids: list[int]) -> None:
+    async def __perform_delete_source_items(self, ids: list[int]) -> bool:
         body_params = IdsPayloadSchema(ids=ids)
         await self.__bin_item_service.delete_bulk(
             Endpoint.BIN_ITEMS_DELETE_BULK,
@@ -149,6 +151,7 @@ class BinTransferController(
             body_params,
             self._module_id,
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_single_bin(self, location: str) -> BinPlainSchema | None:
@@ -369,11 +372,17 @@ class BinTransferController(
             return
 
         if creates:
-            await self.__perform_create_bin_items(creates)
+            created = await self.__perform_create_bin_items(creates)
+            if not created:
+                return
         if updates:
-            await self.__perform_update_bin_items(updates)
+            updated = await self.__perform_update_bin_items(updates)
+            if not updated:
+                return
         if delete_ids:
-            await self.__perform_delete_source_items(delete_ids)
+            deleted = await self.__perform_delete_source_items(delete_ids)
+            if not deleted:
+                return
 
         await self.__refresh_loaded_bins()
         self.__pending_move_quantities.clear()

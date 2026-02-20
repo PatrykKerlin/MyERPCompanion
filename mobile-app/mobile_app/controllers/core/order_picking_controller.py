@@ -417,13 +417,15 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
             self._open_error_dialog(message_key="insufficient_stock")
             return
 
-        await self.__apply_pick_updates(
+        updated_pick = await self.__apply_pick_updates(
             order_items=order_items,
             item_map=item_map,
             item_id=active_item_id,
             bin_option=selected_option,
             moved_quantity=effective_quantity,
         )
+        if not updated_pick:
+            return
 
         await self.__check_and_update_order_status(self.__selected_order_id, {active_item_id})
         self.__active_pick_item_id = None
@@ -457,7 +459,7 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
 
         new_bin_quantity = max(0, selected_option.bin_item_quantity - effective_quantity)
         if new_bin_quantity > 0:
-            await self.__perform_update_bin_items(
+            updated_bins = await self.__perform_update_bin_items(
                 [
                     AssocBinItemStrictSchema(
                         id=selected_option.bin_item_id,
@@ -467,10 +469,14 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
                     )
                 ]
             )
+            if not updated_bins:
+                return
         else:
-            await self.__perform_delete_bin_items([selected_option.bin_item_id])
+            deleted_bins = await self.__perform_delete_bin_items([selected_option.bin_item_id])
+            if not deleted_bins:
+                return
 
-        await self.__perform_create_order_items(
+        created_order_items = await self.__perform_create_order_items(
             [
                 AssocOrderItemStrictSchema(
                     order_id=self.__selected_order_id,
@@ -488,6 +494,8 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
                 )
             ]
         )
+        if not created_order_items:
+            return
 
         package_item_schema = self.__package_items_by_id.get(self.__active_pick_item_id)
         if package_item_schema is None:
@@ -497,10 +505,12 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
                 self.__package_items_by_id[self.__active_pick_item_id] = package_item_schema
         if package_item_schema is not None:
             new_stock = max(0, package_item_schema.stock_quantity - effective_quantity)
-            await self.__perform_update_item(
+            stock_updated = await self.__perform_update_item(
                 self.__active_pick_item_id,
                 self.__build_item_update(package_item_schema, new_stock),
             )
+            if not stock_updated:
+                return
 
         await self.__check_and_update_order_status(self.__selected_order_id, set())
         self.__active_pick_item_id = None
@@ -521,10 +531,10 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
         item_id: int,
         bin_option: OrderPickingBinOption,
         moved_quantity: int,
-    ) -> None:
+    ) -> bool:
         new_bin_quantity = max(0, bin_option.bin_item_quantity - moved_quantity)
         if new_bin_quantity > 0:
-            await self.__perform_update_bin_items(
+            updated_bins = await self.__perform_update_bin_items(
                 [
                     AssocBinItemStrictSchema(
                         id=bin_option.bin_item_id,
@@ -534,8 +544,12 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
                     )
                 ]
             )
+            if not updated_bins:
+                return False
         else:
-            await self.__perform_delete_bin_items([bin_option.bin_item_id])
+            deleted_bins = await self.__perform_delete_bin_items([bin_option.bin_item_id])
+            if not deleted_bins:
+                return False
 
         order_item_states: dict[int, dict[str, Any]] = {}
         for order_item in order_items:
@@ -647,14 +661,21 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
                 )
 
         if order_item_updates:
-            await self.__perform_update_order_items(order_item_updates)
+            updated_order_items = await self.__perform_update_order_items(order_item_updates)
+            if not updated_order_items:
+                return False
         if order_item_creates:
-            await self.__perform_create_order_items(order_item_creates)
+            created_order_items = await self.__perform_create_order_items(order_item_creates)
+            if not created_order_items:
+                return False
 
         item_schema = item_map.get(item_id)
         if item_schema:
             new_stock = max(0, item_schema.stock_quantity - moved_quantity)
-            await self.__perform_update_item(item_id, self.__build_item_update(item_schema, new_stock))
+            stock_updated = await self.__perform_update_item(item_id, self.__build_item_update(item_schema, new_stock))
+            if not stock_updated:
+                return False
+        return True
 
     async def __check_and_update_order_status(self, order_id: int, touched_item_ids: set[int]) -> None:
         statuses = await self.__perform_get_all_statuses()
@@ -672,9 +693,11 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
             if next_status:
                 has_status = any(status.status_id == next_status.id for status in order_statuses)
                 if not has_status:
-                    await self.__perform_create_order_status(
+                    status_created = await self.__perform_create_order_status(
                         AssocOrderStatusStrictSchema(order_id=order_id, status_id=next_status.id)
                     )
+                    if not status_created:
+                        return
                 current_order_value = 3
 
         final_status = status_by_order.get(4) or next((status for status in statuses if status.order == 4), None)
@@ -711,9 +734,11 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
             return
 
         if current_order_value in {2, 3}:
-            await self.__perform_create_order_status(
+            status_created = await self.__perform_create_order_status(
                 AssocOrderStatusStrictSchema(order_id=order_id, status_id=final_status.id)
             )
+            if not status_created:
+                return
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_eligible_orders(
@@ -790,35 +815,41 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
         )
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_create_order_status(self, payload: AssocOrderStatusStrictSchema) -> None:
+    async def __perform_create_order_status(self, payload: AssocOrderStatusStrictSchema) -> bool:
         await self.__order_status_service.create(Endpoint.ORDER_STATUSES, None, None, payload, self._module_id)
+        return True
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_update_bin_items(self, items: list[AssocBinItemStrictSchema]) -> None:
+    async def __perform_update_bin_items(self, items: list[AssocBinItemStrictSchema]) -> bool:
         await self.__bin_item_service.update_bulk(Endpoint.BIN_ITEMS_UPDATE_BULK, None, None, items, self._module_id)
+        return True
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
-    async def __perform_delete_bin_items(self, ids: list[int]) -> None:
+    async def __perform_delete_bin_items(self, ids: list[int]) -> bool:
         body_params = IdsPayloadSchema(ids=ids)
         await self.__bin_item_service.delete_bulk(
             Endpoint.BIN_ITEMS_DELETE_BULK, None, None, body_params, self._module_id
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_update_order_items(self, items: list[AssocOrderItemStrictSchema]) -> None:
+    async def __perform_update_order_items(self, items: list[AssocOrderItemStrictSchema]) -> bool:
         await self.__order_item_service.update_bulk(
             Endpoint.ORDER_ITEMS_UPDATE_BULK, None, None, items, self._module_id
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_create_order_items(self, items: list[AssocOrderItemStrictSchema]) -> None:
+    async def __perform_create_order_items(self, items: list[AssocOrderItemStrictSchema]) -> bool:
         await self.__order_item_service.create_bulk(
             Endpoint.ORDER_ITEMS_CREATE_BULK, None, None, items, self._module_id
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_update_item(self, item_id: int, payload: ItemStrictSchema) -> None:
+    async def __perform_update_item(self, item_id: int, payload: ItemStrictSchema) -> bool:
         await self.__item_service.update(Endpoint.ITEMS, item_id, None, payload, self._module_id)
+        return True
 
     @staticmethod
     def __resolve_selected_order_id(data: dict[str, Any] | None) -> int | None:

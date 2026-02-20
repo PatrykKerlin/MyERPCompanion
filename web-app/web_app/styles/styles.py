@@ -277,6 +277,14 @@ class OrdersViewStyles:
     STATUS_ROW_PADDING = ft.Padding.all(AppDimensions.SPACE_SM)
     STATUS_ROW_BORDER = ft.Border.all(1, AppColors.OUTLINE_VARIANT)
     STATUS_ROW_RADIUS = AppDimensions.RADIUS_SM
+    META_AND_NOTES_SECTION_EXPAND = 11
+    META_AND_NOTES_ROW_COLUMNS = 12
+    META_AND_NOTES_ROW_SPACING = AppDimensions.SPACE_LG
+    META_AND_NOTES_ROW_VERTICAL_ALIGNMENT = AlignmentStyles.CROSS_STRETCH
+    DETAILS_SECTION_EXPAND = 9
+    META_CONTAINER_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 8, "lg": 8, "xl": 8})
+    NOTES_CONTAINER_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"md": 4, "lg": 4, "xl": 4})
+    NOTES_CONTAINER_PADDING = ft.Padding.only(left=AppDimensions.SPACE_LG)
     META_ROW_COLUMNS = 12
     META_ROW_SPACING = AppDimensions.SPACE_LG
     META_TRAILING_SPACING = AppDimensions.SPACE_SM

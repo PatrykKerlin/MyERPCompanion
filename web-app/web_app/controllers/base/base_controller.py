@@ -155,7 +155,7 @@ class BaseController:
     def _queue_dialog(self, dialog: Any, wait_for_future: Awaitable[Any] | None = None) -> None:
         try:
             self._page.run_task(self._show_dialog_serialized, dialog, wait_for_future)
-        except (AttributeError, RuntimeError):
+        except AttributeError, RuntimeError:
             self._logger.warning("Dialog fallback: showing without run_task", exc_info=True)
             self._page.show_dialog(dialog)
 

@@ -31,7 +31,7 @@ class StateStore(Generic[TBaseModel]):
             self.__listeners[attr].remove(func)
             if not self.__listeners[attr]:
                 del self.__listeners[attr]
-        except (ValueError, KeyError):
+        except ValueError, KeyError:
             pass
 
     def update(self, **attrs: dict[str, Any]) -> None:

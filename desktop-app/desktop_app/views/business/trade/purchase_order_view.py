@@ -65,9 +65,7 @@ class PurchaseOrderView(BaseView):
             {"key": "total_gross", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "total_discount", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
         ]
-        notes_field_definition = [
-            {"key": "notes", "input": self._get_text_input, "lines": 3}
-        ]
+        notes_field_definition = [{"key": "notes", "input": self._get_text_input, "lines": 3}]
         main_fields = self._build_field_groups(main_fields_definitions)
         notes_field = self._build_field_groups(notes_field_definition)
         self._add_to_inputs(main_fields, notes_field)
@@ -108,7 +106,11 @@ class PurchaseOrderView(BaseView):
             ft.Column(controls=main_grid + self._spacing_responsive_row + [self.__status_history_row], expand=True),
             self._spacing_column,
             ft.Column(
-                controls=meta_grid + self._spacing_responsive_row + notes_grid + (2 * self._spacing_responsive_row) + [self._spacing_row, self._buttons_row],
+                controls=meta_grid
+                + self._spacing_responsive_row
+                + notes_grid
+                + (2 * self._spacing_responsive_row)
+                + [self._spacing_row, self._buttons_row],
                 expand=True,
             ),
         ]
@@ -226,7 +228,7 @@ class PurchaseOrderView(BaseView):
         for key, field in self._inputs.items():
             input_control = field.input.content
             if mode == ViewMode.EDIT:
-                editable = key == "status_id"
+                editable = key in {"status_id", "notes"}
             else:
                 editable = mode == ViewMode.CREATE and key in self.__editable_keys
             if hasattr(input_control, "read_only"):

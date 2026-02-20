@@ -707,7 +707,9 @@ class CreateOrderController(
             self.__show_order_confirmation(created_order_number)
 
     def __initialize_discount_maps(self, view_data: OrderViewResponseSchema) -> None:
-        self.__item_pricing = {item.id: (item.purchase_price, item.margin, item.vat_rate) for item in view_data.source_items}
+        self.__item_pricing = {
+            item.id: (item.purchase_price, item.margin, item.vat_rate) for item in view_data.source_items
+        }
         self.__item_dimensions = {
             item.id: (item.width, item.height, item.length, item.weight) for item in view_data.source_items
         }

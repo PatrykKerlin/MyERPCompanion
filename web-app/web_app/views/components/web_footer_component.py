@@ -10,7 +10,9 @@ from views.base.base_component import BaseComponent
 class WebFooterComponent(BaseComponent[BaseController], ft.Container):
     def __init__(self, controller: BaseController, translation: Translation) -> None:
         BaseComponent.__init__(self, controller, translation)
-        self.__footer_app_name = self._get_label(self._translation.get("my_erp_companion"), style=TypographyStyles.FOOTER_TITLE)
+        self.__footer_app_name = self._get_label(
+            self._translation.get("my_erp_companion"), style=TypographyStyles.FOOTER_TITLE
+        )
         self.__footer_portal = self._get_label(
             self._translation.get("footer_web_portal"),
             style=TypographyStyles.FOOTER_TEXT,

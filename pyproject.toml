@@ -1,14 +1,14 @@
 [tool.ruff]
-exclude = ["**/.cache", ".vscode-server"]
+exclude = ["**/.cache"]
 line-length = 120
-target-version = "py313"
+target-version = "py314"
 
 [tool.ruff.lint]
 extend-ignore = ["E712"]
 
 [tool.black]
 line-length = 120
-target-version = ["py313"]
+target-version = ["py314"]
 skip-string-normalization = true
 exclude = '''
 /(
@@ -24,4 +24,4 @@ exclude = '''
 [tool.isort]
 profile = "black"
 line_length = 120
-skip = [".vscode-server", "migrations/versions", ".cache"]
+skip = ["migrations/versions", ".cache"]

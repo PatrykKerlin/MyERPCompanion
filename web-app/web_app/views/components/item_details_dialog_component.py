@@ -70,7 +70,11 @@ class ItemDetailsDialogComponent(BaseDialog):
                     content=ft.Column(controls=controls, tight=True, spacing=AppDimensions.SPACE_LG),
                 )
             ],
-            actions=[self._get_button(content=translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_regular)],
+            actions=[
+                self._get_button(
+                    content=translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_regular
+                )
+            ],
         )
         self.scrollable = False
 

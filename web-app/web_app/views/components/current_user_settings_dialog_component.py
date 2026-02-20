@@ -38,7 +38,9 @@ class CurrentUserSettingsDialogComponent(BaseDialog):
             expand=True,
         )
 
-        save_button = self._get_button(content=translation.get("save"), on_click=on_save_clicked, style=ButtonStyles.primary_regular)
+        save_button = self._get_button(
+            content=translation.get("save"), on_click=on_save_clicked, style=ButtonStyles.primary_regular
+        )
         cancel_button = self._get_button(
             content=translation.get("cancel"),
             on_click=on_cancel_clicked,

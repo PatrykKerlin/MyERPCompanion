@@ -478,7 +478,7 @@ class SalesOrderView(BaseView):
         for key, field in self._inputs.items():
             input_control = field.input.content
             if mode == ViewMode.EDIT:
-                editable = key in {"status_id", "tracking_number"}
+                editable = key in {"status_id", "tracking_number", "notes", "external_notes"}
             else:
                 editable = mode == ViewMode.CREATE and key in self.__editable_keys
             if hasattr(input_control, "read_only"):

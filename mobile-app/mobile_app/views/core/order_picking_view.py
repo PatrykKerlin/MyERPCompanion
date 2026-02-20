@@ -4,8 +4,14 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
-from styles.styles import AlignmentStyles, ButtonStyles, MobileCommonViewStyles, OrderPickingViewStyles, TypographyStyles
 from schemas.business.logistic.item_schema import ItemPlainSchema
+from styles.styles import (
+    AlignmentStyles,
+    ButtonStyles,
+    MobileCommonViewStyles,
+    OrderPickingViewStyles,
+    TypographyStyles,
+)
 from utils.enums import View
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
@@ -112,8 +118,7 @@ class OrderPickingView(BaseView):
         self.__customer_input = self._get_dropdown(
             options=customers,
             include_empty_option=True,
-            on_select=lambda event: self._controller.on_value_changed("customer_id", self.__handle_customer_changed
-            ),
+            on_select=lambda event: self._controller.on_value_changed("customer_id", self.__handle_customer_changed),
             value="0",
             editable=True,
             enable_search=True,
@@ -165,8 +170,7 @@ class OrderPickingView(BaseView):
         self.__pick_bin_input = self._get_dropdown(
             options=[],
             include_empty_option=True,
-            on_select=lambda event: self._controller.on_value_changed("pick_bin_id", self.__handle_pick_bin_changed
-            ),
+            on_select=lambda event: self._controller.on_value_changed("pick_bin_id", self.__handle_pick_bin_changed),
             value="0",
             editable=True,
             enable_search=True,
@@ -448,7 +452,7 @@ class OrderPickingView(BaseView):
                             ),
                             trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
                             on_click=self.__build_item_click_handler(row.item_id),
-                        )
+                        ),
                     )
                 )
             self.__items_list.controls = controls
@@ -470,7 +474,7 @@ class OrderPickingView(BaseView):
                                 f"{self._translation.get('location')}: {row.bin_location} | "
                                 f"{self._translation.get('quantity')}: {row.quantity}"
                             ),
-                        )
+                        ),
                     )
                 )
             self.__picked_items_list.controls = picked_controls

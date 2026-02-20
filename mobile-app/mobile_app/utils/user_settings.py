@@ -10,7 +10,7 @@ class UserSettings:
         path = cls.__path()
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError, TypeError):
+        except OSError, ValueError, TypeError:
             return None, None
 
         return payload.get("theme"), payload.get("language")

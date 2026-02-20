@@ -34,9 +34,11 @@ class BinsView(BaseView):
             value="",
             on_change=lambda event: self._controller.on_value_changed("filter_query"),
             on_submit=lambda event: self._controller.on_value_changed("filter_query"),
-            on_focus=lambda event: self._controller.on_value_changed("filter_query")
-            if str(getattr(event, "data", "")).lower() == "false"
-            else None,
+            on_focus=lambda event: (
+                self._controller.on_value_changed("filter_query")
+                if str(getattr(event, "data", "")).lower() == "false"
+                else None
+            ),
             on_tap_outside=lambda event: self._controller.on_value_changed("filter_query"),
             expand=True,
         )
@@ -52,7 +54,8 @@ class BinsView(BaseView):
                 ("outbound", "Outbound"),
             ],
             include_empty_option=True,
-            on_select=lambda event: self._controller.on_value_changed("bin_direction_filter", self.__on_bin_direction_filter_changed
+            on_select=lambda event: self._controller.on_value_changed(
+                "bin_direction_filter", self.__on_bin_direction_filter_changed
             ),
             value="0",
             editable=True,
@@ -170,7 +173,7 @@ class BinsView(BaseView):
                             title=self._get_label(bin_schema.location),
                             trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
                             on_click=self.__build_bin_click_handler(bin_schema.id),
-                        )
+                        ),
                     )
                 )
             return controls
@@ -192,7 +195,7 @@ class BinsView(BaseView):
                         ),
                         trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
                         on_click=self.__build_item_click_handler(item_schema.id),
-                    )
+                    ),
                 )
             )
         return controls

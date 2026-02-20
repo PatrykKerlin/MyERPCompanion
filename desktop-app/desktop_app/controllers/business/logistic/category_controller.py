@@ -76,14 +76,18 @@ class CategoryController(BaseViewController[CategoryService, CategoryView, Categ
             AssocCategoryDiscountStrictSchema(category_id=category_id, discount_id=discount_id)
             for discount_id in pending_ids
         ]
-        await self.__perform_create_category_discounts(payload)
+        created = await self.__perform_create_category_discounts(payload)
+        if not created:
+            return
         await self.__refresh_category_discount_lists(category_id)
 
     async def __handle_discount_delete(self, discount_ids: list[int]) -> None:
         if not self._view or not self._view.data_row:
             return
         category_id = self._view.data_row["id"]
-        await self.__perform_delete_category_discounts(category_id, discount_ids)
+        deleted = await self.__perform_delete_category_discounts(category_id, discount_ids)
+        if not deleted:
+            return
         await self.__refresh_category_discount_lists(category_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
@@ -118,21 +122,23 @@ class CategoryController(BaseViewController[CategoryService, CategoryView, Categ
         )
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_create_category_discounts(self, payload: list[AssocCategoryDiscountStrictSchema]) -> None:
+    async def __perform_create_category_discounts(self, payload: list[AssocCategoryDiscountStrictSchema]) -> bool:
         await self._perform_create_bulk(
             self.__assoc_category_discount_service, Endpoint.CATEGORY_DISCOUNTS_CREATE_BULK, payload
         )
+        return True
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
-    async def __perform_delete_category_discounts(self, category_id: int, discount_ids: list[int]) -> None:
+    async def __perform_delete_category_discounts(self, category_id: int, discount_ids: list[int]) -> bool:
         assoc_rows = await self.__perform_get_category_discounts(category_id)
         assoc_ids = [row.id for row in assoc_rows if row.discount_id in discount_ids]
         if not assoc_ids:
-            return
+            return True
         body_params = IdsPayloadSchema(ids=assoc_ids)
         await self.__assoc_category_discount_service.delete_bulk(
             Endpoint.CATEGORY_DISCOUNTS_DELETE_BULK, None, None, body_params, self._module_id
         )
+        return True
 
     async def __extract_category_discounts(self, data: dict[str, Any] | None) -> list[DiscountTransferItem]:
         discount_ids = self.__extract_discount_ids(data)

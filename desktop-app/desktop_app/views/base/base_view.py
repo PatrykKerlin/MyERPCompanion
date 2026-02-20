@@ -237,15 +237,14 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
                 if marker:
                     marker.update()
                 continue
-            if self._data_row and self._data_row.get(key) and hasattr(input_control, "value"):
+            if self._data_row is not None and key in self._data_row and hasattr(input_control, "value"):
                 value = self._data_row[key]
                 if isinstance(input_control, DateField):
                     value = self.__normalize_date_value(value)
                 self.__set_control_value(input_control, value)
             else:
                 self.__set_control_value(input_control, self.__get_default_value_for_control(input_control))
-            if input_control:
-                input_control.update()
+            self.set_field_error(key, None)
 
     def reset_inputs(self) -> None:
         self._data_row = None
@@ -346,12 +345,11 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             height = (lines * ControlStyles.TEXT_FIELD_HEIGHT) + ((lines - 1) * AppDimensions.SPACE_MD)
         else:
             height = ControlStyles.TEXT_FIELD_HEIGHT
-        on_value_changed = lambda event: self._controller.on_value_changed(event, key)
 
         text_field = ft.TextField(
             value="",
-            on_change=on_value_changed,
-            on_blur=on_value_changed,
+            on_change=lambda event, field_key=key: self._controller.on_value_changed(event, field_key),
+            on_blur=lambda event, field_key=key: self._controller.on_value_changed(event, field_key),
             password=password,
             can_reveal_password=password,
             multiline=lines > 1,
