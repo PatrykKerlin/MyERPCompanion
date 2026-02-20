@@ -99,7 +99,7 @@ def main() -> None:
     app = App()
     os.environ.setdefault("FLET_FORCE_WEB_SERVER", "1")
     host = os.getenv("FLET_SERVER_HOST", "0.0.0.0")
-    port = int(os.getenv("FLET_SERVER_PORT", "8551"))
+    port = int(os.getenv("FLET_SERVER_PORT", "8552"))
     view = getattr(ft.AppView, "WEB_SERVER", ft.AppView.WEB_BROWSER)
     ft.run(app.run, view=view, host=host, port=port)
 

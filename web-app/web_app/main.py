@@ -103,7 +103,7 @@ def main() -> None:
     app = App()
     os.environ.setdefault("FLET_FORCE_WEB_SERVER", "1")
     host = os.getenv("FLET_SERVER_HOST", "0.0.0.0")
-    port = int(os.getenv("FLET_SERVER_PORT", "8550"))
+    port = int(os.getenv("FLET_SERVER_PORT", "8551"))
     view = getattr(ft.AppView, "WEB_SERVER", ft.AppView.WEB_BROWSER)
     assets_dir = Path(__file__).resolve().parent / "assets"
     assets_dir.mkdir(parents=True, exist_ok=True)
