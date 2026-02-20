@@ -266,8 +266,8 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
         return super().did_mount()
 
     def set_images(self, images: list[dict[str, Any]]) -> None:
-        images.sort(key=lambda item: item["order"])
-        self.__image_gallery.controls = [self.__build_image_control(image) for image in images]
+        ordered_images = sorted(images, key=lambda item: item["order"])
+        self.__image_gallery.controls = [self.__build_image_control(image) for image in ordered_images]
         self.__image_gallery.update()
 
     def set_mode(self, mode: ViewMode) -> None:
@@ -327,7 +327,7 @@ class ItemView(BaseView, DiscountBulkTransferMixin):
             padding=padding,
             border=border,
             alignment=AlignmentStyles.CENTER,
-            on_click=lambda _: self.__on_image_clicked(image),
+            on_click=lambda _, selected_image=image: self.__on_image_clicked(selected_image),
         )
 
     def __on_add_image_clicked(self, _: ft.Event[ft.IconButton]) -> None:

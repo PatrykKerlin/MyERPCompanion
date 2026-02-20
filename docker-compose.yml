@@ -35,7 +35,7 @@ services:
       - MODULE_HEADER=X-View-Module
       - MEDIA_DIR=/media
       - MEDIA_URL=http://rest-api:8000/media
-      - CORS_ORIGINS=http://localhost:8550,http://127.0.0.1:8550,http://localhost:8551,http://127.0.0.1:8551
+      - CORS_ORIGINS=http://localhost:8550,http://127.0.0.1:8550,http://localhost:8551,http://127.0.0.1:8551,http://localhost:8552,http://127.0.0.1:8552
       - SUPERUSER_USERNAME=admin
       - SUPERUSER_PASSWORD=haslo123
       - ISSUER_NAME=Northwind Distribution Sp. z o.o.
@@ -92,6 +92,30 @@ services:
     command:
       sh -c "dbus-run-session -- flet run main.py"
 
+  desktop-app-web:
+    build:
+      context: ./desktop-app
+      dockerfile: dockerfile
+    user: root
+    networks:
+      - project_net
+    volumes:
+      - ./desktop-app/desktop_app/:/desktop_app
+      - desktop-app-web-upload-data:/tmp/flet-uploads
+    environment:
+      - API_URL=http://rest-api:8000/api
+      - PUBLIC_API_URL=http://localhost:8000/api
+      - FLET_SERVER_HOST=0.0.0.0
+      - FLET_SERVER_PORT=8552
+      - FLET_UPLOAD_DIR=/tmp/flet-uploads
+      - FLET_SECRET_KEY=desktop-app-web-dev-secret
+    depends_on:
+      - rest-api
+    command:
+      sh -c "/project/bin/python /desktop_app/main_win.py"
+    ports:
+      - "8552:8552"
+
   mobile-app:
     build:
       context: ./mobile-app
@@ -135,6 +159,7 @@ services:
 volumes:
   postgres-data:
   media-data:
+  desktop-app-web-upload-data:
 
 networks:
   project_net:

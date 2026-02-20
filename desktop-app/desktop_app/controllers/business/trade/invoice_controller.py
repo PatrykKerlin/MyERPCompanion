@@ -50,6 +50,7 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         self.__orders_by_id: dict[int, OrderPlainSchema] = {}
         self.__selected_order_ids: set[int] = set()
         self.__pending_order_ids: set[int] = set()
+        self.__file_picker: ft.FilePicker | None = None
 
     def on_value_changed(self, event: ft.ControlEvent, key: str, *after_change: Callable[[], None]) -> None:
         super().on_value_changed(event, key, *after_change)
@@ -453,6 +454,9 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             return
         content, suggested_name = pdf_result
         default_name = suggested_name or f"invoice_{invoice_id}.pdf"
+        if self._page.web:
+            await self.__save_pdf_in_web(default_name, content)
+            return
         file_path = await self.__pick_pdf_save_path(default_name)
         if not file_path:
             return
@@ -460,6 +464,21 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             await asyncio.to_thread(self.__write_pdf_file, file_path, content)
         except Exception:
             self._logger.exception(f"Unhandled exception in {self.__handle_generate_pdf.__qualname__}")
+            self._open_error_dialog(message_key=ApiActionError.GENERIC)
+
+    async def __save_pdf_in_web(self, suggested_name: str, content: bytes) -> None:
+        translation = self._state_store.app_state.translation.items
+        try:
+            file_picker = self.__ensure_file_picker()
+            await file_picker.save_file(
+                dialog_title=translation.get("save_pdf"),
+                file_name=suggested_name,
+                file_type=ft.FilePickerFileType.CUSTOM,
+                allowed_extensions=["pdf"],
+                src_bytes=content,
+            )
+        except Exception:
+            self._logger.exception(f"Unhandled exception in {self.__save_pdf_in_web.__qualname__}")
             self._open_error_dialog(message_key=ApiActionError.GENERIC)
 
     async def __pick_pdf_save_path(self, suggested_name: str) -> str | None:
@@ -501,6 +520,14 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
                 )
             return None
         return result.stdout.strip() or None
+
+    def __ensure_file_picker(self) -> ft.FilePicker:
+        if self.__file_picker is not None:
+            return self.__file_picker
+        self.__file_picker = ft.FilePicker()
+        self._page.services.append(self.__file_picker)
+        self._page.update()
+        return self.__file_picker
 
     @staticmethod
     def __write_pdf_file(file_path: str, content: bytes) -> None:

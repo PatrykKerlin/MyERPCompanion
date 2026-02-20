@@ -2,7 +2,9 @@ import asyncio
 import mimetypes
 import os
 import subprocess
+from pathlib import Path
 from typing import Any, cast
+from uuid import uuid4
 
 import flet as ft
 from config.context import Context
@@ -21,6 +23,7 @@ from services.business.logistic import AssocBinItemService, BinService, Category
 from services.business.trade import AssocItemDiscountService, DiscountService, SupplierService
 from services.core.image_service import ImageService
 from utils.enums import ApiActionError, Endpoint, View, ViewMode
+from utils.media_url import MediaUrl
 from utils.translation import Translation
 from views.business.logistic.item_view import ItemView
 
@@ -47,6 +50,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         self.__image_service = ImageService(self._settings, self._logger, self._tokens_accessor)
         self.__bin_service = BinService(self._settings, self._logger, self._tokens_accessor)
         self.__bin_item_service = AssocBinItemService(self._settings, self._logger, self._tokens_accessor)
+        self.__file_picker: ft.FilePicker | None = None
 
     def on_image_select_requested(self) -> None:
         self._page.run_task(self.__execute_pick_and_upload)
@@ -258,7 +262,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         self._view.set_discount_source_items(source_items)
 
     @BaseController.handle_api_action(ApiActionError.IMAGE_UPLOAD)
-    async def __perform_image_upload(self, file_path: str) -> bool:
+    async def __perform_image_upload(self, file_path: str, uploaded_file_name: str | None = None) -> bool:
         if not self._view or not self._view.data_row:
             return False
         item_id = self._view.data_row["id"]
@@ -267,7 +271,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         max_order = max((image["order"] for image in images), default=0)
         next_order = max_order + 1
         content_type = mimetypes.guess_type(file_path)[0] or "image/unknown"
-        file_name = os.path.basename(file_path)
+        file_name = uploaded_file_name or os.path.basename(file_path)
         data = await asyncio.to_thread(self.__read_binary_file, file_path)
         form_data = {
             "is_primary": str(is_primary).lower(),
@@ -282,7 +286,8 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         response = await self.__image_service.create_multipart(
             Endpoint.IMAGES, None, None, body_params, self._module_id
         )
-        images.append(response.model_dump())
+        image_row = self.__normalize_image_row(response.model_dump())
+        images.append(image_row)
         self._view.data_row["images"] = images
         self._view.set_images(images)
         return True
@@ -309,7 +314,7 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         response = await self.__image_service.update_bulk(
             Endpoint.IMAGES_UPDATE_BULK, None, None, body_params, self._module_id
         )
-        updated_images = [item.model_dump() for item in response]
+        updated_images = self.__normalize_image_rows([item.model_dump() for item in response])
         self._view.data_row["images"] = updated_images
         self._view.set_images(updated_images)
         return True
@@ -320,12 +325,76 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         return True
 
     async def __execute_pick_and_upload(self) -> None:
+        if self._page.web:
+            await self.__execute_web_pick_and_upload()
+            return
         file_path = await self.__pick_file_path()
         if not file_path:
             return
         uploaded = await self.__perform_image_upload(file_path)
         if not uploaded:
             return
+
+    async def __execute_web_pick_and_upload(self) -> None:
+        picked_file = await self.__pick_web_file()
+        if not picked_file:
+            return
+        file_path = await self.__upload_web_file(picked_file)
+        if not file_path:
+            return
+        try:
+            uploaded = await self.__perform_image_upload(file_path, uploaded_file_name=picked_file.name)
+            if not uploaded:
+                return
+        finally:
+            self.__remove_temp_file(file_path)
+
+    async def __pick_web_file(self) -> ft.FilePickerFile | None:
+        translation = self._state_store.app_state.translation.items
+        try:
+            file_picker = self.__ensure_file_picker()
+            files = await file_picker.pick_files(
+                dialog_title=translation.get("select_picture"),
+                file_type=ft.FilePickerFileType.CUSTOM,
+                allowed_extensions=["png", "jpg", "jpeg"],
+                allow_multiple=False,
+            )
+            if not files:
+                return None
+            return files[0]
+        except Exception:
+            self._logger.exception(f"Unhandled exception in {self.__pick_web_file.__qualname__}")
+            self._open_error_dialog(message=translation.get("image_upload_unsupported"))
+            return None
+
+    async def __upload_web_file(self, picked_file: ft.FilePickerFile) -> str | None:
+        translation = self._state_store.app_state.translation.items
+        upload_dir = self.__get_upload_dir()
+        file_name = Path(picked_file.name).name
+        relative_path = f"file_picker/{uuid4().hex}_{file_name}"
+        absolute_path = os.path.join(upload_dir, relative_path)
+        os.makedirs(os.path.dirname(absolute_path), exist_ok=True)
+        file_picker = self.__ensure_file_picker()
+        try:
+            upload_url = self._page.get_upload_url(relative_path, 600)
+            upload_file = (
+                ft.FilePickerUploadFile(upload_url=upload_url, id=picked_file.id)
+                if picked_file.id is not None
+                else ft.FilePickerUploadFile(upload_url=upload_url, name=file_name)
+            )
+            await file_picker.upload([upload_file])
+            file_ready = await self.__wait_for_uploaded_file(absolute_path, timeout_seconds=30.0)
+            if not file_ready:
+                self._logger.warning("Uploaded file is missing from Flet upload dir.")
+                self._open_error_dialog(message=translation.get("image_upload_unsupported"))
+                self.__remove_temp_file(absolute_path)
+                return None
+            return absolute_path
+        except Exception:
+            self._logger.exception(f"Unhandled exception in {self.__upload_web_file.__qualname__}")
+            self._open_error_dialog(message=translation.get("image_upload_unsupported"))
+            self.__remove_temp_file(absolute_path)
+            return None
 
     async def __pick_file_path(self) -> str | None:
         translation = self._state_store.app_state.translation.items
@@ -358,6 +427,34 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
                 self._logger.warning(f"Zenity file picker returned non-zero code with stderr: {stderr}")
             return None
         return result.stdout.strip() or None
+
+    def __ensure_file_picker(self) -> ft.FilePicker:
+        if self.__file_picker is not None:
+            return self.__file_picker
+        self.__file_picker = ft.FilePicker()
+        self._page.services.append(self.__file_picker)
+        self._page.update()
+        return self.__file_picker
+
+    @staticmethod
+    def __get_upload_dir() -> str:
+        upload_dir = os.getenv("FLET_UPLOAD_DIR", os.path.join(os.getcwd(), "uploads"))
+        os.makedirs(upload_dir, exist_ok=True)
+        return upload_dir
+
+    @staticmethod
+    async def __wait_for_uploaded_file(file_path: str, timeout_seconds: float) -> bool:
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + timeout_seconds
+        while loop.time() < deadline:
+            if os.path.isfile(file_path):
+                try:
+                    if os.path.getsize(file_path) > 0:
+                        return True
+                except OSError:
+                    pass
+            await asyncio.sleep(0.1)
+        return False
 
     def __has_primary_image(self, images: list[dict[str, Any]]) -> bool:
         for image in images:
@@ -426,10 +523,34 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
             if not updated:
                 return
             images = self._view.data_row["images"]
-        self._view.data_row["images"] = images
-        self._view.set_images(images)
+        normalized_images = self.__normalize_image_rows(images)
+        self._view.data_row["images"] = normalized_images
+        self._view.set_images(normalized_images)
 
     @staticmethod
     def __read_binary_file(file_path: str) -> bytes:
         with open(file_path, "rb") as file:
             return file.read()
+
+    @staticmethod
+    def __remove_temp_file(file_path: str) -> None:
+        try:
+            os.remove(file_path)
+        except FileNotFoundError:
+            return
+        except Exception:
+            return
+
+    def __normalize_image_row(self, image_row: dict[str, Any]) -> dict[str, Any]:
+        url = image_row.get("url")
+        if isinstance(url, str):
+            image_row["url"] = MediaUrl.normalize(url, self.__resolve_api_url())
+        return image_row
+
+    def __normalize_image_rows(self, images: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return [self.__normalize_image_row(image) for image in images]
+
+    def __resolve_api_url(self) -> str:
+        if self._settings.PUBLIC_API_URL and bool(getattr(self._page, "web", False)):
+            return self._settings.PUBLIC_API_URL
+        return self._settings.API_URL
