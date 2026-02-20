@@ -228,6 +228,8 @@ VALUES
 ('date_to', 'Data do', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('delete', 'Delete', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('delete', 'Usuń', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('confirm_delete_image', 'Delete selected image?', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('confirm_delete_image', 'Usunąć wybrany obraz?', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('confirm_delete_record', 'Delete selected record?', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('confirm_delete_record', 'Usunąć wybrany rekord?', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('delete_record', 'Delete Record', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
