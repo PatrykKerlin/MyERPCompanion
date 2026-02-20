@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from events.base.base_event import BaseEvent
-from utils.enums import View, ViewMode
+from utils.enums import View
 
 
 @dataclass(frozen=True)
@@ -57,4 +57,3 @@ class LogoutRequested(BaseEvent):
 class ViewRequested(BaseEvent):
     module_id: int
     view_key: View
-    mode: ViewMode | None = None

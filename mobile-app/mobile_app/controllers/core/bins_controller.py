@@ -10,7 +10,7 @@ from schemas.business.logistic.bin_schema import BinPlainSchema, BinStrictSchema
 from schemas.business.logistic.item_schema import ItemPlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
 from services.business.logistic import AssocBinItemService, BinService, ItemService
-from utils.enums import ApiActionError, Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View
 from utils.translation import Translation
 from views.core.bins_view import BinsView
 
@@ -50,14 +50,13 @@ class BinsController(BaseViewController[BinService, BinsView, BinPlainSchema, Bi
             ViewRequested(
                 module_id=self._module_id,
                 view_key=View.ITEMS,
-                mode=ViewMode.STATIC,
                 data={"item_id": item_id, "quantity": quantity},
                 caller_view_key=View.BINS,
                 caller_data={"selected_bin_id": self.__selected_bin.id},
             ),
         )
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinsView:
+    async def _build_view(self, translation: Translation, event: ViewRequested) -> BinsView:
         bins = await self.__perform_get_all_bins()
         selected_warehouse_id = self._get_mobile_selected_warehouse_id()
         if selected_warehouse_id is not None:
@@ -71,9 +70,7 @@ class BinsController(BaseViewController[BinService, BinsView, BinPlainSchema, Bi
         view = BinsView(
             controller=self,
             translation=translation,
-            mode=ViewMode.STATIC,
             view_key=event.view_key,
-            data_row=event.data,
         )
         view.set_bins(self.__bins)
 

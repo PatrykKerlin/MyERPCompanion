@@ -1,11 +1,6 @@
 from enum import IntEnum, StrEnum
 
 
-class ViewMode(StrEnum):
-    NONE = "none"
-    STATIC = "static"
-
-
 class Module(IntEnum):
     CORE = 1
     WEB = 2
@@ -28,7 +23,6 @@ class Endpoint(StrEnum):
     TOKEN = "auth/token"
     REFRESH = "auth/refresh"
     CURRENT_USER = "current-user"
-    MODULES = "modules"
     USERS = "users"
     LANGUAGES = "languages"
     ITEMS = "items"

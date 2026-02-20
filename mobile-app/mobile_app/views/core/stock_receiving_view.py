@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING
 
 import flet as ft
 from styles.styles import ButtonStyles, MobileCommonViewStyles, StockReceivingViewStyles, TypographyStyles
-from utils.enums import View, ViewMode
-from utils.field_group import FieldGroup
+from utils.enums import View
 from utils.translation import Translation
 from views.base.base_view import BaseView
-from views.controls.numeric_field_control import NumericField
 
 if TYPE_CHECKING:
     from controllers.core.stock_receiving_controller import StockReceivingController
@@ -19,12 +17,10 @@ class StockReceivingView(BaseView):
         self,
         controller: StockReceivingController,
         translation: Translation,
-        mode: ViewMode,
         view_key: View,
-        data_row: dict[str, Any] | None,
         orders: list[tuple[int, str]],
     ) -> None:
-        super().__init__(controller, translation, mode, view_key, data_row, 0, 0)
+        super().__init__(controller, translation, view_key)
 
         self.__source_rows: list[tuple[int, str, str, int]] = []
         self.__moved_source_ids: set[int] = set()
@@ -60,40 +56,55 @@ class StockReceivingView(BaseView):
             vertical_alignment=MobileCommonViewStyles.HEADER_ROW_VERTICAL_ALIGNMENT,
         )
 
-        order_container, _ = self._get_dropdown_input(
-            "order_id", StockReceivingViewStyles.ORDER_INPUT_SIZE, orders, callbacks=[self.__on_order_changed]
+        self.__order_input = self._get_dropdown(
+            options=orders,
+            include_empty_option=True,
+            on_select=lambda event: self._controller.on_value_changed("order_id", self.__on_order_changed),
+            value="0",
+            editable=True,
+            enable_search=True,
+            enable_filter=True,
+            expand=True,
         )
-        order_container.col = StockReceivingViewStyles.ORDER_COL
-        self.__order_input = cast(ft.Dropdown, order_container.content)
+        self.__order_input.col = StockReceivingViewStyles.ORDER_COL
         self.__order_input.value = "0"
 
-        target_container, _ = self._get_text_input(
-            "target_bin",
-            StockReceivingViewStyles.TARGET_BIN_INPUT_SIZE,
-            callbacks=[self.__on_target_submit],
+        self.__target_input = self._get_text_field(
+            value="",
+            on_change=lambda event: self._controller.on_value_changed("target_bin"),
+            on_submit=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit),
+            on_focus=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit)
+            if str(getattr(event, "data", "")).lower() == "false"
+            else None,
+            on_tap_outside=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit
+            ),
+            expand=True,
         )
-        target_container.col = StockReceivingViewStyles.TARGET_BIN_COL
-        self.__target_input = cast(ft.TextField, target_container.content)
+        self.__target_input.col = StockReceivingViewStyles.TARGET_BIN_COL
 
-        item_container, _ = self._get_dropdown_input(
-            "item_id", StockReceivingViewStyles.ITEM_INPUT_SIZE, [], callbacks=[self.__on_item_changed]
+        self.__item_input = self._get_dropdown(
+            options=[],
+            include_empty_option=True,
+            on_select=lambda event: self._controller.on_value_changed("item_id", self.__on_item_changed),
+            value="0",
+            editable=True,
+            enable_search=True,
+            enable_filter=True,
+            expand=True,
         )
-        item_container.col = StockReceivingViewStyles.ITEM_COL
-        self.__item_input = cast(ft.Dropdown, item_container.content)
+        self.__item_input.col = StockReceivingViewStyles.ITEM_COL
         self.__item_input.value = "0"
         self.__item_input.disabled = True
 
-        quantity_container, _ = self._get_numeric_input(
-            "quantity",
-            StockReceivingViewStyles.QUANTITY_INPUT_SIZE,
+        self.__quantity_input = self._get_numeric_field(
             value=0,
             step=1,
             precision=0,
             min_value=0,
             is_float=False,
+            on_change=lambda event: self._controller.on_value_changed("quantity"),
+            expand=True,
         )
-        quantity_container.col = StockReceivingViewStyles.QUANTITY_INFO_COL
-        self.__quantity_input = cast(NumericField, quantity_container.content)
 
         self.__available_text = self._get_label(
             "",
@@ -148,21 +159,21 @@ class StockReceivingView(BaseView):
 
         self._add_to_inputs(
             {
-                "order_id": FieldGroup(input=(order_container, StockReceivingViewStyles.ORDER_INPUT_SIZE)),
-                "target_bin": FieldGroup(input=(target_container, StockReceivingViewStyles.TARGET_BIN_INPUT_SIZE)),
-                "item_id": FieldGroup(input=(item_container, StockReceivingViewStyles.ITEM_INPUT_SIZE)),
-                "quantity": FieldGroup(input=(quantity_info_container, StockReceivingViewStyles.QUANTITY_INPUT_SIZE)),
+                "order_id": self.__order_input,
+                "target_bin": self.__target_input,
+                "item_id": self.__item_input,
+                "quantity": self.__quantity_input,
             }
         )
 
         self.__top_form_row = ft.ResponsiveRow(
-            controls=[order_container, target_container],
+            controls=[self.__order_input, self.__target_input],
             columns=StockReceivingViewStyles.TOP_FORM_ROW_COLUMNS,
             alignment=StockReceivingViewStyles.TOP_FORM_ROW_ALIGNMENT,
             vertical_alignment=StockReceivingViewStyles.TOP_FORM_ROW_VERTICAL_ALIGNMENT,
         )
         self.__pick_form_row = ft.ResponsiveRow(
-            controls=[item_container, quantity_info_container, add_button_container],
+            controls=[self.__item_input, quantity_info_container, add_button_container],
             columns=StockReceivingViewStyles.PICK_FORM_ROW_COLUMNS,
             alignment=StockReceivingViewStyles.PICK_FORM_ROW_ALIGNMENT,
             vertical_alignment=StockReceivingViewStyles.PICK_FORM_ROW_VERTICAL_ALIGNMENT,

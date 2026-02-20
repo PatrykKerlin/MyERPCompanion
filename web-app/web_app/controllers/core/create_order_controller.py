@@ -30,7 +30,7 @@ from services.business.trade import (
     OrderViewService,
 )
 from utils.discount_context import DiscountContext
-from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, Module, View
 from utils.media_url import MediaUrl
 from utils.translation import Translation
 from views.components.order_confirmation_dialog_component import OrderConfirmationDialogComponent
@@ -58,7 +58,7 @@ class CreateOrderController(
         self.__order_item_service = AssocOrderItemService(self._settings, self._logger, self._tokens_accessor)
         self.__order_status_service = AssocOrderStatusService(self._settings, self._logger, self._tokens_accessor)
         self.__cart: dict[int, dict[str, float | int | None]] = {}
-        self.__item_pricing: dict[int, tuple[float, float]] = {}
+        self.__item_pricing: dict[int, tuple[float, float, float]] = {}
         self.__item_dimensions: dict[int, tuple[float, float, float, float]] = {}
         self.__item_currency_map: dict[int, int | None] = {}
         self.__item_category_map: dict[int, int | None] = {}
@@ -247,7 +247,7 @@ class CreateOrderController(
             quantity = int(data.get("quantity") or 0)
             if quantity <= 0:
                 continue
-            purchase_price, _ = self.__item_pricing.get(item_id, (0.0, 0.0))
+            purchase_price, margin, _ = self.__item_pricing.get(item_id, (0.0, 0.0, 0.0))
             try:
                 purchase_price = self.__convert_to_currency(
                     purchase_price,
@@ -261,7 +261,7 @@ class CreateOrderController(
                 if track_missing:
                     self.__checkout_missing_exchange_rate = True
             quantities[item_id] = quantity
-            base_net_map[item_id] = purchase_price * quantity
+            base_net_map[item_id] = self.__apply_margin(purchase_price, margin) * quantity
 
         order_quantity = sum(quantities.values())
         order_net = sum(base_net_map.values())
@@ -316,7 +316,7 @@ class CreateOrderController(
         track_missing: bool = False,
         raise_on_missing: bool = False,
     ) -> tuple[float, float, float, float]:
-        purchase_price, vat_rate = self.__item_pricing.get(item_id, (0.0, 0.0))
+        purchase_price, margin, vat_rate = self.__item_pricing.get(item_id, (0.0, 0.0, 0.0))
         try:
             purchase_price = self.__convert_to_currency(
                 purchase_price,
@@ -329,7 +329,7 @@ class CreateOrderController(
                 raise
             if track_missing:
                 self.__checkout_missing_exchange_rate = True
-        base_net = purchase_price * quantity
+        base_net = self.__apply_margin(purchase_price, margin) * quantity
         discount_percent = self.__get_cart_discount_percent(
             item_id,
             quantity,
@@ -463,11 +463,11 @@ class CreateOrderController(
             quantity = int(data.get("quantity") or 0)
             if quantity <= 0:
                 continue
-            purchase_price, _ = self.__item_pricing.get(item_id, (0.0, 0.0))
+            purchase_price, margin, _ = self.__item_pricing.get(item_id, (0.0, 0.0, 0.0))
             purchase_price = self.__convert_to_currency(
                 purchase_price, self.__item_currency_map.get(item_id), currency_id, raise_on_missing=True
             )
-            base_net = purchase_price * quantity
+            base_net = self.__apply_margin(purchase_price, margin) * quantity
             (
                 item_discount_id,
                 category_discount_id,
@@ -523,6 +523,10 @@ class CreateOrderController(
         if parsed <= 0:
             return 0
         return parsed
+
+    @staticmethod
+    def __apply_margin(purchase_price: float, margin: float) -> float:
+        return purchase_price * (1 + margin)
 
     @staticmethod
     def __format_order_number(order_date: date, sequence: int) -> str:
@@ -675,7 +679,7 @@ class CreateOrderController(
                 delivery_method_id=delivery_method_id,
                 tracking_number=None,
                 notes=None,
-                internal_notes=None,
+                external_notes=None,
                 invoice_id=None,
             )
             order = await self.__create_order(payload)
@@ -703,7 +707,7 @@ class CreateOrderController(
             self.__show_order_confirmation(created_order_number)
 
     def __initialize_discount_maps(self, view_data: OrderViewResponseSchema) -> None:
-        self.__item_pricing = {item.id: (item.purchase_price, item.vat_rate) for item in view_data.source_items}
+        self.__item_pricing = {item.id: (item.purchase_price, item.margin, item.vat_rate) for item in view_data.source_items}
         self.__item_dimensions = {
             item.id: (item.width, item.height, item.length, item.weight) for item in view_data.source_items
         }
@@ -726,7 +730,7 @@ class CreateOrderController(
         self.__delivery_method_options = [(item.id, item.label) for item in view_data.delivery_methods]
         default_status = next((item for item in view_data.statuses if item.status_number == 1), None)
         self.__default_status_id = default_status.id if default_status else None
-        self.__customer_discounts = [discount for customer in view_data.customers for discount in customer.discounts]
+        self.__customer_discounts = self.__get_current_customer_discounts(view_data)
         self.__discount_percent_map.clear()
         for discount_list in (
             self.__item_discount_map.values(),
@@ -739,6 +743,16 @@ class CreateOrderController(
                         self.__discount_percent_map[discount.id] = discount.percent
         self.__order_currency_id = view_data.order.currency_id if view_data.order else None
         self.__load_exchange_rates(view_data.exchange_rates)
+
+    def __get_current_customer_discounts(self, view_data: OrderViewResponseSchema) -> list[OrderViewDiscountSchema]:
+        user = self._state_store.app_state.user.current
+        customer_id = user.customer_id if user else None
+        if customer_id is None:
+            return []
+        customer = next((item for item in view_data.customers if item.id == customer_id), None)
+        if customer is None:
+            return []
+        return list(customer.discounts)
 
     def __is_discount_allowed(
         self,
@@ -800,7 +814,6 @@ class CreateOrderController(
             ViewRequested(
                 module_id=Module.WEB,
                 view_key=View.WEB_ORDERS,
-                mode=ViewMode.STATIC,
             )
         )
 

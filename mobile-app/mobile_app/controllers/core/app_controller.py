@@ -7,8 +7,6 @@ from config.context import Context
 from controllers.base.base_controller import BaseController
 from events.base.base_event import BaseEvent
 from events.events import (
-    ApiStatusChecked,
-    ApiStatusRequested,
     AppStarted,
     AuthDialogRequested,
     AuthViewReady,
@@ -24,7 +22,7 @@ from events.events import (
 from schemas.business.trade.order_schema import OrderPickingSummarySchema
 from services.business.trade import OrderService
 from services.core.app_service import AppService
-from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, Module, View
 from utils.user_settings import UserSettings
 from views.core.app_view import AppView as MobileAppView
 from views.core.main_menu_view import MainMenuView
@@ -53,7 +51,6 @@ class AppController(BaseController):
                 TranslationReady: self.__translation_ready_handler,
                 TranslationFailed: self.__api_not_responding_handler,
                 UserAuthenticated: self.__user_authenticated_handler,
-                ApiStatusRequested: self.__api_status_handler,
                 AuthViewReady: self.__auth_view_ready_handler,
                 LogoutRequested: self.__logout_requested_handler,
                 ViewReady: self.__view_ready_handler,
@@ -86,10 +83,6 @@ class AppController(BaseController):
             await self._event_bus.publish(TranslationRequested(self._settings.LANGUAGE, False))
             return
         self._open_error_dialog(message_key="api_not_responding")
-
-    async def __api_status_handler(self, _: ApiStatusRequested) -> None:
-        ok = await self.__perform_api_health_check()
-        await self._event_bus.publish(ApiStatusChecked(status=bool(ok)))
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_api_health_check(self) -> bool:
@@ -137,8 +130,6 @@ class AppController(BaseController):
         self.__main_menu = None
         self.__last_view_request = None
         self._state_store.update(
-            view={"title": "", "mode": ViewMode.NONE, "view": None},
-            modules={"items": []},
             user={"current": None},
             mobile_warehouse={"selected_id": None, "selected_name": None},
             tokens={"access": None, "refresh": None},
@@ -218,7 +209,6 @@ class AppController(BaseController):
         event = ViewRequested(
             module_id=Module.MOBILE,
             view_key=view_key,
-            mode=ViewMode.STATIC,
         )
         self.__last_view_request = event
         self._page.run_task(self._event_bus.publish, event)
@@ -231,7 +221,6 @@ class AppController(BaseController):
             module_id=Module.CORE,
             view_key=View.USERS,
             record_id=current_user.id,
-            mode=ViewMode.STATIC,
             caller_view_key=View.CURRENT_USER,
         )
         self.__last_view_request = event
@@ -264,7 +253,6 @@ class AppController(BaseController):
                 module_id=event.module_id,
                 view_key=event.view_key,
                 record_id=current_user.id,
-                mode=event.mode,
                 caller_view_key=event.caller_view_key,
                 caller_data=event.caller_data,
                 width_ratio=event.width_ratio,

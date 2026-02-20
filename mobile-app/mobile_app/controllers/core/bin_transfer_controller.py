@@ -6,9 +6,10 @@ from controllers.base.base_view_controller import BaseViewController
 from events.events import MobileMainMenuRequested, ViewRequested
 from schemas.business.logistic.assoc_bin_item_schema import AssocBinItemPlainSchema, AssocBinItemStrictSchema
 from schemas.business.logistic.bin_schema import BinPlainSchema
+from schemas.business.logistic.item_schema import ItemPlainSchema
 from schemas.core.param_schema import IdsPayloadSchema
 from services.business.logistic import AssocBinItemService, BinService, ItemService
-from utils.enums import ApiActionError, Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View
 from utils.translation import Translation
 from views.core.bin_transfer_view import BinTransferView
 
@@ -103,7 +104,7 @@ class BinTransferController(
     def on_save_clicked(self) -> None:
         self._page.run_task(self.__handle_save)
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> BinTransferView:
+    async def _build_view(self, translation: Translation, event: ViewRequested) -> BinTransferView:
         self.__source_bin = None
         self.__target_bin = None
         self.__source_items = {}
@@ -115,9 +116,7 @@ class BinTransferController(
         return BinTransferView(
             controller=self,
             translation=translation,
-            mode=ViewMode.STATIC,
             view_key=event.view_key,
-            data_row=event.data,
         )
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
@@ -167,33 +166,46 @@ class BinTransferController(
         return None
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_fetch_bin_items(self, bin_schema: BinPlainSchema) -> dict[int, tuple[str, int, int]]:
-        if not bin_schema.item_ids:
-            return {}
-
-        body_params = IdsPayloadSchema(ids=bin_schema.item_ids)
-        item_schemas = await self.__item_service.get_bulk(
+    async def __perform_fetch_items(self, item_ids: list[int]) -> list[ItemPlainSchema] | None:
+        if not item_ids:
+            return []
+        body_params = IdsPayloadSchema(ids=item_ids)
+        return await self.__item_service.get_bulk(
             Endpoint.ITEMS_GET_BULK,
             None,
             None,
             body_params,
             self._module_id,
         )
-        if not item_schemas:
-            return {}
-        item_map = {item.id: item for item in item_schemas}
 
-        query_params = {"bin_id": bin_schema.id}
-        bin_item_schemas = await self.__bin_item_service.get_all(
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_fetch_bin_item_rows(self, bin_id: int) -> list[AssocBinItemPlainSchema] | None:
+        query_params = {"bin_id": bin_id}
+        return await self.__bin_item_service.get_all(
             Endpoint.BIN_ITEMS,
             None,
             query_params,
             None,
             self._module_id,
         )
-        if not bin_item_schemas:
-            return {}
 
+    async def __load_bin_items(self, bin_schema: BinPlainSchema) -> dict[int, tuple[str, int, int]]:
+        if not bin_schema.item_ids:
+            return {}
+        item_schemas = await self.__perform_fetch_items(bin_schema.item_ids)
+        if not item_schemas:
+            return {}
+        bin_item_schemas = await self.__perform_fetch_bin_item_rows(bin_schema.id)
+        return self.__build_bin_items_map(item_schemas, bin_item_schemas)
+
+    @staticmethod
+    def __build_bin_items_map(
+        item_schemas: list[ItemPlainSchema] | None,
+        bin_item_schemas: list[AssocBinItemPlainSchema] | None,
+    ) -> dict[int, tuple[str, int, int]]:
+        if not item_schemas or not bin_item_schemas:
+            return {}
+        item_map = {item.id: item for item in item_schemas}
         items: dict[int, tuple[str, int, int]] = {}
         for bin_item in bin_item_schemas:
             item_schema = item_map.get(bin_item.item_id)
@@ -237,7 +249,7 @@ class BinTransferController(
             return
 
         self.__source_bin = bin_schema
-        self.__source_items = await self.__perform_fetch_bin_items(bin_schema) or {}
+        self.__source_items = await self.__load_bin_items(bin_schema)
         self.__sanitize_pending_moves()
         self._close_loading_dialog()
         self._view.set_source_error(None)
@@ -276,7 +288,7 @@ class BinTransferController(
             return
 
         self.__target_bin = bin_schema
-        self.__target_items = await self.__perform_fetch_bin_items(bin_schema) or {}
+        self.__target_items = await self.__load_bin_items(bin_schema)
         self._close_loading_dialog()
         self._view.set_target_error(None)
         self.__sync_view_state()
@@ -297,7 +309,7 @@ class BinTransferController(
             source_item = self.__source_items.get(item_id)
             if source_item is None:
                 continue
-            _source_index, source_bin_item_id, source_quantity = source_item
+            _, source_bin_item_id, source_quantity = source_item
             bounded_quantity = max(1, min(move_quantity, source_quantity))
             target_item = self.__target_items.get(item_id)
 
@@ -376,7 +388,7 @@ class BinTransferController(
                 self.__pending_move_quantities.clear()
             else:
                 self.__source_bin = refreshed_source
-                self.__source_items = await self.__perform_fetch_bin_items(refreshed_source) or {}
+                self.__source_items = await self.__load_bin_items(refreshed_source)
         if self.__target_bin is not None:
             refreshed_target = await self.__perform_get_single_bin(self.__target_bin.location)
             if refreshed_target is None:
@@ -384,7 +396,7 @@ class BinTransferController(
                 self.__target_items = {}
             else:
                 self.__target_bin = refreshed_target
-                self.__target_items = await self.__perform_fetch_bin_items(refreshed_target) or {}
+                self.__target_items = await self.__load_bin_items(refreshed_target)
         self.__sanitize_pending_moves()
 
     def __sanitize_pending_moves(self) -> None:
@@ -403,7 +415,7 @@ class BinTransferController(
         if not isinstance(self._view, BinTransferView):
             return
         source_rows: list[tuple[int, str, int]] = []
-        for item_id, (item_index, _source_bin_item_id, source_quantity) in self.__source_items.items():
+        for item_id, (item_index, _, source_quantity) in self.__source_items.items():
             pending_quantity = self.__pending_move_quantities.get(item_id, 0)
             remaining_quantity = source_quantity - pending_quantity
             if remaining_quantity <= 0:

@@ -8,7 +8,7 @@ from controllers.base.base_controller import BaseController
 from events.events import ViewRequested
 from schemas.base import BasePlainSchema, BaseStrictSchema
 from services.base.base_service import BaseService
-from utils.enums import Endpoint, View, ViewMode
+from utils.enums import Endpoint, View
 from utils.translation import Translation
 from views.base.base_view import BaseView
 
@@ -45,12 +45,9 @@ class BaseViewController(
         try:
             translation = self._state_store.app_state.translation.items
             self._module_id = event.module_id
-            mode = event.mode or ViewMode.STATIC
             self._view = await self._build_view(translation)
             self._state_store.update(
                 view={
-                    "title": translation.get(event.view_key),
-                    "mode": mode,
                     "view": self._view,
                 }
             )

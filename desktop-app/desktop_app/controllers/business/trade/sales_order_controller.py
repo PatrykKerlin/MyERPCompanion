@@ -58,7 +58,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         self.__source_selectable_ids: set[int] = set()
         self.__item_stock_map: dict[int, tuple[int, int]] = {}
         self.__item_dimensions: dict[int, tuple[float, float, float, float]] = {}
-        self.__item_pricing: dict[int, tuple[float, float]] = {}
+        self.__item_pricing: dict[int, tuple[float, float, float]] = {}
         self.__item_currency_map: dict[int, int | None] = {}
         self.__item_category_map: dict[int, int | None] = {}
 
@@ -122,7 +122,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             "status_id",
             "status_ids",
             "notes",
-            "internal_notes",
+            "external_notes",
         }
         return [field for field in available_fields if field not in hidden_fields]
 
@@ -362,9 +362,9 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
     ) -> AssocOrderItemStrictSchema:
         if context is None:
             context = self.__build_discount_context()
-        purchase_price, _ = self.__item_pricing.get(item_id, (0.0, 0.0))
+        purchase_price, margin, _ = self.__item_pricing.get(item_id, (0.0, 0.0, 0.0))
         purchase_price = self.__convert_to_order_currency(purchase_price, self.__item_currency_map.get(item_id))
-        base_net = purchase_price * quantity
+        base_net = self.__apply_margin(purchase_price, margin) * quantity
         item_discount_id, category_discount_id, customer_discount_id = self.__get_discount_payload(
             item_id, quantity, base_net, context
         )
@@ -450,7 +450,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
             self.__item_dimensions[item.id] = (item.width, item.height, item.length, item.weight)
             self.__item_currency_map[item.id] = item.supplier_currency_id
             self.__item_category_map[item.id] = item.category_id
-            self.__item_pricing[item.id] = (item.purchase_price, item.vat_rate)
+            self.__item_pricing[item.id] = (item.purchase_price, item.margin, item.vat_rate)
             self.__selected_item_discount_ids.setdefault(item.id, None)
             results.append((item.id, row))
         self.__source_item_category_map = category_map
@@ -467,7 +467,7 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         for item in items:
             row = [item.index, item.name, str(item.quantity)]
             self.__item_dimensions[item.item_id] = (item.width, item.height, item.length, item.weight)
-            self.__item_pricing[item.item_id] = (item.purchase_price, item.vat_rate)
+            self.__item_pricing[item.item_id] = (item.purchase_price, item.margin, item.vat_rate)
             if item.supplier_currency_id is not None:
                 self.__item_currency_map[item.item_id] = item.supplier_currency_id
             if item.category_id is not None:
@@ -496,9 +496,9 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
     ) -> tuple[float, float, float, float]:
         if context is None:
             context = self.__build_discount_context()
-        purchase_price, vat_rate = self.__item_pricing.get(item_id, (0.0, 0.0))
+        purchase_price, margin, vat_rate = self.__item_pricing.get(item_id, (0.0, 0.0, 0.0))
         purchase_price = self.__convert_to_order_currency(purchase_price, self.__item_currency_map.get(item_id))
-        base_net = purchase_price * quantity
+        base_net = self.__apply_margin(purchase_price, margin) * quantity
         discount_percent = self.__get_discount_percent(item_id, quantity, base_net, context)
         total_discount = round(base_net * discount_percent, 2) if discount_percent else 0.0
         total_net = round(base_net - total_discount, 2)
@@ -743,9 +743,9 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
     def __get_item_base_net_map(self, quantities: dict[int, int]) -> dict[int, float]:
         base_net_map: dict[int, float] = {}
         for item_id, quantity in quantities.items():
-            purchase_price, _ = self.__item_pricing.get(item_id, (0.0, 0.0))
+            purchase_price, margin, _ = self.__item_pricing.get(item_id, (0.0, 0.0, 0.0))
             purchase_price = self.__convert_to_order_currency(purchase_price, self.__item_currency_map.get(item_id))
-            base_net_map[item_id] = purchase_price * quantity
+            base_net_map[item_id] = self.__apply_margin(purchase_price, margin) * quantity
         return base_net_map
 
     def __discount_meets_requirements(self, discount: OrderViewDiscountSchema, quantity: int, base_net: float) -> bool:
@@ -878,6 +878,10 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         cost = price_per_unit * units
         cost = self.__convert_to_order_currency(cost, carrier_currency_id)
         return round(cost, 2)
+
+    @staticmethod
+    def __apply_margin(purchase_price: float, margin: float) -> float:
+        return purchase_price * (1 + margin)
 
     def __convert_to_order_currency(self, amount: float, source_currency_id: int | None) -> float:
         order_currency_id = self._request_data.input_values.get("currency_id")

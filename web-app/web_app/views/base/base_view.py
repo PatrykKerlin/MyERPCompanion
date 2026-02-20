@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar
 import flet as ft
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from services.base.base_service import BaseService
-from utils.enums import View, ViewMode
+from utils.enums import View
 from utils.field_group import FieldGroup
 from utils.translation import Translation
 from views.base.base_component import BaseComponent
@@ -24,13 +24,11 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
         self,
         controller: TController,
         translation: Translation,
-        mode: ViewMode,
         view_key: View,
         data_row: dict[str, Any] | None,
         caller_view_key: View | None = None,
     ) -> None:
         BaseComponent.__init__(self, controller, translation)
-        self._mode = mode
         self._view_key = view_key
         self._data_row = data_row
         self._inputs: dict[str, FieldGroup] = {}
@@ -44,10 +42,6 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     @property
     def data_row(self) -> dict[str, Any] | None:
         return self._data_row
-
-    @property
-    def mode(self) -> ViewMode:
-        return self._mode
 
     @property
     def view_key(self) -> View:

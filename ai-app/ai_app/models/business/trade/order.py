@@ -36,7 +36,7 @@ class Order(BaseModel):
     shipping_cost: Mapped[float] = Fields.numeric_10_2()
 
     notes: Mapped[str | None] = Fields.string_1000(nullable=True)
-    internal_notes: Mapped[str | None] = Fields.string_1000(nullable=True)
+    external_notes: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     customer_id: Mapped[int | None] = Fields.foreign_key(column="customers.id", nullable=True)
     customer: Mapped[Customer | None] = Fields.relationship(

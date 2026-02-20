@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 import flet as ft
 from styles.styles import ButtonStyles, MobileCommonViewStyles, TypographyStyles, UserViewStyles
 from schemas.validation.constraints import Constraints
-from utils.enums import View, ViewMode
+from utils.enums import View
 from utils.translation import Translation
 from views.base.base_view import BaseView
 
@@ -18,14 +18,12 @@ class UserView(BaseView):
         self,
         controller: UserController,
         translation: Translation,
-        mode: ViewMode,
         view_key: View,
-        data_row: dict[str, Any] | None,
         languages: list[tuple[int, str]],
         selected_language_id: int,
         selected_theme: Constraints.Theme,
     ) -> None:
-        super().__init__(controller, translation, mode, view_key, data_row, 0, 0, caller_view_key=View.CURRENT_USER)
+        super().__init__(controller, translation, view_key, caller_view_key=View.CURRENT_USER)
         self.__languages = languages
         self.__selected_language_id = selected_language_id
         self.__selected_theme = selected_theme

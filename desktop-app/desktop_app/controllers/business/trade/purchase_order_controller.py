@@ -89,7 +89,7 @@ class PurchaseOrderController(
             "status_id",
             "status_ids",
             "notes",
-            "internal_notes",
+            "external_notes",
         }
         return [field for field in available_fields if field not in hidden_fields]
 

@@ -20,13 +20,10 @@ from services.base.base_service import BaseService
 from states.state_store import StateStore
 from states.states import (
     AppState,
-    ModulesState,
     TokensState,
     TranslationState,
     UserState,
-    ViewState,
 )
-from utils.enums import ViewMode
 from utils.translation import Translation
 from utils.user_settings import UserSettings
 
@@ -55,12 +52,6 @@ class App:
             ),
             tokens=TokensState(),
             user=UserState(),
-            modules=ModulesState(items=[]),
-            view=ViewState(
-                title="",
-                mode=ViewMode.NONE,
-                view=None,
-            ),
         )
 
         self.__state_store = StateStore(initial_state)

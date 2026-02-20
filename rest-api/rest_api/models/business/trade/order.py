@@ -22,6 +22,8 @@ class Order(BaseModel):
     __tablename__ = "orders"
     __table_args__ = (Index("ux_order_number_active_true", "number", unique=True, postgresql_where=text("is_active")),)
 
+    INVOICES_ID: str = "orders.invoice_id"
+
     number: Mapped[str] = Fields.string_20(unique=False)
     is_sales: Mapped[bool] = Fields.boolean(default=True)
 
@@ -36,7 +38,7 @@ class Order(BaseModel):
     shipping_cost: Mapped[float] = Fields.numeric_10_2()
 
     notes: Mapped[str | None] = Fields.string_1000(nullable=True)
-    internal_notes: Mapped[str | None] = Fields.string_1000(nullable=True)
+    external_notes: Mapped[str | None] = Fields.string_1000(nullable=True)
 
     customer_id: Mapped[int | None] = Fields.foreign_key(column="customers.id", nullable=True)
     customer: Mapped[Customer | None] = Fields.relationship(
@@ -78,19 +80,19 @@ class Order(BaseModel):
 
     invoice_number = column_property(
         select(Invoice.number)
-        .where(Invoice.id == literal_column("orders.invoice_id"))
+        .where(Invoice.id == literal_column(INVOICES_ID))
         .where(Invoice.is_active.is_(True))
         .scalar_subquery()
     )
     invoice_due_date = column_property(
         select(Invoice.due_date)
-        .where(Invoice.id == literal_column("orders.invoice_id"))
+        .where(Invoice.id == literal_column(INVOICES_ID))
         .where(Invoice.is_active.is_(True))
         .scalar_subquery()
     )
     invoice_is_paid = column_property(
         select(Invoice.is_paid)
-        .where(Invoice.id == literal_column("orders.invoice_id"))
+        .where(Invoice.id == literal_column(INVOICES_ID))
         .where(Invoice.is_active.is_(True))
         .scalar_subquery()
     )

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 import flet as ft
 from styles.dimensions import AppDimensions
 from styles.styles import ButtonStyles, OrdersViewStyles, TypographyStyles
-from utils.enums import View, ViewMode
+from utils.enums import View
 from utils.translation import Translation
 from views.base.base_view import BaseView
 from views.components.image_preview_dialog_component import ImagePreviewDialogComponent
@@ -31,7 +31,6 @@ class OrdersView(BaseView["OrdersController"]):
         super().__init__(
             controller=controller,
             translation=translation,
-            mode=ViewMode.STATIC,
             view_key=View.WEB_ORDERS,
             data_row=None,
         )

@@ -1,18 +1,15 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 import flet as ft
 from styles.styles import AlignmentStyles, ButtonStyles, MobileCommonViewStyles, OrderPickingViewStyles, TypographyStyles
 from schemas.business.logistic.item_schema import ItemPlainSchema
-from utils.enums import View, ViewMode
-from utils.field_group import FieldGroup
+from utils.enums import View
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 from views.base.base_view import BaseView
-from views.controls.date_field_control import DateField
-from views.controls.numeric_field_control import NumericField
 
 if TYPE_CHECKING:
     from controllers.core.order_picking_controller import OrderPickingController
@@ -20,9 +17,6 @@ if TYPE_CHECKING:
 
 
 class OrderPickingView(BaseView):
-    __MODE_LIST = "list"
-    __MODE_PICK = "pick"
-
     __META_FIELDS = {
         "id",
         "created_at",
@@ -83,15 +77,12 @@ class OrderPickingView(BaseView):
         self,
         controller: OrderPickingController,
         translation: Translation,
-        mode: ViewMode,
         view_key: View,
-        data_row: dict[str, Any] | None,
         customers: list[tuple[int, str]],
         default_order_date: date | None,
         selected_customer_id: int | None,
     ) -> None:
-        super().__init__(controller, translation, mode, view_key, data_row, 0, 0)
-        self.__mode = self.__MODE_LIST
+        super().__init__(controller, translation, view_key)
         self.__order_rows: list[OrderPickingItemRow] = []
         self.__picked_rows: list[OrderPickedItemRow] = []
         self.__selected_order_id: int | None = None
@@ -110,38 +101,50 @@ class OrderPickingView(BaseView):
 
         self.__title = self._get_label("", style=TypographyStyles.HEADER_TITLE)
 
-        order_date_container, _ = self._get_date_picker(
-            "order_date",
-            OrderPickingViewStyles.ORDER_DATE_INPUT_SIZE,
-            callbacks=[self.__handle_order_date_changed],
+        self.__order_date_input = self._get_date_field(
             value=default_order_date,
+            on_change=lambda event: self._controller.on_value_changed("order_date", self.__handle_order_date_changed),
+            expand=True,
             read_only=False,
         )
-        self.__order_date_input = cast(DateField, order_date_container.content)
+        self.__order_date_input.col = self._responsive_col(OrderPickingViewStyles.ORDER_DATE_INPUT_SIZE)
 
-        customer_container, _ = self._get_dropdown_input(
-            "customer_id",
-            OrderPickingViewStyles.CUSTOMER_INPUT_SIZE,
-            customers,
-            callbacks=[self.__handle_customer_changed],
+        self.__customer_input = self._get_dropdown(
+            options=customers,
+            include_empty_option=True,
+            on_select=lambda event: self._controller.on_value_changed("customer_id", self.__handle_customer_changed
+            ),
+            value="0",
+            editable=True,
+            enable_search=True,
+            enable_filter=True,
+            expand=True,
         )
-        self.__customer_input = cast(ft.Dropdown, customer_container.content)
+        self.__customer_input.col = self._responsive_col(OrderPickingViewStyles.CUSTOMER_INPUT_SIZE)
 
-        order_container, _ = self._get_dropdown_input(
-            "order_id",
-            OrderPickingViewStyles.ORDER_INPUT_SIZE,
-            [],
-            callbacks=[self.__handle_order_changed],
+        self.__order_input = self._get_dropdown(
+            options=[],
+            include_empty_option=True,
+            on_select=lambda event: self._controller.on_value_changed("order_id", self.__handle_order_changed),
+            value="0",
+            editable=True,
+            enable_search=True,
+            enable_filter=True,
+            expand=True,
         )
-        self.__order_input = cast(ft.Dropdown, order_container.content)
+        self.__order_input.col = self._responsive_col(OrderPickingViewStyles.ORDER_INPUT_SIZE)
 
-        package_item_container, _ = self._get_dropdown_input(
-            "package_item_id",
-            OrderPickingViewStyles.PACKAGE_ITEM_INPUT_SIZE,
-            [],
+        self.__package_item_input = self._get_dropdown(
+            options=[],
+            include_empty_option=True,
+            on_select=lambda event: self._controller.on_value_changed("package_item_id"),
+            value="0",
+            editable=True,
+            enable_search=True,
+            enable_filter=True,
+            expand=True,
         )
-        package_item_container.col = OrderPickingViewStyles.PACKAGE_ITEM_COL
-        self.__package_item_input = cast(ft.Dropdown, package_item_container.content)
+        self.__package_item_input.col = OrderPickingViewStyles.PACKAGE_ITEM_COL
         self.__package_item_input.disabled = True
         self.__add_package_button = self._get_button(
             on_click=self.__on_add_package_clicked,
@@ -153,44 +156,49 @@ class OrderPickingView(BaseView):
             alignment=AlignmentStyles.CENTER_LEFT,
         )
         self.__packages_row = ft.ResponsiveRow(
-            controls=[package_item_container, package_button_container],
+            controls=[self.__package_item_input, package_button_container],
             columns=OrderPickingViewStyles.PACKAGE_ROW_COLUMNS,
             alignment=OrderPickingViewStyles.PACKAGE_ROW_ALIGNMENT,
             vertical_alignment=OrderPickingViewStyles.PACKAGE_ROW_VERTICAL_ALIGNMENT,
         )
 
-        pick_bin_container, _ = self._get_dropdown_input(
-            "pick_bin_id",
-            OrderPickingViewStyles.PICK_BIN_INPUT_SIZE,
-            [],
-            callbacks=[self.__handle_pick_bin_changed],
+        self.__pick_bin_input = self._get_dropdown(
+            options=[],
+            include_empty_option=True,
+            on_select=lambda event: self._controller.on_value_changed("pick_bin_id", self.__handle_pick_bin_changed
+            ),
+            value="0",
+            editable=True,
+            enable_search=True,
+            enable_filter=True,
+            expand=True,
         )
-        self.__pick_bin_input = cast(ft.Dropdown, pick_bin_container.content)
+        self.__pick_bin_input.col = self._responsive_col(OrderPickingViewStyles.PICK_BIN_INPUT_SIZE)
 
-        pick_quantity_container, _ = self._get_numeric_input(
-            "pick_quantity",
-            OrderPickingViewStyles.PICK_QUANTITY_INPUT_SIZE,
+        self.__pick_quantity_input = self._get_numeric_field(
             value=1,
             step=1,
             precision=0,
             min_value=1,
             is_float=False,
+            on_change=lambda event: self._controller.on_value_changed("pick_quantity"),
+            expand=True,
         )
-        self.__pick_quantity_input = cast(NumericField, pick_quantity_container.content)
+        self.__pick_quantity_input.col = self._responsive_col(OrderPickingViewStyles.PICK_QUANTITY_INPUT_SIZE)
 
         self._add_to_inputs(
             {
-                "order_date": FieldGroup(input=(order_date_container, OrderPickingViewStyles.ORDER_DATE_INPUT_SIZE)),
-                "customer_id": FieldGroup(input=(customer_container, OrderPickingViewStyles.CUSTOMER_INPUT_SIZE)),
-                "order_id": FieldGroup(input=(order_container, OrderPickingViewStyles.ORDER_INPUT_SIZE)),
-                "package_item_id": FieldGroup(input=(package_item_container, OrderPickingViewStyles.PACKAGE_ITEM_INPUT_SIZE)),
-                "pick_bin_id": FieldGroup(input=(pick_bin_container, OrderPickingViewStyles.PICK_BIN_INPUT_SIZE)),
-                "pick_quantity": FieldGroup(input=(pick_quantity_container, OrderPickingViewStyles.PICK_QUANTITY_INPUT_SIZE)),
+                "order_date": self.__order_date_input,
+                "customer_id": self.__customer_input,
+                "order_id": self.__order_input,
+                "package_item_id": self.__package_item_input,
+                "pick_bin_id": self.__pick_bin_input,
+                "pick_quantity": self.__pick_quantity_input,
             }
         )
 
         self.__orders_row = ft.ResponsiveRow(
-            controls=[order_date_container, customer_container, order_container],
+            controls=[self.__order_date_input, self.__customer_input, self.__order_input],
             columns=OrderPickingViewStyles.ORDERS_ROW_COLUMNS,
             alignment=OrderPickingViewStyles.ORDERS_ROW_ALIGNMENT,
             vertical_alignment=OrderPickingViewStyles.ORDERS_ROW_VERTICAL_ALIGNMENT,
@@ -245,9 +253,9 @@ class OrderPickingView(BaseView):
         self.__pick_section = ft.Column(
             controls=[
                 self.__pick_item_title,
-                pick_bin_container,
+                self.__pick_bin_input,
                 self.__pick_bin_info_text,
-                pick_quantity_container,
+                self.__pick_quantity_input,
                 self.__pick_buttons_row,
                 ft.Divider(height=MobileCommonViewStyles.DIVIDER_HEIGHT),
                 self.__pick_details_container,
@@ -308,7 +316,7 @@ class OrderPickingView(BaseView):
         self._translation = translation
         self.__render_static_texts()
         self.__render_items_list()
-        if self.__mode == self.__MODE_PICK:
+        if self.__pick_section.visible:
             self.__render_pick_form()
         self.safe_update(self)
 
@@ -350,7 +358,6 @@ class OrderPickingView(BaseView):
         self.safe_update(self.__add_package_button)
 
     def show_items_list(self) -> None:
-        self.__mode = self.__MODE_LIST
         self.__orders_row.visible = True
         self.__pick_section.visible = False
         self.__list_section.visible = True
@@ -369,7 +376,6 @@ class OrderPickingView(BaseView):
         unit_name: str | None,
         is_package_pick: bool,
     ) -> None:
-        self.__mode = self.__MODE_PICK
         self.__pick_item = item
         self.__pick_is_package = is_package_pick
         self.__pick_to_process = max(0, to_process)

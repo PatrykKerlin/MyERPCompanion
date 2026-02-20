@@ -545,7 +545,7 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             tracking_number=order.tracking_number,
             shipping_cost=order.shipping_cost,
             notes=order.notes,
-            internal_notes=order.internal_notes,
+            external_notes=order.external_notes,
             customer_id=order.customer_id,
             supplier_id=order.supplier_id,
             delivery_method_id=order.delivery_method_id,

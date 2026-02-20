@@ -23,7 +23,7 @@ from schemas.validation.constraints import Constraints
 from services.core import LanguageService, UserService
 from services.core.app_service import AppService
 from states.states import ViewState
-from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, Module, View
 from utils.user_settings import UserSettings
 from views.components.current_user_settings_dialog_component import CurrentUserSettingsDialogComponent
 from views.core.app_view import AppView as WebAppView
@@ -107,14 +107,12 @@ class AppController(BaseController):
             ViewRequested(
                 module_id=Module.WEB,
                 view_key=target_view,
-                mode=ViewMode.STATIC,
             )
         )
 
     async def __logout_requested_handler(self, _: LogoutRequested) -> None:
         self._state_store.update(
-            view={"title": "", "mode": ViewMode.NONE, "view": None},
-            modules={"items": []},
+            view={"view": None},
             user={"current": None},
             tokens={"access": None, "refresh": None},
         )
@@ -179,7 +177,6 @@ class AppController(BaseController):
             ViewRequested(
                 module_id=Module.WEB,
                 view_key=View.WEB_ORDERS,
-                mode=ViewMode.STATIC,
             )
         )
 

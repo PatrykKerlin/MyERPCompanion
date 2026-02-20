@@ -25,7 +25,7 @@ from services.business.trade import (
     OrderService,
     StatusService,
 )
-from utils.enums import ApiActionError, Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View
 from utils.order_picking_models import OrderPickedItemRow, OrderPickingBinOption, OrderPickingItemRow
 from utils.translation import Translation
 from views.core.order_picking_view import OrderPickingView
@@ -118,7 +118,7 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
             return
         self._page.run_task(self.__save_item_pick, bin_id, quantity)
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> OrderPickingView:
+    async def _build_view(self, translation: Translation, event: ViewRequested) -> OrderPickingView:
         customers = await self.__perform_get_customers() or []
         customer_pairs = [(customer.id, self.__format_customer_label(customer)) for customer in customers]
         self.__orders = await self.__load_eligible_orders(self.__selected_order_date, self.__selected_customer_id)
@@ -127,9 +127,7 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
         view = OrderPickingView(
             controller=self,
             translation=translation,
-            mode=ViewMode.STATIC,
             view_key=event.view_key,
-            data_row=event.data,
             customers=customer_pairs,
             default_order_date=self.__selected_order_date_for_view(),
             selected_customer_id=self.__selected_customer_id,
@@ -760,7 +758,7 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
         normalized_items: list[ItemPlainSchema] = []
         for item in items:
             item_data = item.model_dump()
-            self._parse_data_row(item_data)
+            self._normalize_data(item_data)
             normalized_items.append(ItemPlainSchema.model_validate(item_data))
         return normalized_items
 

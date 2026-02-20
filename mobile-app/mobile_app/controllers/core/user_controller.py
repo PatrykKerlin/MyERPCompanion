@@ -11,7 +11,7 @@ from schemas.core.language_schema import LanguagePlainSchema
 from schemas.core.user_schema import UserPlainSchema, UserStrictUpdateAppSchema
 from schemas.validation.constraints import Constraints
 from services.core import LanguageService, UserService
-from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, Module, View
 from utils.translation import Translation
 from views.core.user_view import UserView
 
@@ -47,7 +47,7 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
             selected_theme,
         )
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> UserView:
+    async def _build_view(self, translation: Translation, event: ViewRequested) -> UserView:
         user_schema = await self.__resolve_user_schema(event)
         if user_schema is None:
             user_schema = self._state_store.app_state.user.current
@@ -55,9 +55,7 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
             return UserView(
                 controller=self,
                 translation=translation,
-                mode=ViewMode.STATIC,
                 view_key=event.view_key,
-                data_row=event.data,
                 languages=[],
                 selected_language_id=0,
                 selected_theme="system",
@@ -69,9 +67,7 @@ class UserController(BaseViewController[UserService, UserView, UserPlainSchema, 
         return UserView(
             controller=self,
             translation=translation,
-            mode=ViewMode.STATIC,
             view_key=event.view_key,
-            data_row=event.data,
             languages=language_pairs,
             selected_language_id=user_schema.language.id,
             selected_theme=self.__normalize_theme(user_schema.theme),

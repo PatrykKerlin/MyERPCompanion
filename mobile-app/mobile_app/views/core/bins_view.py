@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING
 
 import flet as ft
 from styles.styles import BinsViewStyles, ButtonStyles, MobileCommonViewStyles, TypographyStyles
-from utils.enums import View, ViewMode
-from utils.field_group import FieldGroup
+from utils.enums import View
 from utils.translation import Translation
 from views.base.base_view import BaseView
 
@@ -16,19 +15,13 @@ if TYPE_CHECKING:
 
 
 class BinsView(BaseView):
-    __MODE_BINS = "bins"
-    __MODE_ITEMS = "items"
-
     def __init__(
         self,
         controller: BinsController,
         translation: Translation,
-        mode: ViewMode,
         view_key: View,
-        data_row: dict[str, Any] | None,
     ) -> None:
-        super().__init__(controller, translation, mode, view_key, data_row, 0, 0)
-        self.__mode = self.__MODE_BINS
+        super().__init__(controller, translation, view_key)
         self.__bins: list[BinPlainSchema] = []
         self.__selected_bin: BinPlainSchema | None = None
         self.__items: list[ItemPlainSchema] = []
@@ -37,28 +30,41 @@ class BinsView(BaseView):
         self.__bin_direction_filter = "all"
 
         self.__title = self._get_label("", style=TypographyStyles.HEADER_TITLE)
-        filter_container, _ = self._get_text_input("filter_query", BinsViewStyles.FILTER_TEXT_INPUT_SIZE)
-        self.__filter_field = cast(ft.TextField, filter_container.content)
+        self.__filter_field = self._get_text_field(
+            value="",
+            on_change=lambda event: self._controller.on_value_changed("filter_query"),
+            on_submit=lambda event: self._controller.on_value_changed("filter_query"),
+            on_focus=lambda event: self._controller.on_value_changed("filter_query")
+            if str(getattr(event, "data", "")).lower() == "false"
+            else None,
+            on_tap_outside=lambda event: self._controller.on_value_changed("filter_query"),
+            expand=True,
+        )
+        self.__filter_field.col = self._responsive_col(BinsViewStyles.FILTER_TEXT_INPUT_SIZE)
         self.__filter_field.on_change = self.__on_filter_changed
         self.__filter_field.dense = True
         self.__filter_field.prefix_icon = ft.Icons.SEARCH
 
-        direction_container, _ = self._get_dropdown_input(
-            "bin_direction_filter",
-            BinsViewStyles.FILTER_DIRECTION_INPUT_SIZE,
-            [
+        self.__direction_filter_field = self._get_dropdown(
+            options=[
                 ("all", "All"),
                 ("inbound", "Inbound"),
                 ("outbound", "Outbound"),
             ],
-            callbacks=[self.__on_bin_direction_filter_changed],
+            include_empty_option=True,
+            on_select=lambda event: self._controller.on_value_changed("bin_direction_filter", self.__on_bin_direction_filter_changed
+            ),
+            value="0",
+            editable=True,
+            enable_search=True,
+            enable_filter=True,
+            expand=True,
         )
-        self.__direction_filter_field = cast(ft.Dropdown, direction_container.content)
+        self.__direction_filter_field.col = self._responsive_col(BinsViewStyles.FILTER_DIRECTION_INPUT_SIZE)
         self.__direction_filter_field.value = "all"
-        self.__direction_filter_container = direction_container
 
         self.__filters_row = ft.ResponsiveRow(
-            controls=[filter_container, direction_container],
+            controls=[self.__filter_field, self.__direction_filter_field],
             columns=BinsViewStyles.FILTER_ROW_COLUMNS,
             alignment=BinsViewStyles.FILTER_ROW_ALIGNMENT,
             vertical_alignment=BinsViewStyles.FILTER_ROW_VERTICAL_ALIGNMENT,
@@ -66,8 +72,8 @@ class BinsView(BaseView):
 
         self._add_to_inputs(
             {
-                "filter_query": FieldGroup(input=(filter_container, BinsViewStyles.FILTER_TEXT_INPUT_SIZE)),
-                "bin_direction_filter": FieldGroup(input=(direction_container, BinsViewStyles.FILTER_DIRECTION_INPUT_SIZE)),
+                "filter_query": self.__filter_field,
+                "bin_direction_filter": self.__direction_filter_field,
             }
         )
         self.__list = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=MobileCommonViewStyles.LIST_SPACING)
@@ -112,7 +118,6 @@ class BinsView(BaseView):
         self.__selected_bin = None
         self.__items = []
         self.__item_quantities = {}
-        self.__mode = self.__MODE_BINS
         self.__reset_filter()
         self.__render()
         self.safe_update(self)
@@ -126,13 +131,12 @@ class BinsView(BaseView):
         self.__selected_bin = bin_schema
         self.__items = items
         self.__item_quantities = item_quantities
-        self.__mode = self.__MODE_ITEMS
         self.__reset_filter()
         self.__render()
         self.safe_update(self)
 
     def __render(self) -> None:
-        if self.__mode == self.__MODE_BINS:
+        if self.__selected_bin is None:
             self.__title.value = self._translation.get("bins")
             self.__filter_field.label = self._translation.get("bin_filter")
         else:
@@ -142,7 +146,7 @@ class BinsView(BaseView):
         self.__direction_filter_field.label = self._translation.get("bin_type_filter")
         self.__direction_filter_field.options = self.__build_direction_filter_options()
         self.__direction_filter_field.value = self.__bin_direction_filter
-        self.__direction_filter_container.visible = self.__mode == self.__MODE_BINS
+        self.__direction_filter_field.visible = self.__selected_bin is None
         self.__list.controls = self.__build_list_controls()
 
     def __build_direction_filter_options(self) -> list[ft.DropdownOption]:
@@ -153,7 +157,7 @@ class BinsView(BaseView):
         ]
 
     def __build_list_controls(self) -> list[ft.Control]:
-        if self.__mode == self.__MODE_BINS:
+        if self.__selected_bin is None:
             filtered_bins = self.__get_filtered_bins()
             if not filtered_bins:
                 return [self._get_label(self._translation.get("no_bins"), text_align=ft.TextAlign.CENTER)]
@@ -243,10 +247,10 @@ class BinsView(BaseView):
         self.safe_update(self)
 
     def __on_back_click(self, _: ft.Event[ft.Button]) -> None:
-        if self.__mode == self.__MODE_BINS:
+        if self.__selected_bin is None:
             self._controller.on_back_to_menu()
             return
-        self.__mode = self.__MODE_BINS
+        self.__selected_bin = None
         self.__reset_filter()
         self.__render()
         self.safe_update(self)

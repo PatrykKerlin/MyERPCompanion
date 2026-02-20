@@ -55,6 +55,7 @@ class OrderViewSourceItemSchema(BaseSchema):
     ean: str
     description: str | None = None
     purchase_price: float
+    margin: float
     vat_rate: float
     is_fragile: bool | None = None
     category_id: int | None = None
@@ -81,6 +82,7 @@ class OrderViewTargetItemSchema(BaseSchema):
     name: str
     quantity: int
     purchase_price: float
+    margin: float
     vat_rate: float
     width: float
     height: float

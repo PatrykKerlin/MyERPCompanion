@@ -48,7 +48,7 @@ class SalesOrderView(BaseView):
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
         show_details = self._is_details_mode(mode)
         self.__create_defaults: dict[str, Any] = {}
-        self.__editable_keys = {"customer_id", "delivery_method_id", "currency_id", "notes", "internal_notes"}
+        self.__editable_keys = {"customer_id", "delivery_method_id", "currency_id", "notes", "external_notes"}
         self.__all_source_items = cast(list[tuple[int, list[Any]]], list(source_items))
         self.__source_item_category_map = dict(source_item_categories)
         self.__source_selectable_ids: set[int] | None = None
@@ -119,7 +119,7 @@ class SalesOrderView(BaseView):
         ]
         notes_fields_definitions = [
             {"key": "notes", "input": self._get_text_input, "lines": 3},
-            {"key": "internal_notes", "input": self._get_text_input, "lines": 3},
+            {"key": "external_notes", "input": self._get_text_input, "lines": 3},
         ]
         main_fields = self._build_field_groups(main_fields_definitions)
         notes_fields = self._build_field_groups(notes_fields_definitions)

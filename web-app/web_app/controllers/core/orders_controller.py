@@ -18,7 +18,7 @@ from schemas.business.trade.order_view_schema import (
 )
 from schemas.core.param_schema import PaginatedResponseSchema
 from services.business.trade import OrderService, OrderViewService
-from utils.enums import ApiActionError, Endpoint, Module, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, Module, View
 from utils.media_url import MediaUrl
 from utils.translation import Translation
 from views.core.orders_view import OrdersView
@@ -44,7 +44,6 @@ class OrdersController(BaseViewController[OrderService, OrdersView, OrderPlainSc
             ViewRequested(
                 module_id=Module.WEB,
                 view_key=View.WEB_CREATE_ORDER,
-                mode=ViewMode.STATIC,
             ),
         )
 

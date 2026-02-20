@@ -30,7 +30,7 @@ class InputControlsMixin:
 
     @staticmethod
     def _get_text_field(
-        value: str = "",
+        value: str = "",  # NOSONAR
         label: str | None = None,
         password: bool = False,
         can_reveal_password: bool | None = None,

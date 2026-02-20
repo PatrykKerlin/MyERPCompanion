@@ -12,7 +12,7 @@ from schemas.business.trade.order_view_schema import (
 )
 from styles.dimensions import AppDimensions
 from styles.styles import ButtonStyles, CreateOrderViewStyles, TypographyStyles
-from utils.enums import View, ViewMode
+from utils.enums import View
 from utils.field_group import FieldGroup
 from utils.translation import Translation
 from views.base.base_view import BaseView
@@ -39,7 +39,6 @@ class CreateOrderView(BaseView["CreateOrderController"]):
         super().__init__(
             controller=controller,
             translation=translation,
-            mode=ViewMode.STATIC,
             view_key=View.WEB_CREATE_ORDER,
             data_row=None,
         )

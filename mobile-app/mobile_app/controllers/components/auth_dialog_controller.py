@@ -12,7 +12,6 @@ from views.core.auth_view import AuthView as MobileAuthView
 
 if TYPE_CHECKING:
     from config.context import Context
-    from schemas.core.module_schema import ModulePlainSchema
     from schemas.core.token_schema import TokenPlainSchema
     from schemas.core.user_schema import UserPlainSchema
 
@@ -54,9 +53,6 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
         if not tokens:
             return
         self._state_store.update(tokens={"access": tokens.access, "refresh": tokens.refresh})
-        all_modules = await self.__perform_get_all_modules()
-        if not all_modules:
-            return
         user = await self.__perform_get_current_user()
         if not user:
             return
@@ -68,13 +64,6 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
         selected_warehouse_id = self.__resolve_mobile_selected_warehouse_id(user, warehouse_id)
         selected_warehouse_name = await self.__resolve_mobile_selected_warehouse_name(username, selected_warehouse_id)
 
-        user_groups_set = {group.id for group in user.groups}
-        user_modules: list[ModulePlainSchema] = []
-        for module in all_modules:
-            module_groups_set = {group.id for group in module.groups}
-            if module_groups_set.intersection(user_groups_set):
-                user_modules.append(module)
-        self._state_store.update(modules={"items": user_modules})
         self._state_store.update(
             mobile_warehouse={"selected_id": selected_warehouse_id, "selected_name": selected_warehouse_name}
         )
@@ -129,10 +118,6 @@ class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogReq
     @BaseController.handle_api_action(ApiActionError.FETCH, show_loading=False)
     async def __perform_get_login_warehouses(self, username: str | None) -> list[WarehouseLoginOptionSchema] | None:
         return await self.__service.get_login_warehouses(username)
-
-    @BaseController.handle_api_action(ApiActionError.FETCH)
-    async def __perform_get_all_modules(self) -> list[ModulePlainSchema] | None:
-        return await self.__service.get_all_modules(Endpoint.MODULES, None, None, None, self._module_id)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_current_user(self) -> UserPlainSchema | None:

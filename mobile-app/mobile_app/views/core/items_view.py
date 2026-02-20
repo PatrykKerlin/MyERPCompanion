@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 import flet as ft
 from styles.styles import AlignmentStyles, ButtonStyles, ItemsViewStyles, MobileCommonViewStyles, TypographyStyles
 from schemas.business.logistic.item_schema import ItemPlainSchema
-from utils.enums import View, ViewMode
-from utils.field_group import FieldGroup
+from utils.enums import View
 from utils.translation import Translation
 from views.base.base_dialog import BaseDialog
 from views.base.base_view import BaseView
@@ -17,9 +16,6 @@ if TYPE_CHECKING:
 
 
 class ItemsView(BaseView):
-    __MODE_LIST = "list"
-    __MODE_DETAILS = "details"
-
     __META_FIELDS = {
         "id",
         "created_at",
@@ -72,9 +68,7 @@ class ItemsView(BaseView):
         self,
         controller: ItemsController,
         translation: Translation,
-        mode: ViewMode,
         view_key: View,
-        data_row: dict[str, Any] | None,
         item: ItemPlainSchema | None,
         quantity: int,
         items: list[ItemPlainSchema],
@@ -83,8 +77,7 @@ class ItemsView(BaseView):
         index_filter: str,
         caller_view_key: View | None,
     ) -> None:
-        super().__init__(controller, translation, mode, view_key, data_row, 0, 0, caller_view_key=caller_view_key)
-        self.__mode = self.__MODE_DETAILS if item is not None else self.__MODE_LIST
+        super().__init__(controller, translation, view_key, caller_view_key=caller_view_key)
         self.__item = item
         self.__quantity = quantity
         self.__items = items
@@ -121,21 +114,35 @@ class ItemsView(BaseView):
             vertical_alignment=MobileCommonViewStyles.HEADER_ROW_VERTICAL_ALIGNMENT,
         )
 
-        category_filter_container, _ = self._get_dropdown_input(
-            "category_filter",
-            ItemsViewStyles.CATEGORY_FILTER_INPUT_SIZE,
-            self.__categories,
-            callbacks=[self.__on_category_filter_changed],
+        self.__category_filter_input = self._get_dropdown(
+            options=self.__categories,
+            include_empty_option=True,
+            on_select=lambda event: self._controller.on_value_changed("category_filter", self.__on_category_filter_changed
+            ),
+            value="0",
+            editable=True,
+            enable_search=True,
+            enable_filter=True,
+            expand=True,
         )
-        self.__category_filter_input = cast(ft.Dropdown, category_filter_container.content)
+        self.__category_filter_input.col = self._responsive_col(ItemsViewStyles.CATEGORY_FILTER_INPUT_SIZE)
         self.__category_filter_input.options = [
             ft.dropdown.Option(key="0", text=self._translation.get("all_categories")),
             *[ft.dropdown.Option(key=str(category_id), text=name) for category_id, name in self.__categories],
         ]
         self.__category_filter_input.value = str(self.__selected_category_id) if self.__selected_category_id else "0"
 
-        index_filter_container, _ = self._get_text_input("index_filter", ItemsViewStyles.INDEX_FILTER_INPUT_SIZE)
-        self.__index_filter_input = cast(ft.TextField, index_filter_container.content)
+        self.__index_filter_input = self._get_text_field(
+            value="",
+            on_change=lambda event: self._controller.on_value_changed("index_filter"),
+            on_submit=lambda event: self._controller.on_value_changed("index_filter"),
+            on_focus=lambda event: self._controller.on_value_changed("index_filter")
+            if str(getattr(event, "data", "")).lower() == "false"
+            else None,
+            on_tap_outside=lambda event: self._controller.on_value_changed("index_filter"),
+            expand=True,
+        )
+        self.__index_filter_input.col = self._responsive_col(ItemsViewStyles.INDEX_FILTER_INPUT_SIZE)
         self.__index_filter_input.value = self.__index_filter
         self.__index_filter_input.on_change = self.__on_index_filter_changed
         self.__index_filter_input.dense = True
@@ -143,13 +150,13 @@ class ItemsView(BaseView):
 
         self._add_to_inputs(
             {
-                "category_filter": FieldGroup(input=(category_filter_container, ItemsViewStyles.CATEGORY_FILTER_INPUT_SIZE)),
-                "index_filter": FieldGroup(input=(index_filter_container, ItemsViewStyles.INDEX_FILTER_INPUT_SIZE)),
+                "category_filter": self.__category_filter_input,
+                "index_filter": self.__index_filter_input,
             }
         )
 
         self.__filters_row = ft.ResponsiveRow(
-            controls=[category_filter_container, index_filter_container],
+            controls=[self.__category_filter_input, self.__index_filter_input],
             columns=ItemsViewStyles.FILTER_ROW_COLUMNS,
             alignment=ItemsViewStyles.FILTER_ROW_ALIGNMENT,
             vertical_alignment=ItemsViewStyles.FILTER_ROW_VERTICAL_ALIGNMENT,
@@ -182,7 +189,7 @@ class ItemsView(BaseView):
         self.safe_update(self)
 
     def __render(self) -> None:
-        if self.__mode == self.__MODE_LIST:
+        if self.__item is None:
             self.__render_list_mode()
             return
         self.__render_details_mode()
@@ -254,7 +261,7 @@ class ItemsView(BaseView):
         return items
 
     def __on_back_clicked(self, _: ft.Event[ft.Button]) -> None:
-        if self.__mode == self.__MODE_LIST:
+        if self.__item is None:
             self._controller.on_back_to_menu()
             return
         self._controller.on_back_from_details()

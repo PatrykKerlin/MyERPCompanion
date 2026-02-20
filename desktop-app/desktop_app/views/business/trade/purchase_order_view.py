@@ -39,7 +39,7 @@ class PurchaseOrderView(BaseView):
         super().__init__(controller, translation, mode, key, data_row, 4, 7)
         show_details = self._is_details_mode(mode)
         self.__create_defaults: dict[str, Any] = {}
-        self.__editable_keys = {"supplier_id", "notes", "internal_notes"}
+        self.__editable_keys = {"supplier_id", "notes"}
         self.__pending_source_items = list(source_items)
         self.__pending_target_items = list(target_items)
         self.__pending_totals: dict[str, float] = {}
@@ -65,15 +65,14 @@ class PurchaseOrderView(BaseView):
             {"key": "total_gross", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
             {"key": "total_discount", "input": self._get_numeric_input, "is_float": True, "step": 0.01},
         ]
-        notes_fields_definitions = [
-            {"key": "notes", "input": self._get_text_input, "lines": 3},
-            {"key": "internal_notes", "input": self._get_text_input, "lines": 3},
+        notes_field_definition = [
+            {"key": "notes", "input": self._get_text_input, "lines": 3}
         ]
         main_fields = self._build_field_groups(main_fields_definitions)
-        notes_fields = self._build_field_groups(notes_fields_definitions)
-        self._add_to_inputs(main_fields, notes_fields)
+        notes_field = self._build_field_groups(notes_field_definition)
+        self._add_to_inputs(main_fields, notes_field)
         main_grid = self._build_grid(main_fields)
-        notes_grid = self._build_grid(notes_fields)
+        notes_grid = self._build_grid(notes_field)
         meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
         self.__buttons_spacing_row = ft.Row(
             height=AppDimensions.SPACE_2XL,
@@ -109,7 +108,7 @@ class PurchaseOrderView(BaseView):
             ft.Column(controls=main_grid + self._spacing_responsive_row + [self.__status_history_row], expand=True),
             self._spacing_column,
             ft.Column(
-                controls=meta_grid + self._spacing_responsive_row + notes_grid + [self._spacing_row, self._buttons_row],
+                controls=meta_grid + self._spacing_responsive_row + notes_grid + (2 * self._spacing_responsive_row) + [self._spacing_row, self._buttons_row],
                 expand=True,
             ),
         ]

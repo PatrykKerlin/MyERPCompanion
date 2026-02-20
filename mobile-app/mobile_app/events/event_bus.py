@@ -51,13 +51,11 @@ class EventBus:
         if not self.__started:
             return
         self.__started = False
-        for task in self.__event_workers + self.__handler_workers:
+        tasks = self.__event_workers + self.__handler_workers
+        for task in tasks:
             task.cancel()
-        for task in self.__event_workers + self.__handler_workers:
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
         self.__event_workers.clear()
         self.__handler_workers.clear()
         with self.__subs_lock:
@@ -77,29 +75,29 @@ class EventBus:
 
     async def __run_event_worker(self) -> None:
         while True:
+            event: BaseEvent | None = None
             try:
                 event = await self.__event_queue.get()
-            except asyncio.CancelledError:
-                break
-            try:
                 with self.__subs_lock:
                     handlers = list(self.__subscriptions.get(type(event), []))
                 for handler in handlers:
                     await self.__handler_queue.put((handler, event))
             finally:
-                self.__event_queue.task_done()
+                if event is not None:
+                    self.__event_queue.task_done()
 
     async def __run_handler_worker(self) -> None:
         while True:
+            payload: tuple[Callable[[Any], Awaitable[None]], BaseEvent] | None = None
             try:
-                handler, event = await self.__handler_queue.get()
-            except asyncio.CancelledError:
-                break
-            try:
+                payload = await self.__handler_queue.get()
+                handler, event = payload
                 result = await handler(event)
                 if isinstance(result, Exception):
                     self.__logger.error(f"Error while handling {type(event).__name__}: {result}", exc_info=True)
             except Exception as err:
-                self.__logger.error(f"Error while handling {type(event).__name__}: {err}", exc_info=True)
+                event_name = type(payload[1]).__name__ if payload is not None else "UnknownEvent"
+                self.__logger.error(f"Error while handling {event_name}: {err}", exc_info=True)
             finally:
-                self.__handler_queue.task_done()
+                if payload is not None:
+                    self.__handler_queue.task_done()

@@ -19,7 +19,7 @@ from services.business.trade import (
     OrderService,
     StatusService,
 )
-from utils.enums import ApiActionError, Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View
 from utils.translation import Translation
 from views.core.stock_receiving_view import StockReceivingView
 
@@ -101,7 +101,7 @@ class StockReceivingController(
     def on_save_clicked(self) -> None:
         self._page.run_task(self.__handle_save)
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> StockReceivingView:
+    async def _build_view(self, translation: Translation, event: ViewRequested) -> StockReceivingView:
         self.__target_bin = None
         self.__order_items = {}
         self.__order_item_quantities = {}
@@ -120,9 +120,7 @@ class StockReceivingController(
         return StockReceivingView(
             controller=self,
             translation=translation,
-            mode=ViewMode.STATIC,
             view_key=event.view_key,
-            data_row=event.data,
             orders=order_pairs,
         )
 

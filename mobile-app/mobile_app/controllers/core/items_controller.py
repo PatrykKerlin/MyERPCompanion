@@ -9,7 +9,7 @@ from events.events import MobileMainMenuRequested, ViewRequested
 from schemas.business.logistic.category_schema import CategoryPlainSchema
 from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
 from services.business.logistic import CategoryService, ItemService
-from utils.enums import ApiActionError, Endpoint, View, ViewMode
+from utils.enums import ApiActionError, Endpoint, View
 from utils.translation import Translation
 from views.core.items_view import ItemsView
 
@@ -38,7 +38,6 @@ class ItemsController(BaseViewController[ItemService, ItemsView, ItemPlainSchema
             ViewRequested(
                 module_id=self._module_id,
                 view_key=View.ITEMS,
-                mode=ViewMode.STATIC,
                 data={"item_id": item_id, "quantity": quantity},
                 caller_view_key=View.ITEMS,
                 caller_data={
@@ -52,15 +51,14 @@ class ItemsController(BaseViewController[ItemService, ItemsView, ItemPlainSchema
         self._page.run_task(self._event_bus.publish, MobileMainMenuRequested())
 
     def on_back_from_details(self) -> None:
-        caller_view_key = self.search_params.caller_view_key
-        caller_data = self.search_params.caller_data if isinstance(self.search_params.caller_data, dict) else None
+        caller_view_key = self.caller_view_key
+        caller_data = self.caller_data
         if caller_view_key == View.BINS:
             self._page.run_task(
                 self._event_bus.publish,
                 ViewRequested(
                     module_id=self._module_id,
                     view_key=View.BINS,
-                    mode=ViewMode.STATIC,
                     data=caller_data,
                 ),
             )
@@ -71,14 +69,13 @@ class ItemsController(BaseViewController[ItemService, ItemsView, ItemPlainSchema
                 ViewRequested(
                     module_id=self._module_id,
                     view_key=View.ITEMS,
-                    mode=ViewMode.STATIC,
                     data=caller_data,
                 ),
             )
             return
         self.on_back_to_menu()
 
-    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> ItemsView:
+    async def _build_view(self, translation: Translation, event: ViewRequested) -> ItemsView:
         quantity = self.__resolve_quantity(event.data)
         item_id = self.__resolve_item_id(event.data)
         selected_category_id = self.__resolve_category_id(event.data)
@@ -94,7 +91,7 @@ class ItemsController(BaseViewController[ItemService, ItemsView, ItemPlainSchema
             fetched_item = await self._perform_get_one(item_id, self._service, self._endpoint)
             if fetched_item is not None:
                 item_data = fetched_item.model_dump()
-                self._parse_data_row(item_data)
+                self._normalize_data(item_data)
                 item = ItemPlainSchema.model_validate(item_data)
                 if quantity <= 0:
                     quantity = item.stock_quantity
@@ -105,9 +102,7 @@ class ItemsController(BaseViewController[ItemService, ItemsView, ItemPlainSchema
         return ItemsView(
             controller=self,
             translation=translation,
-            mode=ViewMode.STATIC,
             view_key=event.view_key,
-            data_row=event.data,
             item=item,
             quantity=quantity,
             items=items,

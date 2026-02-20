@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING
 
 import flet as ft
 from styles.styles import BinTransferViewStyles, ButtonStyles, MobileCommonViewStyles, TypographyStyles
-from utils.enums import View, ViewMode
-from utils.field_group import FieldGroup
+from utils.enums import View
 from utils.translation import Translation
 from views.base.base_view import BaseView
-from views.controls.numeric_field_control import NumericField
 
 if TYPE_CHECKING:
     from controllers.core.bin_transfer_controller import BinTransferController
@@ -19,11 +17,9 @@ class BinTransferView(BaseView):
         self,
         controller: BinTransferController,
         translation: Translation,
-        mode: ViewMode,
         view_key: View,
-        data_row: dict[str, Any] | None,
     ) -> None:
-        super().__init__(controller, translation, mode, view_key, data_row, 0, 0)
+        super().__init__(controller, translation, view_key)
 
         self.__source_items: list[tuple[int, str, int]] = []
         self.__pending_items: list[tuple[int, str, int]] = []
@@ -54,39 +50,55 @@ class BinTransferView(BaseView):
             vertical_alignment=MobileCommonViewStyles.HEADER_ROW_VERTICAL_ALIGNMENT,
         )
 
-        source_container, _ = self._get_text_input(
-            "source_bin",
-            BinTransferViewStyles.SOURCE_BIN_INPUT_SIZE,
-            callbacks=[self.__on_source_submit],
+        self.__source_input = self._get_text_field(
+            value="",
+            on_change=lambda event: self._controller.on_value_changed("source_bin"),
+            on_submit=lambda event: self._controller.on_value_changed("source_bin", self.__on_source_submit),
+            on_focus=lambda event: self._controller.on_value_changed("source_bin", self.__on_source_submit)
+            if str(getattr(event, "data", "")).lower() == "false"
+            else None,
+            on_tap_outside=lambda event: self._controller.on_value_changed("source_bin", self.__on_source_submit
+            ),
+            expand=True,
         )
-        source_container.col = BinTransferViewStyles.SOURCE_BIN_COL
-        self.__source_input = cast(ft.TextField, source_container.content)
+        self.__source_input.col = BinTransferViewStyles.SOURCE_BIN_COL
 
-        target_container, _ = self._get_text_input(
-            "target_bin",
-            BinTransferViewStyles.TARGET_BIN_INPUT_SIZE,
-            callbacks=[self.__on_target_submit],
+        self.__target_input = self._get_text_field(
+            value="",
+            on_change=lambda event: self._controller.on_value_changed("target_bin"),
+            on_submit=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit),
+            on_focus=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit)
+            if str(getattr(event, "data", "")).lower() == "false"
+            else None,
+            on_tap_outside=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit
+            ),
+            expand=True,
         )
-        target_container.col = BinTransferViewStyles.TARGET_BIN_COL
-        self.__target_input = cast(ft.TextField, target_container.content)
+        self.__target_input.col = BinTransferViewStyles.TARGET_BIN_COL
 
-        item_container, _ = self._get_dropdown_input("item_id", BinTransferViewStyles.ITEM_INPUT_SIZE, [], callbacks=[self.__on_item_changed])
-        item_container.col = BinTransferViewStyles.ITEM_COL
-        self.__item_input = cast(ft.Dropdown, item_container.content)
+        self.__item_input = self._get_dropdown(
+            options=[],
+            include_empty_option=True,
+            on_select=lambda event: self._controller.on_value_changed("item_id", self.__on_item_changed),
+            value="0",
+            editable=True,
+            enable_search=True,
+            enable_filter=True,
+            expand=True,
+        )
+        self.__item_input.col = BinTransferViewStyles.ITEM_COL
         self.__item_input.disabled = True
         self.__item_input.value = "0"
 
-        quantity_container, _ = self._get_numeric_input(
-            "quantity",
-            BinTransferViewStyles.QUANTITY_INPUT_SIZE,
+        self.__quantity_input = self._get_numeric_field(
             value=1,
             step=1,
             precision=0,
             min_value=1,
             is_float=False,
+            on_change=lambda event: self._controller.on_value_changed("quantity"),
+            expand=True,
         )
-        quantity_container.col = BinTransferViewStyles.QUANTITY_INFO_COL
-        self.__quantity_input = cast(NumericField, quantity_container.content)
         self.__available_text = self._get_label("", size=BinTransferViewStyles.AVAILABLE_TEXT_SIZE)
         quantity_info_container = ft.Container(
             col=BinTransferViewStyles.QUANTITY_INFO_COL,
@@ -130,21 +142,21 @@ class BinTransferView(BaseView):
 
         self._add_to_inputs(
             {
-                "source_bin": FieldGroup(input=(source_container, BinTransferViewStyles.SOURCE_BIN_INPUT_SIZE)),
-                "target_bin": FieldGroup(input=(target_container, BinTransferViewStyles.TARGET_BIN_INPUT_SIZE)),
-                "item_id": FieldGroup(input=(item_container, BinTransferViewStyles.ITEM_INPUT_SIZE)),
-                "quantity": FieldGroup(input=(quantity_info_container, BinTransferViewStyles.QUANTITY_INPUT_SIZE)),
+                "source_bin": self.__source_input,
+                "target_bin": self.__target_input,
+                "item_id": self.__item_input,
+                "quantity": self.__quantity_input,
             }
         )
 
         self.__bins_row = ft.ResponsiveRow(
-            controls=[source_container, target_container],
+            controls=[self.__source_input, self.__target_input],
             columns=BinTransferViewStyles.BINS_ROW_COLUMNS,
             alignment=BinTransferViewStyles.BINS_ROW_ALIGNMENT,
             vertical_alignment=BinTransferViewStyles.BINS_ROW_VERTICAL_ALIGNMENT,
         )
         self.__form_row = ft.ResponsiveRow(
-            controls=[item_container, quantity_info_container, add_button_container],
+            controls=[self.__item_input, quantity_info_container, add_button_container],
             columns=BinTransferViewStyles.FORM_ROW_COLUMNS,
             alignment=BinTransferViewStyles.FORM_ROW_ALIGNMENT,
             vertical_alignment=BinTransferViewStyles.FORM_ROW_VERTICAL_ALIGNMENT,

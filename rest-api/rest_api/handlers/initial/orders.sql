@@ -9,7 +9,7 @@ INSERT INTO orders (
     tracking_number,
     shipping_cost,
     notes,
-    internal_notes,
+    external_notes,
     customer_id,
     supplier_id,
     delivery_method_id,
@@ -112,7 +112,7 @@ sales_orders AS (
             2
         ) AS shipping_cost,
         NULL::text AS notes,
-        NULL::text AS internal_notes,
+        NULL::text AS external_notes,
         sp.customer_id AS customer_id,
         NULL::int AS supplier_id,
         CASE
@@ -180,7 +180,7 @@ purchase_orders AS (
             2
         ) AS shipping_cost,
         NULL::text AS notes,
-        NULL::text AS internal_notes,
+        NULL::text AS external_notes,
         NULL::int AS customer_id,
         (floor(random() * 3) + 1)::int AS supplier_id,
         NULL::int AS delivery_method_id,
