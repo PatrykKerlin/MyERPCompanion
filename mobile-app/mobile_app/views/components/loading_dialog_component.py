@@ -13,7 +13,7 @@ class LoadingDialogComponent(BaseDialog):
     def __init__(self, translation: Translation, min_visible_seconds: float = 0.1) -> None:
         self.__min_visible_seconds = max(min_visible_seconds, 0)
         super().__init__(
-            controls=[ft.Text(translation.get("loading"))],
+            controls=[self._get_label(translation.get("loading"))],
             actions=[ft.ProgressBar()],
         )
 

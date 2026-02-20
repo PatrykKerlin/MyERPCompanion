@@ -16,13 +16,6 @@ class ButtonStyles:
         side=ft.BorderSide(width=1, color=AppColors.OUTLINE),
         shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
     )
-    compact = ft.ButtonStyle(
-        padding=ft.Padding.symmetric(
-            horizontal=AppDimensions.PADDING_BUTTON_HORIZONTAL_COMPACT,
-            vertical=AppDimensions.PADDING_BUTTON_VERTICAL_COMPACT,
-        ),
-        shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
-    )
     toolbar_user = ft.ButtonStyle(
         padding=ft.Padding.symmetric(
             horizontal=AppDimensions.PADDING_BUTTON_HORIZONTAL_COMPACT,
@@ -77,7 +70,6 @@ class AlignmentStyles:
 class ControlStyles:
     INPUT_ALIGNMENT = AlignmentStyles.CENTER_LEFT
     LABEL_ALIGNMENT = AlignmentStyles.TOP_LEFT
-    MARKER_ALIGNMENT = AlignmentStyles.TOP_LEFT
     INPUT_FONT_SIZE = 14
     INPUT_FONT_LINE_HEIGHT = 1.2
     INPUT_TEXT_STYLE = ft.TextStyle(size=INPUT_FONT_SIZE, height=INPUT_FONT_LINE_HEIGHT)

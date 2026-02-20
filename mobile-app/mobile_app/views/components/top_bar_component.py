@@ -122,12 +122,12 @@ class TopBarComponent(InputControlsMixin, ft.Container):
             ),
             ft.PopupMenuItem(
                 icon=ft.Icons.SETTINGS,
-                content=self.__translation.get("settings"),
+                content=self._get_label(self.__translation.get("settings")),
                 on_click=self.__on_user_settings_item_click,
             ),
             ft.PopupMenuItem(
                 icon=ft.Icons.LOGOUT,
-                content=self.__translation.get("log_out"),
+                content=self._get_label(self.__translation.get("log_out")),
                 on_click=self.__on_logout_item_click,
             ),
         ]

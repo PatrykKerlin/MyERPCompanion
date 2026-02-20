@@ -11,7 +11,6 @@ from httpx import HTTPStatusError
 from schemas.base.base_schema import BaseStrictSchema
 from utils.enums import ApiActionError
 from utils.tokens_accessor import TokensAccessor
-from views.components.confirm_dialog_component import ConfirmDialogComponent
 from views.components.error_dialog_component import ErrorDialogComponent
 from views.components.loading_dialog_component import LoadingDialogComponent
 from views.components.message_dialog_component import MessageDialogComponent
@@ -179,15 +178,6 @@ class BaseController:
             on_ok_clicked=lambda _: self._page.pop_dialog(),
         )
         self._queue_dialog(message_dialog)
-
-    async def _show_confirm_dialog(self, message_key: str) -> bool:
-        translation = self._state_store.app_state.translation.items
-        confirm_dialog = ConfirmDialogComponent(translation=translation, message_key=message_key)
-        try:
-            await self._show_dialog_serialized(confirm_dialog, wait_for_future=confirm_dialog.future)
-            return await confirm_dialog.future
-        finally:
-            self._page.pop_dialog()
 
     def _get_tab_title(self, key: str, id: int | None) -> str:
         translation_state = self._state_store.app_state.translation

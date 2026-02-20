@@ -220,13 +220,13 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         return True
 
     @BaseController.handle_api_action(ApiActionError.SAVE)
-    async def __perform_create_order_statuses_bulk(self, payload: list[AssocOrderStatusStrictSchema]) -> bool:
+    async def __perform_create_order_statuses_bulk(self, payload: list[AssocOrderStatusStrictSchema]) -> int | None:
         if not payload:
-            return True
+            return 0
         await self.__order_status_service.create_bulk(
             Endpoint.ORDER_STATUSES_CREATE_BULK, None, None, payload, self._module_id
         )
-        return True
+        return len(payload)
 
     def __build_create_defaults(self) -> dict[str, Any]:
         today = date.today()
@@ -622,7 +622,8 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
             payload.append(AssocOrderStatusStrictSchema(order_id=order_id, status_id=status_id))
         if not payload:
             return True
-        return await self.__perform_create_order_statuses_bulk(payload)
+        created_count = await self.__perform_create_order_statuses_bulk(payload)
+        return created_count is not None
 
     @staticmethod
     def __get_latest_status_id(statuses: list[AssocOrderStatusPlainSchema]) -> int | None:

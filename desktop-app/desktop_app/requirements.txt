@@ -1,7 +1,6 @@
-flet[all]
-matplotlib
-seaborn
-pydantic
-pydantic-settings
-pydantic[email]
-httpx
+flet[all]==0.80.5
+matplotlib==3.10.8
+seaborn==0.13.2
+pydantic[email]==2.12.5
+pydantic-settings==2.13.1
+httpx==0.28.1

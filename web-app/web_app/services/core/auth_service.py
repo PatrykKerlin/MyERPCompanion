@@ -1,6 +1,7 @@
 from typing import Any
 
 from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.core.auth_schema import AuthStrictSchema
 from schemas.core.param_schema import IdsPayloadSchema
 from schemas.core.token_schema import TokenPlainSchema
 from schemas.core.user_schema import UserPlainSchema
@@ -12,9 +13,14 @@ class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
     _plain_schema_cls = BasePlainSchema
 
     async def fetch_tokens(self, username: str, password: str) -> TokenPlainSchema:
+        payload = AuthStrictSchema(
+            username=username,
+            password=password,
+            client=self._settings.CLIENT,
+        ).model_dump()
         response = await self._post(
             Endpoint.TOKEN,
-            {"username": username, "password": password, "client": self._settings.CLIENT},
+            payload,
         )
         return TokenPlainSchema(**response.json())
 

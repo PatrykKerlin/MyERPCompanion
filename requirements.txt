@@ -1,4 +1,4 @@
-black
-pyright
-ruff
-isort
+black==26.1.0
+pyright==1.1.408
+ruff==0.15.2
+isort==8.0.0

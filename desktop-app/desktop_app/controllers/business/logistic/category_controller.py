@@ -85,8 +85,8 @@ class CategoryController(BaseViewController[CategoryService, CategoryView, Categ
         if not self._view or not self._view.data_row:
             return
         category_id = self._view.data_row["id"]
-        deleted = await self.__perform_delete_category_discounts(category_id, discount_ids)
-        if not deleted:
+        deleted_count = await self.__perform_delete_category_discounts(category_id, discount_ids)
+        if deleted_count is None:
             return
         await self.__refresh_category_discount_lists(category_id)
 
@@ -129,16 +129,16 @@ class CategoryController(BaseViewController[CategoryService, CategoryView, Categ
         return True
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
-    async def __perform_delete_category_discounts(self, category_id: int, discount_ids: list[int]) -> bool:
+    async def __perform_delete_category_discounts(self, category_id: int, discount_ids: list[int]) -> int | None:
         assoc_rows = await self.__perform_get_category_discounts(category_id)
         assoc_ids = [row.id for row in assoc_rows if row.discount_id in discount_ids]
         if not assoc_ids:
-            return True
+            return 0
         body_params = IdsPayloadSchema(ids=assoc_ids)
         await self.__assoc_category_discount_service.delete_bulk(
             Endpoint.CATEGORY_DISCOUNTS_DELETE_BULK, None, None, body_params, self._module_id
         )
-        return True
+        return len(assoc_ids)
 
     async def __extract_category_discounts(self, data: dict[str, Any] | None) -> list[DiscountTransferItem]:
         discount_ids = self.__extract_discount_ids(data)

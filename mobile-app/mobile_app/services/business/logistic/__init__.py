@@ -6,7 +6,6 @@ from schemas.business.logistic.bin_schema import BinPlainSchema, BinStrictSchema
 from schemas.business.logistic.category_schema import CategoryPlainSchema, CategoryStrictSchema
 from schemas.business.logistic.item_schema import ItemPlainSchema, ItemStrictSchema
 from schemas.business.logistic.unit_schema import UnitPlainSchema, UnitStrictSchema
-from schemas.business.logistic.warehouse_schema import WarehousePlainSchema, WarehouseStrictSchema
 from utils.service_factory import ServiceFactory
 
 AssocBinItemService = ServiceFactory.create(
@@ -34,11 +33,6 @@ UnitService = ServiceFactory.create(
     plain_schema_cls=UnitPlainSchema,
     strict_schema_cls=UnitStrictSchema,
 )
-WarehouseService = ServiceFactory.create(
-    name_prefix="Warehouse",
-    plain_schema_cls=WarehousePlainSchema,
-    strict_schema_cls=WarehouseStrictSchema,
-)
 
 __all__ = [
     "AssocBinItemService",
@@ -46,5 +40,4 @@ __all__ = [
     "CategoryService",
     "ItemService",
     "UnitService",
-    "WarehouseService",
 ]

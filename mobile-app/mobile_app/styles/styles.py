@@ -86,32 +86,6 @@ class BaseDialogStyles:
 class BaseViewStyles:
     RESPONSIVE_BREAKPOINT = "sm"
 
-    EMPTY_LABEL_SIZE = 0
-    EMPTY_INPUT_SIZE = 0
-
-    INPUT_ALIGNMENT = AlignmentStyles.CENTER_LEFT
-    SPACING_RESPONSIVE_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"sm": AppDimensions.BASE_HIDDEN_FIELD_COL})
-
-    COLUMNS_ROW_ALIGNMENT = AlignmentStyles.AXIS_START
-    COLUMNS_ROW_VERTICAL_ALIGNMENT = AlignmentStyles.CROSS_START
-
-    GRID_ROW_ALIGNMENT = AlignmentStyles.AXIS_START
-    GRID_ROW_VERTICAL_ALIGNMENT = AlignmentStyles.CROSS_START
-
-    MARKER_ANIMATE_SIZE = 300
-    MARKER_TOOLTIP_KEY = "check_to_search"
-
-    DROPDOWN_DEFAULT_KEY = "0"
-    DROPDOWN_EDITABLE = True
-    DROPDOWN_ENABLE_SEARCH = True
-    DROPDOWN_ENABLE_FILTER = True
-
-    RADIO_ROW_ALIGNMENT = AlignmentStyles.AXIS_SPACE_BETWEEN
-    RADIO_ROW_VERTICAL_ALIGNMENT = AlignmentStyles.CROSS_CENTER
-    RADIO_ROW_SPACING = AppDimensions.INPUT_DENSE_SPACING
-
-    CHECKBOX_SHAPE = ft.CircleBorder()
-
 
 class NumericFieldStyles:
     ALIGNMENT = AlignmentStyles.AXIS_START
@@ -144,12 +118,10 @@ class MobileCommonViewStyles:
     LIST_ITEM_BGCOLOR: ft.ColorValue = AppColors.CARD
     SECTION_SPACING = AppDimensions.SPACE_MD
     DIVIDER_HEIGHT = AppDimensions.DIVIDER_HEIGHT
-    DETAILS_VALUE_TEXT_SELECTABLE = True
 
 
 class AppViewStyles:
     MENU_TITLE_STYLE = TypographyStyles.APP_TITLE
-    USERNAME_STYLE = TypographyStyles.HEADER_SUBTITLE
     USER_MENU_USERNAME_STYLE = ft.TextStyle(color=AppColors.ON_SURFACE, weight=ft.FontWeight.W_600)
     USER_MENU_USERNAME_ICON = ft.Icons.PERSON_OUTLINE
     USER_MENU_USERNAME_ICON_COLOR: ft.ColorValue = AppColors.ON_SURFACE
@@ -257,7 +229,6 @@ class ItemsViewStyles:
     DETAILS_LABEL_PADDING = ft.Padding.symmetric(horizontal=AppDimensions.SPACE_XS, vertical=AppDimensions.SPACE_2XS)
     DETAILS_VALUE_PADDING = ft.Padding.symmetric(horizontal=AppDimensions.SPACE_XS, vertical=AppDimensions.SPACE_2XS)
     DETAILS_WRAPPER_PADDING = ft.Padding.symmetric(horizontal=AppDimensions.SPACE_2XS, vertical=AppDimensions.SPACE_2XS)
-    DETAILS_ROW_SPACING = AppDimensions.SPACE_LG
     DETAILS_COL_SPACING = AppDimensions.SPACE_2XS
     DETAILS_PAIR_COLUMNS = 12
     DETAILS_LABEL_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"xs": 6.0, "sm": 6.0})
@@ -281,7 +252,6 @@ class OrderPickingViewStyles:
     ORDER_DATE_INPUT_SIZE = 4
     CUSTOMER_INPUT_SIZE = 4
     ORDER_INPUT_SIZE = 4
-    PACKAGE_ITEM_INPUT_SIZE = 8
     PICK_BIN_INPUT_SIZE = 12
     PICK_QUANTITY_INPUT_SIZE = 12
 
@@ -298,7 +268,6 @@ class OrderPickingViewStyles:
 
     PICK_BUTTONS_ROW_ALIGNMENT = AlignmentStyles.AXIS_SPACE_BETWEEN
     PICK_BUTTONS_ROW_VERTICAL_ALIGNMENT = AlignmentStyles.CROSS_CENTER
-    PICK_BUTTONS_ROW_SPACING = AppDimensions.SPACE_LG
     PICK_BUTTONS_ROW_COLUMNS = 12
     PICK_BACK_BUTTON_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"xs": 6.0, "sm": 6.0})
     PICK_SAVE_BUTTON_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"xs": 6.0, "sm": 6.0})
@@ -306,7 +275,6 @@ class OrderPickingViewStyles:
     DETAILS_LABEL_PADDING = ItemsViewStyles.DETAILS_LABEL_PADDING
     DETAILS_VALUE_PADDING = ItemsViewStyles.DETAILS_VALUE_PADDING
     DETAILS_WRAPPER_PADDING = ItemsViewStyles.DETAILS_WRAPPER_PADDING
-    DETAILS_ROW_SPACING = ItemsViewStyles.DETAILS_ROW_SPACING
     DETAILS_COL_SPACING = ItemsViewStyles.DETAILS_COL_SPACING
     DETAILS_PAIR_COLUMNS = ItemsViewStyles.DETAILS_PAIR_COLUMNS
     DETAILS_LABEL_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"xs": 4.0, "sm": 4.0})
@@ -326,10 +294,6 @@ class OrderPickingViewStyles:
 
 class BinTransferViewStyles:
     AVAILABLE_TEXT_SIZE = 12
-    SOURCE_BIN_INPUT_SIZE = 6
-    TARGET_BIN_INPUT_SIZE = 6
-    ITEM_INPUT_SIZE = 7
-    QUANTITY_INPUT_SIZE = 3
 
     SOURCE_BIN_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"xs": 12.0, "sm": 6.0})
     TARGET_BIN_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"xs": 12.0, "sm": 6.0})
@@ -358,10 +322,6 @@ class BinTransferViewStyles:
 
 class StockReceivingViewStyles:
     AVAILABLE_TEXT_SIZE = 12
-    ORDER_INPUT_SIZE = 6
-    TARGET_BIN_INPUT_SIZE = 6
-    ITEM_INPUT_SIZE = 7
-    QUANTITY_INPUT_SIZE = 3
 
     ORDER_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"xs": 12.0, "sm": 6.0})
     TARGET_BIN_COL: ft.ResponsiveNumber = cast(ft.ResponsiveNumber, {"xs": 12.0, "sm": 6.0})
@@ -392,10 +352,3 @@ class StockReceivingViewStyles:
 class UserViewStyles:
     FIELDS_SPACING = AppDimensions.SPACE_LG
     ACTIONS_ALIGNMENT = AlignmentStyles.AXIS_END
-
-
-class SearchResultsStyles:
-    DATA_TABLE_ROW_COLOR: ft.ColorValue = AppColors.CARD
-    TABLE_ROW_SCROLL = ft.ScrollMode.AUTO
-    TABLE_ROW_EXPAND = True
-    ROOT_EXPAND = True

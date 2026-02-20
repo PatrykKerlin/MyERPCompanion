@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from controllers.core.create_order_controller import CreateOrderController
 
 
-class CreateOrderView(BaseView["CreateOrderController"]):
+class CreateOrderView(BaseView[CreateOrderController]):
     def __init__(
         self,
         controller: CreateOrderController,

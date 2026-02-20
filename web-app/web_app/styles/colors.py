@@ -14,4 +14,3 @@ class AppColors:
     MATERIAL_BLUE: ft.ColorValue = ft.Colors.BLUE_600
     ON_MATERIAL_BLUE: ft.ColorValue = ft.Colors.WHITE
     ERROR: ft.ColorValue = ft.Colors.ERROR
-    WARNING: ft.ColorValue = ft.Colors.TERTIARY

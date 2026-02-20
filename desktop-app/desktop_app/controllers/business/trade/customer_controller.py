@@ -126,8 +126,8 @@ class CustomerController(
         if not self._view or not self._view.data_row:
             return
         customer_id = self._view.data_row["id"]
-        deleted = await self.__perform_delete_customer_discounts(customer_id, discount_ids)
-        if not deleted:
+        deleted_count = await self.__perform_delete_customer_discounts(customer_id, discount_ids)
+        if deleted_count is None:
             return
         await self.__refresh_customer_discount_lists(customer_id)
 
@@ -144,18 +144,18 @@ class CustomerController(
         return True
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
-    async def __perform_delete_customer_discounts(self, customer_id: int, discount_ids: list[int]) -> bool:
+    async def __perform_delete_customer_discounts(self, customer_id: int, discount_ids: list[int]) -> int | None:
         assoc_rows: list[AssocCustomerDiscountPlainSchema] = await self.__assoc_customer_discount_service.get_all(
             Endpoint.CUSTOMER_DISCOUNTS, None, {"customer_id": customer_id}, None, self._module_id
         )
         assoc_ids = [row.id for row in assoc_rows if row.discount_id in discount_ids]
         if not assoc_ids:
-            return True
+            return 0
         body_params = IdsPayloadSchema(ids=assoc_ids)
         await self.__assoc_customer_discount_service.delete_bulk(
             Endpoint.CUSTOMER_DISCOUNTS_DELETE_BULK, None, None, body_params, self._module_id
         )
-        return True
+        return len(assoc_ids)
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
     async def __perform_get_customer(self, customer_id: int) -> CustomerPlainSchema | None:

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import flet as ft
 from schemas.business.logistic.item_schema import ItemPlainSchema
@@ -16,55 +15,6 @@ if TYPE_CHECKING:
 
 
 class ItemsView(BaseView):
-    __META_FIELDS = {
-        "id",
-        "created_at",
-        "created_by",
-        "modified_at",
-        "modified_by",
-        "created_by_username",
-        "modified_by_username",
-    }
-    __FINANCIAL_FIELDS = {
-        "supplier_id",
-        "purchase_price",
-        "vat_rate",
-        "margin",
-        "lead_time",
-        "moq",
-    }
-    __BIN_AND_DISCOUNT_FIELDS = {
-        "bin_ids",
-        "bins",
-        "discount_ids",
-        "discounts",
-    }
-    __DETAIL_FIELDS_ORDER = [
-        "name",
-        "index",
-        "ean",
-        "description",
-        "category_name",
-        "category_id",
-        "unit_id",
-        "is_active",
-        "is_available",
-        "is_fragile",
-        "is_package",
-        "is_returnable",
-        "quantity",
-        "stock_quantity",
-        "reserved_quantity",
-        "outbound_quantity",
-        "min_stock_level",
-        "max_stock_level",
-        "width",
-        "height",
-        "length",
-        "weight",
-        "expiration_date",
-    ]
-
     def __init__(
         self,
         controller: ItemsController,
@@ -277,7 +227,7 @@ class ItemsView(BaseView):
         self._controller.on_back_from_details()
 
     def __on_category_filter_changed(self) -> None:
-        self.__selected_category_id = self.__parse_optional_int(self.__category_filter_input.value)
+        self.__selected_category_id = self._parse_optional_int(self.__category_filter_input.value)
         self.__items_list.controls = self.__build_list_controls()
         self.safe_update(self)
 
@@ -427,43 +377,34 @@ class ItemsView(BaseView):
         data = self.__item.model_dump()
         data["quantity"] = self.__quantity
         rows: list[tuple[str, str]] = []
-        used_keys: set[str] = set()
-
-        for key in self.__DETAIL_FIELDS_ORDER:
-            if key not in data or self.__is_excluded_field(key):
-                continue
-            rows.append((key, self.__format_value(data[key])))
-            used_keys.add(key)
-
-        for key, value in data.items():
-            if key in used_keys or self.__is_excluded_field(key):
-                continue
-            rows.append((key, self.__format_value(value)))
-
+        for key in [
+            "name",
+            "index",
+            "ean",
+            "description",
+            "category_name",
+            "category_id",
+            "unit_id",
+            "is_active",
+            "is_available",
+            "is_fragile",
+            "is_package",
+            "is_returnable",
+            "quantity",
+            "stock_quantity",
+            "reserved_quantity",
+            "outbound_quantity",
+            "min_stock_level",
+            "max_stock_level",
+            "width",
+            "height",
+            "length",
+            "weight",
+            "expiration_date",
+        ]:
+            if key in data:
+                rows.append((key, self._format_display_value(data[key])))
         return rows
-
-    def __is_excluded_field(self, key: str) -> bool:
-        return (
-            key == "images"
-            or key in self.__META_FIELDS
-            or key in self.__FINANCIAL_FIELDS
-            or key in self.__BIN_AND_DISCOUNT_FIELDS
-        )
-
-    def __format_value(self, value: Any) -> str:
-        if value is None:
-            return "-"
-        if isinstance(value, bool):
-            return self._translation.get("yes") if value else self._translation.get("no")
-        if isinstance(value, (date, datetime)):
-            return value.isoformat()
-        if isinstance(value, list):
-            if not value:
-                return "-"
-            return ", ".join(str(item) for item in value)
-        if isinstance(value, float):
-            return f"{value:g}"
-        return str(value)
 
     def __build_detail_columns(self, detail_rows: list[tuple[str, str]]) -> ft.Control:
         rows: list[ft.Control] = [
@@ -497,19 +438,3 @@ class ItemsView(BaseView):
                 tight=True,
             ),
         )
-
-    @staticmethod
-    def __parse_optional_int(value: str | int | float | None) -> int | None:
-        if value is None:
-            return None
-        if isinstance(value, int):
-            return value
-        if isinstance(value, float):
-            return int(value)
-        stripped = value.strip()
-        if stripped == "" or stripped == "0":
-            return None
-        try:
-            return int(stripped)
-        except ValueError:
-            return None

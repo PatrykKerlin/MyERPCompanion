@@ -1,8 +1,9 @@
 import flet as ft
 from styles.styles import BaseDialogStyles
+from views.mixins.input_controls_mixin import InputControlsMixin
 
 
-class BaseDialog(ft.AlertDialog):
+class BaseDialog(InputControlsMixin, ft.AlertDialog):
     def __init__(
         self,
         controls: list[ft.Control],

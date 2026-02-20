@@ -29,7 +29,6 @@ class Endpoint(StrEnum):
     TOKEN = "auth/token"
     REFRESH = "auth/refresh"
     CURRENT_USER = "current-user"
-    MODULES = "modules"
     USERS = "users"
     LANGUAGES = "languages"
     WAREHOUSES_BY_USERNAME = "warehouses/by-username"

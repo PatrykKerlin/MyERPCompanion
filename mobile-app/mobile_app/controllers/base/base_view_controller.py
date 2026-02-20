@@ -8,7 +8,7 @@ from typing import Any, Callable, Generic, TypeVar
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from events.events import LogoutRequested, ViewReady, ViewRequested
-from schemas.base import BasePlainSchema, BaseStrictSchema
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
 from services.base.base_service import BaseService
 from utils.enums import ApiActionError, Endpoint, View
 from utils.media_url import MediaUrl
@@ -76,19 +76,14 @@ class BaseViewController(
     def _normalize_data(self, data: dict[str, Any]) -> None:
         if not data:
             return
-        api_url = self._settings.API_URL
-        if self._settings.PUBLIC_API_URL and (
-            self._settings.CLIENT == "mobile" or bool(getattr(self._page, "web", False))
-        ):
-            api_url = self._settings.PUBLIC_API_URL
+        api_url = self._settings.PUBLIC_API_URL or self._settings.API_URL
         images = data.get("images")
         if isinstance(images, list):
             for image in images:
-                if not isinstance(image, dict):
-                    continue
-                url = image.get("url")
-                if isinstance(url, str):
-                    image["url"] = MediaUrl.normalize(url, api_url)
+                if isinstance(image, dict):
+                    url = image.get("url")
+                    if isinstance(url, str):
+                        image["url"] = MediaUrl.normalize(url, api_url)
         for key, value in list(data.items()):
             if isinstance(value, datetime):
                 data[key] = value.strftime("%Y-%m-%d %H:%M:%S")
@@ -99,34 +94,32 @@ class BaseViewController(
         if event.view_key != self._view_key:
             return
         await self._open_loading_dialog()
-        translation = self._state_store.app_state.translation.items
-        self._module_id = event.module_id
-        effective_event = event
-        data = event.data
+        try:
+            translation = self._state_store.app_state.translation.items
+            self._module_id = event.module_id
 
-        if data is None and event.record_id is not None:
-            response = await self._perform_get_one(event.record_id, self._service, self._endpoint)
-            if response is not None:
-                data = response.model_dump()
+            data = event.data
+            if data is None and event.record_id is not None:
+                response = await self._perform_get_one(event.record_id, self._service, self._endpoint)
+                if response is not None:
+                    data = response.model_dump()
 
-        if data is not None:
-            self._normalize_data(data)
-            if event.data is None:
-                effective_event = replace(event, data=data)
+            if data is not None:
+                self._normalize_data(data)
 
-        self._caller_view_key = event.caller_view_key
-        self._caller_data = event.caller_data if isinstance(event.caller_data, dict) else None
+            self._caller_view_key = event.caller_view_key
+            self._caller_data = event.caller_data if isinstance(event.caller_data, dict) else None
 
-        self._view = await self._build_view(translation, effective_event)
-        await self._event_bus.publish(
-            ViewReady(
-                view_key=event.view_key,
-                record_id=event.record_id,
-                view=self._view,
-                save_succeeded=event.save_succeeded,
+            self._view = await self._build_view(translation, replace(event, data=data))
+            await self._event_bus.publish(
+                ViewReady(
+                    view_key=event.view_key,
+                    record_id=event.record_id,
+                    view=self._view,
+                )
             )
-        )
-        self._close_loading_dialog()
+        finally:
+            self._close_loading_dialog()
 
     async def __logout_requested_handler(self, _: LogoutRequested) -> None:
         self._view = None

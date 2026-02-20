@@ -59,7 +59,7 @@ class StockReceivingView(BaseView):
         self.__order_input = self._get_dropdown(
             options=orders,
             include_empty_option=True,
-            on_select=lambda event: self._controller.on_value_changed("order_id", self.__on_order_changed),
+            on_select=lambda _: self._controller.on_value_changed("order_id", self.__on_order_changed),
             value="0",
             editable=True,
             enable_search=True,
@@ -71,14 +71,14 @@ class StockReceivingView(BaseView):
 
         self.__target_input = self._get_text_field(
             value="",
-            on_change=lambda event: self._controller.on_value_changed("target_bin"),
-            on_submit=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit),
+            on_change=lambda _: self._controller.on_value_changed("target_bin"),
+            on_submit=lambda _: self._controller.on_value_changed("target_bin", self.__on_target_submit),
             on_focus=lambda event: (
                 self._controller.on_value_changed("target_bin", self.__on_target_submit)
                 if str(getattr(event, "data", "")).lower() == "false"
                 else None
             ),
-            on_tap_outside=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit),
+            on_tap_outside=lambda _: self._controller.on_value_changed("target_bin", self.__on_target_submit),
             expand=True,
         )
         self.__target_input.col = StockReceivingViewStyles.TARGET_BIN_COL
@@ -86,7 +86,7 @@ class StockReceivingView(BaseView):
         self.__item_input = self._get_dropdown(
             options=[],
             include_empty_option=True,
-            on_select=lambda event: self._controller.on_value_changed("item_id", self.__on_item_changed),
+            on_select=lambda _: self._controller.on_value_changed("item_id", self.__on_item_changed),
             value="0",
             editable=True,
             enable_search=True,
@@ -103,7 +103,7 @@ class StockReceivingView(BaseView):
             precision=0,
             min_value=0,
             is_float=False,
-            on_change=lambda event: self._controller.on_value_changed("quantity"),
+            on_change=lambda _: self._controller.on_value_changed("quantity"),
             expand=True,
         )
 
@@ -383,7 +383,7 @@ class StockReceivingView(BaseView):
             return
 
         controls: list[ft.Control] = []
-        for _item_id, item_index, item_name, quantity in self.__saved_rows:
+        for _, item_index, item_name, quantity in self.__saved_rows:
             subtitle = item_name if item_name else "-"
             controls.append(
                 ft.Card(
@@ -397,23 +397,23 @@ class StockReceivingView(BaseView):
         self.__saved_list.controls = controls
 
     def __update_available_text(self) -> None:
-        selected_item_id = self.__parse_optional_int(self.__item_input.value)
+        selected_item_id = self._parse_optional_int(self.__item_input.value)
         if selected_item_id is None:
             self.__available_text.value = f"{self._translation.get('available')}: 0"
             return
         available_quantity = 0
-        for item_id, _item_index, _item_name, quantity in self.__source_rows:
+        for item_id, _, _, quantity in self.__source_rows:
             if item_id == selected_item_id:
                 available_quantity = quantity
                 break
         self.__available_text.value = f"{self._translation.get('available')}: {available_quantity}"
 
     def __sync_quantity_limit_to_selected_item(self) -> None:
-        selected_item_id = self.__parse_optional_int(self.__item_input.value)
+        selected_item_id = self._parse_optional_int(self.__item_input.value)
         previous_item_id = self.__last_quantity_item_id
         max_quantity = 0
         if selected_item_id is not None:
-            for item_id, _item_index, _item_name, quantity in self.__source_rows:
+            for item_id, _, _, quantity in self.__source_rows:
                 if item_id == selected_item_id:
                     max_quantity = max(1, quantity)
                     break
@@ -434,7 +434,7 @@ class StockReceivingView(BaseView):
             return
 
     def __update_add_button_state(self) -> None:
-        selected_item_id = self.__parse_optional_int(self.__item_input.value)
+        selected_item_id = self._parse_optional_int(self.__item_input.value)
         self.__add_button.disabled = (not self.__source_enabled) or selected_item_id is None
 
     def __update_save_button_state(self) -> None:
@@ -454,7 +454,7 @@ class StockReceivingView(BaseView):
         self.safe_update(self.__add_button)
 
     def __on_add_clicked(self, _: ft.Event[ft.Button]) -> None:
-        item_id = self.__parse_optional_int(self.__item_input.value)
+        item_id = self._parse_optional_int(self.__item_input.value)
         quantity = self.__parse_quantity(self.__quantity_input.value)
         self._controller.on_add_clicked(item_id, quantity)
 
@@ -480,18 +480,6 @@ class StockReceivingView(BaseView):
         if item_name:
             return f"{item_index} | {item_name}"
         return item_index
-
-    @staticmethod
-    def __parse_optional_int(value: str | None) -> int | None:
-        if not value:
-            return None
-        stripped = value.strip()
-        if stripped in {"", "0"}:
-            return None
-        try:
-            return int(stripped)
-        except ValueError:
-            return None
 
     @staticmethod
     def __parse_quantity(value: int | float | None) -> int | None:

@@ -26,25 +26,6 @@ class ButtonStyles:
         },
         shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
     )
-    compact = ft.ButtonStyle(
-        padding=ft.Padding.symmetric(
-            horizontal=AppDimensions.PADDING_BUTTON_HORIZONTAL_COMPACT,
-            vertical=AppDimensions.PADDING_BUTTON_VERTICAL_COMPACT,
-        ),
-        bgcolor={
-            ft.ControlState.DEFAULT: AppColors.SURFACE_CONTAINER_HIGH,
-            ft.ControlState.DISABLED: AppColors.SURFACE,
-        },
-        color={
-            ft.ControlState.DEFAULT: AppColors.ON_SURFACE,
-            ft.ControlState.DISABLED: AppColors.ON_SURFACE_VARIANT,
-        },
-        side={
-            ft.ControlState.DEFAULT: ft.BorderSide(width=1, color=AppColors.OUTLINE),
-            ft.ControlState.DISABLED: ft.BorderSide(width=1, color=AppColors.OUTLINE_VARIANT),
-        },
-        shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
-    )
     icon = ft.ButtonStyle(
         padding=ft.Padding.all(0),
         shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
@@ -67,25 +48,6 @@ class ButtonStyles:
         padding=ft.Padding.symmetric(
             horizontal=AppDimensions.PADDING_BUTTON_HORIZONTAL,
             vertical=AppDimensions.PADDING_BUTTON_VERTICAL,
-        ),
-        bgcolor={
-            ft.ControlState.DEFAULT: AppColors.MATERIAL_BLUE,
-            ft.ControlState.DISABLED: AppColors.SURFACE_CONTAINER_HIGH,
-        },
-        color={
-            ft.ControlState.DEFAULT: AppColors.ON_MATERIAL_BLUE,
-            ft.ControlState.DISABLED: AppColors.ON_SURFACE_VARIANT,
-        },
-        side={
-            ft.ControlState.DEFAULT: ft.BorderSide(0, ft.Colors.TRANSPARENT),
-            ft.ControlState.DISABLED: ft.BorderSide(1, AppColors.OUTLINE_VARIANT),
-        },
-        shape=ft.RoundedRectangleBorder(radius=AppDimensions.RADIUS_MD),
-    )
-    primary_compact = ft.ButtonStyle(
-        padding=ft.Padding.symmetric(
-            horizontal=AppDimensions.PADDING_BUTTON_HORIZONTAL_COMPACT,
-            vertical=AppDimensions.PADDING_BUTTON_VERTICAL_COMPACT,
         ),
         bgcolor={
             ft.ControlState.DEFAULT: AppColors.MATERIAL_BLUE,
@@ -126,8 +88,6 @@ class AlignmentStyles:
     CENTER = ft.Alignment.CENTER
     CENTER_LEFT = ft.Alignment.CENTER_LEFT
     CENTER_RIGHT = ft.Alignment.CENTER_RIGHT
-    TOP_LEFT = ft.Alignment.TOP_LEFT
-    TOP_RIGHT = ft.Alignment.TOP_RIGHT
     TOP_CENTER = ft.Alignment.TOP_CENTER
 
     AXIS_START = ft.MainAxisAlignment.START
@@ -141,15 +101,12 @@ class AlignmentStyles:
 
 
 class ControlStyles:
-    INPUT_ALIGNMENT = AlignmentStyles.CENTER_LEFT
-    LABEL_ALIGNMENT = AlignmentStyles.TOP_LEFT
     INPUT_FONT_SIZE = 14
     INPUT_FONT_LINE_HEIGHT = 1.2
     INPUT_TEXT_STYLE = ft.TextStyle(size=INPUT_FONT_SIZE, height=INPUT_FONT_LINE_HEIGHT)
     FIELD_BORDER_RADIUS = AppDimensions.RADIUS_MD
     FIELD_BORDER_COLOR: ft.ColorValue = AppColors.OUTLINE
     FIELD_FOCUSED_BORDER_COLOR: ft.ColorValue = AppColors.PRIMARY
-    FIELD_BORDER_SIDE = ft.BorderSide(width=1.25, color=AppColors.OUTLINE)
     TEXT_FIELD_HEIGHT = max(
         AppDimensions.CONTROL_HEIGHT,
         math.ceil((INPUT_FONT_SIZE * INPUT_FONT_LINE_HEIGHT) + (2 * AppDimensions.PADDING_INPUT_VERTICAL) + 2),
@@ -288,7 +245,6 @@ class OrdersViewStyles:
     META_ROW_COLUMNS = 12
     META_ROW_SPACING = AppDimensions.SPACE_LG
     META_TRAILING_SPACING = AppDimensions.SPACE_SM
-    ITEM_DIALOG_FALLBACK_PADDING = ft.Padding.all(AppDimensions.SPACE_SM)
     OVERDUE_COLOR: ft.ColorValue = AppColors.ERROR
     ORDER_SELECTED_BGCOLOR: ft.ColorValue = AppColors.PRIMARY_CONTAINER
     UNPAID_ICON: ft.IconData = ft.Icons.REQUEST_QUOTE
@@ -377,7 +333,6 @@ class CreateOrderViewStyles:
     CART_DIALOG_BREAKPOINT_DESKTOP = 900
     CART_DIALOG_MAX_WIDTH = 620
     CART_DIALOG_MIN_VIEWPORT_WIDTH = 320
-    CART_DIALOG_CONTENT_WIDTH_RATIO = 0.72
     CART_DIALOG_CONTENT_MIN_WIDTH = 300
     CART_DIALOG_DEFAULT_WIDTH = 320
     CART_DIALOG_MIN_HEIGHT = 120
@@ -385,10 +340,6 @@ class CreateOrderViewStyles:
     CART_DIALOG_ROW_ESTIMATED_HEIGHT = 68
     CART_DIALOG_HEIGHT_RATIO = 0.5
 
-    CHECKOUT_DIALOG_MIN_WIDTH = 360
-    CHECKOUT_DIALOG_WIDTH_RATIO = 0.9
-    CHECKOUT_DIALOG_MAX_WIDTH = 720
-    CHECKOUT_DIALOG_DEFAULT_WIDTH = 600
     CHECKOUT_DIALOG_WIDTH_MULTIPLIER = 1.1
 
     CHECKOUT_ERROR_COLOR: ft.ColorValue = AppColors.ERROR

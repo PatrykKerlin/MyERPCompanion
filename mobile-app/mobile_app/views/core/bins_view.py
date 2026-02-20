@@ -32,14 +32,14 @@ class BinsView(BaseView):
         self.__title = self._get_label("", style=TypographyStyles.HEADER_TITLE)
         self.__filter_field = self._get_text_field(
             value="",
-            on_change=lambda event: self._controller.on_value_changed("filter_query"),
-            on_submit=lambda event: self._controller.on_value_changed("filter_query"),
+            on_change=lambda _: self._controller.on_value_changed("filter_query"),
+            on_submit=lambda _: self._controller.on_value_changed("filter_query"),
             on_focus=lambda event: (
                 self._controller.on_value_changed("filter_query")
                 if str(getattr(event, "data", "")).lower() == "false"
                 else None
             ),
-            on_tap_outside=lambda event: self._controller.on_value_changed("filter_query"),
+            on_tap_outside=lambda _: self._controller.on_value_changed("filter_query"),
             expand=True,
         )
         self.__filter_field.col = self._responsive_col(BinsViewStyles.FILTER_TEXT_INPUT_SIZE)
@@ -54,7 +54,7 @@ class BinsView(BaseView):
                 ("outbound", "Outbound"),
             ],
             include_empty_option=True,
-            on_select=lambda event: self._controller.on_value_changed(
+            on_select=lambda _: self._controller.on_value_changed(
                 "bin_direction_filter", self.__on_bin_direction_filter_changed
             ),
             value="0",

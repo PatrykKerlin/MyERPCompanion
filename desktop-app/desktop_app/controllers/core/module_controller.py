@@ -120,8 +120,8 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
         created_views = await self.__perform_create_views(create_payloads)
         if not created_views:
             return
-        controllers_created = await self.__perform_create_view_controllers(created_views, create_sources)
-        if not controllers_created:
+        controllers_created_count = await self.__perform_create_view_controllers(created_views, create_sources)
+        if controllers_created_count is None:
             return
         await self.__refresh_view_rows(module_id)
 
@@ -200,19 +200,19 @@ class ModuleController(BaseViewController[ModuleService, ModuleView, ModulePlain
     @BaseController.handle_api_action(ApiActionError.SAVE)
     async def __perform_create_view_controllers(
         self, created_views: list[ViewPlainSchema], source_views: list[ViewPlainSchema]
-    ) -> bool:
+    ) -> int | None:
         if not created_views or not source_views:
-            return True
+            return 0
         payload: list[AssocViewControllerStrictSchema] = []
         for created_view, source_view in zip(created_views, source_views):
             for controller_id in source_view.controller_ids:
                 payload.append(AssocViewControllerStrictSchema(view_id=created_view.id, controller_id=controller_id))
         if not payload:
-            return True
+            return 0
         await self.__assoc_view_controller_service.create_bulk(
             Endpoint.VIEW_CONTROLLERS_CREATE_BULK, None, None, payload, self._module_id
         )
-        return True
+        return len(payload)
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
     async def __perform_delete_views(self, view_ids: list[int]) -> bool:

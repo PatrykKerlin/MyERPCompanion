@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 import flet as ft
@@ -76,3 +77,34 @@ class BaseView(BaseComponent, Generic[TController], ft.Container):
     @staticmethod
     def _responsive_col(size: int) -> ft.ResponsiveNumber:
         return cast(ft.ResponsiveNumber, {BaseViewStyles.RESPONSIVE_BREAKPOINT: float(size)})
+
+    @staticmethod
+    def _parse_optional_int(value: str | int | float | None) -> int | None:
+        if value is None:
+            return None
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float):
+            return int(value)
+        stripped = value.strip()
+        if stripped in {"", "0"}:
+            return None
+        try:
+            return int(stripped)
+        except ValueError:
+            return None
+
+    def _format_display_value(self, value: Any) -> str:
+        if value is None:
+            return "-"
+        if isinstance(value, bool):
+            return self._translation.get("yes") if value else self._translation.get("no")
+        if isinstance(value, (date, datetime)):
+            return value.isoformat()
+        if isinstance(value, list):
+            if not value:
+                return "-"
+            return ", ".join(str(item) for item in value)
+        if isinstance(value, float):
+            return f"{value:g}"
+        return str(value)

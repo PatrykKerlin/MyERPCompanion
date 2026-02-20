@@ -192,16 +192,16 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         return True
 
     @BaseController.handle_api_action(ApiActionError.DELETE)
-    async def __perform_delete_item_discounts(self, item_id: int, discount_ids: list[int]) -> bool:
+    async def __perform_delete_item_discounts(self, item_id: int, discount_ids: list[int]) -> int | None:
         assoc_rows = await self.__perform_get_item_discounts(item_id)
         assoc_ids = [row.id for row in assoc_rows if row.discount_id in discount_ids]
         if not assoc_ids:
-            return True
+            return 0
         body_params = IdsPayloadSchema(ids=assoc_ids)
         await self.__assoc_item_discount_service.delete_bulk(
             Endpoint.ITEM_DISCOUNTS_DELETE_BULK, None, None, body_params, self._module_id
         )
-        return True
+        return len(assoc_ids)
 
     async def __handle_discount_save(self) -> None:
         if not self._view or not self._view.data_row:
@@ -222,8 +222,8 @@ class ItemController(BaseViewController[ItemService, ItemView, ItemPlainSchema, 
         if not self._view or not self._view.data_row:
             return
         item_id = self._view.data_row["id"]
-        deleted = await self.__perform_delete_item_discounts(item_id, discount_ids)
-        if not deleted:
+        deleted_count = await self.__perform_delete_item_discounts(item_id, discount_ids)
+        if deleted_count is None:
             return
         await self.__refresh_item_discount_lists(item_id)
 

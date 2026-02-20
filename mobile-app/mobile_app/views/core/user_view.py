@@ -137,7 +137,7 @@ class UserView(BaseView):
         self._controller.on_back_to_menu()
 
     def __on_save_click(self, _: ft.Event[ft.Button]) -> None:
-        selected_language_id = self.__parse_optional_int(self.__language_dropdown.value)
+        selected_language_id = self._parse_optional_int(self.__language_dropdown.value)
         selected_theme = self.__parse_theme(self.__theme_dropdown.value)
         self._controller.on_user_save_clicked(
             self.__password_input.value,
@@ -145,18 +145,6 @@ class UserView(BaseView):
             selected_language_id,
             selected_theme,
         )
-
-    @staticmethod
-    def __parse_optional_int(value: str | None) -> int | None:
-        if value is None:
-            return None
-        normalized = value.strip()
-        if normalized in {"", "0"}:
-            return None
-        try:
-            return int(normalized)
-        except ValueError:
-            return None
 
     @staticmethod
     def __parse_theme(value: str | None) -> Constraints.Theme:

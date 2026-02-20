@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import date, datetime
-from typing import TYPE_CHECKING, Any
+from datetime import date
+from typing import TYPE_CHECKING
 
 import flet as ft
 from schemas.business.logistic.item_schema import ItemPlainSchema
@@ -23,62 +23,6 @@ if TYPE_CHECKING:
 
 
 class OrderPickingView(BaseView):
-    __META_FIELDS = {
-        "id",
-        "created_at",
-        "created_by",
-        "modified_at",
-        "modified_by",
-        "created_by_username",
-        "modified_by_username",
-    }
-    __FINANCIAL_FIELDS = {
-        "supplier_id",
-        "purchase_price",
-        "vat_rate",
-        "margin",
-        "lead_time",
-        "moq",
-        "total_net",
-        "total_vat",
-        "total_gross",
-        "total_discount",
-    }
-    __BIN_AND_DISCOUNT_FIELDS = {
-        "bin_ids",
-        "bins",
-        "discount_ids",
-        "discounts",
-    }
-    __HIDDEN_DETAIL_FIELDS = {
-        "category_id",
-        "unit_id",
-        "is_available",
-        "is_returnable",
-        "min_stock_level",
-        "max_stock_level",
-        "to_process",
-        "is_active",
-        "is_package",
-    }
-    __DETAIL_FIELDS_ORDER = [
-        "index",
-        "name",
-        "ean",
-        "description",
-        "category_name",
-        "unit_name",
-        "is_fragile",
-        "stock_quantity",
-        "reserved_quantity",
-        "outbound_quantity",
-        "width",
-        "height",
-        "length",
-        "weight",
-        "expiration_date",
-    ]
-
     def __init__(
         self,
         controller: OrderPickingController,
@@ -109,7 +53,7 @@ class OrderPickingView(BaseView):
 
         self.__order_date_input = self._get_date_field(
             value=default_order_date,
-            on_change=lambda event: self._controller.on_value_changed("order_date", self.__handle_order_date_changed),
+            on_change=lambda _: self._controller.on_value_changed("order_date", self.__handle_order_date_changed),
             expand=True,
             read_only=False,
         )
@@ -118,7 +62,7 @@ class OrderPickingView(BaseView):
         self.__customer_input = self._get_dropdown(
             options=customers,
             include_empty_option=True,
-            on_select=lambda event: self._controller.on_value_changed("customer_id", self.__handle_customer_changed),
+            on_select=lambda _: self._controller.on_value_changed("customer_id", self.__handle_customer_changed),
             value="0",
             editable=True,
             enable_search=True,
@@ -130,7 +74,7 @@ class OrderPickingView(BaseView):
         self.__order_input = self._get_dropdown(
             options=[],
             include_empty_option=True,
-            on_select=lambda event: self._controller.on_value_changed("order_id", self.__handle_order_changed),
+            on_select=lambda _: self._controller.on_value_changed("order_id", self.__handle_order_changed),
             value="0",
             editable=True,
             enable_search=True,
@@ -142,7 +86,7 @@ class OrderPickingView(BaseView):
         self.__package_item_input = self._get_dropdown(
             options=[],
             include_empty_option=True,
-            on_select=lambda event: self._controller.on_value_changed("package_item_id"),
+            on_select=lambda _: self._controller.on_value_changed("package_item_id"),
             value="0",
             editable=True,
             enable_search=True,
@@ -170,7 +114,7 @@ class OrderPickingView(BaseView):
         self.__pick_bin_input = self._get_dropdown(
             options=[],
             include_empty_option=True,
-            on_select=lambda event: self._controller.on_value_changed("pick_bin_id", self.__handle_pick_bin_changed),
+            on_select=lambda _: self._controller.on_value_changed("pick_bin_id", self.__handle_pick_bin_changed),
             value="0",
             editable=True,
             enable_search=True,
@@ -185,7 +129,7 @@ class OrderPickingView(BaseView):
             precision=0,
             min_value=1,
             is_float=False,
-            on_change=lambda event: self._controller.on_value_changed("pick_quantity"),
+            on_change=lambda _: self._controller.on_value_changed("pick_quantity"),
             expand=True,
         )
         self.__pick_quantity_input.col = self._responsive_col(OrderPickingViewStyles.PICK_QUANTITY_INPUT_SIZE)
@@ -393,7 +337,7 @@ class OrderPickingView(BaseView):
                 key=str(bin_id),
                 text=location,
             )
-            for bin_id, location, _outbound, _available in bin_options
+            for bin_id, location, _, _ in bin_options
         ]
 
         if default_bin_id in self.__pick_bin_available_by_id:
@@ -507,44 +451,26 @@ class OrderPickingView(BaseView):
         data = item.model_dump()
         data["unit_name"] = self.__pick_unit_name if self.__pick_unit_name else str(item.unit_id)
         rows: list[tuple[str, str]] = []
-        used_keys: set[str] = set()
-
-        for key in self.__DETAIL_FIELDS_ORDER:
-            if key not in data or self.__is_excluded_field(key):
-                continue
-            rows.append((key, self.__format_value(data[key])))
-            used_keys.add(key)
-
-        for key, value in data.items():
-            if key in used_keys or self.__is_excluded_field(key):
-                continue
-            rows.append((key, self.__format_value(value)))
-
+        for key in [
+            "index",
+            "name",
+            "ean",
+            "description",
+            "category_name",
+            "unit_name",
+            "is_fragile",
+            "stock_quantity",
+            "reserved_quantity",
+            "outbound_quantity",
+            "width",
+            "height",
+            "length",
+            "weight",
+            "expiration_date",
+        ]:
+            if key in data:
+                rows.append((key, self._format_display_value(data[key])))
         return rows
-
-    def __is_excluded_field(self, key: str) -> bool:
-        return (
-            key == "images"
-            or key in self.__META_FIELDS
-            or key in self.__FINANCIAL_FIELDS
-            or key in self.__BIN_AND_DISCOUNT_FIELDS
-            or key in self.__HIDDEN_DETAIL_FIELDS
-        )
-
-    def __format_value(self, value: Any) -> str:
-        if value is None:
-            return "-"
-        if isinstance(value, bool):
-            return self._translation.get("yes") if value else self._translation.get("no")
-        if isinstance(value, (date, datetime)):
-            return value.isoformat()
-        if isinstance(value, float):
-            return f"{value:g}"
-        if isinstance(value, list):
-            if not value:
-                return "-"
-            return ", ".join(str(item) for item in value)
-        return str(value)
 
     def __build_detail_columns(self, detail_rows: list[tuple[str, str]]) -> ft.Control:
         rows: list[ft.Control] = [
@@ -707,7 +633,7 @@ class OrderPickingView(BaseView):
         self._controller.on_customer_changed(self.__customer_input.value)
 
     def __handle_order_changed(self) -> None:
-        self.__selected_order_id = self.__parse_optional_int(self.__order_input.value)
+        self.__selected_order_id = self._parse_optional_int(self.__order_input.value)
         self._controller.on_order_selected(self.__selected_order_id)
 
     def __handle_pick_bin_changed(self) -> None:
@@ -722,7 +648,7 @@ class OrderPickingView(BaseView):
         self.safe_update(self.__pick_bin_info_text)
 
     def __update_pick_bin_info(self) -> None:
-        selected_bin_id = self.__parse_optional_int(self.__pick_bin_input.value)
+        selected_bin_id = self._parse_optional_int(self.__pick_bin_input.value)
         outbound_available = (
             self.__pick_bin_outbound_by_id.get(selected_bin_id, 0) if selected_bin_id is not None else 0
         )
@@ -735,7 +661,7 @@ class OrderPickingView(BaseView):
             )
 
     def __selected_bin_available(self) -> int:
-        selected_bin_id = self.__parse_optional_int(self.__pick_bin_input.value)
+        selected_bin_id = self._parse_optional_int(self.__pick_bin_input.value)
         if selected_bin_id is None:
             return 0
         return self.__pick_bin_available_by_id.get(selected_bin_id, 0)
@@ -747,32 +673,16 @@ class OrderPickingView(BaseView):
         self._controller.on_pick_form_cancelled()
 
     def __on_pick_save_clicked(self, _: ft.Event[ft.Button]) -> None:
-        selected_bin_id = self.__parse_optional_int(self.__pick_bin_input.value)
+        selected_bin_id = self._parse_optional_int(self.__pick_bin_input.value)
         quantity = self.__parse_quantity(self.__pick_quantity_input.value)
         self._controller.on_pick_form_saved(selected_bin_id, quantity)
 
     def __on_add_package_clicked(self, _: ft.Event[ft.Button]) -> None:
-        package_item_id = self.__parse_optional_int(self.__package_item_input.value)
+        package_item_id = self._parse_optional_int(self.__package_item_input.value)
         self._controller.on_package_item_selected(package_item_id)
 
     def __build_item_click_handler(self, item_id: int):
         return lambda _: self._controller.on_order_item_selected(item_id)
-
-    @staticmethod
-    def __parse_optional_int(value: str | int | float | None) -> int | None:
-        if value is None:
-            return None
-        if isinstance(value, int):
-            return value
-        if isinstance(value, float):
-            return int(value)
-        stripped = value.strip()
-        if stripped == "" or stripped == "0":
-            return None
-        try:
-            return int(stripped)
-        except ValueError:
-            return None
 
     @staticmethod
     def __parse_quantity(value: int | float | None) -> int | None:

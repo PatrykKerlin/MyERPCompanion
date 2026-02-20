@@ -122,7 +122,7 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
         customers = await self.__perform_get_customers() or []
         customer_pairs = [(customer.id, self.__format_customer_label(customer)) for customer in customers]
         self.__orders = await self.__load_eligible_orders(self.__selected_order_date, self.__selected_customer_id)
-        self.__selected_order_id = self.__resolve_selected_order_id(event.data)
+        self.__selected_order_id = event.data.get("selected_order_id") if event.data else None
 
         view = OrderPickingView(
             controller=self,
@@ -324,10 +324,6 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
             is_package_pick=is_package_pick,
         )
         self._page.update()
-
-    @staticmethod
-    def __resolve_package_pick_limit(item_schema: ItemPlainSchema) -> int:
-        return max(1, item_schema.outbound_quantity, item_schema.stock_quantity)
 
     async def __resolve_unit_name(self, unit_id: int) -> str | None:
         unit_schema = self.__units_by_id.get(unit_id)
@@ -852,13 +848,8 @@ class OrderPickingController(BaseViewController[OrderService, OrderPickingView, 
         return True
 
     @staticmethod
-    def __resolve_selected_order_id(data: dict[str, Any] | None) -> int | None:
-        if not data:
-            return None
-        selected_order_id = data.get("selected_order_id")
-        if isinstance(selected_order_id, int):
-            return selected_order_id
-        return None
+    def __resolve_package_pick_limit(item_schema: ItemPlainSchema) -> int:
+        return max(1, item_schema.outbound_quantity, item_schema.stock_quantity)
 
     @staticmethod
     def __format_customer_label(customer: CustomerPlainSchema) -> str:

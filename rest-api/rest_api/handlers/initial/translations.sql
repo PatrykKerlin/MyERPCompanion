@@ -378,6 +378,8 @@ VALUES
 ('no_report_rows', 'Brak wierszy raportu.', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('no_status_history', 'No status history.', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('no_status_history', 'Brak historii statusów.', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('no_permissions', 'No permissions.', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('no_permissions', 'Brak uprawnień.', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('number', 'Number', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('number', 'Numer', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('open_user', 'Open User', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),

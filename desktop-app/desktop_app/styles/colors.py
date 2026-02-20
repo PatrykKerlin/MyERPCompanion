@@ -15,6 +15,4 @@ class AppColors:
     PRIMARY: ft.ColorValue = ft.Colors.PRIMARY
     MATERIAL_BLUE: ft.ColorValue = ft.Colors.BLUE_600
     ON_MATERIAL_BLUE: ft.ColorValue = ft.Colors.WHITE
-    CONTROL_SELECTED: ft.ColorValue = ft.Colors.PRIMARY_CONTAINER
-    CONTROL_SELECTED_CONTENT: ft.ColorValue = ft.Colors.ON_PRIMARY_CONTAINER
     CONTROL_UNSELECTED: ft.ColorValue = ft.Colors.ON_SURFACE_VARIANT

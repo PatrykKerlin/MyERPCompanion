@@ -255,8 +255,6 @@ class AppController(BaseController):
                 record_id=current_user.id,
                 caller_view_key=event.caller_view_key,
                 caller_data=event.caller_data,
-                width_ratio=event.width_ratio,
-                save_succeeded=False,
             )
             self.__last_view_request = event
 

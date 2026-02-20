@@ -19,5 +19,4 @@ class RequestData:
     redo_stack: list[tuple[str, Any, Any]] = field(default_factory=list)
     caller_view_key: View | None = None
     caller_data: dict[str, Any] | None = None
-    pending_user_id: int | None = None
     is_saving: bool = False

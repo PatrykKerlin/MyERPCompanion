@@ -52,28 +52,28 @@ class BinTransferView(BaseView):
 
         self.__source_input = self._get_text_field(
             value="",
-            on_change=lambda event: self._controller.on_value_changed("source_bin"),
-            on_submit=lambda event: self._controller.on_value_changed("source_bin", self.__on_source_submit),
+            on_change=lambda _: self._controller.on_value_changed("source_bin"),
+            on_submit=lambda _: self._controller.on_value_changed("source_bin", self.__on_source_submit),
             on_focus=lambda event: (
                 self._controller.on_value_changed("source_bin", self.__on_source_submit)
                 if str(getattr(event, "data", "")).lower() == "false"
                 else None
             ),
-            on_tap_outside=lambda event: self._controller.on_value_changed("source_bin", self.__on_source_submit),
+            on_tap_outside=lambda _: self._controller.on_value_changed("source_bin", self.__on_source_submit),
             expand=True,
         )
         self.__source_input.col = BinTransferViewStyles.SOURCE_BIN_COL
 
         self.__target_input = self._get_text_field(
             value="",
-            on_change=lambda event: self._controller.on_value_changed("target_bin"),
-            on_submit=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit),
+            on_change=lambda _: self._controller.on_value_changed("target_bin"),
+            on_submit=lambda _: self._controller.on_value_changed("target_bin", self.__on_target_submit),
             on_focus=lambda event: (
                 self._controller.on_value_changed("target_bin", self.__on_target_submit)
                 if str(getattr(event, "data", "")).lower() == "false"
                 else None
             ),
-            on_tap_outside=lambda event: self._controller.on_value_changed("target_bin", self.__on_target_submit),
+            on_tap_outside=lambda _: self._controller.on_value_changed("target_bin", self.__on_target_submit),
             expand=True,
         )
         self.__target_input.col = BinTransferViewStyles.TARGET_BIN_COL
@@ -81,7 +81,7 @@ class BinTransferView(BaseView):
         self.__item_input = self._get_dropdown(
             options=[],
             include_empty_option=True,
-            on_select=lambda event: self._controller.on_value_changed("item_id", self.__on_item_changed),
+            on_select=lambda _: self._controller.on_value_changed("item_id", self.__on_item_changed),
             value="0",
             editable=True,
             enable_search=True,
@@ -98,7 +98,7 @@ class BinTransferView(BaseView):
             precision=0,
             min_value=1,
             is_float=False,
-            on_change=lambda event: self._controller.on_value_changed("quantity"),
+            on_change=lambda _: self._controller.on_value_changed("quantity"),
             expand=True,
         )
         self.__available_text = self._get_label("", size=BinTransferViewStyles.AVAILABLE_TEXT_SIZE)
@@ -277,7 +277,7 @@ class BinTransferView(BaseView):
         self._controller.on_target_bin_submit(self.__target_input.value or "")
 
     def __on_add_click(self, _: ft.Event[ft.Button]) -> None:
-        item_id = self.__parse_optional_int(self.__item_input.value)
+        item_id = self._parse_optional_int(self.__item_input.value)
         quantity = self.__parse_quantity(self.__quantity_input.value)
         self._controller.on_add_clicked(item_id, quantity)
 
@@ -298,18 +298,6 @@ class BinTransferView(BaseView):
         return lambda _: self._controller.on_pending_item_removed(item_id)
 
     @staticmethod
-    def __parse_optional_int(value: str | None) -> int | None:
-        if not value:
-            return None
-        stripped = value.strip()
-        if stripped in {"", "0"}:
-            return None
-        try:
-            return int(stripped)
-        except ValueError:
-            return None
-
-    @staticmethod
     def __parse_quantity(value: int | float | None) -> int | None:
         if value is None:
             return None
@@ -319,7 +307,7 @@ class BinTransferView(BaseView):
         return parsed
 
     def __update_available_text(self) -> None:
-        selected_item_id = self.__parse_optional_int(self.__item_input.value)
+        selected_item_id = self._parse_optional_int(self.__item_input.value)
         if selected_item_id is None:
             self.__available_text.value = f"{self._translation.get('available')}: -"
             return
@@ -332,7 +320,7 @@ class BinTransferView(BaseView):
         self.__available_text.text_align = BinTransferViewStyles.QUANTITY_INFO_TEXT_ALIGN
 
     def __sync_quantity_limit_to_selected_item(self) -> None:
-        selected_item_id = self.__parse_optional_int(self.__item_input.value)
+        selected_item_id = self._parse_optional_int(self.__item_input.value)
         previous_item_id = self.__last_quantity_item_id
         max_quantity = 0
         if selected_item_id is not None:
@@ -356,5 +344,5 @@ class BinTransferView(BaseView):
             return
 
     def __update_add_button_state(self) -> None:
-        selected_item_id = self.__parse_optional_int(self.__item_input.value)
+        selected_item_id = self._parse_optional_int(self.__item_input.value)
         self.__add_button.disabled = (not self.__form_enabled) or selected_item_id is None

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
@@ -76,10 +74,11 @@ class ItemsController(BaseViewController[ItemService, ItemsView, ItemPlainSchema
         self.on_back_to_menu()
 
     async def _build_view(self, translation: Translation, event: ViewRequested) -> ItemsView:
-        quantity = self.__resolve_quantity(event.data)
-        item_id = self.__resolve_item_id(event.data)
-        selected_category_id = self.__resolve_category_id(event.data)
-        index_filter = self.__resolve_index_filter(event.data)
+        data = event.data or {}
+        item_id: int | None = data.get("item_id")
+        quantity: int = data.get("quantity", 0)
+        selected_category_id: int | None = data.get("category_id")
+        index_filter = self.__resolve_index_filter(data)
 
         categories = await self.__perform_get_all_categories()
         category_options = sorted(((schema.id, schema.name) for schema in categories), key=lambda item: item[1].lower())
@@ -122,44 +121,7 @@ class ItemsController(BaseViewController[ItemService, ItemsView, ItemPlainSchema
         return await self._service.get_all(Endpoint.ITEMS, None, query_params, None, self._module_id)
 
     @staticmethod
-    def __resolve_item_id(data: dict[str, Any] | None) -> int | None:
-        if not data:
-            return None
-        item_id = data.get("item_id")
-        if isinstance(item_id, int):
-            return item_id
-        return None
-
-    @staticmethod
-    def __resolve_quantity(data: dict[str, Any] | None) -> int:
-        if not data:
-            return 0
-        quantity = data.get("quantity")
-        if isinstance(quantity, int):
-            return quantity
-        return 0
-
-    @staticmethod
-    def __resolve_category_id(data: dict[str, Any] | None) -> int | None:
-        if not data:
-            return None
-        category_id = data.get("category_id")
-        if isinstance(category_id, int):
-            return category_id
-        if isinstance(category_id, str):
-            stripped = category_id.strip()
-            if stripped in {"", "0"}:
-                return None
-            try:
-                return int(stripped)
-            except ValueError:
-                return None
-        return None
-
-    @staticmethod
-    def __resolve_index_filter(data: dict[str, Any] | None) -> str:
-        if not data:
-            return ""
+    def __resolve_index_filter(data: dict[str, object]) -> str:
         index_filter = data.get("index_filter")
         if isinstance(index_filter, str):
             return index_filter.strip()

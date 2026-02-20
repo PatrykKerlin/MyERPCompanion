@@ -12,7 +12,6 @@ class AppDimensions:
     SPACE_SM = 8
     SPACE_MD = 10
     SPACE_LG = 12
-    SPACE_XL = 16
     SPACE_2XL = 25
 
     CONTROL_HEIGHT = 44
@@ -43,7 +42,6 @@ class AppDimensions:
 
     REPORT_DIALOG_WIDTH_RATIO = 0.98
     REPORT_DIALOG_HEIGHT_RATIO = 0.9
-    DIALOG_MIN_CONTENT_WIDTH = 420
 
     ANIMATION_DURATION_MS = 333
     SMALL_ROW_HEIGHT = 15

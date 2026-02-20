@@ -64,8 +64,6 @@ class ViewRequested(BaseEvent):
     data: dict[str, Any] | None = None
     caller_view_key: View | None = None
     caller_data: dict[str, Any] | None = None
-    width_ratio: float = 0.5
-    save_succeeded: bool = False
 
 
 @dataclass(frozen=True)
@@ -73,5 +71,3 @@ class ViewReady(BaseEvent):
     view_key: View
     view: BaseView
     record_id: int | None = None
-    width_ratio: float = 0.5
-    save_succeeded: bool = False

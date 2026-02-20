@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 from config.context import Context
 from controllers.base.base_controller import BaseController
 from controllers.base.base_view_controller import BaseViewController
@@ -73,12 +71,11 @@ class BinsController(BaseViewController[BinService, BinsView, BinPlainSchema, Bi
             view_key=event.view_key,
         )
         view.set_bins(self.__bins)
-
-        selected_bin_id = self.__resolve_selected_bin_id(event.data)
+        selected_bin_id = event.data.get("selected_bin_id") if event.data else None
         if selected_bin_id is None:
             return view
         selected_bin = next((schema for schema in self.__bins if schema.id == selected_bin_id), None)
-        if not selected_bin:
+        if selected_bin is None:
             return view
         await self.__set_selected_bin_items(selected_bin)
         selected_bin_schema = self.__selected_bin
@@ -136,12 +133,3 @@ class BinsController(BaseViewController[BinService, BinsView, BinPlainSchema, Bi
         self.__selected_bin = selected_bin
         self.__items = sorted(items, key=lambda schema: schema.name.lower())
         self.__item_quantities = item_quantities
-
-    @staticmethod
-    def __resolve_selected_bin_id(data: dict[str, Any] | None) -> int | None:
-        if not data:
-            return None
-        selected_bin_id = data.get("selected_bin_id")
-        if isinstance(selected_bin_id, int):
-            return selected_bin_id
-        return None
