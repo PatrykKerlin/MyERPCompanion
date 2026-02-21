@@ -124,7 +124,7 @@ class OrderPickingView(BaseView):
             content=self._translation.get("confirm"),
             on_click=lambda _: self._controller.on_complete_status_clicked(),
             disabled=True,
-            style=ButtonStyles.primary_regular,
+            style=ButtonStyles.regular,
         )
         complete_row = ft.Row(
             controls=[self.__complete_button],
@@ -227,6 +227,7 @@ class OrderPickingView(BaseView):
 
     def set_complete_button_enabled(self, enabled: bool) -> None:
         self.__complete_button.disabled = not enabled
+        self.__complete_button.style = ButtonStyles.primary_regular if enabled else ButtonStyles.regular
         if self.__complete_button.page:
             self.__complete_button.update()
 
