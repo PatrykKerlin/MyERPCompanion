@@ -240,7 +240,7 @@ class SalesReportController(
 
     @staticmethod
     def __to_currency_options(currencies: list[CurrencyPlainSchema]) -> list[tuple[int, str]]:
-        options = [(currency.id, f"{currency.code} {currency.name}") for currency in currencies]
+        options = [(currency.id, currency.code) for currency in currencies]
         return sorted(options, key=lambda option: option[1].lower())
 
     @staticmethod
