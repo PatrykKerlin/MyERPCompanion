@@ -116,6 +116,8 @@ VALUES
 ('previous_tab', 'Poprzednia karta', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('about', 'About', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('about', 'O aplikacji', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('about_content', 'MyERPCompanion. All rights reserved.', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
+('about_content', 'MyERPCompanion. Wszelkie prawa zastrzeżone.', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('add', 'Add', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('add', 'Dodaj', 2, TRUE, CURRENT_TIMESTAMP, :superuser_id),
 ('add_image', 'Add Image', 1, TRUE, CURRENT_TIMESTAMP, :superuser_id),

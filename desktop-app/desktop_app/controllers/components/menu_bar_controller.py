@@ -122,7 +122,7 @@ class MenuBarController(BaseComponentController[MenuBarComponent, MenuBarRequest
         self._page.run_task(self._event_bus.publish, TabsBarToggleRequested())
 
     def on_about_clicked(self) -> None:
-        self._open_message_dialog("about")
+        self._open_message_dialog("about_content")
 
     def on_check_api_status_clicked(self) -> None:
         self._page.run_task(self._event_bus.publish, ApiStatusRequested(silent=False))
