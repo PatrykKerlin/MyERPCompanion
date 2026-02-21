@@ -57,7 +57,7 @@ class BinQuantityDialogComponent(BaseDialog):
         super().__init__(
             controls=[
                 ft.Text(translation.get("source_bin")),
-                self.__bin_dropdown,
+                ft.Row(controls=[self.__bin_dropdown]),
                 ft.Text(translation.get("quantity")),
                 self.__quantity_field,
             ],
