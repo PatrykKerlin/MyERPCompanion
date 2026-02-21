@@ -412,13 +412,18 @@ class BaseViewController(
             return
         data_row = self._view.data_row
         record_id = data_row.get("id") if data_row else None
+        mode = event.mode
+        if mode in {ViewMode.READ, ViewMode.EDIT}:
+            data = None
+        else:
+            data = data_row
         await self._event_bus.publish(
             ViewRequested(
                 module_id=self._module_id,
                 view_key=self._view_key,
                 record_id=record_id,
-                data=data_row,
-                mode=event.mode,
+                data=data,
+                mode=mode,
                 caller_view_key=event.caller_view_key,
                 caller_data=event.caller_data,
             )
@@ -657,7 +662,7 @@ class BaseViewController(
                             module_id=self._module_id,
                             view_key=self._view_key,
                             record_id=response_with_id.id,
-                            record_data=response.model_dump(),
+                            mode=ViewMode.READ,
                             save_succeeded=True,
                         )
                     )
