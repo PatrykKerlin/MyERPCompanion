@@ -82,6 +82,15 @@ class EmployeeController(
     def _user_link_entity_key(self) -> str:
         return "employee_id"
 
+    def _get_validation_context(self, input_values: dict[str, Any]) -> dict[str, Any] | None:
+        position_id = self.__normalize_selected_id(input_values.get("position_id"))
+        if position_id is None:
+            return None
+        position = self.__positions_by_id.get(position_id)
+        if position is None:
+            return None
+        return {"salary_range": (position.min_salary, position.max_salary)}
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> EmployeeView:
         (
             self.__all_employees,

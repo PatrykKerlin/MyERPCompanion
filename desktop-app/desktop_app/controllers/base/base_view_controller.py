@@ -218,6 +218,15 @@ class BaseViewController(
     def get_search_result_columns(self, available_fields: list[str]) -> list[str]:
         return available_fields
 
+    def _get_validation_context(self, input_values: dict[str, Any]) -> dict[str, Any] | None:
+        return None
+
+    def _validate_input_values(self, input_values: dict[str, Any]) -> TControllerStrictSchema:
+        context = self._get_validation_context(input_values)
+        if context is None:
+            return self._strict_schema_cls.model_validate(input_values)
+        return self._strict_schema_cls.model_validate(input_values, context=context)
+
     async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> TView: ...
 
     @BaseController.handle_api_action(ApiActionError.FETCH)
@@ -632,13 +641,13 @@ class BaseViewController(
         try:
             response: TControllerPlainSchema | None = None
             if self._view.mode == ViewMode.CREATE:
-                payload = self._strict_schema_cls(**self._request_data.input_values)
+                payload = self._validate_input_values(dict(self._request_data.input_values))
                 response = await self._perform_create(self._service, self._endpoint, payload)
                 if response:
                     self._view.clear_inputs()
                     self._state_store.update(view={"mode": ViewMode.SEARCH})
             elif self._view.mode == ViewMode.EDIT:
-                payload = self._strict_schema_cls(**self._request_data.input_values)
+                payload = self._validate_input_values(dict(self._request_data.input_values))
                 response = await self._perform_update(
                     self._request_data.input_values["id"], self._service, self._endpoint, payload
                 )
@@ -695,10 +704,11 @@ class BaseViewController(
             input_control = field.input.content
             if hasattr(input_control, "disabled") and getattr(input_control, "disabled"):
                 return None
-        if self._view.mode == ViewMode.CREATE:
-            self._request_data.input_values["id"] = 1
+        validation_input = dict(self._request_data.input_values)
+        if self._view.mode == ViewMode.CREATE and "id" not in validation_input:
+            validation_input["id"] = 1
         try:
-            self._strict_schema_cls(**self._request_data.input_values)
+            self._validate_input_values(validation_input)
             return None
         except ValidationError as validation_error:
             for error in validation_error.errors():
