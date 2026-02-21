@@ -164,21 +164,21 @@ class ToolbarComponent(BaseComponent, ft.Container):
             self.__lock_view_button.icon = unlocked_icon
         elif not unlocked and self.__lock_view_button.icon == unlocked_icon:
             self.__lock_view_button.icon = locked_icon
-        self.__lock_view_button.update()
+        self.safe_update(self.__lock_view_button)
 
     def set_lock_view_button_state(self, disabled: bool) -> None:
         if disabled and not self.__lock_view_button.disabled:
             self.__lock_view_button.disabled = True
         elif not disabled and self.__lock_view_button.disabled:
             self.__lock_view_button.disabled = False
-        self.__lock_view_button.update()
+        self.safe_update(self.__lock_view_button)
 
     def set_delete_button_state(self, disabled: bool) -> None:
         if disabled and not self.__delete_record_button.disabled:
             self.__delete_record_button.disabled = True
         elif not disabled and self.__delete_record_button.disabled:
             self.__delete_record_button.disabled = False
-        self.__delete_record_button.update()
+        self.safe_update(self.__delete_record_button)
 
     def set_navigation_buttons_state(self, disabled: bool) -> None:
         buttons = [
@@ -196,7 +196,7 @@ class ToolbarComponent(BaseComponent, ft.Container):
                 button.disabled = True
             elif not disabled and button.disabled:
                 button.disabled = False
-            button.update()
+            self.safe_update(button)
 
     def did_mount(self):
         if self.__pending_username is not None:
@@ -222,6 +222,6 @@ class ToolbarComponent(BaseComponent, ft.Container):
             self.__current_user_text.value = ""
             self.__current_user_button.disabled = True
             self.__logout_button.disabled = True
-        self.__current_user_text.update()
-        self.__current_user_button.update()
-        self.__logout_button.update()
+        self.safe_update(self.__current_user_text)
+        self.safe_update(self.__current_user_button)
+        self.safe_update(self.__logout_button)

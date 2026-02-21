@@ -60,7 +60,7 @@ class TabsBarComponent(BaseComponent, ft.Container):
 
     def refresh(self) -> None:
         self.__build_controls()
-        self.update()
+        self.safe_update(self)
 
     def __build_controls(self) -> None:
         controls: list[ft.Control] = []

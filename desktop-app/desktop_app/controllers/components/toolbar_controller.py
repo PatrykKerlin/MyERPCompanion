@@ -148,6 +148,7 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         self._component = ToolbarComponent(controller=self, translation=translation)
         current = self._state_store.app_state.user.current
         self._component.set_current_user(current.username if current else None)
+        self.__view_updated_listener(self._state_store.app_state.view)
         await self._event_bus.publish(ToolbarReady(self._component))
 
     def __user_updated_listener(self, state) -> None:

@@ -640,10 +640,7 @@ class BaseViewController(
             if response:
                 response_with_id = cast(BasePlainSchema, response)
                 if self._request_data.caller_view_key:
-                    is_current_user_settings = (
-                        self._request_data.caller_view_key == View.CURRENT_USER and self._view_key == View.USERS
-                    )
-                    close_title = None if is_current_user_settings else self._state_store.app_state.view.title
+                    close_title = self._state_store.app_state.view.title
                     await self._event_bus.publish(
                         CallerActionRequested(
                             caller_view_key=self._request_data.caller_view_key,
@@ -653,18 +650,6 @@ class BaseViewController(
                             caller_data=self._request_data.caller_data,
                         )
                     )
-                    if is_current_user_settings:
-                        await self._event_bus.publish(
-                            TabRequested(
-                                module_id=self._module_id,
-                                view_key=self._view_key,
-                                record_id=response_with_id.id,
-                                record_data=response.model_dump(),
-                                mode=ViewMode.READ,
-                                caller_view_key=View.CURRENT_USER,
-                                caller_data=self._request_data.caller_data,
-                            )
-                        )
                     self.__open_save_success_dialog(close_title)
                 else:
                     await self._event_bus.publish(

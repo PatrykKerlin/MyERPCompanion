@@ -62,6 +62,7 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
     async def _component_requested_handler(self, _: TabsBarRequested) -> None:
         translation = self._state_store.app_state.translation.items
         self._component = TabsBarComponent(controller=self, translation=translation)
+        self.__sync_component_with_state(self._state_store.app_state.view)
         await self._event_bus.publish(TabsBarReady(self._component))
 
     async def __tab_requested_handler(self, event: TabRequested) -> None:
@@ -118,10 +119,29 @@ class TabsBarController(BaseComponentController[TabsBarComponent, TabsBarRequest
     def __view_updated_listener(self, state: ViewState) -> None:
         if not self._component:
             return
-        self._component.active_tab = state.title
+        self.__sync_component_with_state(state)
+
+    def __sync_component_with_state(self, state: ViewState) -> None:
+        if not self._component:
+            return
+        self.__ensure_active_view_tab(state)
+        active_title = state.title if state.title in self.__active_tabs else ""
+        self._component.active_tab = active_title
         self._component.active_mode = state.mode
         self._component.tabs = list(self.__active_tabs.keys())
         self._component.refresh()
+
+    def __ensure_active_view_tab(self, state: ViewState) -> None:
+        if not state.title or not state.view:
+            return
+        current_view = self.__active_tabs.get(state.title)
+        if current_view is state.view:
+            return
+        existing_title = next((title for title, view in self.__active_tabs.items() if view is state.view), None)
+        if existing_title and existing_title != state.title:
+            self.__active_tabs[state.title] = self.__active_tabs.pop(existing_title)
+            return
+        self.__active_tabs[state.title] = state.view
 
     def __navigate_tabs(self, direction: TabNavigationDirection) -> None:
         titles = list(self.__active_tabs.keys())
