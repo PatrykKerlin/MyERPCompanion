@@ -182,8 +182,8 @@ class SalesReportView(BaseView):
                 self.__build_date_range_input(),
                 self.__build_filter_input(self._translation.get("currency"), self.__currency_input, md_size=2),
                 self.__build_filter_input(self._translation.get("customer"), self.__customer_input, md_size=2),
-                self.__build_filter_input(self._translation.get("item"), self.__item_input, md_size=2),
                 self.__build_filter_input(self._translation.get("category"), self.__category_input, md_size=2),
+                self.__build_filter_input(self._translation.get("item"), self.__item_input, md_size=2),
             ],
         )
         filters_bottom_row = ft.ResponsiveRow(

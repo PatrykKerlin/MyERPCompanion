@@ -260,8 +260,8 @@ class SalesForecastReportView(BaseView):
                 self.__build_discount_range_input(),
                 self.__build_filter_input(self._translation.get("currency"), self.__currency_input),
                 self.__build_filter_input(self._translation.get("customer"), self.__customer_input),
-                self.__build_filter_input(self._translation.get("item"), self.__item_input),
                 self.__build_filter_input(self._translation.get("category"), self.__category_input),
+                self.__build_filter_input(self._translation.get("item"), self.__item_input),
             ],
         )
         filters_bottom_row = ft.ResponsiveRow(
