@@ -40,7 +40,9 @@ class DataTable(ft.Container):
             ],
             rows=[
                 ft.DataRow(
-                    cells=[ft.DataCell(ft.Text(str(row.get(column_key, "")))) for column_key in columns],
+                    cells=[
+                        ft.DataCell(ft.Text(self.__to_cell_text(row.get(column_key, "")))) for column_key in columns
+                    ],
                     on_select_change=self.__handle_on_row_clicked(row, on_row_clicked),
                 )
                 for row in rows
@@ -146,3 +148,9 @@ class DataTable(ft.Container):
         if self.__read_only:
             return
         on_row_clicked(row)
+
+    @staticmethod
+    def __to_cell_text(value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value)
