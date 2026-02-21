@@ -19,6 +19,8 @@ from utils.enums import Permission
 
 
 class Auth:
+    _CUSTOMERS_GROUP_KEY = "customers"
+
     def __init__(self, context: Context) -> None:
         self.__settings = context.settings
         self.__pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -47,7 +49,8 @@ class Auth:
         elif client == "mobile":
             allowed = is_superuser or has_employee
         elif client == "web":
-            allowed = is_superuser or has_customer
+            has_customers_group = self.__has_group(user_schema, self._CUSTOMERS_GROUP_KEY)
+            allowed = is_superuser or (has_customer and has_customers_group)
         else:
             return None, "invalid_client"
         if not allowed:
@@ -221,6 +224,10 @@ class Auth:
 
     async def __has_web_module_access(self, session: AsyncSession, user_schema: UserPlainSchema) -> bool:
         return await self.__has_module_access(session, user_schema, "web")
+
+    @staticmethod
+    def __has_group(user_schema: UserPlainSchema, group_key: str) -> bool:
+        return any(group.key == group_key for group in user_schema.groups)
 
     async def __has_module_access(
         self,
