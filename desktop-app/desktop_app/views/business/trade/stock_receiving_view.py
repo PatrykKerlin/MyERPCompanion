@@ -102,14 +102,10 @@ class StockReceivingView(BaseView):
             self.__order_input.update()
 
     def set_order_error(self, message: str | None) -> None:
-        self.__order_input.error_text = message
-        if self.__order_input.page:
-            self.__order_input.update()
+        self.set_field_error("order_id", message)
 
     def set_target_error(self, message: str | None) -> None:
-        self.__target_input.error = message
-        if self.__target_input.page:
-            self.__target_input.update()
+        self.set_field_error("target_bin", message)
 
     def set_source_rows(self, rows: list[tuple[int, list[str]]]) -> None:
         self.__bulk_transfer.set_source_rows(rows)
