@@ -457,6 +457,8 @@ class SalesOrderController(BaseViewController[OrderService, SalesOrderView, Orde
         for item in items:
             if item.is_package:
                 continue
+            if not item.is_available:
+                continue
             if item.outbound_quantity <= 0:
                 continue
             available_quantity = max(item.outbound_quantity - item.reserved_quantity, 0)

@@ -53,6 +53,7 @@ class OrderViewSourceItemSchema(BaseSchema):
     index: str
     name: str
     ean: str
+    is_available: bool = True
     description: str | None = None
     purchase_price: float
     margin: float

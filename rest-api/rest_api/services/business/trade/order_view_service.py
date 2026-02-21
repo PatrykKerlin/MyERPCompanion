@@ -157,6 +157,7 @@ class OrderViewService(
                 index=item.index,
                 name=item.name,
                 ean=item.ean,
+                is_available=item.is_available,
                 description=item.description,
                 purchase_price=item.purchase_price,
                 margin=item.margin,

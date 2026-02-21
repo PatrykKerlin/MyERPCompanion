@@ -225,12 +225,13 @@ class CreateOrderController(
     async def _build_view(self, translation: Translation) -> CreateOrderView:
         view_data = await self.__perform_get_sales_view()
         self.__initialize_discount_maps(view_data)
-        image_map, images_map = self.__build_image_maps(view_data.source_items)
+        available_source_items = [item for item in view_data.source_items if item.is_available]
+        image_map, images_map = self.__build_image_maps(available_source_items)
         return CreateOrderView(
             controller=self,
             translation=translation,
             categories=view_data.categories,
-            items=view_data.source_items,
+            items=available_source_items,
             image_map=image_map,
             images_map=images_map,
         )
