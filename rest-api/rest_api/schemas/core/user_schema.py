@@ -8,6 +8,8 @@ from schemas.core.group_schema import GroupPlainSchema
 from schemas.core.language_schema import LanguagePlainSchema
 from schemas.validation.constraints import Constraints
 
+PASSWORDS_DO_NOT_MATCH_ERROR = "Passwords do not match."
+
 
 class UserStrictBaseSchema(BaseModel):
     username: Constraints.Username
@@ -29,7 +31,7 @@ class UserStrictCreateAppSchema(BaseStrictSchema, UserStrictBaseSchema):
     @model_validator(mode="after")
     def _validate_passwords(self) -> UserStrictCreateAppSchema:
         if self.password != self.password_repeat:
-            raise ValueError("passwords_do_not_match")
+            raise ValueError(PASSWORDS_DO_NOT_MATCH_ERROR)
         return self
 
 
@@ -46,9 +48,9 @@ class UserStrictUpdateAppSchema(BaseStrictSchema, UserStrictBaseSchema):
         if self.password is None and self.password_repeat is None:
             return self
         if self.password is None or self.password_repeat is None:
-            raise ValueError("passwords_do_not_match")
+            raise ValueError(PASSWORDS_DO_NOT_MATCH_ERROR)
         if self.password != self.password_repeat:
-            raise ValueError("passwords_do_not_match")
+            raise ValueError(PASSWORDS_DO_NOT_MATCH_ERROR)
         return self
 
 
