@@ -86,8 +86,10 @@ class UserLinkViewMixin:
         marker_value = False
         if field and field.marker:
             marker = field.marker.content
-            if isinstance(marker, ft.Checkbox):
-                marker_value = bool(marker.value)
+            if hasattr(marker, "value"):
+                marker_value = bool(getattr(marker, "value", False))
+            elif isinstance(marker, ft.IconButton):
+                marker_value = bool(marker.selected)
         user_id_value = self._data_row.get("user_id") if self._data_row else None
         if user_id_value in (0, "0", ""):
             user_id_value = None
