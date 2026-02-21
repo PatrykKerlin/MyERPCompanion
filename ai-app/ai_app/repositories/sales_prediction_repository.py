@@ -73,3 +73,52 @@ class SalesPredictionRepository:
             }
             for row in rows
         ]
+
+    async def get_prediction_keys(self, end_date: date | None = None) -> list[tuple[int, int, int, int]]:
+        query = (
+            select(
+                AssocOrderItem.item_id.label("item_id"),
+                Order.customer_id.label("customer_id"),
+                Item.category_id.label("category_id"),
+                Order.currency_id.label("currency_id"),
+            )
+            .join(AssocOrderItem, AssocOrderItem.order_id == Order.id)
+            .join(Item, Item.id == AssocOrderItem.item_id)
+            .where(
+                Order.is_sales.is_(True),
+                Order.is_active.is_(True),
+                Order.invoice_id.is_not(None),
+                Order.customer_id.is_not(None),
+                Order.currency_id.is_not(None),
+                AssocOrderItem.is_active.is_(True),
+                Item.is_active.is_(True),
+                Item.category_id.is_not(None),
+            )
+            .group_by(
+                AssocOrderItem.item_id,
+                Order.customer_id,
+                Item.category_id,
+                Order.currency_id,
+            )
+            .order_by(
+                AssocOrderItem.item_id,
+                Order.customer_id,
+                Item.category_id,
+                Order.currency_id,
+            )
+        )
+        if end_date is not None:
+            query = query.where(Order.order_date <= end_date)
+
+        async with self._engine.get_session() as session:
+            result = await session.execute(query)
+            rows = result.all()
+        return [
+            (
+                int(row.item_id),
+                int(row.customer_id),
+                int(row.category_id),
+                int(row.currency_id),
+            )
+            for row in rows
+        ]

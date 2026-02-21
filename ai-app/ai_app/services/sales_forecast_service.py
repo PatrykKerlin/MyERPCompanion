@@ -59,10 +59,15 @@ class SalesForecastService:
             logger.info(f"Only one unique month in dataset ({min_period}), skipped")
             return None
 
-        item_scale = float(max(int(row["item_id"]) for row in rows))
-        customer_scale = float(max(int(row["customer_id"]) for row in rows))
-        category_scale = float(max(int(row["category_id"]) for row in rows))
-        currency_scale = float(max(int(row["currency_id"]) for row in rows))
+        prediction_keys = await self._prediction_repository.get_prediction_keys(end_date=end_date)
+        if not prediction_keys:
+            logger.info("No prediction keys found, skipped")
+            return None
+
+        item_scale = float(max(item_id for item_id, _, _, _ in prediction_keys))
+        customer_scale = float(max(customer_id for _, customer_id, _, _ in prediction_keys))
+        category_scale = float(max(category_id for _, _, category_id, _ in prediction_keys))
+        currency_scale = float(max(currency_id for _, _, _, currency_id in prediction_keys))
         period_scale = float(period_span)
 
         train_features: list[list[float]] = []
@@ -100,18 +105,6 @@ class SalesForecastService:
 
         x_train = torch.tensor(train_features, dtype=torch.float32)
         y_train = torch.tensor(y_train_values, dtype=torch.float32)
-
-        prediction_keys = list(
-            dict.fromkeys(
-                (
-                    int(row["item_id"]),
-                    int(row["customer_id"]),
-                    int(row["category_id"]),
-                    int(row["currency_id"]),
-                )
-                for row in rows
-            )
-        )
         predict_features: list[list[float]] = []
         prediction_points: list[dict[str, Any]] = []
         for month_offset in range(1, self._horizon_months + 1):
