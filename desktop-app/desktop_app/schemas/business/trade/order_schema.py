@@ -22,7 +22,7 @@ class OrderStrictBaseSchema(BaseStrictSchema):
     shipping_cost: Constraints.NonNegativeNumeric_10_2
 
     notes: Constraints.StringOptional_1000
-    external_notes: Constraints.StringOptional_1000
+    external_notes: Constraints.StringOptional_1000 = None
 
     delivery_method_id: Constraints.PositiveIntegerOptional
     currency_id: Constraints.PositiveInteger
