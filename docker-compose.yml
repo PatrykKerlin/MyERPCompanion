@@ -75,18 +75,19 @@ services:
     build:
       context: ./desktop-app
       dockerfile: dockerfile
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     networks:
       - project_net
     volumes:
       - ./desktop-app/desktop_app/:/desktop_app
-      - /mnt/wslg/runtime-dir:/mnt/wslg/runtime-dir
+      - ${WAYLAND_HOST_RUNTIME_DIR:-/mnt/wslg/runtime-dir}:${WAYLAND_CONTAINER_RUNTIME_DIR:-/tmp/wayland-runtime}
     environment:
       - API_URL=http://rest-api:8000/api
       - PUBLIC_API_URL=http://localhost:8000/api
-      - WAYLAND_DISPLAY=wayland-0
-      - XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir
-      - XDG_SESSION_TYPE=wayland
-      - GDK_BACKEND=wayland
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-0}
+      - XDG_RUNTIME_DIR=${WAYLAND_CONTAINER_RUNTIME_DIR:-/tmp/wayland-runtime}
+      - XDG_SESSION_TYPE=${XDG_SESSION_TYPE:-wayland}
+      - GDK_BACKEND=${GDK_BACKEND:-wayland,x11}
     depends_on:
       - rest-api
     command:

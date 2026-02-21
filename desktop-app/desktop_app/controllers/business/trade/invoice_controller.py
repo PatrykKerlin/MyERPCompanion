@@ -499,7 +499,7 @@ class InvoiceController(BaseViewController[InvoiceService, InvoiceView, InvoiceP
         cwd = os.getcwd()
         env = os.environ.copy()
         env["WAYLAND_DISPLAY"] = env.get("WAYLAND_DISPLAY", "wayland-0")
-        env["XDG_RUNTIME_DIR"] = env.get("XDG_RUNTIME_DIR", "/mnt/wslg/runtime-dir")
+        env["XDG_RUNTIME_DIR"] = env.get("XDG_RUNTIME_DIR", "/tmp/wayland-runtime")
         env["XDG_SESSION_TYPE"] = "wayland"
         env["GDK_BACKEND"] = "wayland"
         args = [

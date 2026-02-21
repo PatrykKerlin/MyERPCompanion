@@ -46,7 +46,7 @@ class PopulateDatabase:
                 logger.info("Superuser already exists.")
                 return
             hashed_password = await self.__auth.get_password_hash(password)
-            superuser = mc.User(username=username, password=hashed_password, theme="system", is_superuser=True)
+            superuser = mc.User(username=username, password=hashed_password, theme="dark", is_superuser=True)
             session.add(superuser)
             await session.flush()
             superuser.created_by = superuser.id
@@ -108,7 +108,7 @@ class PopulateDatabase:
 
     async def __update_superuser(self, session: AsyncSession) -> None:
         if self.__superuser:
-            self.__superuser.language_id = 2
+            self.__superuser.language_id = 1
             self.__superuser.modified_by = self.__superuser.id
             session.add(self.__superuser)
             await session.commit()
