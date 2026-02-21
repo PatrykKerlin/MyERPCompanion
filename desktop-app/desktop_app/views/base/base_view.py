@@ -851,7 +851,7 @@ class BaseView(BaseComponent, Generic[TController], ft.Card):
             self._cancel_button.visible = True
             self._save_button.visible = True
             self._search_button.visible = False
-        elif self._mode == ViewMode.SEARCH:
+        elif self._mode in [ViewMode.SEARCH, ViewMode.LIST]:
             self._cancel_button.visible = False
             self._save_button.visible = False
             self._search_button.visible = True

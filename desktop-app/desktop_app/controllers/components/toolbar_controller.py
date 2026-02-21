@@ -81,11 +81,12 @@ class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequest
         current_view = view_state.view
         if not current_view:
             return
+        refresh_mode = None if view_state.mode == ViewMode.LIST else view_state.mode
         self._page.run_task(
             self._event_bus.publish,
             ViewRefreshRequested(
                 view_key=current_view.view_key,
-                mode=view_state.mode,
+                mode=refresh_mode,
                 caller_view_key=current_view.caller_view_key,
                 caller_data=current_view.data_row,
             ),
