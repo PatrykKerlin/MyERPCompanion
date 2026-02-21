@@ -4,14 +4,14 @@ from typing import TYPE_CHECKING
 
 from models.base.base_model import BaseModel
 from models.base.fields import Fields
-from sqlalchemy import Index, text
-from sqlalchemy.orm import Mapped
+from models.core import User
+from sqlalchemy import Index, literal_column, select, text
+from sqlalchemy.orm import Mapped, column_property
 
 if TYPE_CHECKING:
     from models.business.trade.assoc_customer_discount import AssocCustomerDiscount
     from models.business.trade.invoice import Invoice
     from models.business.trade.order import Order
-    from models.core.user import User
 
 
 class Customer(BaseModel):
@@ -47,6 +47,12 @@ class Customer(BaseModel):
     shipping_city: Mapped[str | None] = Fields.string_50(nullable=True)
     shipping_country: Mapped[str | None] = Fields.string_50(nullable=True)
 
+    user_id: Mapped[int | None] = column_property(
+        select(User.id)
+        .where(User.customer_id == literal_column("customers.id"))
+        .where(User.is_active.is_(True))
+        .scalar_subquery()
+    )
     user: Mapped[User | None] = Fields.relationship(
         argument="User", back_populates="customer", foreign_keys="User.customer_id", uselist=False
     )
@@ -67,7 +73,4 @@ class Customer(BaseModel):
     @property
     def discount_ids(self) -> list[int]:
         return [row.discount_id for row in self.customer_discounts]
-
-    @property
-    def user_id(self) -> int | None:
-        return self.user.id if self.user else None
+    
