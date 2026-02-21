@@ -53,6 +53,7 @@ class CategoryView(BaseView, DiscountBulkTransferMixin):
             on_discount_save_clicked,
             on_discount_delete_clicked,
             height=AppDimensions.SECTION_HEIGHT_LARGE,
+            visible_modes=set(self._DETAIL_MODES),
         )
         bulk_transfer_row = self._build_discount_bulk_transfer_row()
         self._master_column.controls.extend(
