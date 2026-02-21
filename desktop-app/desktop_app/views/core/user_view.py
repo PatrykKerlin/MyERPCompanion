@@ -39,17 +39,9 @@ class UserView(BaseView, GroupBulkTransferMixin):
         on_groups_save_clicked=None,
         on_groups_delete_clicked=None,
     ) -> None:
-        super().__init__(
-            controller,
-            translation,
-            mode,
-            key,
-            data_row,
-            4,
-            7,
-            caller_view_key=caller_view_key,
-        )
+        super().__init__(controller, translation, mode, key, data_row, 4, 7, caller_view_key=caller_view_key)
         self.__password_validation_ready = False
+        self.__password_validation_bound = False
         main_fields_definitions = [
             {"key": "password", "input": self._get_text_input, "password": True},
             {"key": "password_repeat", "input": self._get_text_input, "password": True},
@@ -91,7 +83,7 @@ class UserView(BaseView, GroupBulkTransferMixin):
         self._add_to_inputs(main_fields)
         self.__hide_password_markers()
         if mode in {ViewMode.CREATE, ViewMode.EDIT}:
-            self.__bind_password_validation()
+            self.__ensure_password_validation_bound()
         main_grid = self._build_grid(main_fields)
         columns: list[ft.Control] = [ft.Column(controls=main_grid, expand=True)]
         if show_meta:
@@ -131,6 +123,8 @@ class UserView(BaseView, GroupBulkTransferMixin):
         ]
 
     def set_mode(self, mode: ViewMode) -> None:
+        if mode in {ViewMode.CREATE, ViewMode.EDIT}:
+            self.__ensure_password_validation_bound()
         super().set_mode(mode)
         show_spacing = mode != ViewMode.READ
         self.__buttons_spacing_row.visible = show_spacing
@@ -245,3 +239,9 @@ class UserView(BaseView, GroupBulkTransferMixin):
                 control.on_blur = lambda _: self.__validate_password_fields()
         if self.__password_validation_ready:
             self.__validate_password_fields()
+        self.__password_validation_bound = True
+
+    def __ensure_password_validation_bound(self) -> None:
+        if self.__password_validation_bound:
+            return
+        self.__bind_password_validation()
