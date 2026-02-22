@@ -82,6 +82,8 @@ docker compose up web-app
 Następnie należy otworzyć:
 `http://localhost:8551`
 
+Po otwarciu widoku zalecane jest wykonanie twardego odświeżenia przeglądarki (`Ctrl+F5`).
+
 ### Krok 9. Start `mobile-app` (osobny terminal)
 W kolejnym, osobnym terminalu należy uruchomić:
 
@@ -92,12 +94,16 @@ docker compose up mobile-app
 Następnie należy otworzyć:
 `http://localhost:8552`
 
+Po otwarciu widoku zalecane jest wykonanie twardego odświeżenia przeglądarki (`Ctrl+F5`).
+
 ## 3. Adresy aplikacji
 - API: `http://localhost:8000`
 - Desktop natywny: okno aplikacji Flet (bez adresu URL)
 - Desktop (wersja web): `http://localhost:8550`
 - Web app: `http://localhost:8551`
 - Mobile app (web preview): `http://localhost:8552`
+
+Uwaga dla widoków webowych (`desktop-app-web`, `web-app`, `mobile-app`): po otwarciu adresu należy wykonać twarde odświeżenie (`Ctrl+F5`).
 
 ## 4. Połączenie z PostgreSQL (bezpośrednie)
 Po uruchomieniu kontenera `postgres` dostępne jest bezpośrednie połączenie do bazy:
@@ -128,6 +134,8 @@ docker compose up desktop-app-web
 ```
 3. Należy otworzyć:
 `http://localhost:8550`
+
+Po otwarciu widoku zalecane jest wykonanie twardego odświeżenia przeglądarki (`Ctrl+F5`).
 
 To jest funkcjonalny odpowiednik desktopu, niewymagający lokalnego GUI w kontenerze.
 Wersję `desktop-app-web` można uruchamiać również z `PowerShell` (z użyciem `docker compose`).
