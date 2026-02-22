@@ -1,28 +1,36 @@
-from typing import Sequence
-
 import flet as ft
+from styles.styles import DialogStyles
 
 
 class BaseDialog(ft.AlertDialog):
     def __init__(
         self,
-        controls: Sequence[ft.Control],
-        actions: Sequence[ft.Control] = [],
+        controls: list[ft.Control],
+        actions: list[ft.Control] | None = None,
         title: str | ft.Control | None = None,
-        **kwargs,
+        scrollable: bool = DialogStyles.SCROLLABLE,
     ) -> None:
         super().__init__(
-            modal=True,
-            alignment=ft.alignment.center,
+            modal=DialogStyles.MODAL,
+            title=title,
             content=ft.Container(
                 content=ft.Column(
-                    controls=list(controls),
+                    controls=controls,
                     tight=True,
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=DialogStyles.CONTENT_SPACING,
+                    alignment=DialogStyles.CONTENT_ALIGNMENT,
+                    horizontal_alignment=DialogStyles.CONTENT_HORIZONTAL_ALIGNMENT,
                 ),
             ),
-            actions=list(actions),
-            title=title,
-            **kwargs,
+            actions=actions or [],
+            elevation=DialogStyles.ELEVATION,
+            title_padding=DialogStyles.TITLE_PADDING,
+            content_padding=DialogStyles.CONTENT_PADDING,
+            actions_padding=DialogStyles.ACTIONS_PADDING,
+            actions_alignment=DialogStyles.ACTIONS_ALIGNMENT,
+            action_button_padding=DialogStyles.ACTION_BUTTON_PADDING,
+            actions_overflow_button_spacing=DialogStyles.ACTIONS_OVERFLOW_BUTTON_SPACING,
+            inset_padding=DialogStyles.INSET_PADDING,
+            alignment=DialogStyles.ALIGNMENT,
+            scrollable=scrollable,
         )

@@ -1,0 +1,66 @@
+from typing import Any
+
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.business.logistic.warehouse_schema import WarehouseLoginOptionFetchSchema, WarehouseLoginOptionSchema
+from schemas.core.auth_schema import AuthStrictSchema
+from schemas.core.param_schema import IdsPayloadSchema
+from schemas.core.token_schema import TokenPlainSchema
+from schemas.core.user_schema import UserPlainSchema
+from services.base.base_service import BaseService
+from utils.enums import Endpoint
+
+
+class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
+    _plain_schema_cls = BasePlainSchema
+
+    async def fetch_tokens(
+        self,
+        username: str,
+        password: str,
+        warehouse_id: int | None = None,
+    ) -> TokenPlainSchema:
+        payload = AuthStrictSchema(
+            username=username,
+            password=password,
+            client=self._settings.CLIENT,
+            warehouse_id=warehouse_id,
+        ).model_dump()
+        response = await self._post(
+            Endpoint.TOKEN,
+            payload,
+        )
+        return TokenPlainSchema(**response.json())
+
+    async def get_login_warehouses(self, username: str | None = None) -> list[WarehouseLoginOptionSchema]:
+        params: dict[str, Any] = {"page": 1}
+        if username:
+            params["username"] = username
+
+        rows: list[WarehouseLoginOptionFetchSchema] = []
+        while True:
+            response = await self._get(
+                endpoint=Endpoint.WAREHOUSES_BY_USERNAME,
+                query_params=params,
+                tokens=None,
+                module_id=None,
+            )
+            data = response.json()
+            rows.extend(WarehouseLoginOptionFetchSchema(**row) for row in data.get("items", []))
+            if not data.get("has_next", False):
+                break
+            params["page"] += 1
+
+        return [WarehouseLoginOptionSchema.model_construct(**row.model_dump(mode="python")) for row in rows]
+
+    @BaseService.handle_token_refresh
+    async def get_current_user(
+        self,
+        endpoint: Endpoint,
+        path_param: int | None = None,
+        query_params: dict[str, Any] | None = None,
+        body_params: BaseStrictSchema | list[BaseStrictSchema] | IdsPayloadSchema | None = None,
+        tokens: TokenPlainSchema | None = None,
+        module_id: int | None = None,
+    ) -> UserPlainSchema:
+        response = await self._get(endpoint=endpoint, tokens=tokens, module_id=module_id)
+        return UserPlainSchema(**response.json(), password="")

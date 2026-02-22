@@ -1,13 +1,19 @@
 from collections.abc import Callable
 
 import flet as ft
-
-from views.base import BaseDialog
+from styles.styles import ButtonStyles
+from utils.translation import Translation
+from views.base.base_dialog import BaseDialog
 
 
 class MessageDialogComponent(BaseDialog):
-    def __init__(self, texts: dict[str, str], message_key: str, on_click: Callable[[], None]) -> None:
+    def __init__(
+        self,
+        translation: Translation,
+        message_key: str,
+        on_ok_clicked: Callable[[ft.Event[ft.TextButton]], ft.DialogControl | None],
+    ) -> None:
         super().__init__(
-            controls=[ft.Text(texts[message_key])],
-            actions=[ft.TextButton(texts["ok"], on_click=lambda _: on_click())],
+            controls=[ft.Text(translation.get(message_key))],
+            actions=[ft.TextButton(translation.get("ok"), on_click=on_ok_clicked, style=ButtonStyles.primary_compact)],
         )

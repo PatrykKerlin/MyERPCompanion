@@ -1,92 +1,129 @@
-import csv
+import logging
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 from os import getenv
 from pathlib import Path
 
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from aiofiles import open
 from models import core as mc
-from models.base import BaseModel
-from schemas import core as sc
-from schemas.base import BaseInputSchema
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 from utils.auth import Auth
+
+logger = logging.getLogger("api")
 
 
 class PopulateDatabase:
-    def __init__(self, get_session: Callable[..., AbstractAsyncContextManager[AsyncSession]]) -> None:
+    __lock_key = 734982134507
+
+    def __init__(self, get_session: Callable[..., AbstractAsyncContextManager[AsyncSession]], auth: Auth) -> None:
         self.__get_session = get_session
+        self.__auth = auth
         self.__superuser: mc.User | None = None
-        self.__base_path = Path(__file__).resolve().parent.parent / "config/initial_data"
+        self.__base_path = Path(__file__).resolve().parent / "initial"
 
-    async def populate_superuser(self) -> None:
+    async def execute(self) -> None:
         async with self.__get_session() as session:
-            count = await PopulateDatabase.__get_model_count(session, mc.User)
-            if count > 0:
-                print("Superuser already exists.")
+            lock_acquired = await PopulateDatabase.__try_acquire_lock(session)
+            if not lock_acquired:
                 return
-            username = getenv("SUPERUSER_USERNAME")
-            password = getenv("SUPERUSER_PASSWORD")
-            if isinstance(username, str) and isinstance(password, str):
-                hashed_password = Auth.get_password_hash(password)
-                superuser = mc.User(username=username, password=hashed_password, is_superuser=True)
-                session.add(superuser)
-                await session.flush()
-                superuser.created_by = superuser.id
-                await session.commit()
-                self.__superuser = superuser
-                print("Superuser created successfully.")
+            try:
+                await self.__populate_superuser(session)
+                await self.__populate_from_sql(session)
+                await self.__update_superuser(session)
+            except Exception:
+                await session.rollback()
+                raise
+            finally:
+                await PopulateDatabase.__release_lock(session)
 
-    async def populate_admins_group(self) -> None:
+    async def __populate_superuser(self, session: AsyncSession) -> None:
+        username = getenv("SUPERUSER_USERNAME")
+        password = getenv("SUPERUSER_PASSWORD")
+        if isinstance(username, str) and isinstance(password, str):
+            existing_user = await session.scalar(select(mc.User).where(mc.User.username == username))
+            if existing_user:
+                logger.info("Superuser already exists.")
+                return
+            hashed_password = await self.__auth.get_password_hash(password)
+            superuser = mc.User(username=username, password=hashed_password, theme="dark", is_superuser=True)
+            session.add(superuser)
+            await session.flush()
+            superuser.created_by = superuser.id
+            await session.commit()
+            self.__superuser = superuser
+            logger.info("Superuser created successfully.")
+
+    async def __populate_from_sql(self, session: AsyncSession) -> None:
+        if not self.__superuser:
+            return
+
+        sql_files = [
+            "languages",
+            "translations",
+            "groups",
+            "modules",
+            "views",
+            "controllers",
+            "assoc_view_controllers",
+            "assoc_module_groups",
+            "currencies",
+            "exchange_rates",
+            "departments",
+            "positions",
+            "employees",
+            "warehouses",
+            "bins",
+            "units",
+            "carriers",
+            "delivery_methods",
+            "discounts",
+            "categories",
+            "assoc_category_discounts",
+            "suppliers",
+            "items",
+            "assoc_bin_items",
+            "assoc_item_discounts",
+            "customers",
+            "statuses",
+            "assoc_customer_discounts",
+            "orders",
+            "order_items",
+            "invoices",
+            "order_statuses",
+            "users",
+            "assoc_user_groups",
+        ]
+        for file_name in sql_files:
+            file_path = self.__base_path / f"{file_name}.sql"
+            async with open(file_path, mode="r", encoding="utf-8") as file:
+                content = await file.read()
+            queries = [query.strip() for query in content.split(";") if query.strip()]
+            params: dict[str, int | str] = {"superuser_id": self.__superuser.id}
+            if file_name == "users":
+                params["password"] = await self.__auth.get_password_hash("haslo123")
+            for query in queries:
+                await session.execute(text(query), params)
+            await session.commit()
+
+    async def __update_superuser(self, session: AsyncSession) -> None:
         if self.__superuser:
-            async with self.__get_session() as session:
-                key = getenv("ADMINS_GROUP_KEY")
-                description = getenv("ADMINS_GROUP_DESC")
-                admins = mc.Group(key=key, description=description, created_by=self.__superuser.id)
-                session.add(admins)
-                await session.commit()
-
-    async def populate_from_csv(self) -> None:
-        if self.__superuser:
-            data_to_write = [
-                ("languages", mc.Language, sc.LanguageInputSchema),
-                ("texts", mc.Text, sc.TextInputSchema),
-                ("themes", mc.Theme, sc.ThemeInputSchema),
-                ("groups", mc.Group, sc.GroupInputSchema),
-                ("users", mc.User, sc.UserInputCreateSchema),
-                ("users_groups", mc.AssocUserGroup, sc.AssocUserGroupInputSchema),
-                ("modules", mc.Module, sc.ModuleInputSchema),
-                ("endpoints", mc.Endpoint, sc.EndpointInputSchema),
-                ("groups_modules", mc.AssocGroupModule, sc.AssocGroupModuleInputSchema),
-            ]
-            for file_name, model_cls, schema_cls in data_to_write:
-                file_path = self.__base_path / f"{file_name}.csv"
-                await self.__write_new_rows(file_path, model_cls, schema_cls)
-
-    async def update_superuser(self) -> None:
-        if self.__superuser:
-            async with self.__get_session() as session:
-                self.__superuser.language_id = 2
-                self.__superuser.theme_id = 1
-                self.__superuser.modified_by = self.__superuser.id
-                session.add(self.__superuser)
-                await session.commit()
-
-    async def __write_new_rows(self, file_path: Path, model: type[BaseModel], schema: type[BaseInputSchema]) -> None:
-        async with self.__get_session() as session:
-            with open(file_path) as csv_file:
-                reader = csv.DictReader(csv_file)
-                for row in reader:
-                    if "password" in row.keys() and row["password"]:
-                        row["password"] = Auth.get_password_hash(row["password"])
-                    validated_row = schema(**row)
-                    instance = model(**validated_row.model_dump(exclude_unset=True))
-                    instance.created_by = self.__superuser.id if self.__superuser else None
-                    session.add(instance)
+            self.__superuser.language_id = 1
+            self.__superuser.modified_by = self.__superuser.id
+            session.add(self.__superuser)
             await session.commit()
 
     @staticmethod
-    async def __get_model_count(session: AsyncSession, model: type[BaseModel]) -> int:
-        result = await session.execute(select(func.count()).select_from(model))
-        return result.scalar_one()
+    async def __try_acquire_lock(session: AsyncSession) -> bool:
+        result = await session.scalar(
+            text("SELECT pg_try_advisory_lock(:lock_key)"),
+            {"lock_key": PopulateDatabase.__lock_key},
+        )
+        return bool(result)
+
+    @staticmethod
+    async def __release_lock(session: AsyncSession) -> None:
+        await session.execute(
+            text("SELECT pg_advisory_unlock(:lock_key)"),
+            {"lock_key": PopulateDatabase.__lock_key},
+        )

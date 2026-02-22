@@ -2,79 +2,212 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from controllers.base import BaseComponentController
-from services.base import BaseService
-from utils.view_modes import ViewMode
-from views.base import BaseView
-from views.components import ToolbarComponent
+from controllers.base.base_component_controller import BaseComponentController
+from events.events import (
+    LogoutRequested,
+    RecordDeleteRequested,
+    SideMenuToggleRequested,
+    TabCloseAllRequested,
+    TabCloseOthersRequested,
+    TabNavigateRequested,
+    TabRequested,
+    TabSearchRequested,
+    ToolbarReady,
+    ToolbarRequested,
+    ViewRefreshRequested,
+)
+from states.states import ViewState
+from utils.enums import Module, TabNavigationDirection, View, ViewMode
+from views.components.toolbar_component import ToolbarComponent
 
 if TYPE_CHECKING:
     from config.context import Context
-    from views.base.base_view import BaseView
 
 
-class ToolbarController(BaseComponentController[BaseService, ToolbarComponent]):
+class ToolbarController(BaseComponentController[ToolbarComponent, ToolbarRequested]):
     def __init__(self, context: Context):
         super().__init__(context)
-        self.__side_menu_visible = True
-        self.__toolbar: ToolbarComponent | None = None
-        self.__side_menu_width: float | None = None
-
-    def get_new_component(self) -> ToolbarComponent:
-        self.__toolbar = ToolbarComponent(self, texts=self._context.texts)
-        return self.__toolbar
+        self.__state_handlers = {
+            ViewMode.NONE: self.__set_none_mode,
+            ViewMode.SEARCH: self.__set_search_mode,
+            ViewMode.LIST: self.__set_list_mode,
+            ViewMode.READ: self.__set_read_mode,
+            ViewMode.CREATE: self.__set_create_mode,
+            ViewMode.EDIT: self.__set_edit_mode,
+            ViewMode.STATIC: self.__set_static_mode,
+        }
+        self._subscribe_event_handlers(
+            {
+                ToolbarRequested: self._component_requested_handler,
+            }
+        )
+        self._subscribe_state_listeners(
+            {
+                "view": self.__view_updated_listener,
+                "user": self.__user_updated_listener,
+            }
+        )
 
     def on_toggle_menu_clicked(self) -> None:
-        side_menu = self._context.controllers.get("side_menu").side_menu
-        if not side_menu:
-            return
-        if not self.__side_menu_width:
-            self.__side_menu_width = side_menu.width
-        self.__side_menu_visible = not self.__side_menu_visible
-        side_menu.width = self.__side_menu_width if self.__side_menu_visible else 0
-        side_menu.opacity = 1.0 if self.__side_menu_visible else 0.0
-        self._context.page.update()
+        self._page.run_task(self._event_bus.publish, SideMenuToggleRequested())
 
     def on_lock_view_clicked(self) -> None:
-        active_view = self.__get_active_view()
-        if not self.__toolbar or not active_view:
+        if not self._component:
             return
-        self.__toolbar.set_lock_view_button_icon(unlocked=True)
-        self.__toolbar.set_lock_view_button_disabled(disabled=True)
-        if active_view.mode == ViewMode.SEARCH:
-            active_view.set_create_mode()
-        elif active_view.mode == ViewMode.READ:
-            active_view.set_edit_mode()
+        view_state = self._state_store.app_state.view
+        if view_state.mode == ViewMode.SEARCH:
+            self._state_store.update(view={"mode": ViewMode.CREATE})
+        elif view_state.mode == ViewMode.READ:
+            self._state_store.update(view={"mode": ViewMode.EDIT})
+        self._component.set_lock_view_button_icon(unlocked=True)
+        self._component.set_lock_view_button_state(disabled=True)
 
-    def on_delete_record_clicked(self) -> None:
-        active_view = self.__get_active_view()
-        if not self.__toolbar or not active_view or active_view.mode != ViewMode.READ:
+    def on_delete_clicked(self) -> None:
+        if not self._component:
             return
-        self._context.controllers.get_view_controller(active_view.controller_key).on_record_delete()
-
-    def refresh(self) -> None:
-        self.__set_lock_view_button()
-        self.__set_delete_record_button()
-
-    def __set_lock_view_button(self) -> None:
-        active_view = self.__get_active_view()
-        if not self.__toolbar or not active_view:
+        view_state = self._state_store.app_state.view
+        if not view_state.view:
             return
-        self.__toolbar.set_lock_view_button_icon(unlocked=False)
-        if active_view.mode in (ViewMode.SEARCH, ViewMode.READ):
-            self.__toolbar.set_lock_view_button_disabled(disabled=False)
-        else:
-            self.__toolbar.set_lock_view_button_disabled(disabled=True)
-
-    def __set_delete_record_button(self) -> None:
-        active_view = self.__get_active_view()
-        if not self.__toolbar or not active_view:
+        data_row = getattr(view_state.view, "data_row", None)
+        if not data_row or view_state.mode != ViewMode.READ:
             return
-        if active_view.mode == ViewMode.READ:
-            self.__toolbar.set_delete_record_button_disabled(disabled=False)
-        else:
-            self.__toolbar.set_delete_record_button_disabled(disabled=True)
+        self._page.run_task(
+            self._event_bus.publish,
+            RecordDeleteRequested(view_key=view_state.view.view_key, id=data_row["id"]),
+        )
 
-    def __get_active_view(self) -> BaseView | None:
-        active_view_key = self._context.controllers.get("tabs_bar").active_view_key
-        return self._context.active_views.get(active_view_key, None)
+    def on_refresh_clicked(self) -> None:
+        view_state = self._state_store.app_state.view
+        current_view = view_state.view
+        if not current_view:
+            return
+        refresh_mode = None if view_state.mode == ViewMode.LIST else view_state.mode
+        self._page.run_task(
+            self._event_bus.publish,
+            ViewRefreshRequested(
+                view_key=current_view.view_key,
+                mode=refresh_mode,
+                caller_view_key=current_view.caller_view_key,
+                caller_data=current_view.data_row,
+            ),
+        )
+
+    def on_first_tab_clicked(self) -> None:
+        self._page.run_task(
+            self._event_bus.publish,
+            TabNavigateRequested(direction=TabNavigationDirection.FIRST),
+        )
+
+    def on_previous_tab_clicked(self) -> None:
+        self._page.run_task(
+            self._event_bus.publish,
+            TabNavigateRequested(direction=TabNavigationDirection.PREVIOUS),
+        )
+
+    def on_search_tab_clicked(self) -> None:
+        self._page.run_task(self._event_bus.publish, TabSearchRequested())
+
+    def on_close_all_tabs_clicked(self) -> None:
+        self._page.run_task(self._event_bus.publish, TabCloseAllRequested())
+
+    def on_close_other_tabs_clicked(self) -> None:
+        self._page.run_task(self._event_bus.publish, TabCloseOthersRequested())
+
+    def on_next_tab_clicked(self) -> None:
+        self._page.run_task(
+            self._event_bus.publish,
+            TabNavigateRequested(direction=TabNavigationDirection.NEXT),
+        )
+
+    def on_last_tab_clicked(self) -> None:
+        self._page.run_task(
+            self._event_bus.publish,
+            TabNavigateRequested(direction=TabNavigationDirection.LAST),
+        )
+
+    def on_current_user_clicked(self) -> None:
+        current = self._state_store.app_state.user.current
+        if not current:
+            return
+        self._page.run_task(
+            self._event_bus.publish,
+            TabRequested(
+                module_id=Module.CORE,
+                view_key=View.USERS,
+                record_id=current.id,
+                mode=ViewMode.READ,
+                caller_view_key=View.CURRENT_USER,
+            ),
+        )
+
+    def on_logout_clicked(self) -> None:
+        self._page.run_task(self._event_bus.publish, LogoutRequested())
+
+    async def _component_requested_handler(self, _: ToolbarRequested) -> None:
+        translation = self._state_store.app_state.translation.items
+        self._component = ToolbarComponent(controller=self, translation=translation)
+        current = self._state_store.app_state.user.current
+        self._component.set_current_user(current.username if current else None)
+        self.__view_updated_listener(self._state_store.app_state.view)
+        await self._event_bus.publish(ToolbarReady(self._component))
+
+    def __user_updated_listener(self, state) -> None:
+        if not self._component:
+            return
+        current = state.current
+        username = current.username if current else None
+        self._component.set_current_user(username)
+
+    def __view_updated_listener(self, state: ViewState) -> None:
+        self.__state_handlers[state.mode]()
+
+    def __set_none_mode(self) -> None:
+        if not self._component:
+            return
+        self._component.set_lock_view_button_icon(unlocked=False)
+        self._component.set_lock_view_button_state(disabled=True)
+        self._component.set_delete_button_state(disabled=True)
+        self._component.set_navigation_buttons_state(disabled=True)
+
+    def __set_search_mode(self) -> None:
+        if not self._component:
+            return
+        self._component.set_lock_view_button_icon(unlocked=False)
+        self._component.set_lock_view_button_state(disabled=False)
+        self._component.set_delete_button_state(disabled=True)
+        self._component.set_navigation_buttons_state(disabled=False)
+
+    def __set_list_mode(self) -> None:
+        if not self._component:
+            return
+        self._component.set_lock_view_button_icon(unlocked=False)
+        self._component.set_lock_view_button_state(disabled=True)
+        self._component.set_delete_button_state(disabled=True)
+        self._component.set_navigation_buttons_state(disabled=False)
+
+    def __set_read_mode(self) -> None:
+        if not self._component:
+            return
+        self._component.set_lock_view_button_icon(unlocked=False)
+        self._component.set_lock_view_button_state(disabled=False)
+        self._component.set_delete_button_state(disabled=False)
+        self._component.set_navigation_buttons_state(disabled=False)
+
+    def __set_create_mode(self) -> None:
+        if not self._component:
+            return
+        self._component.set_lock_view_button_icon(unlocked=True)
+        self._component.set_lock_view_button_state(disabled=True)
+        self._component.set_delete_button_state(disabled=True)
+        self._component.set_navigation_buttons_state(disabled=False)
+
+    def __set_edit_mode(self) -> None:
+        if not self._component:
+            return
+        self._component.set_lock_view_button_icon(unlocked=True)
+        self._component.set_lock_view_button_state(disabled=False)
+        self._component.set_delete_button_state(disabled=True)
+        self._component.set_navigation_buttons_state(disabled=False)
+
+    def __set_static_mode(self) -> None:
+        self.__set_list_mode()

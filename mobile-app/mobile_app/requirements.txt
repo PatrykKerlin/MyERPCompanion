@@ -1,0 +1,4 @@
+flet[all]==0.80.5
+pydantic[email]==2.12.5
+pydantic-settings==2.13.1
+httpx==0.28.1

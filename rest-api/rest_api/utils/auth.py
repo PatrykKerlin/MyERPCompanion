@@ -1,126 +1,254 @@
+import asyncio
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
-from functools import wraps
-from typing import Any, cast
+from typing import Awaitable, cast
 
-from fastapi import Request
+from config.context import Context
+from fastapi import HTTPException, Request, status
 from jose import JWTError, jwt
+from models.core.assoc_module_group import AssocModuleGroup
+from models.core.module import Module
 from passlib.context import CryptContext
+from schemas.core.user_schema import UserPlainSchema
+from services.business.logistic import WarehouseService
+from services.core import ModuleService, UserService
+from sqlalchemy import exists, or_, select
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from config import Settings
-from schemas.core import UserOutputSchema
-from utils.exceptions import InvalidCredentialsException, NoPermissionException, NotFoundException
+from utils.enums import Permission
 
 
 class Auth:
-    __pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+    _CUSTOMERS_GROUP_KEY = "customers"
 
-    @classmethod
+    def __init__(self, context: Context) -> None:
+        self.__settings = context.settings
+        self.__pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+        self.__user_service = UserService()
+        self.__user_service.set_auth(self)
+        self.__module_service = ModuleService()
+        self.__warehouse_service = WarehouseService()
+
     async def authenticate(
-        cls, session: AsyncSession, username: str, password: str, settings: Settings
-    ) -> dict[str, str] | None:
-        from services.core import UserService
+        self,
+        session: AsyncSession,
+        username: str,
+        password: str,
+        client: str,
+        warehouse_id: int | None = None,
+    ) -> tuple[dict[str, str] | None, str | None]:
+        user_schema = await self.__user_service.get_one_by_username(session, username)
+        if not user_schema or not await self.__verify_password(password, cast(str, user_schema.password)):
+            return None, "invalid_credentials"
+        is_superuser = user_schema.is_superuser
+        has_employee = user_schema.employee_id is not None
+        has_customer = user_schema.customer_id is not None
+        effective_warehouse_id: int | None = None
+        if client == "desktop":
+            allowed = is_superuser or has_employee
+        elif client == "mobile":
+            allowed = is_superuser or has_employee
+        elif client == "web":
+            has_customers_group = self.__has_group(user_schema, self._CUSTOMERS_GROUP_KEY)
+            allowed = is_superuser or (has_customer and has_customers_group)
+        else:
+            return None, "invalid_client"
+        if not allowed:
+            return None, "user_not_allowed"
+        if client == "mobile":
+            if not is_superuser and not await self.__has_mobile_module_access(session, user_schema):
+                return None, "user_not_allowed"
+            if user_schema.warehouse_id is not None:
+                effective_warehouse_id = user_schema.warehouse_id
+            elif warehouse_id is None:
+                return None, "warehouse_required"
+            else:
+                try:
+                    selected_warehouse = await self.__warehouse_service.get_one_by_id(session, warehouse_id)
+                except NoResultFound:
+                    return None, "invalid_warehouse"
+                effective_warehouse_id = selected_warehouse.id
+        if client == "web":
+            if not is_superuser and not await self.__has_web_module_access(session, user_schema):
+                return None, "user_not_allowed"
+        access_token = self.create_access_token(
+            user_schema.id,
+            client=client,
+            warehouse_id=effective_warehouse_id,
+        )
+        refresh_token = self.__create_refresh_token(
+            user_schema.id,
+            client=client,
+            warehouse_id=effective_warehouse_id,
+        )
+        return {"access": access_token, "refresh": refresh_token}, None
 
-        service = UserService()
-        schema = await service.get_by_name(session, username)
-        if not schema or not cls.__verify_password(password, cast(str, schema.password)):
-            return None
-        access_token = cls.create_access_token(schema.id, settings)
-        refresh_token = cls.__create_refresh_token(schema.id, settings)
-        return {"access": access_token, "refresh": refresh_token}
+    async def get_password_hash(self, password: str) -> str:
+        return await asyncio.to_thread(self.__pwd_context.hash, password)
 
-    @classmethod
-    def get_password_hash(cls, password: str) -> str:
-        return cls.__pwd_context.hash(password)
-
-    @classmethod
-    def decode_access_token(cls, token: str, settings: Settings) -> dict[str, str | int]:
+    def decode_access_token(self, token: str) -> dict[str, str | int]:
         try:
-            return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            return jwt.decode(token, self.__settings.SECRET_KEY, algorithms=[self.__settings.ALGORITHM])
         except JWTError:
             return {}
 
-    @classmethod
-    def create_access_token(cls, user_id: int, settings: Settings) -> str:
-        time_to_expire = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    def create_access_token(
+        self,
+        user_id: int,
+        client: str | None = None,
+        warehouse_id: int | None = None,
+    ) -> str:
+        time_to_expire = timedelta(minutes=self.__settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         token_type = "access"
-        token = cls.__prepare_token(user_id, time_to_expire, token_type, settings)
+        token = self.__prepare_token(
+            user_id,
+            time_to_expire,
+            token_type,
+            client=client,
+            warehouse_id=warehouse_id,
+        )
         return token
 
-    @classmethod
-    async def validate_refresh_token(cls, session: AsyncSession, token: str, settings: Settings) -> UserOutputSchema:
-        from services.core import UserService
+    async def validate_refresh_token(
+        self, session: AsyncSession, token: str, client: str | None
+    ) -> tuple[UserPlainSchema, str | None, int | None]:
+        payload = self.decode_access_token(token)
+        user_id = payload.get("user")
+        token_type = payload.get("type")
+        token_client = payload.get("client")
+        token_warehouse_id = payload.get("warehouse_id")
+        if not isinstance(user_id, int) or token_type != "refresh":
+            raise NoResultFound()
+        if token_client is not None and token_client != client:
+            raise NoResultFound()
+        user_schema = await self.__user_service.get_one_by_id(session, user_id)
+        if not user_schema:
+            raise NoResultFound()
+        return (
+            user_schema,
+            token_client if isinstance(token_client, str) else None,
+            token_warehouse_id if isinstance(token_warehouse_id, int) else None,
+        )
 
-        payload = cls.decode_access_token(token, settings)
-        if payload.get("type") != "refresh":
-            raise InvalidCredentialsException()
-        user_id = payload.get("user", None)
-        if not isinstance(user_id, int):
-            raise InvalidCredentialsException()
-        service = UserService()
-        schema = await service.get_one_by_id(session, user_id)
-        if not schema:
-            raise InvalidCredentialsException()
-        return schema
+    def restrict_access(self, permissions: list[Permission], controller: str) -> Callable[..., Awaitable[None]]:
+        async def dependency(request: Request) -> None:
+            user_schema = getattr(request.state, "user", None)
+            if not user_schema:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+            if user_schema and user_schema.is_superuser:
+                return
 
-    @classmethod
-    def restrict_access(cls) -> Callable:
-        from services.core import ModuleService
+            module_schema = getattr(request.state, "module", None)
+            if not module_schema:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+            if not module_schema or controller not in set(module_schema.controllers):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-        def decorator(func: Callable) -> Callable:
-            @wraps(func)
-            async def wrapper(self: Any, *args: Any, request: Request, **kwargs: Any) -> Any:
-                user_schema = request.state.user
-                if not user_schema:
-                    raise InvalidCredentialsException()
-                if getattr(user_schema, "is_superuser", False):
-                    return await func(self, *args, request=request, **kwargs)
+            async def check_permissions(session: AsyncSession) -> None:
+                refreshed_module = await self.__module_service.get_one_by_id(session, module_schema.id)
+                if not refreshed_module:
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-                controller = self.__class__.__name__
+                allowed_groups = {group.id for group in refreshed_module.groups}
+                user_groups = {group.id for group in user_schema.groups}
+                common_groups = user_groups.intersection(allowed_groups)
 
-                async with self._get_session() as session:
-                    service = ModuleService()
-                    module_schema = await service.get_by_controller(session, controller)
+                if not common_groups:
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-                if not module_schema:
-                    raise NotFoundException()
+                permission_columns = [getattr(AssocModuleGroup, permission) for permission in permissions]
 
-                allowed_groups = {group.key for group in module_schema.groups}
-                user_groups = {group.key for group in user_schema.groups}
+                has_permission = await session.scalar(
+                    select(
+                        exists().where(
+                            AssocModuleGroup.is_active.is_(True),
+                            AssocModuleGroup.group_id.in_(common_groups),
+                            AssocModuleGroup.module_id == refreshed_module.id,
+                            *[column.is_(True) for column in permission_columns],
+                        )
+                    )
+                )
 
-                if not user_groups.intersection(allowed_groups):
-                    raise NoPermissionException()
+                if not has_permission:
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-                return await func(self, *args, request=request, **kwargs)
+            session = getattr(request.state, "db", None)
+            if session is None:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            await check_permissions(session)
 
-            return wrapper
+        return dependency
 
-        return decorator
+    async def __verify_password(self, plain_password: str, hashed_password: str) -> bool:
+        return await asyncio.to_thread(self.__pwd_context.verify, plain_password, hashed_password)
 
-    @classmethod
-    def __verify_password(cls, plain_password: str, hashed_password: str) -> bool:
-        return cls.__pwd_context.verify(plain_password, hashed_password)
-
-    @classmethod
-    def __create_refresh_token(cls, user_id: int, settings: Settings) -> str:
-        time_to_expire = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    def __create_refresh_token(
+        self,
+        user_id: int,
+        client: str | None = None,
+        warehouse_id: int | None = None,
+    ) -> str:
+        time_to_expire = timedelta(days=self.__settings.REFRESH_TOKEN_EXPIRE_DAYS)
         token_type = "refresh"
-        token = cls.__prepare_token(user_id, time_to_expire, token_type, settings)
+        token = self.__prepare_token(
+            user_id,
+            time_to_expire,
+            token_type,
+            client=client,
+            warehouse_id=warehouse_id,
+        )
         return token
 
-    @classmethod
     def __prepare_token(
-        cls,
+        self,
         user_id: int,
         time_to_expire: timedelta,
         token_type: str,
-        settings: Settings,
+        client: str | None,
+        warehouse_id: int | None = None,
     ) -> str:
         token_data = {
             "user": user_id,
             "type": token_type,
             "exp": datetime.now(UTC) + time_to_expire,
         }
-        encoded_jwt = jwt.encode(token_data, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+        if client:
+            token_data["client"] = client
+        if warehouse_id is not None:
+            token_data["warehouse_id"] = warehouse_id
+        encoded_jwt = jwt.encode(token_data, self.__settings.SECRET_KEY, algorithm=self.__settings.ALGORITHM)
         return encoded_jwt
+
+    async def __has_mobile_module_access(self, session: AsyncSession, user_schema: UserPlainSchema) -> bool:
+        return await self.__has_module_access(session, user_schema, "mobile")
+
+    async def __has_web_module_access(self, session: AsyncSession, user_schema: UserPlainSchema) -> bool:
+        return await self.__has_module_access(session, user_schema, "web")
+
+    @staticmethod
+    def __has_group(user_schema: UserPlainSchema, group_key: str) -> bool:
+        return any(group.key == group_key for group in user_schema.groups)
+
+    async def __has_module_access(
+        self,
+        session: AsyncSession,
+        user_schema: UserPlainSchema,
+        module_key: str,
+    ) -> bool:
+        group_ids = [group.id for group in user_schema.groups]
+        if not group_ids:
+            return False
+
+        has_access = await session.scalar(
+            select(
+                exists().where(
+                    AssocModuleGroup.is_active.is_(True),
+                    AssocModuleGroup.group_id.in_(group_ids),
+                    AssocModuleGroup.module_id == Module.id,
+                    Module.is_active.is_(True),
+                    Module.key == module_key,
+                    or_(AssocModuleGroup.can_read.is_(True), AssocModuleGroup.can_modify.is_(True)),
+                )
+            )
+        )
+        return bool(has_access)

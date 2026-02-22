@@ -1,13 +1,14 @@
-from typing import Annotated
-
-from pydantic import Field
-
-from schemas.base import BaseInputSchema, BaseOutputSchema
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.validation.constraints import Constraints
 
 
-class LanguageInputSchema(BaseInputSchema):
-    key: Annotated[str, Field(min_length=2, max_length=2)]
+class LanguageStrictSchema(BaseStrictSchema):
+    key: Constraints.Key
+    symbol: Constraints.Symbol
+    description: Constraints.StringOptional_1000
 
 
-class LanguageOutputSchema(BaseOutputSchema):
+class LanguagePlainSchema(BasePlainSchema):
     key: str
+    symbol: str
+    description: str | None

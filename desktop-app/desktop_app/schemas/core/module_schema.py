@@ -1,19 +1,22 @@
-from typing import Annotated
-
 from pydantic import Field
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.core.group_schema import GroupPlainSchema
+from schemas.core.view_schema import ViewPlainSchema
+from schemas.validation.constraints import Constraints
 
-from schemas.base import BaseInputSchema, BaseOutputSchema
-from schemas.core import EndpointInputSchema, GroupInputSchema
+
+class ModuleStrictSchema(BaseStrictSchema):
+    key: Constraints.Key
+    description: Constraints.StringOptional_1000
+    in_side_menu: Constraints.BooleanTrue
+    order: Constraints.NonNegativeInteger
 
 
-class ModuleInputSchema(BaseInputSchema):
+class ModulePlainSchema(BasePlainSchema):
     key: str
+    description: str | None
+    in_side_menu: bool
     order: int
-    endpoints: list[EndpointInputSchema] = []
-    groups: list[GroupInputSchema] = []
-
-
-class ModuleOutputSchema(BaseOutputSchema):
-    key: Annotated[str, Field(min_length=1, max_length=25)]
-    order: Annotated[int, Field(ge=1)]
-    groups: Annotated[list[Annotated[int, Field(ge=1)]] | None, Field(default=None)]
+    controllers: list[str] = Field(default_factory=list)
+    views: list[ViewPlainSchema]
+    groups: list[GroupPlainSchema]

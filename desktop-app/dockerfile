@@ -1,0 +1,29 @@
+FROM python:3.14-trixie
+LABEL maintainer="Patryk Kerlin"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    VIRTUAL_ENV=/project \
+    PATH="/project/bin:$PATH" \
+    PYTHONPATH="/desktop_app"
+
+RUN apt-get update && \
+    apt-get install -y \
+    libgtk-3-0 libsecret-1-0 libegl1 libgles2 libgl1 zenity && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY /desktop_app/requirements.txt /tmp/requirements.txt
+
+RUN python -m venv $VIRTUAL_ENV && \
+    pip install --upgrade pip && \
+    pip install -r /tmp/requirements.txt && \
+    rm -rf /tmp/requirements.txt
+
+WORKDIR /desktop_app
+
+RUN useradd -m -d /desktop_app -s /bin/bash desktop-app && \
+    chown -R desktop-app:desktop-app /desktop_app && \
+    chmod -R 755 /desktop_app
+
+USER desktop-app

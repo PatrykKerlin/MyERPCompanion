@@ -1,18 +1,19 @@
-from __future__ import annotations
-
-from typing import Any
-
-from controllers.base import BaseViewController
-from schemas.core import GroupOutputSchema
+from controllers.base.base_view_controller import BaseViewController
+from events.events import ViewRequested
+from schemas.core.group_schema import GroupPlainSchema, GroupStrictSchema
 from services.core import GroupService
-from utils.view_modes import ViewMode
-from views.core import GroupView
+from utils.enums import Endpoint, View, ViewMode
+from utils.translation import Translation
+from views.core.group_view import GroupView
 
 
-class GroupController(BaseViewController[GroupService, GroupView, GroupOutputSchema]):
-    _output_schema_cls = GroupOutputSchema
+class GroupController(BaseViewController[GroupService, GroupView, GroupPlainSchema, GroupStrictSchema]):
+    _plain_schema_cls = GroupPlainSchema
+    _strict_schema_cls = GroupStrictSchema
     _service_cls = GroupService
+    _view_cls = GroupView
+    _endpoint = Endpoint.GROUPS
+    _view_key = View.GROUPS
 
-    def get_new_view(self, data_row: dict[str, Any] | None = None, mode: ViewMode = ViewMode.SEARCH) -> GroupView:
-        self._view = GroupView(self, self._context.texts, 1, data_row, mode, self._endpoint.key)
-        return self._view
+    async def _build_view(self, translation: Translation, mode: ViewMode, event: ViewRequested) -> GroupView:
+        return GroupView(self, translation, mode, event.view_key, event.data)

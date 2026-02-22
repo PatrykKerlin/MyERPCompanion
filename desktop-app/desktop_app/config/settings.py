@@ -1,17 +1,18 @@
 import locale
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    REDIS_HOST: str
-    REDIS_PORT: int
-    REDIS_DB: int
-    REDIS_PASSWORD: str
     API_URL: str
+    PUBLIC_API_URL: str | None = None
+    CLIENT: Literal["desktop"]
     LANGUAGE: str = Field(default_factory=lambda: Settings.__get_system_language())
     THEME: str = "system"
+    API_CHECK_DELAY: int = 60
+    TIMEZONE: str | None = None
 
     model_config = {"env_file": ".env"}
 

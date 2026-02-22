@@ -1,0 +1,29 @@
+FROM python:3.14-trixie
+LABEL maintainer="Patryk Kerlin"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    VIRTUAL_ENV=/project \
+    PATH="/project/bin:$PATH" \
+    PYTHONPATH="/ai_app"
+
+RUN apt-get update && \
+    apt-get install -y \
+    postgresql-client --no-install-recommends && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY /ai_app/requirements.txt /tmp/requirements.txt
+
+RUN python -m venv $VIRTUAL_ENV && \
+    pip install --upgrade pip && \
+    pip install -r /tmp/requirements.txt && \
+    rm -rf /tmp/requirements.txt
+
+WORKDIR /ai_app
+
+RUN useradd -m -d /ai_app -s /bin/bash ai-app && \
+    chown -R ai-app:ai-app /ai_app && \
+    chmod -R 775 /ai_app
+
+USER ai-app

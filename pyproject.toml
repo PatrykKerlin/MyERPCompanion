@@ -1,0 +1,27 @@
+[tool.ruff]
+exclude = ["**/.cache"]
+line-length = 120
+target-version = "py314"
+
+[tool.ruff.lint]
+extend-ignore = ["E712"]
+
+[tool.black]
+line-length = 120
+target-version = ["py314"]
+skip-string-normalization = true
+exclude = '''
+/(
+    \.cache
+    | \.git
+    | \.ruff_cache
+    | \.vscode-server
+    | __pycache__
+    | migrations/versions
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip = ["migrations/versions", ".cache"]

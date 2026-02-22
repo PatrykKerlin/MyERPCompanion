@@ -1,0 +1,38 @@
+from typing import Any
+
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.core.auth_schema import AuthStrictSchema
+from schemas.core.param_schema import IdsPayloadSchema
+from schemas.core.token_schema import TokenPlainSchema
+from schemas.core.user_schema import UserPlainSchema
+from services.base.base_service import BaseService
+from utils.enums import Endpoint
+
+
+class AuthService(BaseService[BasePlainSchema, BaseStrictSchema]):
+    _plain_schema_cls = BasePlainSchema
+
+    async def fetch_tokens(self, username: str, password: str) -> TokenPlainSchema:
+        payload = AuthStrictSchema(
+            username=username,
+            password=password,
+            client=self._settings.CLIENT,
+        ).model_dump()
+        response = await self._post(
+            Endpoint.TOKEN,
+            payload,
+        )
+        return TokenPlainSchema(**response.json())
+
+    @BaseService.handle_token_refresh
+    async def get_current_user(
+        self,
+        endpoint: Endpoint,
+        _path_param: int | None = None,
+        _query_params: dict[str, Any] | None = None,
+        _body_params: BaseStrictSchema | list[BaseStrictSchema] | IdsPayloadSchema | None = None,
+        tokens: TokenPlainSchema | None = None,
+        module_id: int | None = None,
+    ) -> UserPlainSchema:
+        response = await self._get(endpoint=endpoint, tokens=tokens, module_id=module_id)
+        return UserPlainSchema(**response.json(), password="")

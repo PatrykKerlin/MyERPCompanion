@@ -3,22 +3,27 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flet as ft
-
-from views.base import BaseComponent
+from styles.styles import AlignmentStyles
+from views.base.base_component import BaseComponent
 
 if TYPE_CHECKING:
     from controllers.components.footer_controller import FooterController
+    from utils.translation import Translation
 
 
 class FooterComponent(BaseComponent, ft.Container):
-    def __init__(self, controller: FooterController, texts: dict[str, str]) -> None:
-        BaseComponent.__init__(self, controller, texts)
+    def __init__(self, controller: FooterController, translation: Translation) -> None:
+        BaseComponent.__init__(self, controller, translation)
+        self.__success_message = self._translation.get("connected")
+        self.__success_icon = ft.Icons.CHECK_OUTLINED
+        self.__error_message = self._translation.get("not_connected")
+        self.__error_icon = ft.Icons.ERROR_OUTLINE
         self.__timestamp = ft.Text()
-        self.__status_message = ft.Text()
-        self.__status_icon = ft.Icon()
+        self.__status_message = ft.Text(self.__success_message)
+        self.__status_icon = ft.Icon(self.__success_icon)
         self.__status_row = ft.Row(
             controls=[
-                ft.Text(value=f"{texts["connection_status"]}:"),
+                ft.Text(value=f"{self._translation.get('connection_status')}:"),
                 self.__status_message,
                 self.__status_icon,
             ]
@@ -27,7 +32,7 @@ class FooterComponent(BaseComponent, ft.Container):
             self,
             content=ft.Row(
                 controls=[self.__status_row, ft.Container(expand=True), self.timestamp],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                alignment=AlignmentStyles.AXIS_SPACE_BETWEEN,
             ),
             expand=False,
         )
@@ -46,14 +51,14 @@ class FooterComponent(BaseComponent, ft.Container):
 
     def set_time(self, value: str) -> None:
         self.__timestamp.value = value
-        self.__timestamp.update()
+        self.safe_update(self.__timestamp)
 
     def set_status(self, success: bool) -> None:
         if success:
-            self.__status_message.value = self._texts["connected"]
-            self.__status_icon.name = ft.Icons.CHECK_OUTLINED
+            self.__status_message.value = self.__success_message
+            self.__status_icon.icon = self.__success_icon
         else:
-            self.__status_message.value = self._texts["not_connected"]
-            self.__status_icon.name = ft.Icons.ERROR_OUTLINE
-        self.__status_message.update()
-        self.__status_icon.update()
+            self.__status_message.value = self.__error_message
+            self.__status_icon.icon = self.__error_icon
+        self.safe_update(self.__status_message)
+        self.safe_update(self.__status_icon)

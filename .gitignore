@@ -175,3 +175,18 @@ rest-api/rest_api/migrations/versions
 
 # Flet
 .flet
+
+# Devcontainer
+.devcontainer
+.gitconfig
+.dotnet
+.gnupg
+.ssh
+.vscode-server
+.bash_history
+.config
+.local
+.artifacts
+
+# PDF
+*.pdf

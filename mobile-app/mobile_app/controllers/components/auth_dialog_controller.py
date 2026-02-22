@@ -1,0 +1,124 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from controllers.base.base_component_controller import BaseComponentController
+from controllers.base.base_controller import BaseController
+from events.events import AuthDialogRequested, AuthViewReady, UserAuthenticated
+from schemas.business.logistic.warehouse_schema import WarehouseLoginOptionSchema
+from services.core.auth_service import AuthService
+from utils.enums import ApiActionError, Endpoint
+from views.core.auth_view import AuthView as MobileAuthView
+
+if TYPE_CHECKING:
+    from config.context import Context
+    from schemas.core.token_schema import TokenPlainSchema
+    from schemas.core.user_schema import UserPlainSchema
+
+
+class AuthDialogController(BaseComponentController[MobileAuthView, AuthDialogRequested]):
+    def __init__(self, context: Context) -> None:
+        super().__init__(context)
+        self.__service = AuthService(self._settings, self._logger, self._tokens_accessor)
+        self.__mobile_login_warehouses_request_id = 0
+        self.__mobile_login_warehouses_username: str | None = None
+        self.__mobile_login_warehouses_by_id: dict[int, str] = {}
+        self._subscribe_event_handlers({AuthDialogRequested: self._component_requested_handler})
+
+    def on_cancel_click(self) -> None:
+        self._page.run_task(self._page.window.destroy)
+
+    def on_login_click(self, username: str, password: str, warehouse_id: int | None = None) -> None:
+        self._page.run_task(self.__handle_login, username, password, warehouse_id)
+
+    def on_mobile_username_changed(self, username: str | None, force: bool = False) -> None:
+        normalized_username = (username or "").strip() or None
+        if not force and normalized_username == self.__mobile_login_warehouses_username:
+            return
+        self.__mobile_login_warehouses_username = normalized_username
+        self.__mobile_login_warehouses_request_id += 1
+        request_id = self.__mobile_login_warehouses_request_id
+        self._page.run_task(self.__load_mobile_login_warehouses, normalized_username, request_id)
+
+    async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
+        translation_state = self._state_store.app_state.translation
+        self.__mobile_login_warehouses_username = None
+        self.__mobile_login_warehouses_by_id = {}
+        self._component = MobileAuthView(controller=self, translation=translation_state.items)
+        await self._event_bus.publish(AuthViewReady(component=self._component))
+        self.on_mobile_username_changed(None, force=True)
+
+    async def __handle_login(self, username: str, password: str, warehouse_id: int | None = None) -> None:
+        tokens = await self.__perform_fetch_tokens(username, password, warehouse_id)
+        if not tokens:
+            return
+        self._state_store.update(tokens={"access": tokens.access, "refresh": tokens.refresh})
+        user = await self.__perform_get_current_user()
+        if not user:
+            return
+        if not user.is_superuser and user.employee_id is None:
+            self._state_store.update(tokens={"access": None, "refresh": None})
+            self._open_error_dialog(message_key="employee_login_required")
+            return
+
+        selected_warehouse_id = self.__resolve_mobile_selected_warehouse_id(user, warehouse_id)
+        selected_warehouse_name = await self.__resolve_mobile_selected_warehouse_name(username, selected_warehouse_id)
+
+        self._state_store.update(
+            mobile_warehouse={"selected_id": selected_warehouse_id, "selected_name": selected_warehouse_name}
+        )
+        self._state_store.update(user={"current": user})
+        self._component = None
+        await self._event_bus.publish(AuthViewReady(component=None))
+        await self._event_bus.publish(UserAuthenticated())
+
+    async def __load_mobile_login_warehouses(self, username: str | None, request_id: int) -> None:
+        warehouses = await self.__perform_get_login_warehouses(username)
+        if request_id != self.__mobile_login_warehouses_request_id:
+            return
+        if not isinstance(self._component, MobileAuthView):
+            return
+        if warehouses is None:
+            self.__mobile_login_warehouses_by_id = {}
+            self._component.set_warehouse_options([])
+            self._page.update()
+            return
+        self.__mobile_login_warehouses_by_id = {warehouse.id: warehouse.name for warehouse in warehouses}
+        options = [(warehouse.id, warehouse.name) for warehouse in warehouses]
+        self._component.set_warehouse_options(options)
+        self._page.update()
+
+    @staticmethod
+    def __resolve_mobile_selected_warehouse_id(user: UserPlainSchema, selected_warehouse_id: int | None) -> int | None:
+        if user.warehouse_id is not None:
+            return user.warehouse_id
+        return selected_warehouse_id
+
+    async def __resolve_mobile_selected_warehouse_name(self, username: str, warehouse_id: int | None) -> str | None:
+        if warehouse_id is None:
+            return None
+        warehouse_name = self.__mobile_login_warehouses_by_id.get(warehouse_id)
+        if warehouse_name:
+            return warehouse_name
+        warehouses = await self.__perform_get_login_warehouses(username)
+        if warehouses is None:
+            return None
+        self.__mobile_login_warehouses_by_id = {warehouse.id: warehouse.name for warehouse in warehouses}
+        return self.__mobile_login_warehouses_by_id.get(warehouse_id)
+
+    @BaseController.handle_api_action(ApiActionError.INVALID_CREDENTIALS)
+    async def __perform_fetch_tokens(
+        self,
+        username: str,
+        password: str,
+        warehouse_id: int | None = None,
+    ) -> TokenPlainSchema | None:
+        return await self.__service.fetch_tokens(username, password, warehouse_id)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH, show_loading=False)
+    async def __perform_get_login_warehouses(self, username: str | None) -> list[WarehouseLoginOptionSchema] | None:
+        return await self.__service.get_login_warehouses(username)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_current_user(self) -> UserPlainSchema | None:
+        return await self.__service.get_current_user(Endpoint.CURRENT_USER, None, None, None, self._module_id)

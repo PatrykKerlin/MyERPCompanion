@@ -4,17 +4,24 @@ from pydantic import BaseModel
 
 
 class BaseSchema(BaseModel):
-    model_config = {"from_attributes": True, "arbitrary_types_allowed": True}
+    model_config = {
+        "from_attributes": True,
+        "arbitrary_types_allowed": True,
+        "populate_by_name": True,
+    }
 
 
-class BaseInputSchema(BaseSchema):
+class BaseStrictSchema(BaseSchema):
     pass
 
 
-class BaseOutputSchema(BaseSchema):
+class BasePlainSchema(BaseSchema):
     id: int
     is_active: bool
     created_at: datetime
     created_by: int
     modified_at: datetime | None = None
     modified_by: int | None = None
+
+    created_by_username: str | None = None
+    modified_by_username: str | None = None

@@ -1,0 +1,12 @@
+fastapi==0.129.0
+uvicorn==0.41.0
+sqlalchemy==2.0.46
+asyncpg==0.31.0
+passlib[argon2]==1.7.4
+alembic==1.18.4
+python-jose[cryptography]==3.5.0
+pydantic[email]==2.12.5
+pydantic-settings==2.13.1
+aiofiles==25.1.0
+python-multipart==0.0.22
+reportlab==4.4.10

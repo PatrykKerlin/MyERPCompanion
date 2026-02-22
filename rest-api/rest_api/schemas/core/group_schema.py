@@ -1,15 +1,12 @@
-from typing import Annotated
-
-from pydantic import Field
-
-from schemas.base import BaseInputSchema, BaseOutputSchema
+from schemas.base.base_schema import BasePlainSchema, BaseStrictSchema
+from schemas.validation.constraints import Constraints
 
 
-class GroupInputSchema(BaseInputSchema):
-    key: Annotated[str, Field(min_length=1, max_length=10)]
-    description: Annotated[str, Field(min_length=1, max_length=255)]
+class GroupStrictSchema(BaseStrictSchema):
+    key: Constraints.Key
+    description: Constraints.StringOptional_1000
 
 
-class GroupOutputSchema(BaseOutputSchema):
+class GroupPlainSchema(BasePlainSchema):
     key: str
-    description: str
+    description: str | None

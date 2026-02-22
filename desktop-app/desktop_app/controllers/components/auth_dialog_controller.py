@@ -2,44 +2,80 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from controllers.base import BaseComponentController
-from services.core import AuthService
-from views.components import AuthDialogComponent
+from controllers.base.base_component_controller import BaseComponentController
+from controllers.base.base_controller import BaseController
+from events.events import AuthDialogRequested, UserAuthenticated
+from services.core.auth_service import AuthService
+from utils.enums import ApiActionError, Endpoint
+from views.components.auth_dialog_component import AuthDialogComponent
 
 if TYPE_CHECKING:
     from config.context import Context
+    from schemas.core.module_schema import ModulePlainSchema
+    from schemas.core.token_schema import TokenPlainSchema
+    from schemas.core.user_schema import UserPlainSchema
 
 
-class AuthDialogController(BaseComponentController[AuthService, AuthDialogComponent]):
+class AuthDialogController(BaseComponentController[AuthDialogComponent, AuthDialogRequested]):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        self.__auth_dialog: AuthDialogComponent | None = None
-        self.__service = AuthService(context)
-
-    def get_new_component(self) -> AuthDialogComponent:
-        self.__auth_dialog = AuthDialogComponent(self, texts=self._context.texts)
-        return self.__auth_dialog
+        self.__service = AuthService(self._settings, self._logger, self._tokens_accessor)
+        self._subscribe_event_handlers({AuthDialogRequested: self._component_requested_handler})
 
     def on_cancel_click(self) -> None:
-        self._context.page.window.destroy()
+        self._page.run_task(self._page.window.destroy)
 
     def on_login_click(self, username: str, password: str) -> None:
-        self._context.page.run_task(self.__handle_login, "admin", "admin123")
+        if self._settings.CLIENT == "desktop":
+            self._page.run_task(self.__handle_login, username, password)
+
+    async def _component_requested_handler(self, _: AuthDialogRequested) -> None:
+        translation_state = self._state_store.app_state.translation
+        self._component = AuthDialogComponent(controller=self, translation=translation_state.items)
+        self._queue_dialog(self._component)
 
     async def __handle_login(self, username: str, password: str) -> None:
-        loading_dialog = self._show_loading_dialog()
-        try:
-            tokens = await self.__service.fetch_tokens(username, password)
-            self._context.tokens = tokens
-            user = await self.__service.fetch_current_user()
-            self._context.user = user
-            if self.__auth_dialog:
-                self._close_dialog(self.__auth_dialog)
-            self._close_dialog(loading_dialog)
-            app_controller = self._context.controllers.get("app")
-            app_controller.after_login()
-        except Exception as error:
-            self._close_dialog(loading_dialog)
-            if self.__auth_dialog:
-                self._close_dialog(self.__auth_dialog)
-            self._show_error_dialog(message=str(error))
+        tokens = await self.__perform_fetch_tokens(username, password)
+        if not tokens:
+            return
+        self._state_store.update(tokens={"access": tokens.access, "refresh": tokens.refresh})
+        all_modules = await self.__perform_get_all_modules()
+        if not all_modules:
+            return
+        user = await self.__perform_get_current_user()
+        if not user:
+            return
+        if self._settings.CLIENT == "desktop" and not user.is_superuser and user.employee_id is None:
+            self._state_store.update(tokens={"access": None, "refresh": None})
+            self._open_error_dialog(message_key="employee_login_required")
+            return
+        if user.is_superuser:
+            user_modules = all_modules
+        else:
+            user_groups_set = {group.id for group in user.groups}
+            user_modules: list[ModulePlainSchema] = []
+            for module in all_modules:
+                module_groups_set = {group.id for group in module.groups}
+                if module_groups_set.intersection(user_groups_set):
+                    user_modules.append(module)
+        self._state_store.update(modules={"items": user_modules})
+        self._state_store.update(user={"current": user})
+        if self._component:
+            self._page.pop_dialog()
+        await self._event_bus.publish(UserAuthenticated())
+
+    @BaseController.handle_api_action(ApiActionError.INVALID_CREDENTIALS)
+    async def __perform_fetch_tokens(
+        self,
+        username: str,
+        password: str,
+    ) -> TokenPlainSchema | None:
+        return await self.__service.fetch_tokens(username, password)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_all_modules(self) -> list[ModulePlainSchema] | None:
+        return await self.__service.get_all_modules(Endpoint.MODULES, None, None, None, self._module_id)
+
+    @BaseController.handle_api_action(ApiActionError.FETCH)
+    async def __perform_get_current_user(self) -> UserPlainSchema | None:
+        return await self.__service.get_current_user(Endpoint.CURRENT_USER, None, None, None, self._module_id)

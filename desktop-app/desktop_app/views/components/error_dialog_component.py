@@ -1,32 +1,45 @@
 from collections.abc import Callable
+from typing import cast
 
 import flet as ft
-
-from views.base import BaseDialog
+from styles.colors import AppColors
+from styles.styles import ButtonStyles
+from utils.translation import Translation
+from views.base.base_dialog import BaseDialog
 
 
 class ErrorDialogComponent(BaseDialog):
     def __init__(
         self,
-        texts: dict[str, str],
+        translation: Translation,
         message_key: str | None,
         message: str | None,
-        on_click: Callable[[ft.ControlEvent], None],
+        on_ok_clicked: Callable[[ft.Event[ft.TextButton]], ft.DialogControl | None],
     ) -> None:
         final_message = ""
         if message_key:
-            final_message += texts.get(message_key, "")
+            final_message += translation.get(message_key)
         if message:
             if final_message:
                 final_message += "\n"
             final_message += message
         super().__init__(
             controls=[ft.Text(final_message)],
-            actions=[ft.TextButton(texts["ok"], on_click=on_click)],
+            actions=cast(
+                list[ft.Control],
+                [
+                    ft.TextButton(
+                        translation.get("ok"),
+                        on_click=on_ok_clicked,
+                        style=ButtonStyles.primary_compact,
+                    )
+                ],
+            ),
+            scrollable=True,
             title=ft.Row(
                 controls=[
-                    ft.Icon(name=ft.Icons.ERROR, color=ft.Colors.RED),
-                    ft.Text(value=texts["error"]),
+                    ft.Icon(icon=ft.Icons.ERROR, color=AppColors.ERROR),
+                    ft.Text(value=translation.get("error")),
                 ]
             ),
         )

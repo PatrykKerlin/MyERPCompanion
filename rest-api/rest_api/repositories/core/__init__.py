@@ -1,25 +1,35 @@
-from models.core import AssocGroupModule, AssocUserGroup, Endpoint, Group, Language, Theme
-from utils.factories import RepositoryFactory
+from models.core.assoc_module_group import AssocModuleGroup
+from models.core.assoc_user_group import AssocUserGroup
+from models.core.assoc_view_controller import AssocViewController
+from models.core.controller import Controller
+from models.core.group import Group
+from models.core.image import Image
+from models.core.language import Language
+from repositories.core.module_repository import ModuleRepository
+from repositories.core.translation_repository import TranslationRepository
+from repositories.core.user_repository import UserRepository
+from repositories.core.view_repository import ViewRepository
+from utils.repository_factory import RepositoryFactory
 
-from .module_repository import ModuleRepository
-from .text_repository import TextRepository
-from .user_repository import UserRepository
-
-AssocGroupModuleRepository = RepositoryFactory.create(AssocGroupModule)
+AssocModuleGroupRepository = RepositoryFactory.create(AssocModuleGroup)
 AssocUserGroupRepository = RepositoryFactory.create(AssocUserGroup)
-EndpointRepository = RepositoryFactory.create(Endpoint)
+AssocViewControllerRepository = RepositoryFactory.create(AssocViewController)
+ControllerRepository = RepositoryFactory.create(Controller)
 GroupRepository = RepositoryFactory.create(Group)
+ImageRepository = RepositoryFactory.create(Image)
 LanguageRepository = RepositoryFactory.create(Language)
-ThemeRepository = RepositoryFactory.create(Theme)
+UserRepository = UserRepository
 
 __all__ = [
-    "AssocGroupModuleRepository",
+    "AssocModuleGroupRepository",
     "AssocUserGroupRepository",
-    "EndpointRepository",
+    "AssocViewControllerRepository",
+    "ControllerRepository",
     "GroupRepository",
+    "ImageRepository",
     "LanguageRepository",
     "ModuleRepository",
-    "TextRepository",
-    "ThemeRepository",
+    "TranslationRepository",
     "UserRepository",
+    "ViewRepository",
 ]

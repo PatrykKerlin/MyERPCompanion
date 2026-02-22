@@ -1,12 +1,30 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-if TYPE_CHECKING:
-    from controllers.base.base_controller import BaseController
+import flet as ft
+from controllers.base.base_controller import BaseController
 
-TController = TypeVar("TController", bound="BaseController")
+if TYPE_CHECKING:
+    from utils.translation import Translation
+
+TController = TypeVar("TController", bound=BaseController)
 
 
 class BaseComponent(Generic[TController]):
-    def __init__(self, controller: TController, texts: dict[str, str]) -> None:
+    def __init__(self, controller: TController, translation: Translation) -> None:
         self._controller = controller
-        self._texts = texts
+        self._translation = translation
+
+    @staticmethod
+    def safe_update(control: ft.Control | None) -> None:
+        if control is None:
+            return
+        try:
+            _ = control.page
+        except RuntimeError:
+            return
+        try:
+            control.update()
+        except RuntimeError:
+            return

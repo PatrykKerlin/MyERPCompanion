@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
-
-from utils.view_modes import ViewMode
-from views.base import BaseView
+from utils.enums import View, ViewMode
+from utils.translation import Translation
+from views.base.base_view import BaseView
 
 if TYPE_CHECKING:
     from controllers.core.group_controller import GroupController
@@ -15,40 +15,25 @@ class GroupView(BaseView):
     def __init__(
         self,
         controller: GroupController,
-        texts: dict[str, str],
-        columns: int,
-        data_row: dict[str, Any] | None,
+        translation: Translation,
         mode: ViewMode,
-        controller_key: str,
+        key: View,
+        data_row: dict[str, Any] | None,
     ) -> None:
-        super().__init__(controller, texts, columns, data_row, mode, controller_key)
-        self._inputs[0].update(
-            {
-                "key": ft.TextField(
-                    value=data_row["key"] if data_row else None,
-                    max_length=self._controller.get_constraint("key", "max_length"),
-                ),
-                "description": ft.TextField(
-                    value=data_row["description"] if data_row else None,
-                    max_length=self._controller.get_constraint("description", "max_length"),
-                    min_lines=5,
-                    max_lines=5,
-                ),
-            }
-        )
-        self._add_search_markers()
-        self._add_input_rows()
-        self._columns[0].controls.append(ft.Row(controls=[ft.Text(value="")]))
-        self._columns[0].controls.append(
-            ft.Row(
-                controls=[
-                    self._cancel_button,
-                    ft.Container(expand=True),
-                    self._save_button,
-                    self._search_button,
-                ],
-                alignment=ft.MainAxisAlignment.START,
-            )
-        )
-        self._master_column.controls.extend(self._columns)
-        ft.Card.__init__(self, content=self._scrollable_wrapper, expand=True)
+        super().__init__(controller, translation, mode, key, data_row, 4, 7)
+        main_fields_definitions = [
+            {"key": "key", "input": self._get_text_input},
+            {"key": "description", "input": self._get_text_input, "lines": 3},
+        ]
+        main_fields = self._build_field_groups(main_fields_definitions)
+        self._add_to_inputs(main_fields)
+        main_grid = self._build_grid(main_fields)
+        meta_grid = self._get_meta_grid(label_size=4, id_size=4, text_size=7)
+
+        columns = [
+            ft.Column(controls=main_grid, expand=True),
+            self._spacing_column,
+            ft.Column(controls=meta_grid, expand=True),
+        ]
+        self._columns_row.controls.extend(columns)
+        self._master_column.controls.extend(self._rows)

@@ -1,33 +1,130 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import flet as ft
+from styles.colors import AppColors
+from styles.dimensions import AppDimensions
+from styles.styles import MenuStyles
+from views.base.base_component import BaseComponent
 
-from styles import MenuStyles
+if TYPE_CHECKING:
+    from controllers.components.menu_bar_controller import MenuBarController
+    from utils.translation import Translation
 
 
-class MenuBarComponent(ft.MenuBar):
-    def __init__(self, texts: dict[str, str]) -> None:
-        super().__init__(
+class MenuBarComponent(BaseComponent, ft.MenuBar):
+    def __init__(self, controller: MenuBarController, translation: Translation) -> None:
+        BaseComponent.__init__(self, controller, translation)
+
+        ft.MenuBar.__init__(
+            self,
             style=MenuStyles.flat,
             controls=[
                 ft.SubmenuButton(
-                    content=ft.Text(texts["file"]),
+                    content=ft.Text(self._translation.get("file")),
                     controls=[
-                        ft.MenuItemButton(content=ft.Text(texts["new"])),
-                        ft.MenuItemButton(content=ft.Text(texts["open"])),
-                        ft.MenuItemButton(content=ft.Text(texts["exit"])),
+                        ft.MenuItemButton(
+                            content=self.__label_with_shortcut("new", "Ctrl+N"),
+                            on_click=lambda _: self._controller.on_new_clicked(),
+                        ),
+                        ft.MenuItemButton(
+                            content=self.__label_with_shortcut("search", "Ctrl+O"),
+                            on_click=lambda _: self._controller.on_search_clicked(),
+                        ),
+                        ft.MenuItemButton(
+                            content=self.__label_with_shortcut("save", "Ctrl+S"),
+                            on_click=lambda _: self._controller.on_save_clicked(),
+                        ),
+                        ft.MenuItemButton(
+                            content=self.__label_with_shortcut("close_tab", "Ctrl+W"),
+                            on_click=lambda _: self._controller.on_close_tab_clicked(),
+                        ),
+                        ft.MenuItemButton(
+                            content=self.__label_with_shortcut("close_other_tabs", "Ctrl+Shift+O"),
+                            on_click=lambda _: self._controller.on_close_other_tabs_clicked(),
+                        ),
+                        ft.MenuItemButton(
+                            content=self.__label_with_shortcut("close_all_tabs", "Ctrl+Shift+W"),
+                            on_click=lambda _: self._controller.on_close_all_tabs_clicked(),
+                        ),
                     ],
                 ),
                 ft.SubmenuButton(
-                    content=ft.Text(texts["edit"]),
+                    content=ft.Text(self._translation.get("edit")),
                     controls=[
-                        ft.MenuItemButton(content=ft.Text(texts["undo"])),
-                        ft.MenuItemButton(content=ft.Text(texts["redo"])),
+                        ft.MenuItemButton(
+                            content=self.__label_with_shortcut("undo", "Ctrl+Z"),
+                            on_click=lambda _: self._controller.on_undo_clicked(),
+                        ),
+                        ft.MenuItemButton(
+                            content=self.__label_with_shortcut("redo", "Ctrl+Y"),
+                            on_click=lambda _: self._controller.on_redo_clicked(),
+                        ),
+                        ft.MenuItemButton(
+                            content=self.__label_with_shortcut("copy_form_data", "Ctrl+Shift+C"),
+                            on_click=lambda _: self._controller.on_copy_clicked(),
+                        ),
+                        ft.MenuItemButton(
+                            content=self.__label_with_shortcut("paste_form_data", "Ctrl+Shift+V"),
+                            on_click=lambda _: self._controller.on_paste_clicked(),
+                        ),
+                        ft.MenuItemButton(
+                            content=self.__label_with_shortcut("find_tab", "Ctrl+F"),
+                            on_click=lambda _: self._controller.on_find_tab_clicked(),
+                        ),
                     ],
                 ),
                 ft.SubmenuButton(
-                    content=ft.Text(texts["help"]),
+                    content=ft.Text(self._translation.get("view")),
                     controls=[
-                        ft.MenuItemButton(content=ft.Text(texts["about"])),
+                        ft.MenuItemButton(
+                            content=self.__label_with_shortcut("refresh", "Ctrl+R"),
+                            on_click=lambda _: self._controller.on_refresh_clicked(),
+                        ),
+                        ft.MenuItemButton(
+                            content=ft.Text(self._translation.get("toggle_side_menu")),
+                            on_click=lambda _: self._controller.on_toggle_side_menu_clicked(),
+                        ),
+                        ft.MenuItemButton(
+                            content=ft.Text(self._translation.get("toggle_toolbar")),
+                            on_click=lambda _: self._controller.on_toggle_toolbar_clicked(),
+                        ),
+                        ft.MenuItemButton(
+                            content=ft.Text(self._translation.get("toggle_tabs_bar")),
+                            on_click=lambda _: self._controller.on_toggle_tabs_bar_clicked(),
+                        ),
+                    ],
+                ),
+                ft.SubmenuButton(
+                    content=ft.Text(self._translation.get("help")),
+                    controls=[
+                        ft.MenuItemButton(
+                            content=ft.Text(self._translation.get("about")),
+                            on_click=lambda _: self._controller.on_about_clicked(),
+                        ),
+                        ft.MenuItemButton(
+                            content=ft.Text(self._translation.get("check_api_status")),
+                            on_click=lambda _: self._controller.on_check_api_status_clicked(),
+                        ),
                     ],
                 ),
             ],
         )
+
+    def __label_with_shortcut(self, key: str, shortcut: str | None = None) -> ft.Text:
+        label = self._translation.get(key)
+        if shortcut:
+            return ft.Text(
+                spans=[
+                    ft.TextSpan(label),
+                    ft.TextSpan(
+                        f"  {shortcut}",
+                        style=ft.TextStyle(
+                            size=AppDimensions.SHORTCUT_FONT_SIZE,
+                            color=AppColors.SHORTCUT_TEXT,
+                        ),
+                    ),
+                ]
+            )
+        return ft.Text(label)
