@@ -113,7 +113,7 @@ services:
     depends_on:
       - rest-api
     command:
-      sh -c "/project/bin/python /desktop_app/main_win.py"
+      sh -c "/project/bin/python /desktop_app/main_web.py"
     ports:
       - "8550:8550"
 
