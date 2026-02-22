@@ -213,6 +213,5 @@ class SalesForecastService:
 
     @staticmethod
     def __month_cycle_features(value: date) -> tuple[float, float]:
-        # Encode month as a cyclical signal to capture seasonality.
         angle = (2.0 * math.pi * float(value.month - 1)) / 12.0
         return math.sin(angle), math.cos(angle)

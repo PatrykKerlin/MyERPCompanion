@@ -73,4 +73,3 @@ class Customer(BaseModel):
     @property
     def discount_ids(self) -> list[int]:
         return [row.discount_id for row in self.customer_discounts]
-    
